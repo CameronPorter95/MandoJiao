@@ -97,8 +97,18 @@ final class SpeakSession {
 
         attemptsUsed += 1
         let heard = outcome.best.trimmingCharacters(in: .whitespacesAndNewlines)
+        let isRight = AnswerGrader.isCorrect(outcome, for: card, strictness: strictness)
 
-        if AnswerGrader.isCorrect(outcome, for: card, strictness: strictness) {
+        SpeechLog.attempt(
+            card: card,
+            outcome: outcome,
+            strictness: strictness,
+            attempt: attemptsUsed,
+            of: SpeakLessonBuilder.attemptsPerCard,
+            wasCorrect: isRight
+        )
+
+        if isRight {
             cleanSolvesByPairID[card.id, default: 0] += 1
             phase = .correct(heard: heard)
             sounds.playMatch(step: cardIndex, of: plan.cardCount)

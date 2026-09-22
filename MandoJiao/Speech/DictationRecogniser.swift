@@ -101,7 +101,9 @@ final class DictationRecogniser: SpeechRecognising {
             locale: locale,
             contentHints: [.shortForm],
             transcriptionOptions: [],
-            reportingOptions: [.volatileResults],
+            // Alternatives have to be asked for. Without this option `result.alternatives`
+            // is always empty, and grading them achieves nothing.
+            reportingOptions: [.volatileResults, .alternativeTranscriptions],
             attributeOptions: []
         )
     }
