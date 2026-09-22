@@ -23,6 +23,9 @@ struct LessonView: View {
     @State private var session: LessonSession?
     @State private var isConfirmingQuit = false
 
+    /// One setting for the whole board, kept across lessons and launches.
+    @AppStorage("showsPinyinInLessons") private var showsPinyin = false
+
     var body: some View {
         VStack(spacing: 0) {
             if let session {
@@ -84,12 +87,18 @@ struct LessonView: View {
             }
 
             if !session.isFinished {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Tap the matching pairs")
-                        .font(.title2.bold())
-                    Text(request.title)
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                HStack(alignment: .firstTextBaseline) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Tap the matching pairs")
+                            .font(.title2.bold())
+                        Text(request.title)
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+
+                    Spacer(minLength: 12)
+
+                    pinyinToggle
                 }
             }
         }
@@ -97,10 +106,28 @@ struct LessonView: View {
         .padding(.bottom, 20)
     }
 
+    /// Applies to every Hanzi tile on the board at once, rather than revealing
+    /// one card at a time.
+    private var pinyinToggle: some View {
+        Button {
+            showsPinyin.toggle()
+        } label: {
+            HStack(spacing: 5) {
+                Image(systemName: showsPinyin ? "eye.fill" : "eye.slash")
+                Text("pīnyīn")
+            }
+            .font(.footnote.weight(.semibold))
+        }
+        .buttonStyle(.bordered)
+        .buttonBorderShape(.capsule)
+        .tint(showsPinyin ? Theme.accent : .secondary)
+        .accessibilityLabel(showsPinyin ? "Hide pinyin" : "Show pinyin")
+    }
+
     private func board(_ session: LessonSession) -> some View {
         VStack {
             Spacer(minLength: 0)
-            MatchBoardView(board: session.board) { tile in
+            MatchBoardView(board: session.board, showsPinyin: showsPinyin) { tile in
                 session.tap(tile)
             }
             .id(session.exerciseIndex)

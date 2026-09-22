@@ -6,9 +6,18 @@ struct WordTileView: View {
     let isSelected: Bool
     let isMatched: Bool
     let isMissed: Bool
+    /// Lesson-wide setting, not a per-tile reveal.
+    let showsPinyin: Bool
     let action: () -> Void
 
     @State private var shakeProgress: CGFloat = 0
+
+    /// A solved pair always shows its pinyin, since the answer is already out.
+    /// Before that it depends on the lesson setting.
+    private var isPinyinVisible: Bool {
+        guard tile.side == .hanzi, let pinyin, !pinyin.isEmpty else { return false }
+        return showsPinyin || isMatched
+    }
 
     var body: some View {
         Button(action: action) {
@@ -19,15 +28,14 @@ struct WordTileView: View {
                     .minimumScaleFactor(0.6)
                     .lineLimit(2)
 
-                // Pinyin is held back until the pair is solved, so the Hanzi
-                // still has to be recognised on its own.
-                if isMatched, tile.side == .hanzi, let pinyin, !pinyin.isEmpty {
+                if isPinyinVisible, let pinyin {
                     Text(pinyin)
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
             }
             .frame(maxWidth: .infinity, minHeight: Theme.tileMinHeight)
+            .frame(maxHeight: .infinity)
             .padding(.horizontal, 8)
             .padding(.vertical, 10)
             .background(background)
@@ -41,6 +49,7 @@ struct WordTileView: View {
         .modifier(ShakeEffect(animatableData: shakeProgress))
         .animation(.spring(response: 0.25, dampingFraction: 0.7), value: isSelected)
         .animation(.easeOut(duration: 0.2), value: isMatched)
+        .animation(.easeInOut(duration: 0.2), value: isPinyinVisible)
         .disabled(isMatched)
         .onChange(of: isMissed) { _, missed in
             guard missed else { return }
@@ -81,21 +90,32 @@ struct WordTileView: View {
             pinyin: pair.pinyin,
             isSelected: false,
             isMatched: false,
-            isMissed: false
+            isMissed: false,
+            showsPinyin: false
         ) {}
         WordTileView(
             tile: Tile(pairID: pair.id, side: .hanzi, text: pair.hanzi),
             pinyin: pair.pinyin,
             isSelected: true,
             isMatched: false,
-            isMissed: false
+            isMissed: false,
+            showsPinyin: false
+        ) {}
+        WordTileView(
+            tile: Tile(pairID: pair.id, side: .hanzi, text: pair.hanzi),
+            pinyin: pair.pinyin,
+            isSelected: false,
+            isMatched: false,
+            isMissed: false,
+            showsPinyin: true
         ) {}
         WordTileView(
             tile: Tile(pairID: pair.id, side: .hanzi, text: pair.hanzi),
             pinyin: pair.pinyin,
             isSelected: false,
             isMatched: true,
-            isMissed: false
+            isMissed: false,
+            showsPinyin: false
         ) {}
     }
     .padding()

@@ -24,9 +24,12 @@ final class LessonSession {
     /// never feels like waiting.
     private let advanceDelay: Duration = .milliseconds(320)
 
-    init(plan: LessonPlan, sounds: MatchSoundPlaying = ToneEngine.shared) {
+    /// `sounds` defaults inside the body rather than in the signature, because a
+    /// default argument referring to a main actor value is evaluated in the
+    /// caller's context.
+    init(plan: LessonPlan, sounds: MatchSoundPlaying? = nil) {
         self.plan = plan
-        self.sounds = sounds
+        self.sounds = sounds ?? ToneEngine.shared
         self.board = MatchBoard(pairs: plan.exercises.first ?? [])
     }
 
