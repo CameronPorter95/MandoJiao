@@ -20,6 +20,9 @@ struct SpeakLessonView: View {
     @State private var isTyping = false
     @State private var listeningTask: Task<Void, Never>?
 
+    @AppStorage(Preferences.Key.speechStrictness) private var strictnessRaw = MatchStrictness.default.rawValue
+    @AppStorage(Preferences.Key.drillCardLimit) private var cardLimit = 20
+
     /// Long enough for a one-word answer, short enough that a silent card is not a wait.
     private let listeningLimit: Duration = .seconds(5)
 
@@ -211,8 +214,8 @@ struct SpeakLessonView: View {
         listeningTask = nil
 
         Task {
-            let heard = await recogniser.stop()
-            if submitting { session?.submit(heard) }
+            let outcome = await recogniser.stop()
+            if submitting { session?.submit(outcome) }
         }
     }
 
@@ -228,11 +231,19 @@ struct SpeakLessonView: View {
         recordResults()
         didRecordResults = false
 
-        guard let plan = SpeakLessonBuilder.makeLesson(title: request.title, from: request.pool) else {
+        let plan = SpeakLessonBuilder.makeLesson(
+            title: request.title,
+            from: request.pool,
+            maxCards: cardLimit
+        )
+        guard let plan else {
             session = nil
             return
         }
-        session = SpeakSession(plan: plan)
+        session = SpeakSession(
+            plan: plan,
+            strictness: MatchStrictness(rawValue: strictnessRaw) ?? .default
+        )
     }
 
     private func close() {

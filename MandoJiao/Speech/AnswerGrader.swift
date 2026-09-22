@@ -7,9 +7,9 @@ import Foundation
 /// returns whichever character is most common. The user says the right thing and gets
 /// marked wrong.
 ///
-/// So everything is reduced to toneless pinyin before comparing. Tones are dropped
-/// deliberately: a recogniser's tone output reflects its own guess as much as the
-/// speaker's, so grading on tone would fail people for reasons they cannot diagnose.
+/// So everything is reduced to toneless pinyin syllables before comparing. Tones are
+/// dropped deliberately: a recogniser's tone output reflects its own guess as much as
+/// the speaker's, so grading on tone would fail people for reasons they cannot diagnose.
 ///
 /// Accepted consequence: homophones pass. Answering 事 when asked for 是 is marked
 /// correct, because audio alone cannot tell them apart.
@@ -22,54 +22,179 @@ enum AnswerGrader {
         }
     }
 
-    /// Lowercase pinyin letters only: no tone marks, no tone digits, no spaces or
-    /// punctuation. Hanzi is converted on the way through.
-    static func normalised(_ text: String) -> String {
+    /// Toneless pinyin, one entry per syllable.
+    ///
+    /// Syllables are kept apart rather than run together because matching a word inside
+    /// a longer phrase has to respect syllable boundaries. Flat-string containment would
+    /// accept 完成 (`wancheng`) as an answer for 喝 (`he`), since "cheng" contains "he".
+    static func syllables(_ text: String) -> [String] {
         var working = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !working.isEmpty else { return "" }
+        guard !working.isEmpty else { return [] }
 
         if containsHan(working) {
+            // The transform emits one space-separated syllable per character.
             working = mandarinLatin(working)
         }
 
-        // Folding turns shuǐ into shui and ǜ into u.
-        working = working.folding(
-            options: .diacriticInsensitive,
-            locale: Locale(identifier: "en_US_POSIX")
-        )
-
-        // Keeping only a-z drops spaces, apostrophes and tone digits in one pass.
-        let letters = working.lowercased().unicodeScalars.filter {
-            $0.value >= 97 && $0.value <= 122
-        }
-
-        // People type lv for lü, which folds to lu from the other direction.
-        return String(String.UnicodeScalarView(letters)).replacingOccurrences(of: "v", with: "u")
+        return working
+            .folding(options: .diacriticInsensitive, locale: Locale(identifier: "en_US_POSIX"))
+            .lowercased()
+            .split(whereSeparator: { !$0.isLetter })
+            .map { token in
+                let letters = token.unicodeScalars.filter { $0.value >= 97 && $0.value <= 122 }
+                // People type lv for lü, which folds to lu from the other direction.
+                return String(String.UnicodeScalarView(letters))
+                    .replacingOccurrences(of: "v", with: "u")
+            }
+            .filter { !$0.isEmpty }
     }
 
-    /// Every spelling that counts as right, including the pinyin derived from the Hanzi.
+    /// Lowercase pinyin letters only: no tone marks, no tone digits, no spaces.
+    static func normalised(_ text: String) -> String {
+        syllables(text).joined()
+    }
+
+    /// Every spelling that counts as right, as syllables.
     ///
-    /// Both sources are kept because they disagree on neutral tones: 学生 is stored as
-    /// `xuésheng`, while the transform produces `xuéshēng`.
-    static func acceptedForms(of pair: WordPair) -> Set<String> {
-        var forms: Set<String> = []
+    /// Both the Hanzi and the stored pinyin are kept. They can disagree on syllable
+    /// boundaries: a word typed in as `wánchéng` is one token, while the same word's
+    /// Hanzi transforms to `wán chéng`, two. Keeping both means matching inside a phrase
+    /// still works whichever way the word was entered.
+    static func acceptedSyllableForms(of pair: WordPair) -> [[String]] {
+        var forms: [[String]] = []
         for source in [pair.hanzi, pair.pinyin] {
-            let form = normalised(source)
-            if !form.isEmpty { forms.insert(form) }
+            let form = syllables(source)
+            if !form.isEmpty, !forms.contains(form) {
+                forms.append(form)
+            }
         }
         return forms
     }
 
-    static func isCorrect(_ response: String, for pair: WordPair) -> Bool {
+    static func acceptedForms(of pair: WordPair) -> Set<String> {
+        Set(acceptedSyllableForms(of: pair).map { $0.joined() })
+    }
+
+    static func isCorrect(
+        _ response: String,
+        for pair: WordPair,
+        strictness: MatchStrictness = .default
+    ) -> Bool {
         let trimmed = response.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return false }
 
         if trimmed == pair.hanzi { return true }
 
-        let answer = normalised(trimmed)
-        guard !answer.isEmpty else { return false }
-        return acceptedForms(of: pair).contains(answer)
+        let heard = syllables(trimmed)
+        guard !heard.isEmpty else { return false }
+
+        return acceptedSyllableForms(of: pair).contains { expected in
+            matches(heard: heard, expected: expected, strictness: strictness)
+        }
     }
+
+    /// Grades the recogniser's best guess and, where the setting allows, the alternatives
+    /// it offered alongside it.
+    static func isCorrect(
+        _ outcome: SpeechOutcome,
+        for pair: WordPair,
+        strictness: MatchStrictness = .default
+    ) -> Bool {
+        if isCorrect(outcome.best, for: pair, strictness: strictness) { return true }
+        guard strictness.allowsAlternatives else { return false }
+        return outcome.alternatives.contains { isCorrect($0, for: pair, strictness: strictness) }
+    }
+
+    // MARK: - Matching
+
+    private static func matches(
+        heard: [String],
+        expected: [String],
+        strictness: MatchStrictness
+    ) -> Bool {
+        let expectedJoined = expected.joined()
+
+        // Joined rather than element-wise, because the two sides disagree about where
+        // syllables break: 完成 transforms to two syllables, while the same word typed in
+        // as "wancheng" arrives as one token.
+        if heard.joined() == expectedJoined { return true }
+
+        if strictness.allowsSurroundingWords,
+           runs(of: heard).contains(expectedJoined) {
+            return true
+        }
+
+        guard strictness.allowsNearSpellings else { return false }
+
+        let expectedKey = folded(expectedJoined)
+        let allowance = allowance(for: expectedKey)
+
+        if editDistance(folded(heard.joined()), expectedKey) <= allowance { return true }
+
+        guard strictness.allowsSurroundingWords else { return false }
+
+        return runs(of: heard).contains {
+            editDistance(folded($0), expectedKey) <= allowance
+        }
+    }
+
+    /// Every contiguous run of syllables, joined.
+    ///
+    /// Runs start and end on a syllable, which is what stops a short word being found
+    /// inside an unrelated longer one: 喝 is "he" and 完成 is "wancheng", which contains
+    /// those letters but never as a whole syllable.
+    private static func runs(of syllables: [String]) -> [String] {
+        var result: [String] = []
+        for start in syllables.indices {
+            var joined = ""
+            for end in start..<syllables.count {
+                joined += syllables[end]
+                result.append(joined)
+            }
+        }
+        return result
+    }
+
+    /// Collapses the pairs learners and recognisers most often swap: the retroflex
+    /// initials against their alveolar counterparts, and the -ng ending against -n.
+    private static func folded(_ key: String) -> String {
+        var result = key
+        for (from, to) in [("zh", "z"), ("ch", "c"), ("sh", "s")] {
+            result = result.replacingOccurrences(of: from, with: to)
+        }
+        return result.replacingOccurrences(of: "ng", with: "n")
+    }
+
+    /// One letter of slack per syllable's worth of word, capped at two. A short word gets
+    /// none: with three letters to play with, half the syllables in the language are one
+    /// edit apart.
+    private static func allowance(for key: String) -> Int {
+        min(2, key.count / 4)
+    }
+
+    private static func editDistance(_ lhs: String, _ rhs: String) -> Int {
+        if lhs == rhs { return 0 }
+        let left = Array(lhs)
+        let right = Array(rhs)
+        if left.isEmpty { return right.count }
+        if right.isEmpty { return left.count }
+
+        var previous = Array(0...right.count)
+        var current = [Int](repeating: 0, count: right.count + 1)
+
+        for i in 1...left.count {
+            current[0] = i
+            for j in 1...right.count {
+                let substitution = previous[j - 1] + (left[i - 1] == right[j - 1] ? 0 : 1)
+                current[j] = min(previous[j] + 1, current[j - 1] + 1, substitution)
+            }
+            previous = current
+        }
+
+        return previous[right.count]
+    }
+
+    // MARK: - Display
 
     /// Pinyin with tone marks, for showing the answer once a card is over.
     static func pinyinWithTones(_ hanzi: String) -> String {

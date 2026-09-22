@@ -40,7 +40,8 @@ struct LessonView: View {
     @State private var didRecordResults = false
 
     /// One setting for the whole board, kept across lessons and launches.
-    @AppStorage("showsPinyinInLessons") private var showsPinyin = false
+    @AppStorage(Preferences.Key.showsPinyin) private var showsPinyin = false
+    @AppStorage(Preferences.Key.matchingRounds) private var rounds = 10
 
     var body: some View {
         VStack(spacing: 0) {
@@ -194,7 +195,12 @@ struct LessonView: View {
         recordResults()
         didRecordResults = false
 
-        guard let plan = LessonBuilder.makeLesson(title: request.title, from: request.pool) else {
+        let plan = LessonBuilder.makeLesson(
+            title: request.title,
+            from: request.pool,
+            exerciseCount: rounds
+        )
+        guard let plan else {
             session = nil
             return
         }

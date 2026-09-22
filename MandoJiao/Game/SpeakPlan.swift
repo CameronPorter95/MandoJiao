@@ -25,7 +25,11 @@ enum SpeakLessonBuilder {
     /// Unlike `LessonBuilder`, a single word is enough for a lesson. Dropping the
     /// five-at-a-time floor is the point of this exercise: the matching board had to pad
     /// a short mistakes list with unrelated words to fill a round.
-    static func makeLesson(title: String, from pool: [WordPair]) -> SpeakPlan? {
+    static func makeLesson(
+        title: String,
+        from pool: [WordPair],
+        maxCards: Int = maxCards
+    ) -> SpeakPlan? {
         var seen = Set<String>()
         let cards = pool.filter { pair in
             let hanzi = pair.hanzi.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -35,6 +39,6 @@ enum SpeakLessonBuilder {
         }
 
         guard !cards.isEmpty else { return nil }
-        return SpeakPlan(title: title, cards: Array(cards.prefix(maxCards)))
+        return SpeakPlan(title: title, cards: Array(cards.prefix(max(1, maxCards))))
     }
 }

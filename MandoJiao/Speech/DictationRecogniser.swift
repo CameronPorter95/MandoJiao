@@ -27,6 +27,7 @@ final class DictationRecogniser: SpeechRecognising {
     private var converter: AVAudioConverter?
     private var analyzerFormat: AVAudioFormat?
     private var finalText = ""
+    private var finalAlternatives: [String] = []
     private var isListening = false
 
     // MARK: - Preparation
@@ -144,6 +145,7 @@ final class DictationRecogniser: SpeechRecognising {
 
         partialText = ""
         finalText = ""
+        finalAlternatives = []
 
         let transcriber = Self.makeTranscriber(locale: locale)
         self.transcriber = transcriber
@@ -171,6 +173,11 @@ final class DictationRecogniser: SpeechRecognising {
                     let text = String(result.text.characters)
                     if result.isFinal {
                         self?.finalText = text
+                        // The runner-up transcriptions are worth keeping: on an isolated
+                        // word the right answer is often sitting in second place.
+                        self?.finalAlternatives = result.alternatives.map {
+                            String($0.characters)
+                        }
                     } else {
                         self?.partialText = text
                     }
@@ -233,8 +240,8 @@ final class DictationRecogniser: SpeechRecognising {
         return error == nil ? output : buffer
     }
 
-    func stop() async -> String {
-        guard isListening else { return finalText.isEmpty ? partialText : finalText }
+    func stop() async -> SpeechOutcome {
+        guard isListening else { return currentOutcome }
         isListening = false
 
         engine.inputNode.removeTap(onBus: 0)
@@ -251,7 +258,15 @@ final class DictationRecogniser: SpeechRecognising {
         transcriber = nil
         converter = nil
 
-        return finalText.isEmpty ? partialText : finalText
+        return currentOutcome
+    }
+
+    /// The final transcript when there is one, otherwise whatever the live one reached.
+    private var currentOutcome: SpeechOutcome {
+        SpeechOutcome(
+            best: finalText.isEmpty ? partialText : finalText,
+            alternatives: finalAlternatives
+        )
     }
 
     func cancel() {
@@ -271,6 +286,7 @@ final class DictationRecogniser: SpeechRecognising {
         converter = nil
         partialText = ""
         finalText = ""
+        finalAlternatives = []
 
         Task { await analyzer?.cancelAndFinishNow() }
     }

@@ -41,12 +41,18 @@ final class SpeakSession {
     private(set) var feedbackToken = 0
 
     private let sounds: MatchSoundPlaying
+    private let strictness: MatchStrictness
     private var isAdvancing = false
     private var advanceTask: Task<Void, Never>?
     private let advanceDelay: Duration = .milliseconds(850)
 
-    init(plan: SpeakPlan, sounds: MatchSoundPlaying? = nil) {
+    init(
+        plan: SpeakPlan,
+        strictness: MatchStrictness = .default,
+        sounds: MatchSoundPlaying? = nil
+    ) {
         self.plan = plan
+        self.strictness = strictness
         self.sounds = sounds ?? MatchSounds.shared
     }
 
@@ -83,12 +89,16 @@ final class SpeakSession {
     /// exist because recognition of isolated words is unreliable, so spending them is not
     /// evidence that the word is unknown.
     func submit(_ response: String) {
+        submit(SpeechOutcome(best: response))
+    }
+
+    func submit(_ outcome: SpeechOutcome) {
         guard !isFinished, !isAdvancing, !phase.isSettled else { return }
 
         attemptsUsed += 1
-        let heard = response.trimmingCharacters(in: .whitespacesAndNewlines)
+        let heard = outcome.best.trimmingCharacters(in: .whitespacesAndNewlines)
 
-        if AnswerGrader.isCorrect(heard, for: card) {
+        if AnswerGrader.isCorrect(outcome, for: card, strictness: strictness) {
             cleanSolvesByPairID[card.id, default: 0] += 1
             phase = .correct(heard: heard)
             sounds.playMatch(step: cardIndex, of: plan.cardCount)

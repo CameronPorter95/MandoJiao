@@ -77,6 +77,12 @@ struct HomeView: View {
         .toolbar {
             ToolbarItemGroup(placement: .primaryAction) {
                 NavigationLink {
+                    SettingsView()
+                } label: {
+                    Label("Settings", systemImage: "gearshape")
+                }
+
+                NavigationLink {
                     WordLibraryView()
                 } label: {
                     Label("Library", systemImage: "character.book.closed")
