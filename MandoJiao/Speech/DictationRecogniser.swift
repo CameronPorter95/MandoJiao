@@ -46,10 +46,19 @@ final class DictationRecogniser: SpeechRecognising {
             return availability
         }
 
-        let installed = await DictationTranscriber.installedLocales
-        let isInstalled = installed.contains { $0.identifier(.bcp47) == locale.identifier(.bcp47) }
+        // The locale must be reserved before any module is built with it, whether or not
+        // the model needs downloading. Skipping this on the already-installed path makes
+        // the framework log "Cannot use modules with unallocated locales" for every
+        // transcriber, and it says that becomes an error in a future release.
+        guard await reserveLocale(locale) else {
+            availability = .unsupported(reason: "Mandarin dictation could not be reserved on this device.")
+            return availability
+        }
 
-        if !isInstalled {
+        switch await AssetInventory.status(forModules: [Self.makeTranscriber(locale: locale)]) {
+        case .installed:
+            break
+        case .supported, .downloading:
             availability = .downloadingModel(progress: 0)
             do {
                 try await installModel(for: locale)
@@ -57,10 +66,43 @@ final class DictationRecogniser: SpeechRecognising {
                 availability = .unsupported(reason: "The Mandarin speech model could not be downloaded.")
                 return availability
             }
+        case .unsupported:
+            availability = .unsupported(reason: "Mandarin dictation is not available on this device.")
+            return availability
+        @unknown default:
+            availability = .unsupported(reason: "Mandarin dictation is not available on this device.")
+            return availability
         }
 
         availability = .ready
         return availability
+    }
+
+    /// Reservations are a limited, app-wide resource. This app only ever wants Mandarin,
+    /// so one is claimed and kept.
+    private func reserveLocale(_ locale: Locale) async -> Bool {
+        let reserved = await AssetInventory.reservedLocales
+        if reserved.contains(where: { $0.identifier(.bcp47) == locale.identifier(.bcp47) }) {
+            return true
+        }
+
+        if reserved.count >= AssetInventory.maximumReservedLocales, let spare = reserved.first {
+            _ = await AssetInventory.release(reservedLocale: spare)
+        }
+
+        return (try? await AssetInventory.reserve(locale: locale)) ?? false
+    }
+
+    /// One place to build the module, so the asset request and status check are asking
+    /// about exactly what listening will use.
+    private nonisolated static func makeTranscriber(locale: Locale) -> DictationTranscriber {
+        DictationTranscriber(
+            locale: locale,
+            contentHints: [.shortForm],
+            transcriptionOptions: [],
+            reportingOptions: [.volatileResults],
+            attributeOptions: []
+        )
     }
 
     private func requestMicrophoneAccess() async -> Bool {
@@ -77,8 +119,7 @@ final class DictationRecogniser: SpeechRecognising {
     }
 
     private func installModel(for locale: Locale) async throws {
-        let module = DictationTranscriber(locale: locale, preset: .shortDictation)
-        _ = try await AssetInventory.reserve(locale: locale)
+        let module = Self.makeTranscriber(locale: locale)
 
         guard let request = try await AssetInventory.assetInstallationRequest(supporting: [module]) else {
             return
@@ -104,13 +145,7 @@ final class DictationRecogniser: SpeechRecognising {
         partialText = ""
         finalText = ""
 
-        let transcriber = DictationTranscriber(
-            locale: locale,
-            contentHints: [.shortForm],
-            transcriptionOptions: [],
-            reportingOptions: [.volatileResults],
-            attributeOptions: []
-        )
+        let transcriber = Self.makeTranscriber(locale: locale)
         self.transcriber = transcriber
 
         // This is the payoff for using the dictation module: the expected answer and its
