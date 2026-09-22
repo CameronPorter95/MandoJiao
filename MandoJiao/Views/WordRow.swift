@@ -18,6 +18,17 @@ struct WordRow: View {
                         .foregroundStyle(.secondary)
                 }
             }
+
+            if word.missCount > 0 {
+                Text("\(word.missCount)")
+                    .font(.caption2.weight(.bold))
+                    .monospacedDigit()
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 2)
+                    .background(Capsule().fill(Theme.miss))
+                    .accessibilityLabel("\(word.missCount) outstanding mistakes")
+            }
         }
     }
 }

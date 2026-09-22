@@ -12,6 +12,12 @@ final class VocabWord {
     var createdAt: Date = Date.now
     var decks: [Deck] = []
 
+    /// Outstanding mistakes. Goes up when the word is part of a wrong guess and
+    /// back down when a later lesson solves it without missing it, so a word
+    /// leaves the mistakes list once it has been earned back.
+    var missCount: Int = 0
+    var lastMissedAt: Date?
+
     init(english: String, hanzi: String, pinyin: String = "") {
         self.uuid = UUID()
         self.english = english

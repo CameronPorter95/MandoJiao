@@ -1,3 +1,4 @@
+import SwiftData
 import SwiftUI
 
 /// What a lesson is drawn from. Kept as detached pairs so the lesson is stable
@@ -20,8 +21,11 @@ struct LessonView: View {
     let request: LessonRequest
     let onClose: () -> Void
 
+    @Environment(\.modelContext) private var context
+
     @State private var session: LessonSession?
     @State private var isConfirmingQuit = false
+    @State private var didRecordResults = false
 
     /// One setting for the whole board, kept across lessons and launches.
     @AppStorage("showsPinyinInLessons") private var showsPinyin = false
@@ -32,8 +36,12 @@ struct LessonView: View {
                 header(session)
 
                 if session.isFinished {
-                    LessonCompleteView(session: session, onPractiseAgain: startLesson, onDone: onClose)
-                        .transition(.opacity)
+                    LessonCompleteView(
+                        session: session,
+                        onPractiseAgain: startLesson,
+                        onDone: { close() }
+                    )
+                    .transition(.opacity)
                 } else {
                     board(session)
                 }
@@ -47,15 +55,20 @@ struct LessonView: View {
         .sensoryFeedback(trigger: session?.feedbackToken ?? 0) { _, _ in
             feedback(for: session?.lastResult)
         }
+        // Recorded as soon as the last board is cleared, so the review screen
+        // and the mistakes list agree even if the app is killed from here.
+        .onChange(of: session?.isFinished ?? false) { _, finished in
+            if finished { recordResults() }
+        }
         .confirmationDialog(
             "Quit this lesson?",
             isPresented: $isConfirmingQuit,
             titleVisibility: .visible
         ) {
-            Button("Quit", role: .destructive, action: onClose)
+            Button("Quit", role: .destructive) { close() }
             Button("Keep practising", role: .cancel) {}
         } message: {
-            Text("Progress in this lesson will not be saved.")
+            Text("Mistakes so far are still added to your mistakes list.")
         }
     }
 
@@ -66,7 +79,7 @@ struct LessonView: View {
             HStack(spacing: 16) {
                 Button {
                     if session.isFinished || session.progress == 0 {
-                        onClose()
+                        close()
                     } else {
                         isConfirmingQuit = true
                     }
@@ -159,6 +172,11 @@ struct LessonView: View {
     // MARK: - Behaviour
 
     private func startLesson() {
+        // Practising again starts a fresh tally, so the previous lesson's
+        // mistakes are not written a second time.
+        recordResults()
+        didRecordResults = false
+
         guard let plan = LessonBuilder.makeLesson(title: request.title, from: request.pool) else {
             session = nil
             return
@@ -166,9 +184,25 @@ struct LessonView: View {
         session = LessonSession(plan: plan)
     }
 
+    private func close() {
+        recordResults()
+        onClose()
+    }
+
+    /// Idempotent: the finish handler and the close button both call it.
+    private func recordResults() {
+        guard let session, !didRecordResults else { return }
+        didRecordResults = true
+        MistakeLog.apply(
+            misses: session.missesByPairID,
+            cleanSolves: session.cleanSolvesByPairID,
+            in: context
+        )
+    }
+
     private func feedback(for result: TapResult?) -> SensoryFeedback? {
         switch result {
-        case .matched(_, let boardComplete):
+        case .matched(_, let boardComplete, _):
             return boardComplete ? .success : .impact(weight: .light)
         case .missed:
             return .error

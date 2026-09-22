@@ -13,6 +13,12 @@ final class LessonSession {
     private(set) var isFinished = false
     private(set) var missCount = 0
 
+    /// How many times each pair was part of a wrong guess in this lesson.
+    private(set) var missesByPairID: [UUID: Int] = [:]
+    /// How many times each pair was solved on a board where it had not been
+    /// guessed wrong. Used to retire words from the mistakes list.
+    private(set) var cleanSolvesByPairID: [UUID: Int] = [:]
+
     /// Bumped on every tap so views can hang haptics off it.
     private(set) var feedbackToken = 0
     private(set) var lastResult: TapResult?
@@ -45,17 +51,36 @@ final class LessonSession {
         return (Double(exerciseIndex) + withinBoard) / Double(plan.exerciseCount)
     }
 
+    /// The words this lesson got wrong, most-missed first, for the review screen.
+    var missedPairs: [(pair: WordPair, misses: Int)] {
+        let byID = Dictionary(
+            plan.distinctPairs.map { ($0.id, $0) },
+            uniquingKeysWith: { first, _ in first }
+        )
+        return missesByPairID
+            .compactMap { id, misses in byID[id].map { (pair: $0, misses: misses) } }
+            .sorted {
+                $0.misses == $1.misses ? $0.pair.english < $1.pair.english : $0.misses > $1.misses
+            }
+    }
+
     func tap(_ tile: Tile) {
         guard !isFinished, !isAdvancing else { return }
 
         let result = board.tap(tile)
 
         switch result {
-        case .matched(let step, let boardComplete):
+        case .matched(let step, let boardComplete, let wasMissedEarlier):
+            if !wasMissedEarlier {
+                cleanSolvesByPairID[tile.pairID, default: 0] += 1
+            }
             sounds.playMatch(step: step, of: board.pairs.count)
             if boardComplete { scheduleAdvance() }
-        case .missed:
+        case .missed(let tiles):
             missCount += 1
+            for missed in tiles {
+                missesByPairID[missed.pairID, default: 0] += 1
+            }
             sounds.playMiss()
         case .selected, .switched, .deselected, .ignored:
             break

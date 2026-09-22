@@ -32,31 +32,22 @@ struct LessonCompleteView: View {
                 stat(value: "\(accuracy)%", label: "accuracy")
             }
 
-            VStack(alignment: .leading, spacing: 8) {
-                Text("Words in this lesson")
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(.secondary)
+            ScrollView {
+                VStack(alignment: .leading, spacing: 18) {
+                    if !missedPairs.isEmpty {
+                        section(
+                            title: "Got wrong",
+                            tint: Theme.miss,
+                            rows: missedPairs.map { ($0.pair, $0.misses) }
+                        )
+                    }
 
-                ScrollView {
-                    VStack(spacing: 0) {
-                        ForEach(session.plan.distinctPairs.sorted { $0.english < $1.english }) { pair in
-                            HStack(alignment: .firstTextBaseline) {
-                                Text(pair.hanzi)
-                                    .font(.system(size: 20, weight: .medium))
-                                VStack(alignment: .leading, spacing: 1) {
-                                    Text(pair.english)
-                                        .font(.subheadline)
-                                    if !pair.pinyin.isEmpty {
-                                        Text(pair.pinyin)
-                                            .font(.caption)
-                                            .foregroundStyle(.secondary)
-                                    }
-                                }
-                                Spacer()
-                            }
-                            .padding(.vertical, 7)
-                            Divider()
-                        }
+                    if !cleanPairs.isEmpty {
+                        section(
+                            title: missedPairs.isEmpty ? "Words in this lesson" : "Got right",
+                            tint: nil,
+                            rows: cleanPairs.map { ($0, 0) }
+                        )
                     }
                 }
             }
@@ -77,6 +68,61 @@ struct LessonCompleteView: View {
                     .tint(.secondary)
             }
             .padding(.bottom, 8)
+        }
+    }
+
+    private var missedPairs: [(pair: WordPair, misses: Int)] { session.missedPairs }
+
+    /// Everything the lesson covered that never went wrong.
+    private var cleanPairs: [WordPair] {
+        let missed = Set(missedPairs.map(\.pair.id))
+        return session.plan.distinctPairs
+            .filter { !missed.contains($0.id) }
+            .sorted { $0.english < $1.english }
+    }
+
+    private func section(title: String, tint: Color?, rows: [(WordPair, Int)]) -> some View {
+        VStack(alignment: .leading, spacing: 0) {
+            HStack {
+                Text(title)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(tint ?? .secondary)
+                Text("\(rows.count)")
+                    .font(.caption.weight(.semibold))
+                    .monospacedDigit()
+                    .foregroundStyle(.secondary)
+                Spacer()
+            }
+            .padding(.bottom, 6)
+
+            ForEach(rows, id: \.0.id) { pair, misses in
+                HStack(alignment: .firstTextBaseline) {
+                    Text(pair.hanzi)
+                        .font(.system(size: 20, weight: .medium))
+                        .frame(minWidth: 52, alignment: .leading)
+
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text(pair.english)
+                            .font(.subheadline)
+                        if !pair.pinyin.isEmpty {
+                            Text(pair.pinyin)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+
+                    Spacer()
+
+                    if misses > 1 {
+                        Text("\(misses)x")
+                            .font(.caption.weight(.semibold))
+                            .monospacedDigit()
+                            .foregroundStyle(Theme.miss)
+                    }
+                }
+                .padding(.vertical, 7)
+                Divider()
+            }
         }
     }
 

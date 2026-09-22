@@ -21,8 +21,12 @@ enum TapResult: Equatable {
     /// Selection moved to another tile on the same side.
     case switched
     /// `step` is 0-based: the first match of the board is step 0.
-    case matched(step: Int, boardComplete: Bool)
-    case missed(tileIDs: [String])
+    /// `wasMissedEarlier` is true when this pair had already been guessed wrong
+    /// on this board, so a clean solve can be told apart from a recovery.
+    case matched(step: Int, boardComplete: Bool, wasMissedEarlier: Bool)
+    /// Both tiles of a wrong guess. A miss implicates both words, since the
+    /// two were confused for each other.
+    case missed(tiles: [Tile])
     /// Tap landed on an already-matched tile.
     case ignored
 }
@@ -39,7 +43,10 @@ struct MatchBoard {
     private(set) var matchedPairIDs: Set<UUID> = []
     private(set) var selected: Tile?
     /// Tiles that were part of the most recent wrong guess, for the shake.
+    /// Cleared on the next tap.
     private(set) var missedTileIDs: Set<String> = []
+    /// Every pair guessed wrong on this board, kept for the whole exercise.
+    private(set) var missedPairIDs: Set<UUID> = []
 
     init(pairs: [WordPair]) {
         self.pairs = pairs
@@ -87,11 +94,17 @@ struct MatchBoard {
         if current.pairID == tile.pairID {
             matchedPairIDs.insert(tile.pairID)
             selected = nil
-            return .matched(step: matchedPairIDs.count - 1, boardComplete: isComplete)
+            return .matched(
+                step: matchedPairIDs.count - 1,
+                boardComplete: isComplete,
+                wasMissedEarlier: missedPairIDs.contains(tile.pairID)
+            )
         }
 
         selected = nil
         missedTileIDs = [current.id, tile.id]
-        return .missed(tileIDs: [current.id, tile.id])
+        missedPairIDs.insert(current.pairID)
+        missedPairIDs.insert(tile.pairID)
+        return .missed(tiles: [current, tile])
     }
 }

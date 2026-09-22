@@ -9,13 +9,30 @@ struct HomeView: View {
     @State private var activeRequest: LessonRequest?
     @State private var newDeckName = ""
     @State private var isNamingDeck = false
+    @State private var isConfirmingClear = false
 
     private var usableWords: [VocabWord] { words.filter(\.isUsable) }
+
+    /// Words carrying outstanding mistakes, worst first.
+    private var mistakeWords: [VocabWord] {
+        usableWords
+            .filter { $0.missCount > 0 }
+            .sorted {
+                ($0.missCount, $0.lastMissedAt ?? .distantPast)
+                    > ($1.missCount, $1.lastMissedAt ?? .distantPast)
+            }
+    }
 
     var body: some View {
         List {
             Section {
                 quickPracticeCard
+            }
+
+            if !mistakeWords.isEmpty {
+                Section {
+                    mistakesCard
+                }
             }
 
             Section {
@@ -80,6 +97,18 @@ struct HomeView: View {
         } message: {
             Text("Give the deck a name, then pick its words.")
         }
+        .confirmationDialog(
+            "Clear the mistakes list?",
+            isPresented: $isConfirmingClear,
+            titleVisibility: .visible
+        ) {
+            Button("Clear", role: .destructive) {
+                MistakeLog.clearAll(in: context)
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("\(mistakeWords.count) words will be marked as learned.")
+        }
         .fullScreenCover(item: $activeRequest) { request in
             LessonView(request: request) { activeRequest = nil }
         }
@@ -116,6 +145,60 @@ struct HomeView: View {
             }
         }
         .padding(.vertical, 6)
+    }
+
+    private var mistakesCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Mistakes")
+                    .font(.title3.bold())
+                Text(mistakesSubtitle)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+
+            HStack(spacing: 12) {
+                Button {
+                    start(title: "Mistakes", pool: mistakePool)
+                } label: {
+                    Text("Practise mistakes")
+                        .font(.headline)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 6)
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(Theme.miss)
+                .disabled(mistakePool.count < LessonBuilder.pairsPerExercise)
+
+                Button("Clear") { isConfirmingClear = true }
+                    .font(.subheadline)
+                    .tint(.secondary)
+            }
+        }
+        .padding(.vertical, 6)
+    }
+
+    private var mistakesSubtitle: String {
+        let count = mistakeWords.count
+        let noun = count == 1 ? "word" : "words"
+        if count < LessonBuilder.pairsPerExercise {
+            // Too few to fill a board on their own, so the rest is made up from
+            // the library and the mistakes are mixed through it.
+            return "\(count) \(noun) to earn back, padded out with other words to fill each round."
+        }
+        return "\(count) \(noun) to earn back. Get one right in a lesson and it comes off the list."
+    }
+
+    /// The mistakes, topped up from the library when there are not enough of
+    /// them to fill a board.
+    private var mistakePool: [WordPair] {
+        var pool = mistakeWords
+        if pool.count < LessonBuilder.pairsPerExercise {
+            let chosen = Set(pool.map(\.uuid))
+            let filler = usableWords.filter { !chosen.contains($0.uuid) }.shuffled()
+            pool += filler.prefix(LessonBuilder.pairsPerExercise - pool.count)
+        }
+        return pool.pairs
     }
 
     private func deckRow(_ deck: Deck) -> some View {
