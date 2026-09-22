@@ -17,6 +17,18 @@ struct LessonRequest: Identifiable, Hashable {
     var canStart: Bool { pool.count >= LessonBuilder.pairsPerExercise }
 }
 
+/// Which exercise a lesson opens into.
+enum LessonRoute: Identifiable, Hashable {
+    case matching(LessonRequest)
+    case speaking(LessonRequest)
+
+    var id: UUID {
+        switch self {
+        case .matching(let request), .speaking(let request): return request.id
+        }
+    }
+}
+
 struct LessonView: View {
     let request: LessonRequest
     let onClose: () -> Void
@@ -37,7 +49,7 @@ struct LessonView: View {
 
                 if session.isFinished {
                     LessonCompleteView(
-                        session: session,
+                        results: results(for: session),
                         onPractiseAgain: startLesson,
                         onDone: { close() }
                     )
@@ -187,6 +199,19 @@ struct LessonView: View {
     private func close() {
         recordResults()
         onClose()
+    }
+
+    private func results(for session: LessonSession) -> LessonCompleteView.Results {
+        let missed = Set(session.missedPairs.map(\.pair.id))
+        return LessonCompleteView.Results(
+            total: session.plan.exercises.reduce(0) { $0 + $1.count },
+            totalLabel: "matches",
+            missCount: session.missCount,
+            missedPairs: session.missedPairs,
+            cleanPairs: session.plan.distinctPairs
+                .filter { !missed.contains($0.id) }
+                .sorted { $0.english < $1.english }
+        )
     }
 
     /// Idempotent: the finish handler and the close button both call it.

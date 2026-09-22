@@ -1,18 +1,29 @@
 import SwiftUI
 
+/// Shared review screen. Takes plain values rather than a session, so the matching
+/// lesson and the speech drill both end on the same screen.
 struct LessonCompleteView: View {
-    let session: LessonSession
+    struct Results {
+        /// How many questions the lesson asked: matches for the board, cards for a drill.
+        let total: Int
+        let totalLabel: String
+        /// Failed attempts, not failed words.
+        let missCount: Int
+        let missedPairs: [(pair: WordPair, misses: Int)]
+        let cleanPairs: [WordPair]
+    }
+
+    let results: Results
     let onPractiseAgain: () -> Void
     let onDone: () -> Void
 
-    private var totalMatches: Int {
-        session.plan.exercises.reduce(0) { $0 + $1.count }
-    }
+    private var missedPairs: [(pair: WordPair, misses: Int)] { results.missedPairs }
+    private var cleanPairs: [WordPair] { results.cleanPairs }
 
     private var accuracy: Int {
-        let attempts = totalMatches + session.missCount
+        let attempts = results.total + results.missCount
         guard attempts > 0 else { return 100 }
-        return Int((Double(totalMatches) / Double(attempts) * 100).rounded())
+        return Int((Double(results.total) / Double(attempts) * 100).rounded())
     }
 
     var body: some View {
@@ -27,8 +38,8 @@ struct LessonCompleteView: View {
             .padding(.top, 8)
 
             HStack(spacing: 12) {
-                stat(value: "\(totalMatches)", label: "matches")
-                stat(value: "\(session.missCount)", label: session.missCount == 1 ? "miss" : "misses")
+                stat(value: "\(results.total)", label: results.totalLabel)
+                stat(value: "\(results.missCount)", label: results.missCount == 1 ? "miss" : "misses")
                 stat(value: "\(accuracy)%", label: "accuracy")
             }
 
@@ -69,16 +80,6 @@ struct LessonCompleteView: View {
             }
             .padding(.bottom, 8)
         }
-    }
-
-    private var missedPairs: [(pair: WordPair, misses: Int)] { session.missedPairs }
-
-    /// Everything the lesson covered that never went wrong.
-    private var cleanPairs: [WordPair] {
-        let missed = Set(missedPairs.map(\.pair.id))
-        return session.plan.distinctPairs
-            .filter { !missed.contains($0.id) }
-            .sorted { $0.english < $1.english }
     }
 
     private func section(title: String, tint: Color?, rows: [(WordPair, Int)]) -> some View {

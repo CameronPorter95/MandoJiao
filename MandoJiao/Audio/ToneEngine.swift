@@ -1,14 +1,6 @@
 import AVFoundation
 import Foundation
 
-@MainActor
-protocol MatchSoundPlaying {
-    /// `step` is 0-based; the last step of a board gets the top note.
-    func playMatch(step: Int, of total: Int)
-    func playMiss()
-    func playLessonComplete()
-}
-
 /// Synthesised tones, so the pitch can climb with each match instead of playing
 /// one canned sound file.
 ///
@@ -25,6 +17,7 @@ final class ToneEngine: MatchSoundPlaying {
     private var nextPlayer = 0
     private var didStart = false
     private var buffers: [String: AVAudioPCMBuffer] = [:]
+    private var isRecordingMode = false
 
     /// C5, then a major-ish scale climbing to the octave.
     private static let baseFrequency = 523.25
@@ -61,6 +54,53 @@ final class ToneEngine: MatchSoundPlaying {
         }
     }
 
+    // MARK: - Sharing the session with the microphone
+
+    /// Switches the audio session over so a recogniser can record.
+    ///
+    /// `.defaultToSpeaker` is not optional here: under `.playAndRecord` the output
+    /// otherwise goes to the earpiece, which makes the feedback tones nearly inaudible
+    /// while a card is listening.
+    func enterRecordingMode() {
+        guard !isRecordingMode else { return }
+        isRecordingMode = true
+        configureSession()
+        restart()
+    }
+
+    func exitRecordingMode() {
+        guard isRecordingMode else { return }
+        isRecordingMode = false
+        configureSession()
+        restart()
+    }
+
+    private func configureSession() {
+        let session = AVAudioSession.sharedInstance()
+        if isRecordingMode {
+            try? session.setCategory(
+                .playAndRecord,
+                mode: .measurement,
+                options: [.defaultToSpeaker, .allowBluetooth]
+            )
+        } else {
+            // Ambient so practising never interrupts whatever is already playing,
+            // and stays quiet when the ringer switch is off.
+            try? session.setCategory(.ambient, mode: .default, options: [.mixWithOthers])
+        }
+        try? session.setActive(true)
+    }
+
+    /// A category change tears the engine's graph down, so the node pool is rebuilt.
+    private func restart() {
+        guard didStart else { return }
+        engine.stop()
+        players.forEach { engine.detach($0) }
+        players = []
+        didStart = false
+        start()
+    }
+
     // MARK: - Engine
 
     private func play(semitones: Int, duration: Double, gain: Double) {
@@ -80,11 +120,7 @@ final class ToneEngine: MatchSoundPlaying {
     private func start() {
         guard !didStart else { return }
 
-        // Ambient so practising never interrupts whatever is already playing,
-        // and stays quiet when the ringer switch is off.
-        let session = AVAudioSession.sharedInstance()
-        try? session.setCategory(.ambient, mode: .default, options: [.mixWithOthers])
-        try? session.setActive(true)
+        configureSession()
 
         for _ in 0..<Self.playerCount {
             let player = AVAudioPlayerNode()
@@ -140,12 +176,4 @@ final class ToneEngine: MatchSoundPlaying {
         buffers[key] = buffer
         return buffer
     }
-}
-
-/// Used by previews and by anything that should stay silent.
-@MainActor
-struct SilentSounds: MatchSoundPlaying {
-    func playMatch(step: Int, of total: Int) {}
-    func playMiss() {}
-    func playLessonComplete() {}
 }

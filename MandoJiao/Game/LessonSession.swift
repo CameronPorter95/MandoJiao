@@ -35,7 +35,7 @@ final class LessonSession {
     /// caller's context.
     init(plan: LessonPlan, sounds: MatchSoundPlaying? = nil) {
         self.plan = plan
-        self.sounds = sounds ?? ToneEngine.shared
+        self.sounds = sounds ?? MatchSounds.shared
         self.board = MatchBoard(pairs: plan.exercises.first ?? [])
     }
 

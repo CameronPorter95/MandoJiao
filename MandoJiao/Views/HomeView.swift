@@ -6,7 +6,7 @@ struct HomeView: View {
     @Query(sort: \VocabWord.createdAt) private var words: [VocabWord]
     @Query(sort: \Deck.createdAt) private var decks: [Deck]
 
-    @State private var activeRequest: LessonRequest?
+    @State private var activeRoute: LessonRoute?
     @State private var newDeckName = ""
     @State private var isNamingDeck = false
     @State private var isConfirmingClear = false
@@ -71,7 +71,7 @@ struct HomeView: View {
         .navigationTitle("MandoJiao")
         .navigationDestination(for: Deck.self) { deck in
             DeckDetailView(deck: deck) { request in
-                activeRequest = request
+                activeRoute = .matching(request)
             }
         }
         .toolbar {
@@ -109,8 +109,13 @@ struct HomeView: View {
         } message: {
             Text("\(mistakeWords.count) words will be marked as learned.")
         }
-        .fullScreenCover(item: $activeRequest) { request in
-            LessonView(request: request) { activeRequest = nil }
+        .fullScreenCover(item: $activeRoute) { route in
+            switch route {
+            case .matching(let request):
+                LessonView(request: request) { activeRoute = nil }
+            case .speaking(let request):
+                SpeakLessonView(request: request) { activeRoute = nil }
+            }
         }
     }
 
@@ -159,16 +164,19 @@ struct HomeView: View {
 
             HStack(spacing: 12) {
                 Button {
-                    start(title: "Mistakes", pool: mistakePool)
+                    // A drill is one card per word, so any number of mistakes works.
+                    // No five-word floor, and nothing is padded in to fill a round.
+                    activeRoute = .speaking(
+                        LessonRequest(title: "Mistakes", pool: mistakeWords.pairs)
+                    )
                 } label: {
-                    Text("Practise mistakes")
+                    Label("Practise mistakes", systemImage: "mic.fill")
                         .font(.headline)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 6)
                 }
                 .buttonStyle(.borderedProminent)
                 .tint(Theme.miss)
-                .disabled(mistakePool.count < LessonBuilder.pairsPerExercise)
 
                 Button("Clear") { isConfirmingClear = true }
                     .font(.subheadline)
@@ -181,24 +189,7 @@ struct HomeView: View {
     private var mistakesSubtitle: String {
         let count = mistakeWords.count
         let noun = count == 1 ? "word" : "words"
-        if count < LessonBuilder.pairsPerExercise {
-            // Too few to fill a board on their own, so the rest is made up from
-            // the library and the mistakes are mixed through it.
-            return "\(count) \(noun) to earn back, padded out with other words to fill each round."
-        }
-        return "\(count) \(noun) to earn back. Get one right in a lesson and it comes off the list."
-    }
-
-    /// The mistakes, topped up from the library when there are not enough of
-    /// them to fill a board.
-    private var mistakePool: [WordPair] {
-        var pool = mistakeWords
-        if pool.count < LessonBuilder.pairsPerExercise {
-            let chosen = Set(pool.map(\.uuid))
-            let filler = usableWords.filter { !chosen.contains($0.uuid) }.shuffled()
-            pool += filler.prefix(LessonBuilder.pairsPerExercise - pool.count)
-        }
-        return pool.pairs
+        return "\(count) \(noun) to earn back. Say each one out loud, one at a time."
     }
 
     private func deckRow(_ deck: Deck) -> some View {
@@ -223,7 +214,7 @@ struct HomeView: View {
 
     private func start(title: String, pool: [WordPair]) {
         guard pool.count >= LessonBuilder.pairsPerExercise else { return }
-        activeRequest = LessonRequest(title: title, pool: pool)
+        activeRoute = .matching(LessonRequest(title: title, pool: pool))
     }
 
     private func createDeck() {
