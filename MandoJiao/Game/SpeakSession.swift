@@ -42,6 +42,7 @@ final class SpeakSession {
 
     private let sounds: MatchSoundPlaying
     private var isAdvancing = false
+    private var advanceTask: Task<Void, Never>?
     private let advanceDelay: Duration = .milliseconds(850)
 
     init(plan: SpeakPlan, sounds: MatchSoundPlaying? = nil) {
@@ -109,6 +110,9 @@ final class SpeakSession {
     /// Used by the "continue" button after a card runs out of attempts. A correct card
     /// advances itself.
     func advance() {
+        // Cancels any pending auto-advance, so advancing by hand cannot land twice.
+        advanceTask?.cancel()
+        advanceTask = nil
         isAdvancing = false
         attemptsUsed = 0
         phase = .idle
@@ -124,8 +128,9 @@ final class SpeakSession {
 
     private func scheduleAdvance() {
         isAdvancing = true
-        Task { [advanceDelay] in
+        advanceTask = Task { [advanceDelay] in
             try? await Task.sleep(for: advanceDelay)
+            guard !Task.isCancelled else { return }
             self.advance()
         }
     }

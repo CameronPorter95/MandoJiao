@@ -29,13 +29,32 @@ final class ToneEngine: MatchSoundPlaying {
     // MARK: - Sounds
 
     func playMatch(step: Int, of total: Int) {
-        let semitones: Int
-        if total > 1 && step >= total - 1 {
-            semitones = 12
-        } else {
-            semitones = Self.scale[min(max(step, 0), Self.scale.count - 1)]
+        play(semitones: Self.semitones(forStep: step, of: total), duration: 0.16, gain: 0.34)
+    }
+
+    /// The note a step lands on: up the scale, with the last one topping out on the
+    /// octave so finishing is audible.
+    ///
+    /// Split out from `playMatch` so the climb can be asserted without audio hardware.
+    ///
+    /// A board is five matches and fits the scale directly. A speech drill runs to
+    /// twenty cards, and indexing the scale by step would sit on the octave from the
+    /// eighth card onward, which stops the pitch telling you anything, so a long lesson
+    /// spreads the scale across its whole length instead. With more cards than notes the
+    /// climb repeats a note here and there; it never descends.
+    nonisolated static func semitones(forStep step: Int, of total: Int) -> Int {
+        guard total > 1 else { return scale[0] }
+
+        let clamped = min(max(step, 0), total - 1)
+        if clamped == total - 1 { return 12 }
+
+        if total <= scale.count {
+            return scale[clamped]
         }
-        play(semitones: semitones, duration: 0.16, gain: 0.34)
+
+        let position = Double(clamped) / Double(total - 1)
+        let index = Int(position * Double(scale.count - 1))
+        return scale[min(index, scale.count - 2)]
     }
 
     func playMiss() {
