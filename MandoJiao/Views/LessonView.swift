@@ -63,7 +63,12 @@ struct LessonView: View {
         }
         .padding(.horizontal, 20)
         .frame(maxHeight: .infinity, alignment: .top)
-        .onAppear { if session == nil { startLesson() } }
+        .onAppear {
+            if session == nil { startLesson() }
+            // Activating the audio session is asynchronous, so it starts now rather than
+            // on the first match.
+            ToneEngine.shared.prepare()
+        }
         .sensoryFeedback(trigger: session?.feedbackToken ?? 0) { _, _ in
             feedback(for: session?.lastResult)
         }

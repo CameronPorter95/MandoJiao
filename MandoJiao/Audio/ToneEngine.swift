@@ -15,14 +15,20 @@ final class ToneEngine: MatchSoundPlaying {
     private let format = AVAudioFormat(standardFormatWithSampleRate: 44_100, channels: 1)!
     private var players: [AVAudioPlayerNode] = []
     private var nextPlayer = 0
-    private var didStart = false
+    private var isEngineRunning = false
+    private var isConfiguring = false
     private var buffers: [String: AVAudioPCMBuffer] = [:]
     private var isRecordingMode = false
+    /// A sound asked for before the engine was ready, played once it is.
+    private var pendingTone: (semitones: Int, duration: Double, gain: Double)?
 
     /// C5, then a major-ish scale climbing to the octave.
-    private static let baseFrequency = 523.25
-    private static let scale = [0, 2, 4, 5, 7, 9, 11, 12]
-    private static let playerCount = 6
+    ///
+    /// Nonisolated because `semitones(forStep:of:)` is pure and callable from anywhere,
+    /// including the tests.
+    private nonisolated static let baseFrequency = 523.25
+    private nonisolated static let scale = [0, 2, 4, 5, 7, 9, 11, 12]
+    private nonisolated static let playerCount = 6
 
     private init() {}
 
@@ -83,49 +89,78 @@ final class ToneEngine: MatchSoundPlaying {
     func enterRecordingMode() {
         guard !isRecordingMode else { return }
         isRecordingMode = true
-        configureSession()
-        restart()
+        reconfigure()
     }
 
     func exitRecordingMode() {
         guard isRecordingMode else { return }
         isRecordingMode = false
-        configureSession()
-        restart()
+        reconfigure()
     }
 
-    private func configureSession() {
-        let session = AVAudioSession.sharedInstance()
-        if isRecordingMode {
-            try? session.setCategory(
-                .playAndRecord,
-                mode: .measurement,
-                options: [.defaultToSpeaker, .allowBluetooth]
-            )
-        } else {
-            // Ambient so practising never interrupts whatever is already playing,
-            // and stays quiet when the ringer switch is off.
-            try? session.setCategory(.ambient, mode: .default, options: [.mixWithOthers])
+    /// Gets the session and engine ready ahead of the first sound.
+    ///
+    /// Worth calling when a lesson opens: activation is not instant, and priming it
+    /// early means the first match does not have to wait for it.
+    func prepare() {
+        guard !isEngineRunning, !isConfiguring else { return }
+        reconfigure()
+    }
+
+    private func reconfigure() {
+        isConfiguring = true
+        let recording = isRecordingMode
+
+        Task {
+            await Self.applySessionConfiguration(recording: recording)
+            isConfiguring = false
+            // A category change tears the engine's graph down, so the node pool is
+            // rebuilt rather than reused.
+            rebuildEngine()
+            flushPendingTone()
         }
-        try? session.setActive(true)
     }
 
-    /// A category change tears the engine's graph down, so the node pool is rebuilt.
-    private func restart() {
-        guard didStart else { return }
-        engine.stop()
-        players.forEach { engine.detach($0) }
-        players = []
-        didStart = false
-        start()
+    /// Deliberately off the main actor.
+    ///
+    /// `setActive` can block long enough to stall the UI, and AVAudioSession logs a
+    /// runtime warning when it is called on the main thread. The async
+    /// `activate(options:completionHandler:)` that the warning suggests is iOS 27, above
+    /// this app's deployment target, so the work is moved off the main thread directly.
+    private nonisolated static func applySessionConfiguration(recording: Bool) async {
+        await Task.detached(priority: .userInitiated) {
+            let session = AVAudioSession.sharedInstance()
+            if recording {
+                try? session.setCategory(
+                    .playAndRecord,
+                    mode: .measurement,
+                    options: [.defaultToSpeaker, .allowBluetoothHFP]
+                )
+            } else {
+                // Ambient so practising never interrupts whatever is already playing,
+                // and stays quiet when the ringer switch is off.
+                try? session.setCategory(.ambient, mode: .default, options: [.mixWithOthers])
+            }
+            try? session.setActive(true)
+        }.value
     }
 
     // MARK: - Engine
 
     private func play(semitones: Int, duration: Double, gain: Double) {
-        start()
-        guard didStart, !players.isEmpty else { return }
+        guard isEngineRunning, !players.isEmpty else {
+            // Setting the session up is asynchronous now, so a sound asked for before it
+            // is ready is held rather than dropped. Only the latest is kept: a backlog of
+            // stale tones firing at once would be worse than silence.
+            pendingTone = (semitones, duration, gain)
+            prepare()
+            return
+        }
 
+        emit(semitones: semitones, duration: duration, gain: gain)
+    }
+
+    private func emit(semitones: Int, duration: Double, gain: Double) {
         let frequency = Self.baseFrequency * pow(2, Double(semitones) / 12)
         guard let buffer = buffer(frequency: frequency, duration: duration, gain: gain) else {
             return
@@ -136,10 +171,19 @@ final class ToneEngine: MatchSoundPlaying {
         player.scheduleBuffer(buffer, at: nil, options: .interrupts)
     }
 
-    private func start() {
-        guard !didStart else { return }
+    private func flushPendingTone() {
+        guard let tone = pendingTone, isEngineRunning, !players.isEmpty else { return }
+        pendingTone = nil
+        emit(semitones: tone.semitones, duration: tone.duration, gain: tone.gain)
+    }
 
-        configureSession()
+    private func rebuildEngine() {
+        if isEngineRunning {
+            engine.stop()
+            players.forEach { engine.detach($0) }
+            players = []
+            isEngineRunning = false
+        }
 
         for _ in 0..<Self.playerCount {
             let player = AVAudioPlayerNode()
@@ -151,11 +195,11 @@ final class ToneEngine: MatchSoundPlaying {
         do {
             try engine.start()
             players.forEach { $0.play() }
-            didStart = true
+            isEngineRunning = true
         } catch {
             players.forEach { engine.detach($0) }
             players = []
-            didStart = false
+            isEngineRunning = false
         }
     }
 
