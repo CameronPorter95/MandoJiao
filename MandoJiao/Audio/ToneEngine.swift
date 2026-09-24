@@ -30,30 +30,12 @@ final class ToneEngine: MatchSoundPlaying {
     private nonisolated static let scale = [0, 2, 4, 5, 7, 9, 11, 12]
     private nonisolated static let playerCount = 6
 
-    /// Makes up for the drop in output level while the microphone session is in force.
-    ///
-    /// A speech drill runs the session as `.playAndRecord` in `.measurement` mode, which
-    /// turns off the system's output processing, so the same buffer plays back markedly
-    /// quieter than it does under `.ambient` in a matching lesson. The mode is worth
-    /// keeping, since it is what leaves the recogniser's input unprocessed, so the tones
-    /// are raised to meet it instead.
-    nonisolated static let recordingBoost = 2.0
-
     private init() {}
 
     // MARK: - Sounds
 
     func playMatch(step: Int, of total: Int) {
         play(semitones: Self.semitones(forStep: step, of: total), duration: 0.16, gain: 0.34)
-    }
-
-    /// The level a tone is actually rendered at, given whether the microphone session is
-    /// in force.
-    ///
-    /// Clamped, because the waveform peaks at roughly the gain it is given and anything
-    /// above 1 would clip into a buzz rather than getting louder.
-    nonisolated static func outputGain(_ base: Double, recording: Bool) -> Double {
-        min(1, base * (recording ? recordingBoost : 1))
     }
 
     /// The note a step lands on: up the scale, with the last one topping out on the
@@ -110,10 +92,16 @@ final class ToneEngine: MatchSoundPlaying {
         reconfigure()
     }
 
-    func exitRecordingMode() {
+    /// Awaitable, so a caller can be sure the session is back to normal before playing
+    /// something that needs to be heard at the usual level.
+    func exitRecordingMode() async {
         guard isRecordingMode else { return }
         isRecordingMode = false
-        reconfigure()
+        isConfiguring = true
+        await Self.applySessionConfiguration(recording: false)
+        isConfiguring = false
+        rebuildEngine()
+        flushPendingTone()
     }
 
     /// Gets the session and engine ready ahead of the first sound.
@@ -149,6 +137,10 @@ final class ToneEngine: MatchSoundPlaying {
         await Task.detached(priority: .userInitiated) {
             let session = AVAudioSession.sharedInstance()
             if recording {
+                // Measurement mode stays. It is what leaves the recogniser's input
+                // unprocessed, and recognition accuracy is worth more than the volume of
+                // a feedback tone. Its cost to output level is handled by shifting the
+                // tones up rather than by weakening the input.
                 try? session.setCategory(
                     .playAndRecord,
                     mode: .measurement,
@@ -180,8 +172,7 @@ final class ToneEngine: MatchSoundPlaying {
 
     private func emit(semitones: Int, duration: Double, gain: Double) {
         let frequency = Self.baseFrequency * pow(2, Double(semitones) / 12)
-        let level = Self.outputGain(gain, recording: isRecordingMode)
-        guard let buffer = buffer(frequency: frequency, duration: duration, gain: level) else {
+        guard let buffer = buffer(frequency: frequency, duration: duration, gain: gain) else {
             return
         }
 

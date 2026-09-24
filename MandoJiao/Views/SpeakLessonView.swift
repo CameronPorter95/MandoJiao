@@ -60,7 +60,7 @@ struct SpeakLessonView: View {
         .onDisappear {
             listeningTask?.cancel()
             recogniser.cancel()
-            ToneEngine.shared.exitRecordingMode()
+            Task { await ToneEngine.shared.exitRecordingMode() }
         }
         // Losing the foreground mid-answer would otherwise leave the tap installed.
         .onChange(of: scenePhase) { _, phase in
@@ -74,7 +74,16 @@ struct SpeakLessonView: View {
             }
         }
         .onChange(of: session?.isFinished ?? false) { _, finished in
-            if finished { recordResults() }
+            guard finished else { return }
+            recordResults()
+
+            // The drill is over, so nothing else needs the microphone. Handing the
+            // session back before the fanfare is what lets it be heard at the same level
+            // as everywhere else, which the per-card tones could not be.
+            Task {
+                await ToneEngine.shared.exitRecordingMode()
+                ToneEngine.shared.playLessonComplete()
+            }
         }
         // Carries straight on to the next word after a correct answer, so a run of them
         // needs one tap rather than one per card. Deliberately triggered on the card
@@ -194,10 +203,13 @@ struct SpeakLessonView: View {
 
     private func prepare() async {
         if session == nil { startLesson() }
-        ToneEngine.shared.enterRecordingMode()
         let availability = await recogniser.prepare()
-        // Fall straight into typing rather than showing a mic that cannot work.
-        if !availability.canListen { isTyping = true }
+        if availability.canListen {
+            ToneEngine.shared.enterRecordingMode()
+        } else {
+            // Fall straight into typing rather than showing a mic that cannot work.
+            isTyping = true
+        }
     }
 
     /// `automatic` marks a listen the drill started itself, carrying on from a correct
@@ -283,9 +295,22 @@ struct SpeakLessonView: View {
             session = nil
             return
         }
+        // Practising again after finishing needs the microphone session back, since
+        // finishing handed it over so the fanfare could be heard properly.
+        if recogniser.availability.canListen {
+            ToneEngine.shared.enterRecordingMode()
+        }
+
         session = SpeakSession(
             plan: plan,
-            strictness: MatchStrictness(rawValue: strictnessRaw) ?? .default
+            strictness: MatchStrictness(rawValue: strictnessRaw) ?? .default,
+            // The per-card tones are silenced. They would play through the microphone's
+            // audio session, where measurement mode leaves them markedly quieter than a
+            // matching lesson's, and the level cannot be recovered without handing the
+            // recogniser processed input. Haptics still mark every right and wrong
+            // answer, and the completion fanfare is played by this view once the session
+            // has been handed back.
+            sounds: SilentSounds()
         )
     }
 
