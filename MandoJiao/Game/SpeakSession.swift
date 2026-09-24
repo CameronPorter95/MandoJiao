@@ -127,6 +127,19 @@ final class SpeakSession {
         feedbackToken += 1
     }
 
+    /// Clears a failed verdict so a fresh attempt can show its own.
+    ///
+    /// Without this the previous failure stays on screen through the next attempt,
+    /// sitting where the live transcript would be, so there is no way to see what the
+    /// recogniser is making of the second or third try.
+    ///
+    /// A settled card is left alone: once a card is right or out of attempts, that
+    /// verdict is the final word on it.
+    func beginAttempt() {
+        guard case .wrong = phase else { return }
+        phase = .idle
+    }
+
     /// Used by the "continue" button after a card runs out of attempts. A correct card
     /// advances itself.
     func advance() {

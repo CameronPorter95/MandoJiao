@@ -81,6 +81,49 @@ struct SpeakSessionTests {
         #expect(session.cleanSolvesByPairID.isEmpty)
     }
 
+    @Test("starting another attempt clears the last failure without spending a try")
+    func beginAttemptClearsAFailure() {
+        let session = makeSession()
+        session.submit("cha")
+        #expect(session.phase == .wrong(heard: "cha", attemptsLeft: 2))
+
+        session.beginAttempt()
+
+        // Back to a blank card, so the next attempt's transcript has somewhere to show.
+        #expect(session.phase == .idle)
+        // Clearing the display is not a free go.
+        #expect(session.attemptsLeft == 2)
+        #expect(session.failedAttempts == 1)
+    }
+
+    @Test("a settled card keeps its verdict when another attempt is started")
+    func beginAttemptLeavesSettledCardsAlone() {
+        let correct = makeSession()
+        correct.submit("shui")
+        correct.beginAttempt()
+        #expect(correct.phase == .correct(heard: "shui"))
+
+        let exhausted = makeSession()
+        exhausted.submit("x")
+        exhausted.submit("x")
+        exhausted.submit("x")
+        exhausted.beginAttempt()
+        #expect(exhausted.phase == .exhausted(heard: "x"))
+    }
+
+    @Test("clearing a failure does not lose the recorded mistake")
+    func beginAttemptKeepsTheTally() {
+        let session = makeSession()
+        session.submit("x")
+        session.submit("x")
+        session.beginAttempt()
+        session.submit("x")
+
+        #expect(session.phase == .exhausted(heard: "x"))
+        #expect(session.missesByPairID[water.id] == 1)
+        #expect(session.failedAttempts == 3)
+    }
+
     @Test("advancing resets the card state")
     func advancing() {
         let session = makeSession()

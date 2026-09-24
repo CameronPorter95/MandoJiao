@@ -189,6 +189,9 @@ struct SpeakLessonView: View {
 
     private func startListening() {
         guard !isListening, recogniser.availability.canListen else { return }
+        // Drop the previous failure before listening, or it stays on screen instead of
+        // this attempt's transcript.
+        session?.beginAttempt()
         isListening = true
 
         listeningTask = Task {
