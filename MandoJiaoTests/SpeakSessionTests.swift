@@ -138,6 +138,43 @@ struct SpeakSessionTests {
         #expect(!session.isFinished)
     }
 
+    @Test("a solved card is flagged so the drill can keep listening into the next one")
+    func advancingAfterCorrect() {
+        let session = makeSession()
+        #expect(!session.advancedAfterCorrect, "nothing has been answered yet")
+
+        session.submit("shui")
+        session.advance()
+        #expect(session.advancedAfterCorrect)
+    }
+
+    @Test("a card that ran out of attempts is not flagged, so the microphone stops")
+    func advancingAfterExhaustion() {
+        // Getting it wrong should leave the answer on screen to be read, not carry
+        // straight on into the next word.
+        let session = makeSession()
+        session.submit("x")
+        session.submit("x")
+        session.submit("x")
+        session.advance()
+
+        #expect(!session.advancedAfterCorrect)
+    }
+
+    @Test("the flag tracks the most recent card, not any earlier one")
+    func flagIsNotSticky() {
+        let session = makeSession()
+        session.submit("shui")
+        session.advance()
+        #expect(session.advancedAfterCorrect)
+
+        session.submit("x")
+        session.submit("x")
+        session.submit("x")
+        session.advance()
+        #expect(!session.advancedAfterCorrect)
+    }
+
     @Test("a drill finishes after its last card")
     func finishing() {
         let session = makeSession()

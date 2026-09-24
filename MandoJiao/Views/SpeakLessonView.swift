@@ -19,6 +19,7 @@ struct SpeakLessonView: View {
     @State private var micState: MicState = .idle
     @State private var isTyping = false
     @State private var listeningTask: Task<Void, Never>?
+    @State private var stopTask: Task<Void, Never>?
 
     @AppStorage(Preferences.Key.speechStrictness) private var strictnessRaw = MatchStrictness.default.rawValue
     @AppStorage(Preferences.Key.drillCardLimit) private var cardLimit = 20
@@ -74,6 +75,18 @@ struct SpeakLessonView: View {
         }
         .onChange(of: session?.isFinished ?? false) { _, finished in
             if finished { recordResults() }
+        }
+        // Carries straight on to the next word after a correct answer, so a run of them
+        // needs one tap rather than one per card. Deliberately triggered on the card
+        // changing rather than on the answer landing: the success tone plays during the
+        // pause between the two, and an open microphone would record it.
+        .onChange(of: session?.cardIndex ?? -1) { _, _ in
+            guard let session,
+                  !session.isFinished,
+                  session.advancedAfterCorrect,
+                  !isTypingMode
+            else { return }
+            startListening(automatic: true)
         }
         .confirmationDialog(
             "Quit this drill?",
@@ -131,9 +144,9 @@ struct SpeakLessonView: View {
             attemptsLeft: session.attemptsLeft,
             micState: micState,
             partialText: recogniser.partialText,
-            isTyping: isTyping || !recogniser.availability.canListen,
+            isTyping: isTypingMode,
             canListen: recogniser.availability.canListen,
-            onStartListening: startListening,
+            onStartListening: { startListening() },
             onStopListening: { stopListening(submitting: true) },
             onSubmitTyped: { session.submit($0) },
             onToggleTyping: { isTyping.toggle() },
@@ -187,7 +200,9 @@ struct SpeakLessonView: View {
         if !availability.canListen { isTyping = true }
     }
 
-    private func startListening() {
+    /// `automatic` marks a listen the drill started itself, carrying on from a correct
+    /// answer rather than following a tap.
+    private func startListening(automatic: Bool = false) {
         guard micState == .idle, recogniser.availability.canListen else { return }
         // Drop the previous failure before listening, or it stays on screen instead of
         // this attempt's transcript.
@@ -199,6 +214,15 @@ struct SpeakLessonView: View {
         micState = .arming
 
         listeningTask = Task {
+            // The previous teardown nils the analyser once it has finished finalising,
+            // so starting on top of it would leave the new session with its state pulled
+            // out from under it.
+            await stopTask?.value
+            guard !Task.isCancelled else {
+                micState = .idle
+                return
+            }
+
             do {
                 try await recogniser.start(hints: hints)
             } catch {
@@ -207,11 +231,17 @@ struct SpeakLessonView: View {
             }
             guard !Task.isCancelled else { return }
             micState = .listening
+
             // Stops as soon as the transcript stops moving, rather than waiting out the
             // limit on every card.
-            _ = await Endpointing.waitForEnd { recogniser.partialText }
+            let ending = await Endpointing.waitForEnd { recogniser.partialText }
             guard !Task.isCancelled else { return }
-            stopListening(submitting: true)
+
+            // A listen the drill started can open before the word has even been read, so
+            // hearing nothing means "not ready yet" rather than a failed attempt. A tap
+            // is a deliberate go, and silence after one still counts.
+            let heardNothing = ending == .reachedLimit && recogniser.partialText.isEmpty
+            stopListening(submitting: !(automatic && heardNothing))
         }
     }
 
@@ -221,10 +251,15 @@ struct SpeakLessonView: View {
         listeningTask?.cancel()
         listeningTask = nil
 
-        Task {
+        stopTask = Task {
             let outcome = await recogniser.stop()
             if submitting { session?.submit(outcome) }
         }
+    }
+
+    /// Typing is either chosen or forced by the microphone being unavailable.
+    private var isTypingMode: Bool {
+        isTyping || !recogniser.availability.canListen
     }
 
     /// The expected answer, both ways round, biasing recognition toward this card.

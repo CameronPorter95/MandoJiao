@@ -40,6 +40,12 @@ final class SpeakSession {
 
     private(set) var feedbackToken = 0
 
+    /// Whether the card just left was solved.
+    ///
+    /// The drill keeps the microphone going into the next word after a correct answer,
+    /// and stops after a wrong one so the answer can be read.
+    private(set) var advancedAfterCorrect = false
+
     private let sounds: MatchSoundPlaying
     private let strictness: MatchStrictness
     private var isAdvancing = false
@@ -147,6 +153,12 @@ final class SpeakSession {
         advanceTask?.cancel()
         advanceTask = nil
         isAdvancing = false
+
+        if case .correct = phase {
+            advancedAfterCorrect = true
+        } else {
+            advancedAfterCorrect = false
+        }
         attemptsUsed = 0
         phase = .idle
 
