@@ -126,20 +126,31 @@ enum AnswerGrader {
         // while the same word typed in as "wancheng" arrives as one token.
         if candidates.contains(expectedJoined) { return true }
 
-        if strictness.allowsVowelConfusions {
-            let vowelKey = vowelFolded(expectedJoined)
-            if candidates.contains(where: { vowelFolded($0) == vowelKey }) { return true }
+        if strictness.allowsVowelConfusions || strictness.allowsNasalFinals {
+            let key = canonical(expectedJoined, for: strictness)
+            if candidates.contains(where: { canonical($0, for: strictness) == key }) {
+                return true
+            }
         }
 
-        // Nothing below here applies to any level but lenient.
+        // Nothing below here applies to any level but the loosest.
         guard strictness.allowsNearSpellings else { return false }
 
-        let expectedKey = folded(vowelFolded(expectedJoined))
+        let expectedKey = folded(canonical(expectedJoined, for: strictness))
         let allowance = allowance(for: expectedKey)
 
         return candidates.contains {
-            editDistance(folded(vowelFolded($0)), expectedKey) <= allowance
+            editDistance(folded(canonical($0, for: strictness)), expectedKey) <= allowance
         }
+    }
+
+    /// The spelling a level compares on, with whatever that level treats as the same
+    /// sound collapsed together.
+    private static func canonical(_ key: String, for strictness: MatchStrictness) -> String {
+        var result = key
+        if strictness.allowsVowelConfusions { result = vowelFolded(result) }
+        if strictness.allowsNasalFinals { result = nasalFolded(result) }
+        return result
     }
 
     /// Every contiguous run of syllables, joined.
@@ -176,6 +187,24 @@ enum AnswerGrader {
         var result = key
         for initial in ["zh", "ch", "sh", "r", "z", "c", "s"] {
             result = result.replacingOccurrences(of: "\(initial)i", with: "\(initial)e")
+        }
+        return result
+    }
+
+    /// Collapses the vowel in a syllable-final -ng, so -ang, -eng and -ong are one ending.
+    ///
+    /// This is the confusion behind 完成 coming back as 晚昌 or 晚冲: the initial is
+    /// right, the nasal is right, only the vowel in front of it differs.
+    ///
+    /// -ing is left alone, so 明 and 忙 stay apart. The compound finals keep their medial
+    /// and so stay distinct too: -uang does not become -ang, which is what keeps 晚窗
+    /// (chuang) from counting as 完成 (cheng).
+    ///
+    /// The cost is that 想 (xiǎng) and 兄 (xiōng) become indistinguishable.
+    private static func nasalFolded(_ key: String) -> String {
+        var result = key
+        for vowel in ["a", "e", "o"] {
+            result = result.replacingOccurrences(of: "\(vowel)ng", with: "Ang")
         }
         return result
     }

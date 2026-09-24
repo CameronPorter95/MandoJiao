@@ -164,6 +164,68 @@ struct StrictnessTests {
         #expect(!AnswerGrader.isCorrect("社", for: toBe, strictness: .strict))
     }
 
+    // MARK: - Nasal finals
+
+    @Test("the default level is Relaxed")
+    func defaultLevel() {
+        #expect(MatchStrictness.default == .relaxed)
+    }
+
+    @Test("levels are ordered tightest to loosest")
+    func ordering() {
+        #expect(MatchStrictness.allCases == [.strict, .balanced, .relaxed, .lenient])
+    }
+
+    @Test(
+        "one -ng ending is accepted for another from Relaxed up",
+        arguments: ["晚昌", "晚冲", "晚充"]
+    )
+    func nasalFinalsFold(answer: String) {
+        // Reported from a lesson: 完成 came back as 晚昌 and 晚冲 repeatedly. The initial
+        // and the nasal are right, only the vowel in front of the -ng differs.
+        #expect(!AnswerGrader.isCorrect(answer, for: complete, strictness: .balanced))
+        #expect(AnswerGrader.isCorrect(answer, for: complete, strictness: .relaxed))
+        #expect(AnswerGrader.isCorrect(answer, for: complete, strictness: .lenient))
+    }
+
+    @Test(
+        "Relaxed lets none of the neighbouring real words through",
+        arguments: ["晚餐", "晚春", "晚窗", "晚安", "完全", "晚上"]
+    )
+    func relaxedKeepsRealWordsApart(answer: String) {
+        // The point of a separate level rather than reaching for Generous: every one of
+        // these is a different word, and Generous takes most of them.
+        #expect(!AnswerGrader.isCorrect(answer, for: complete, strictness: .relaxed))
+    }
+
+    @Test("a first syllable that differs is not rescued by the nasal fold")
+    func nasalFoldOnlyForgivesTheVowel() {
+        // 往昌 is wang + chang. The fold makes chang and cheng one ending, but wang and
+        // wan are still different syllables, so the word as a whole does not match.
+        #expect(!AnswerGrader.isCorrect("往昌", for: complete, strictness: .relaxed))
+        #expect(AnswerGrader.isCorrect("往昌", for: complete, strictness: .lenient))
+    }
+
+    @Test("-ing is left out of the fold, so ming and mang stay apart")
+    func ingIsNotFolded() {
+        let tomorrow = WordPair(english: "tomorrow", hanzi: "明天", pinyin: "míngtiān")
+        #expect(!AnswerGrader.isCorrect("忙天", for: tomorrow, strictness: .relaxed))
+    }
+
+    @Test("a compound final keeps its medial, so chuang is not cheng")
+    func compoundFinalsStayDistinct() {
+        #expect(!AnswerGrader.isCorrect("晚窗", for: complete, strictness: .relaxed))
+    }
+
+    @Test("the cost of the nasal fold, recorded rather than discovered")
+    func nasalFoldCost() {
+        // 想 xiǎng and 兄 xiōng differ only in the vowel before the -ng, so this fold
+        // makes them identical. That is the price of accepting 晚昌 for 完成.
+        let want = WordPair(english: "to want", hanzi: "想", pinyin: "xiǎng")
+        #expect(AnswerGrader.isCorrect("兄", for: want, strictness: .relaxed))
+        #expect(!AnswerGrader.isCorrect("兄", for: want, strictness: .balanced))
+    }
+
     // MARK: - Alternatives
 
     @Test("a right answer sitting in the alternatives counts, except when strict")
