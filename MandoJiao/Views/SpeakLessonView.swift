@@ -23,9 +23,6 @@ struct SpeakLessonView: View {
     @AppStorage(Preferences.Key.speechStrictness) private var strictnessRaw = MatchStrictness.default.rawValue
     @AppStorage(Preferences.Key.drillCardLimit) private var cardLimit = 20
 
-    /// Long enough for a one-word answer, short enough that a silent card is not a wait.
-    private let listeningLimit: Duration = .seconds(5)
-
     /// `recogniser` is injectable so the drill can be driven without a microphone.
     init(
         request: LessonRequest,
@@ -201,7 +198,9 @@ struct SpeakLessonView: View {
                 isListening = false
                 return
             }
-            try? await Task.sleep(for: listeningLimit)
+            // Stops as soon as the transcript stops moving, rather than waiting out the
+            // limit on every card.
+            _ = await Endpointing.waitForEnd { recogniser.partialText }
             guard !Task.isCancelled else { return }
             stopListening(submitting: true)
         }
