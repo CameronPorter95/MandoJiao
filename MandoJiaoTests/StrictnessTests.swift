@@ -86,6 +86,58 @@ struct StrictnessTests {
         #expect(AnswerGrader.isCorrect("wo wanchang le", for: complete, strictness: .lenient))
     }
 
+    // MARK: - Empty-rime vowel confusions
+
+    private let know = WordPair(english: "to know", hanzi: "知道", pinyin: "zhīdào")
+    private let evening = WordPair(english: "evening", hanzi: "晚上", pinyin: "wǎnshang")
+
+    @Test("zhi heard as zhe is accepted from Balanced up")
+    func emptyRimeVowel() {
+        // Reported from a real lesson: 知道 came back as 这倒 three attempts running.
+        #expect(!AnswerGrader.isCorrect("这倒", for: know, strictness: .strict))
+        #expect(AnswerGrader.isCorrect("这倒", for: know, strictness: .balanced))
+        #expect(AnswerGrader.isCorrect("这倒", for: know, strictness: .lenient))
+    }
+
+    @Test(
+        "the fold covers the other empty-rime initials too",
+        arguments: [
+            ("shi", "she"), ("zhi", "zhe"), ("chi", "che"),
+            ("zi", "ze"), ("ci", "ce"), ("si", "se"), ("ri", "re")
+        ]
+    )
+    func emptyRimeInitials(written: String, heard: String) {
+        let word = WordPair(english: "x", hanzi: "", pinyin: written)
+        #expect(AnswerGrader.isCorrect(heard, for: word, strictness: .balanced))
+    }
+
+    @Test("folding the vowel does not loosen anything else at Balanced")
+    func balancedStaysTightElsewhere() {
+        // Both were alternatives on a real 晚上 card. Lenient takes them, Balanced must
+        // not: they differ in the final, which is not what this fold is about.
+        #expect(!AnswerGrader.isCorrect("王勺", for: evening, strictness: .balanced))
+        #expect(!AnswerGrader.isCorrect("皇上", for: evening, strictness: .balanced))
+        // 晚安, a real and different word.
+        #expect(!AnswerGrader.isCorrect("晚安", for: evening, strictness: .balanced))
+    }
+
+    @Test("a syllable containing ui is untouched by the i-to-e fold")
+    func shuiIsNotShi() {
+        // "shui" is s-h-u-i, so the fold has no "shi" to find. Worth pinning, since a
+        // careless replacement here would make 是 an answer for 水.
+        #expect(!AnswerGrader.isCorrect("是", for: water, strictness: .balanced))
+        #expect(!AnswerGrader.isCorrect("shi", for: water, strictness: .balanced))
+    }
+
+    @Test("the cost of the vowel fold, recorded rather than discovered")
+    func emptyRimeFoldCost() {
+        // 是 shì and 社 shè are different words that this fold makes identical. That is
+        // the price of accepting 这倒 for 知道, and it is deliberate.
+        let toBe = WordPair(english: "to be", hanzi: "是", pinyin: "shì")
+        #expect(AnswerGrader.isCorrect("社", for: toBe, strictness: .balanced))
+        #expect(!AnswerGrader.isCorrect("社", for: toBe, strictness: .strict))
+    }
+
     // MARK: - Alternatives
 
     @Test("a right answer sitting in the alternatives counts, except when strict")

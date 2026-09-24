@@ -29,7 +29,7 @@ enum MatchStrictness: String, CaseIterable, Identifiable, Sendable {
         case .strict:
             "Only the word itself, exactly as recognised."
         case .balanced:
-            "Also accepts the word inside a longer phrase, and the recogniser's second guesses."
+            "Also accepts the word inside a longer phrase, the recogniser's second guesses, and zhi for zhe, shi for she and the like."
         case .lenient:
             "Also accepts near spellings: zh and z, ch and c, sh and s, -ng and -n, and a syllable that is a letter or two out."
         }
@@ -45,6 +45,16 @@ enum MatchStrictness: String, CaseIterable, Identifiable, Sendable {
     /// guess. This is less a loosening than using information already on offer.
     var allowsAlternatives: Bool { self != .strict }
 
-    /// Whether spellings a step or two away from the answer count.
+    /// Whether the empty-rime vowel counts as interchangeable with -e: zhi against zhe,
+    /// shi against she, zi against ze, and so on.
+    ///
+    /// Narrow and specific. Recognisers confuse exactly these, because the vowel in zhi
+    /// and shi is not really an [i] at all, it is the consonant held on, and it sits
+    /// acoustically close to -e. Folding them is far more targeted than letting any
+    /// one-letter difference through.
+    var allowsVowelConfusions: Bool { self != .strict }
+
+    /// Whether spellings a step or two away from the answer count. Implies everything
+    /// above: there is no level that allows near spellings but not the rest.
     var allowsNearSpellings: Bool { self == .lenient }
 }

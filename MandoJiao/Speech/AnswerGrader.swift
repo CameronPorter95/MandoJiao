@@ -124,17 +124,28 @@ enum AnswerGrader {
             return true
         }
 
+        if strictness.allowsVowelConfusions {
+            let vowelKey = vowelFolded(expectedJoined)
+            if vowelFolded(heard.joined()) == vowelKey { return true }
+            if strictness.allowsSurroundingWords,
+               runs(of: heard).contains(where: { vowelFolded($0) == vowelKey }) {
+                return true
+            }
+        }
+
+        // Nothing below this point applies to any level but lenient, and lenient allows
+        // everything above, so there is no second check to make on the level here.
         guard strictness.allowsNearSpellings else { return false }
 
-        let expectedKey = folded(expectedJoined)
+        let expectedKey = folded(vowelFolded(expectedJoined))
         let allowance = allowance(for: expectedKey)
 
-        if editDistance(folded(heard.joined()), expectedKey) <= allowance { return true }
-
-        guard strictness.allowsSurroundingWords else { return false }
+        if editDistance(folded(vowelFolded(heard.joined())), expectedKey) <= allowance {
+            return true
+        }
 
         return runs(of: heard).contains {
-            editDistance(folded($0), expectedKey) <= allowance
+            editDistance(folded(vowelFolded($0)), expectedKey) <= allowance
         }
     }
 
@@ -151,6 +162,27 @@ enum AnswerGrader {
                 joined += syllables[end]
                 result.append(joined)
             }
+        }
+        return result
+    }
+
+    /// Collapses the empty-rime syllables onto their -e counterparts: zhi with zhe, shi
+    /// with she, zi with ze, and the rest.
+    ///
+    /// The vowel in zhi, chi, shi, ri, zi, ci and si is not an [i]. It is the initial
+    /// consonant held on, and it sits close enough to -e that recognisers swap them
+    /// constantly: 知道 comes back as 这倒 over and over.
+    ///
+    /// Safe to run on a joined string. Each of these initials only ever begins a
+    /// syllable, and none of them takes a further vowel after the i, so the sequence
+    /// "zhi" in run-together pinyin is always the syllable zhi and never a boundary
+    /// crossing. "shui" is not affected, since its letters are s-h-u-i.
+    ///
+    /// The cost is real but narrow: 是 (shì) and 社 (shè) become indistinguishable.
+    private static func vowelFolded(_ key: String) -> String {
+        var result = key
+        for initial in ["zh", "ch", "sh", "r", "z", "c", "s"] {
+            result = result.replacingOccurrences(of: "\(initial)i", with: "\(initial)e")
         }
         return result
     }
