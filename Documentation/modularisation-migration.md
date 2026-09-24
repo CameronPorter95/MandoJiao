@@ -88,26 +88,59 @@ What does not match:
 
 ## Sequencing
 
-1. **Done. The drill, without packages.** Introduce `DrillViewModel` with State/Action/Effect,
-   move the microphone rules out of `SpeakLessonView` into it, and split the view into
-   Route and Screen. Inject the recogniser, sounds and audio session. This is the move
-   with the best return: the untested rules become tests driven by
-   `ScriptedRecogniser`, and nothing about storage changes. It proves the pattern in
-   folders before paying for packages.
-2. **`Vocabulary` repository.** Put `WordRepository` in front of SwiftData, replace
-   `MistakeLog` with use cases, and move the four store-owning views onto view models.
-   This is where `@Query` goes, and where the cost of [decision 7](architecture.md#7-observing-the-store-without-query)
-   is paid.
-3. **Matching.** Mostly mechanical once 1 and 2 exist: `LessonSession` becomes a view
-   model, results go through the Vocabulary use case.
-4. **Extract packages.** `Core` first, then `Vocabulary`, then `Drill` and `Matching`,
-   then `Settings`. Doing this after the layering exists means each extraction is a
-   move plus access control, not a redesign at the same time.
-5. **macOS.** Add `.macOS(.v26)` to each package as it lands, and run the domain and
-   view model tests headlessly.
+Layer in folders first, then extract the verticals that are layered, so the compiler
+starts enforcing the boundaries while most of the app is still unmigrated. Each
+extraction is then a move plus access control, never a redesign at the same time.
+
+1. **Done. The drill, without packages.** Introduce `DrillViewModel` with
+   State/Action/Effect, move the microphone rules out of `SpeakLessonView` into it,
+   and split the view into Route and Screen. Inject the recogniser, sounds and audio
+   session. This is the move with the best return: the untested rules become tests
+   driven by a fake recogniser, and nothing about storage changes. It proves the
+   pattern in folders before paying for packages.
+
+2. **Repositories, still in folders.** This is where the domain and data layers first
+   exist as layers rather than as habits.
+   - **Vocabulary.** Put `WordRepository` in front of SwiftData behind a `@ModelActor`
+     local source, replace `MistakeLog` with `RecordLessonResultsUseCase` and
+     `ClearMistakesUseCase`, and move the four store-owning views onto view models.
+     This is where `@Query` goes, and where the cost of
+     [decision 7](architecture.md#7-observing-the-store-without-query) is paid.
+   - **Drill.** `DrillFactory` hands `DrillViewModel` the results use case instead of
+     the `MistakeLog` closure. Strictness and the card limit move behind a
+     `DrillSettingsRepository` in the drill's domain, backed by `UserDefaults` in its
+     data layer, reading the existing `Preferences.Key` strings and raw values.
+   - **Folders mirror the targets to come.** `Vocabulary/` and `Drill/` each get
+     `Domain/`, `Data/`, `UI/` and `DI/` subfolders, so step 3 moves folders into
+     targets rather than sorting files.
+   - **Version the schema.** Add a `VersionedSchema` for the current `VocabWord` and
+     `Deck` shape before step 3 moves them. Cheap insurance for the upgrade check
+     there.
+
+3. **Extract `Core`, `Vocabulary` and `Drill`.** The first SPM packages, together
+   because `Drill` depends on `VocabularyDomain` for `WordPair`, `LessonRequest` and
+   the results use case. `DictationRecogniser` and `SpeechLog` land in `DrillData`,
+   `ToneEngine` in `CoreAudio`, `LessonCompleteView` in `CoreUI`, and the
+   `ModelContainer` is built in the app from the packages' schemas. Each package lists
+   `.macOS(.v26)`, and the domain and view model tests run headlessly from here on.
+   The app target keeps `Matching` and `Settings`, which import only the new packages'
+   `Domain` and `DI` products. **Gate:** the store upgrade check in
+   [What will cost time](#what-will-cost-time) passes on a device before this ships.
+
+4. **Matching, layered and extracted in one go.** The pattern is proven and the
+   package plumbing exists, so there is no reason to stop in folders.
+   `LessonSession` becomes a view model, results go through the Vocabulary use case,
+   rounds and pinyin visibility get a `MatchingSettingsRepository`, and `LessonView`
+   stops reaching `ToneEngine.shared`. `MatchSounds.shared` is deleted.
+
+5. **Settings.** The screen moves to a `Settings` package editing drill and matching
+   settings through their domains. What remains in the app target is the entry point,
+   `ContentView` and `AppNavigation`.
 
 Each step leaves the app shippable and the suite green, so the order can pause at any
-point without leaving half a pattern in place.
+point without leaving half a pattern in place. Moving tests into package targets
+changes where the count comes from: after every step, clean, run, and check the count
+against the previous step.
 
 ---
 
@@ -133,10 +166,10 @@ and set the language mode per target deliberately rather than inheriting it.
 **The SwiftData store has live user data and no versioned schema.** The container is
 built as `ModelContainer(for: VocabWord.self, Deck.self)` with no `VersionedSchema`.
 Whether moving the `@Model` classes into another module changes how SwiftData
-identifies them in an existing store is **not verified**. Before step 4 ships, install
+identifies them in an existing store is **not verified**. Before step 3 ships, install
 the current App Store build, add words and mistakes, upgrade to the packaged build on
-the same device, and check nothing is lost. Introducing a `VersionedSchema` for the
-current shape first is cheap insurance.
+the same device, and check nothing is lost. Step 2 adds a `VersionedSchema` for the
+current shape first, so there is a defined schema to migrate from if the check fails.
 
 **`@testable import MandoJiao` stops being enough.** Tests move with their code, into
 package test targets. The app scheme must include each package test target, and the
