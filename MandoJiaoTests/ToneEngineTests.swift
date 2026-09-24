@@ -39,6 +39,27 @@ struct ToneEngineTests {
         #expect(ToneEngine.semitones(forStep: 0, of: 1) == 0)
     }
 
+    @Test("tones are raised while the microphone session is in force")
+    func recordingBoost() {
+        // A speech drill runs .playAndRecord in .measurement mode, which turns off output
+        // processing and makes the same buffer noticeably quieter than in a matching
+        // lesson. Without this the two exercises are not equally loud.
+        let match = 0.34
+        #expect(ToneEngine.outputGain(match, recording: false) == match)
+        #expect(ToneEngine.outputGain(match, recording: true) > match)
+    }
+
+    @Test(
+        "the boost never pushes a tone into clipping",
+        arguments: [0.26, 0.34, 0.5, 0.8, 1.0]
+    )
+    func gainIsClamped(base: Double) {
+        // The waveform peaks at about the gain it is given, so anything over 1 turns into
+        // a buzz instead of getting louder.
+        #expect(ToneEngine.outputGain(base, recording: true) <= 1)
+        #expect(ToneEngine.outputGain(base, recording: false) <= 1)
+    }
+
     @Test("out of range steps stay inside the scale")
     func clampsOutOfRange() {
         #expect(ToneEngine.semitones(forStep: -5, of: 5) == 0)

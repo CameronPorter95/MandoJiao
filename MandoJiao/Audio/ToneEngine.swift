@@ -30,12 +30,30 @@ final class ToneEngine: MatchSoundPlaying {
     private nonisolated static let scale = [0, 2, 4, 5, 7, 9, 11, 12]
     private nonisolated static let playerCount = 6
 
+    /// Makes up for the drop in output level while the microphone session is in force.
+    ///
+    /// A speech drill runs the session as `.playAndRecord` in `.measurement` mode, which
+    /// turns off the system's output processing, so the same buffer plays back markedly
+    /// quieter than it does under `.ambient` in a matching lesson. The mode is worth
+    /// keeping, since it is what leaves the recogniser's input unprocessed, so the tones
+    /// are raised to meet it instead.
+    nonisolated static let recordingBoost = 2.0
+
     private init() {}
 
     // MARK: - Sounds
 
     func playMatch(step: Int, of total: Int) {
         play(semitones: Self.semitones(forStep: step, of: total), duration: 0.16, gain: 0.34)
+    }
+
+    /// The level a tone is actually rendered at, given whether the microphone session is
+    /// in force.
+    ///
+    /// Clamped, because the waveform peaks at roughly the gain it is given and anything
+    /// above 1 would clip into a buzz rather than getting louder.
+    nonisolated static func outputGain(_ base: Double, recording: Bool) -> Double {
+        min(1, base * (recording ? recordingBoost : 1))
     }
 
     /// The note a step lands on: up the scale, with the last one topping out on the
@@ -162,7 +180,8 @@ final class ToneEngine: MatchSoundPlaying {
 
     private func emit(semitones: Int, duration: Double, gain: Double) {
         let frequency = Self.baseFrequency * pow(2, Double(semitones) / 12)
-        guard let buffer = buffer(frequency: frequency, duration: duration, gain: gain) else {
+        let level = Self.outputGain(gain, recording: isRecordingMode)
+        guard let buffer = buffer(frequency: frequency, duration: duration, gain: level) else {
             return
         }
 
