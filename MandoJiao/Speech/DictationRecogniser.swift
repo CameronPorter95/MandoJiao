@@ -75,6 +75,13 @@ final class DictationRecogniser: SpeechRecognising {
             return availability
         }
 
+        // Resolved now rather than on the first tap. This is the slow part of arming the
+        // microphone, and doing it here means a card does not spend it while the user is
+        // already talking.
+        analyzerFormat = await SpeechAnalyzer.bestAvailableAudioFormat(
+            compatibleWith: [Self.makeTranscriber(locale: locale)]
+        )
+
         availability = .ready
         return availability
     }
@@ -167,7 +174,11 @@ final class DictationRecogniser: SpeechRecognising {
         )
         self.analyzer = analyzer
 
-        analyzerFormat = await SpeechAnalyzer.bestAvailableAudioFormat(compatibleWith: [transcriber])
+        if analyzerFormat == nil {
+            analyzerFormat = await SpeechAnalyzer.bestAvailableAudioFormat(
+                compatibleWith: [transcriber]
+            )
+        }
 
         resultsTask = Task { @MainActor [weak self] in
             do {

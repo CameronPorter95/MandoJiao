@@ -16,7 +16,7 @@ struct SpeakLessonView: View {
     @State private var recogniser: any SpeechRecognising
     @State private var isConfirmingQuit = false
     @State private var didRecordResults = false
-    @State private var isListening = false
+    @State private var micState: MicState = .idle
     @State private var isTyping = false
     @State private var listeningTask: Task<Void, Never>?
 
@@ -129,7 +129,7 @@ struct SpeakLessonView: View {
             card: session.card,
             phase: session.phase,
             attemptsLeft: session.attemptsLeft,
-            isListening: isListening,
+            micState: micState,
             partialText: recogniser.partialText,
             isTyping: isTyping || !recogniser.availability.canListen,
             canListen: recogniser.availability.canListen,
@@ -188,19 +188,25 @@ struct SpeakLessonView: View {
     }
 
     private func startListening() {
-        guard !isListening, recogniser.availability.canListen else { return }
+        guard micState == .idle, recogniser.availability.canListen else { return }
         // Drop the previous failure before listening, or it stays on screen instead of
         // this attempt's transcript.
         session?.beginAttempt()
-        isListening = true
+
+        // Arming, not listening: opening the microphone takes a moment, and saying
+        // "listening" through it would invite talking into a microphone that is not
+        // recording yet.
+        micState = .arming
 
         listeningTask = Task {
             do {
                 try await recogniser.start(hints: hints)
             } catch {
-                isListening = false
+                micState = .idle
                 return
             }
+            guard !Task.isCancelled else { return }
+            micState = .listening
             // Stops as soon as the transcript stops moving, rather than waiting out the
             // limit on every card.
             _ = await Endpointing.waitForEnd { recogniser.partialText }
@@ -210,8 +216,8 @@ struct SpeakLessonView: View {
     }
 
     private func stopListening(submitting: Bool) {
-        guard isListening else { return }
-        isListening = false
+        guard micState != .idle else { return }
+        micState = .idle
         listeningTask?.cancel()
         listeningTask = nil
 

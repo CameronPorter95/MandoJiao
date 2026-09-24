@@ -1,5 +1,16 @@
 import SwiftUI
 
+/// What the microphone is doing.
+///
+/// `arming` exists because opening the microphone is not instant, and a button that says
+/// it is listening before capture has started invites people to speak into nothing. The
+/// first syllable then goes missing and comes back as a grunt.
+enum MicState: Equatable {
+    case idle
+    case arming
+    case listening
+}
+
 /// One speech card: the English prompt, the answer control, and the verdict.
 ///
 /// Presentational. The lesson view owns the microphone and the session.
@@ -7,7 +18,7 @@ struct SpeakCardView: View {
     let card: WordPair
     let phase: SpeakSession.Phase
     let attemptsLeft: Int
-    let isListening: Bool
+    let micState: MicState
     let partialText: String
     let isTyping: Bool
     let canListen: Bool
@@ -74,7 +85,7 @@ struct SpeakCardView: View {
     private var verdict: some View {
         switch phase {
         case .idle:
-            if isListening && !partialText.isEmpty {
+            if micState == .listening, !partialText.isEmpty {
                 heardText(partialText, tint: .secondary)
             } else {
                 Color.clear.frame(height: 1)
@@ -174,18 +185,29 @@ struct SpeakCardView: View {
     private var micControl: some View {
         VStack(spacing: 14) {
             Button {
-                isListening ? onStopListening() : onStartListening()
+                micState == .listening ? onStopListening() : onStartListening()
             } label: {
                 ZStack {
                     Circle()
-                        .fill(isListening ? Theme.miss : Theme.accent)
+                        .fill(micState == .idle ? Theme.accent : Theme.miss)
                         .frame(width: 88, height: 88)
-                    Image(systemName: isListening ? "stop.fill" : "mic.fill")
-                        .font(.system(size: 34, weight: .medium))
-                        .foregroundStyle(.white)
+
+                    switch micState {
+                    case .idle:
+                        Image(systemName: "mic.fill")
+                            .font(.system(size: 34, weight: .medium))
+                            .foregroundStyle(.white)
+                    case .arming:
+                        ProgressView()
+                            .tint(.white)
+                    case .listening:
+                        Image(systemName: "stop.fill")
+                            .font(.system(size: 34, weight: .medium))
+                            .foregroundStyle(.white)
+                    }
                 }
                 .overlay {
-                    if isListening {
+                    if micState == .listening {
                         Circle()
                             .stroke(Theme.miss.opacity(0.35), lineWidth: 3)
                             .frame(width: 112, height: 112)
@@ -193,9 +215,10 @@ struct SpeakCardView: View {
                 }
             }
             .buttonStyle(.plain)
-            .accessibilityLabel(isListening ? "Stop listening" : "Start speaking")
+            .disabled(micState == .arming)
+            .accessibilityLabel(micState == .listening ? "Stop listening" : "Start speaking")
 
-            Text(isListening ? "Listening, tap to stop" : "Tap and say it out loud")
+            Text(micPrompt)
                 .font(.footnote)
                 .foregroundStyle(.secondary)
 
@@ -239,6 +262,16 @@ struct SpeakCardView: View {
         }
     }
 
+    /// Waiting is stated rather than hidden: being told to hold on for a moment is better
+    /// than being told to speak into a microphone that is not open yet.
+    private var micPrompt: String {
+        switch micState {
+        case .idle: "Tap and say it out loud"
+        case .arming: "Opening the microphone…"
+        case .listening: "Listening, tap to stop"
+        }
+    }
+
     private func submitTyped() {
         let answer = typed.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !answer.isEmpty else { return }
@@ -252,7 +285,7 @@ struct SpeakCardView: View {
         card: WordPair(english: "water", hanzi: "水", pinyin: "shuǐ"),
         phase: .idle,
         attemptsLeft: 3,
-        isListening: false,
+        micState: .idle,
         partialText: "",
         isTyping: false,
         canListen: true,
@@ -270,7 +303,7 @@ struct SpeakCardView: View {
         card: WordPair(english: "water", hanzi: "水", pinyin: "shuǐ"),
         phase: .wrong(heard: "茶", attemptsLeft: 2),
         attemptsLeft: 2,
-        isListening: false,
+        micState: .idle,
         partialText: "",
         isTyping: false,
         canListen: true,
