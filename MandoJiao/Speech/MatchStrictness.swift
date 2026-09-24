@@ -27,19 +27,13 @@ enum MatchStrictness: String, CaseIterable, Identifiable, Sendable {
     var detail: String {
         switch self {
         case .strict:
-            "Only the word itself, exactly as recognised."
+            "The word spelled exactly, from the recogniser's first guess. It may sit inside a longer phrase."
         case .balanced:
-            "Also accepts the word inside a longer phrase, the recogniser's second guesses, and zhi for zhe, shi for she and the like."
+            "Also accepts the recogniser's second guesses, and zhi for zhe, shi for she and the like."
         case .lenient:
             "Also accepts near spellings: zh and z, ch and c, sh and s, -ng and -n, and a syllable that is a letter or two out."
         }
     }
-
-    /// Whether a transcript may carry other words alongside the answer.
-    ///
-    /// The recogniser often returns a short phrase rather than a bare word, so a correct
-    /// answer comes back as 完成了 or 是完成 and fails an exact comparison.
-    var allowsSurroundingWords: Bool { self != .strict }
 
     /// Whether the recogniser's alternative transcriptions count, not just its best
     /// guess. This is less a loosening than using information already on offer.

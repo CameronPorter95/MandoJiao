@@ -26,14 +26,40 @@ struct StrictnessTests {
     }
 
     @Test(
-        "the word inside a longer phrase is the case that was actually failing",
+        "the word inside a longer phrase counts at every level, including Strict",
         arguments: ["完成了", "是完成", "我完成了", "wo wancheng le"]
     )
     func wordInsideAPhrase(answer: String) {
-        // This is what a recogniser hands back in practice: a short phrase, not a bare
-        // word. Strict still rejects it, which is what makes it strict.
-        #expect(!AnswerGrader.isCorrect(answer, for: complete, strictness: .strict))
-        #expect(AnswerGrader.isCorrect(answer, for: complete, strictness: .balanced))
+        // A recogniser pads one word into something sentence-shaped. The speaker did not
+        // say 了, so failing them for it would be judging the recogniser's phrasing
+        // rather than their pronunciation.
+        for level in MatchStrictness.allCases {
+            #expect(AnswerGrader.isCorrect(answer, for: complete, strictness: level))
+        }
+    }
+
+    @Test("what Strict still refuses")
+    func strictStillMeansSomething() {
+        // No vowel folding, and the best guess only: the answer being in the alternatives
+        // does not count.
+        #expect(!AnswerGrader.isCorrect("这倒", for: know, strictness: .strict))
+        #expect(!AnswerGrader.isCorrect("wanchang", for: complete, strictness: .strict))
+
+        let outcome = SpeechOutcome(best: "万座", alternatives: ["完成"])
+        #expect(!AnswerGrader.isCorrect(outcome, for: complete, strictness: .strict))
+    }
+
+    @Test("the cost of never requiring the word alone, recorded rather than discovered")
+    func phraseMatchingCost() {
+        // A single-syllable answer can be found inside a longer word that contains it as
+        // a whole syllable: 老师 is lao + shi, so it carries 是. Saying a different word
+        // that happens to contain the target syllable passes. The alternative was failing
+        // people whenever the recogniser added a particle, which happens constantly.
+        let toBe = WordPair(english: "to be", hanzi: "是", pinyin: "shì")
+        #expect(AnswerGrader.isCorrect("老师", for: toBe, strictness: .strict))
+
+        // Multi-syllable answers are far safer: a chance run of two syllables is rare.
+        #expect(!AnswerGrader.isCorrect("老师", for: complete, strictness: .strict))
     }
 
     // MARK: - Matching a phrase cannot match rubbish

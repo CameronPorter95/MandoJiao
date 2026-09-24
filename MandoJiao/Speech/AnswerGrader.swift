@@ -113,38 +113,31 @@ enum AnswerGrader {
         strictness: MatchStrictness
     ) -> Bool {
         let expectedJoined = expected.joined()
+        let candidates = runs(of: heard)
 
-        // Joined rather than element-wise, because the two sides disagree about where
-        // syllables break: 完成 transforms to two syllables, while the same word typed in
-        // as "wancheng" arrives as one token.
-        if heard.joined() == expectedJoined { return true }
-
-        if strictness.allowsSurroundingWords,
-           runs(of: heard).contains(expectedJoined) {
-            return true
-        }
+        // Matching inside a phrase is not gated by strictness. The extra words are the
+        // recogniser padding a single word into something sentence-shaped, not the
+        // speaker getting anything wrong: saying 完成 and having it come back as 完成了
+        // is a correct answer however strict the setting.
+        //
+        // `runs` includes the whole transcript, so this covers an exact match too.
+        // Comparing runs joined rather than syllable by syllable matters because the two
+        // sides disagree about where syllables break: 完成 transforms to two syllables,
+        // while the same word typed in as "wancheng" arrives as one token.
+        if candidates.contains(expectedJoined) { return true }
 
         if strictness.allowsVowelConfusions {
             let vowelKey = vowelFolded(expectedJoined)
-            if vowelFolded(heard.joined()) == vowelKey { return true }
-            if strictness.allowsSurroundingWords,
-               runs(of: heard).contains(where: { vowelFolded($0) == vowelKey }) {
-                return true
-            }
+            if candidates.contains(where: { vowelFolded($0) == vowelKey }) { return true }
         }
 
-        // Nothing below this point applies to any level but lenient, and lenient allows
-        // everything above, so there is no second check to make on the level here.
+        // Nothing below here applies to any level but lenient.
         guard strictness.allowsNearSpellings else { return false }
 
         let expectedKey = folded(vowelFolded(expectedJoined))
         let allowance = allowance(for: expectedKey)
 
-        if editDistance(folded(vowelFolded(heard.joined())), expectedKey) <= allowance {
-            return true
-        }
-
-        return runs(of: heard).contains {
+        return candidates.contains {
             editDistance(folded(vowelFolded($0)), expectedKey) <= allowance
         }
     }
