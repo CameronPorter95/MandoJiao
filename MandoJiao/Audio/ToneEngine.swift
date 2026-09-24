@@ -8,7 +8,7 @@ import Foundation
 /// are fired off in quick succession: queueing them on one node would make the
 /// audio lag behind the taps.
 @MainActor
-final class ToneEngine: MatchSoundPlaying {
+final class ToneEngine: MatchSoundPlaying, AudioSessionSwitching {
     static let shared = ToneEngine()
 
     private let engine = AVAudioEngine()

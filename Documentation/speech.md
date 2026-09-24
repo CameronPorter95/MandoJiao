@@ -37,11 +37,14 @@ will not match the framework's own `zh-CN`.
 
 ## The seam
 
-`SpeechRecognising` is a protocol in a Foundation-only file. `SpeakSession` never
-touches it — the view captures audio and hands the session a `SpeechOutcome`,
-which is also how typed answers arrive. That is what lets the three-attempt rule
-be tested without audio hardware, and it means `SFSpeechRecognizer` could be
-dropped in without touching grading or UI.
+`SpeechRecognising` is a protocol in a Foundation-only file. `DrillViewModel`
+drives it and hands each `SpeechOutcome` to `DrillLesson`, a plain value that never
+sees the recogniser. Typed answers arrive the same way. That is what lets the
+three-attempt rule and the microphone rules (carrying on after a correct answer,
+not counting silence after an automatic listen) be tested with a fake recogniser,
+and it means `SFSpeechRecognizer` could be dropped in without touching grading or
+UI. The audio session is reached through `AudioSessionSwitching` for the same
+reason.
 
 ## Knowing when someone has stopped
 
@@ -103,7 +106,7 @@ but not enough.
 
 So **the drill plays no per-card tones at all.** Haptics still mark every right
 and wrong answer, so feedback is not lost, only its audio. The completion fanfare
-does play, because by then the drill is over: the view hands the session back
+does play, because by then the drill is over: the view model hands the session back
 with `await exitRecordingMode()` before playing it, and it is heard at the normal
 level. That call is awaitable for exactly this reason — playing during the switch
 collapses the arpeggio to whichever note lands after the engine returns.

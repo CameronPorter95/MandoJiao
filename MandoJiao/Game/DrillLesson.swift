@@ -1,14 +1,11 @@
 import Foundation
-import Observation
 
-/// Drives a speech drill one card at a time.
+/// A speech drill's progress, one card at a time.
 ///
-/// It never touches the microphone. The view captures audio and hands the transcript to
-/// `submit`, which means the whole exercise, including the three-attempt rule, can be
-/// exercised without audio hardware. Typed answers go through the same door.
-@MainActor
-@Observable
-final class SpeakSession {
+/// A value with no timers, audio or microphone. `DrillViewModel` owns those and feeds
+/// transcripts in through `submit`, so the three-attempt rule is exercised without audio
+/// hardware. Typed answers go through the same door.
+struct DrillLesson: Equatable {
     enum Phase: Equatable {
         case idle
         case wrong(heard: String, attemptsLeft: Int)
@@ -25,6 +22,7 @@ final class SpeakSession {
     }
 
     let plan: SpeakPlan
+    let strictness: MatchStrictness
 
     private(set) var cardIndex = 0
     private(set) var phase: Phase = .idle
@@ -38,28 +36,15 @@ final class SpeakSession {
     private(set) var missesByPairID: [UUID: Int] = [:]
     private(set) var cleanSolvesByPairID: [UUID: Int] = [:]
 
-    private(set) var feedbackToken = 0
-
     /// Whether the card just left was solved.
     ///
     /// The drill keeps the microphone going into the next word after a correct answer,
     /// and stops after a wrong one so the answer can be read.
     private(set) var advancedAfterCorrect = false
 
-    private let sounds: MatchSoundPlaying
-    private let strictness: MatchStrictness
-    private var isAdvancing = false
-    private var advanceTask: Task<Void, Never>?
-    private let advanceDelay: Duration = .milliseconds(850)
-
-    init(
-        plan: SpeakPlan,
-        strictness: MatchStrictness = .default,
-        sounds: MatchSoundPlaying? = nil
-    ) {
+    init(plan: SpeakPlan, strictness: MatchStrictness = .default) {
         self.plan = plan
         self.strictness = strictness
-        self.sounds = sounds ?? MatchSounds.shared
     }
 
     var card: WordPair { plan.cards[min(cardIndex, max(plan.cards.count - 1, 0))] }
@@ -91,34 +76,28 @@ final class SpeakSession {
 
     /// Grades one attempt, whether it came from the microphone or the keyboard.
     ///
+    /// Returns the verdict, or nil when the answer was ignored because the card had
+    /// already settled or the drill had finished.
+    ///
     /// Getting it right on the third go still counts as a clean solve. Three attempts
     /// exist because recognition of isolated words is unreliable, so spending them is not
     /// evidence that the word is unknown.
-    func submit(_ response: String) {
+    @discardableResult
+    mutating func submit(_ response: String) -> Bool? {
         submit(SpeechOutcome(best: response))
     }
 
-    func submit(_ outcome: SpeechOutcome) {
-        guard !isFinished, !isAdvancing, !phase.isSettled else { return }
+    @discardableResult
+    mutating func submit(_ outcome: SpeechOutcome) -> Bool? {
+        guard !isFinished, !phase.isSettled else { return nil }
 
         attemptsUsed += 1
         let heard = outcome.best.trimmingCharacters(in: .whitespacesAndNewlines)
         let isRight = AnswerGrader.isCorrect(outcome, for: card, strictness: strictness)
 
-        SpeechLog.attempt(
-            card: card,
-            outcome: outcome,
-            strictness: strictness,
-            attempt: attemptsUsed,
-            of: SpeakLessonBuilder.attemptsPerCard,
-            wasCorrect: isRight
-        )
-
         if isRight {
             cleanSolvesByPairID[card.id, default: 0] += 1
             phase = .correct(heard: heard)
-            sounds.playMatch(step: cardIndex, of: plan.cardCount)
-            scheduleAdvance()
         } else {
             failedAttempts += 1
             if attemptsLeft > 0 {
@@ -127,10 +106,8 @@ final class SpeakSession {
                 missesByPairID[card.id, default: 0] += 1
                 phase = .exhausted(heard: heard)
             }
-            sounds.playMiss()
         }
-
-        feedbackToken += 1
+        return isRight
     }
 
     /// Clears a failed verdict so a fresh attempt can show its own.
@@ -141,18 +118,14 @@ final class SpeakSession {
     ///
     /// A settled card is left alone: once a card is right or out of attempts, that
     /// verdict is the final word on it.
-    func beginAttempt() {
+    mutating func beginAttempt() {
         guard case .wrong = phase else { return }
         phase = .idle
     }
 
-    /// Used by the "continue" button after a card runs out of attempts. A correct card
-    /// advances itself.
-    func advance() {
-        // Cancels any pending auto-advance, so advancing by hand cannot land twice.
-        advanceTask?.cancel()
-        advanceTask = nil
-        isAdvancing = false
+    /// Moves to the next card, or finishes after the last one.
+    mutating func advance() {
+        guard !isFinished else { return }
 
         if case .correct = phase {
             advancedAfterCorrect = true
@@ -165,18 +138,8 @@ final class SpeakSession {
         let next = cardIndex + 1
         guard next < plan.cardCount else {
             isFinished = true
-            sounds.playLessonComplete()
             return
         }
         cardIndex = next
-    }
-
-    private func scheduleAdvance() {
-        isAdvancing = true
-        advanceTask = Task { [advanceDelay] in
-            try? await Task.sleep(for: advanceDelay)
-            guard !Task.isCancelled else { return }
-            self.advance()
-        }
     }
 }

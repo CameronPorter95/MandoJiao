@@ -1,22 +1,11 @@
 import SwiftUI
 
-/// What the microphone is doing.
-///
-/// `arming` exists because opening the microphone is not instant, and a button that says
-/// it is listening before capture has started invites people to speak into nothing. The
-/// first syllable then goes missing and comes back as a grunt.
-enum MicState: Equatable {
-    case idle
-    case arming
-    case listening
-}
-
 /// One speech card: the English prompt, the answer control, and the verdict.
 ///
-/// Presentational. The lesson view owns the microphone and the session.
+/// Presentational. `DrillViewModel` owns the microphone and the lesson.
 struct SpeakCardView: View {
     let card: WordPair
-    let phase: SpeakSession.Phase
+    let phase: DrillLesson.Phase
     let attemptsLeft: Int
     let micState: MicState
     let partialText: String

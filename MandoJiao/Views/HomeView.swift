@@ -120,7 +120,11 @@ struct HomeView: View {
             case .matching(let request):
                 LessonView(request: request) { activeRoute = nil }
             case .speaking(let request):
-                SpeakLessonView(request: request) { activeRoute = nil }
+                DrillFactory.makeRoute(
+                    request: request,
+                    context: context,
+                    navigation: DrillNavigation(didClose: { activeRoute = nil })
+                )
             }
         }
     }

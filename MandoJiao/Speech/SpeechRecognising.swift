@@ -36,8 +36,12 @@ struct SpeechOutcome: Equatable {
 ///
 /// This file imports Foundation only, so anything depending on it still compiles where
 /// the Speech framework does not.
+///
+/// `Observable` because `DrillViewModel` mirrors `availability` and `partialText` into its
+/// state through observation tracking. A recogniser that is not observable would leave
+/// the screen showing stale values.
 @MainActor
-protocol SpeechRecognising: AnyObject {
+protocol SpeechRecognising: AnyObject, Observable {
     var availability: SpeechAvailability { get }
     /// Updated live while listening, for on-screen feedback.
     var partialText: String { get }
@@ -53,6 +57,7 @@ protocol SpeechRecognising: AnyObject {
 /// Returns canned transcripts in order. Used by previews and by the checks that drive a
 /// lesson without a microphone.
 @MainActor
+@Observable
 final class ScriptedRecogniser: SpeechRecognising {
     var availability: SpeechAvailability = .ready
     var partialText: String = ""

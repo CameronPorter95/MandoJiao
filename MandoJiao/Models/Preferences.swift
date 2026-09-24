@@ -12,9 +12,14 @@ enum Preferences {
 
     static let matchingRoundsRange = 5...20
     static let drillCardLimitRange = 5...40
+    static let defaultDrillCardLimit = 20
 
     static var strictness: MatchStrictness {
         let raw = UserDefaults.standard.string(forKey: Key.speechStrictness)
         return raw.flatMap(MatchStrictness.init(rawValue:)) ?? .default
+    }
+
+    static var drillCardLimit: Int {
+        UserDefaults.standard.object(forKey: Key.drillCardLimit) as? Int ?? defaultDrillCardLimit
     }
 }

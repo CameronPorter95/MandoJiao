@@ -1,4 +1,9 @@
-# Architecture
+# Exercises
+
+How the two exercises, the mistakes list, sound and settings work today. These are
+product rules and survive any restructuring. The target architecture is in
+[`architecture.md`](architecture.md); where the code is relative to it is in
+[`modularisation-migration.md`](modularisation-migration.md).
 
 SwiftUI and SwiftData, iOS 26, no third-party dependencies.
 
@@ -6,7 +11,7 @@ The shape worth knowing: **exercise logic never touches SwiftData, SwiftUI or
 AVFoundation.** Lessons are built from detached value types, which is what lets
 the interesting parts be tested without a simulator, a store or a microphone.
 
-## Layers
+## Current layout
 
 ```
 Views/          SwiftUI. Owns presentation, the microphone, and writing results back.
@@ -39,7 +44,7 @@ differ in almost everything except where their results go.
 | --- | --- | --- |
 | Plan | `LessonPlan`, 10 rounds of 5 pairs | `SpeakPlan`, one card per word, max 20 |
 | Board | `MatchBoard`, a value type | no board, one card at a time |
-| Driver | `LessonSession` | `SpeakSession` |
+| Driver | `LessonSession` | `DrillViewModel`, over a `DrillLesson` value |
 | Minimum words | 5 | 1 |
 | Input | taps | speech, or typing |
 
@@ -80,8 +85,8 @@ be checked where `AVAudioSession` does not exist.
 what allows the pitch to climb. It runs a pool of six player nodes so rapid
 matches overlap instead of queueing behind each other.
 
-The drill passes `SilentSounds()` to its session. See
-[`docs/speech.md`](speech.md) for why.
+The drill makes no per-card sound calls at all, and a test pins that. See
+[`speech.md`](speech.md) for why.
 
 ## Settings
 

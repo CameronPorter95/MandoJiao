@@ -65,8 +65,10 @@ xcrun simctl launch <udid> com.cameronporter.MandoJiao
 xcrun simctl io <udid> screenshot out.png
 ```
 
-Injecting a stub recogniser through `SpeakLessonView(request:recogniser:onClose:)`
-is how the drill's states get looked at without a microphone.
+The drill's states are easier still: `DrillScreen` is a pure function of
+`DrillState`, so its previews show any state without a microphone, and
+`DrillViewModel` takes any `SpeechRecognising`, so `ScriptedRecogniser` can drive
+the whole drill.
 
 ## Checking behaviour without the app
 
