@@ -1,19 +1,33 @@
+import OSLog
 import SwiftData
 import SwiftUI
 
 @main
 struct MandoJiaoApp: App {
-    private let container: ModelContainer
+    private let vocabulary: VocabularyFactory
+    private let drill: DrillFactory
 
     init() {
-        // The exercises reach for sound through MatchSounds so their logic stays free of
-        // AVFoundation. This is the one place that decides what actually plays.
+        // The matching lesson reaches for sound through MatchSounds so its logic stays
+        // free of AVFoundation. This is the one place that decides what actually plays.
         MatchSounds.shared = ToneEngine.shared
 
+        let errorLog = Logger(subsystem: "com.cameronporter.MandoJiao", category: "errors")
+        ErrorLog.sink = { model, context in
+            errorLog.notice(
+                "\(context, privacy: .public) failed: \(model.domain, privacy: .public) \(model.code) \(model.description, privacy: .public)"
+            )
+        }
+
         do {
-            let container = try ModelContainer(for: VocabWord.self, Deck.self)
+            let container = try VocabularyFactory.makeContainer()
             SampleVocabulary.seedIfNeeded(container.mainContext)
-            self.container = container
+            vocabulary = VocabularyFactory(
+                container: container,
+                minimumMatchingWords: LessonBuilder.pairsPerExercise,
+                quickPracticeRounds: LessonBuilder.exercisesPerLesson
+            )
+            drill = DrillFactory(recordResults: vocabulary.recordLessonResults)
         } catch {
             fatalError("Could not open the vocabulary store: \(error)")
         }
@@ -21,8 +35,7 @@ struct MandoJiaoApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            ContentView(vocabulary: vocabulary, drill: drill)
         }
-        .modelContainer(container)
     }
 }

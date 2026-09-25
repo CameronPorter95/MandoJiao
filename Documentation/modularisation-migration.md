@@ -8,81 +8,74 @@ is the part that changes.
 
 ## Status
 
-**Step 1 is done: the drill is on MVI, still in folders.** The app is a single target
-with folders (`Views/`, `Game/`, `Speech/`, `Audio/`, `Models/`, and now `Drill/`),
-and 114 tests in 10 suites. Work happens on `refactor/mvi`.
+**Steps 1 and 2 are done: the drill and the vocabulary are layered, still in one
+target.** 159 tests in 18 suites. Work happens on `refactor/mvi`.
 
-The drill now looks like this:
+```
+MandoJiao/
+  Core/        Domain/ (DomainErrorModel, ErrorLog)  Persistence/ (LocalStoreError)
+               UI/ (LoggedError, EffectChannel, errorAlert)
+  Vocabulary/  Domain/  Data/  UI/  DI/     complete vertical, the reference
+  Drill/       Domain/  Data/  UI/  DI/  TestSupport/
+  Game/  Views/  Audio/  Models/            Matching, Settings and shared audio, unmigrated
+```
 
-| File | Layer | Role |
-| --- | --- | --- |
-| `Game/DrillLesson.swift` | domain | The card state machine as a value: attempts, verdicts, tallies. No timers. |
-| `Drill/DrillState.swift`, `DrillAction.swift`, `DrillEffect.swift` | UI | State (with `MicState`), intents, and the `.haptic` / `.close` effects. |
-| `Drill/DrillViewModel.swift` | UI | Microphone rules, auto-advance, the audio session hand-off, recording results. Imports `Observation`, not `SwiftUI`. |
-| `Drill/DrillRoute.swift`, `DrillScreen.swift`, `SpeakCardView.swift` | UI | Route owns the view model and performs effects; Screen and card are stateless. |
-| `Drill/DrillNavigation.swift` | UI | `didClose`, no default. |
-| `Drill/DrillFactory.swift` | wiring | The only place naming `DictationRecogniser` and `ToneEngine` for the drill. |
-| `Audio/AudioSessionSwitching.swift` | seam | Recording mode on and off, implemented by `ToneEngine`. |
+**Vocabulary.** `VocabularyRepository` sits in front of SwiftData. Writes go through
+nine use cases; reads are one `AsyncStream<Vocabulary>` that every screen subscribes
+to and that republishes after each write. The store is behind `VocabularyLocalSourceImpl`,
+a `@ModelActor`, and entities never leave `Data/`. Home, the library, the word editor
+and deck detail each have State, Action, Effect, a view model, a Route and a Screen.
+`@Query`, `modelContext` in views, `MistakeLog` and `PreviewData` are gone.
 
-`SpeakSession` and `SpeakLessonView` are gone. `SpeechRecognising` now requires
-`Observable`, because the view model mirrors the recogniser's live values into state
-through observation tracking.
+**The schema is versioned.** `VocabularySchemaV1` is the shape shipped before
+versioning, and `V2` adds `Deck.uuid`, with a custom stage giving each existing deck its
+own. Verified on the simulator: a store written by the previous build, with mistakes
+and a renamed deck added through sqlite, was upgraded by the new build with every word,
+deck, date and membership byte-identical and six distinct deck ids. The same check is
+now a test against a fixture store from that build.
 
-What already matches the target shape, and why the migration is smaller than the
-document count suggests:
+**Drill.** Results go through `RecordLessonResultsUseCase`, and strictness and the card
+limit come from `DrillSettingsRepository`, reading the same `Preferences.Key` strings
+the settings screen writes. A failed save is shown and logged.
 
-- **The domain/data boundary exists.** Lessons are built from `WordPair`, never from
-  `VocabWord`. That is the domain model / entity split under another name.
-- **Most domain rules are already Foundation-only.** `AnswerGrader`, `MatchStrictness`,
-  `Endpointing`, `LessonBuilder`, `SpeakLessonBuilder`, `MatchBoard` and the plan types
-  import nothing platform-specific, and compile standalone with `swiftc`.
-- **Two seams exist.** `SpeechRecognising` (with `ScriptedRecogniser` as its fake) and
-  `MatchSoundPlaying` (with `SilentSounds`).
-- **`LessonSession` is nearly a view model.** An `@Observable` driver taking values
-  in and exposing state, with no SwiftData.
+**Effects moved to `EffectChannel`.** A Route's `.task` is cancelled when a screen is
+pushed over it, which permanently ends a bare `AsyncStream`. The channel gives each
+appearance a fresh stream and holds effects sent in between. See
+[decision 9](architecture.md#9-effects-through-a-channel-state-over-the-observable-property).
 
-What does not match:
+What does not match yet:
 
-- **Views own the store.** `HomeView`, `WordLibraryView`, `DeckDetailView` and
-  `WordEditorView` use `@Query` and `modelContext` directly.
-- **One global left in use.** `LessonView` reaches `ToneEngine.shared` and
-  `LessonSession` defaults to `MatchSounds.shared`. The drill reaches neither.
-- **Settings are read with `@AppStorage` in `LessonView`.** The drill reads them once,
-  in `DrillFactory`, through `Preferences`.
-- **Results are written with a closure over a `ModelContext`.** `DrillFactory` wraps
-  `MistakeLog.apply` until step 2 puts a repository there.
+- **Matching is unmigrated.** `LessonView` still reaches `ToneEngine.shared`,
+  `LessonSession` defaults to `MatchSounds.shared`, and settings are read with
+  `@AppStorage`. Its results go through the use case, from a closure in `ContentView`
+  that logs a failure because there is no view model to show one.
+- **Settings is unmigrated.** It writes through `@AppStorage` under the same keys the
+  drill's settings repository reads.
+- **`ContentView` still decides the presentation** of lessons itself, pending
+  `AppNavigation`.
 
 ---
 
 ## Where each file goes
 
-| Today | Target | Notes |
+| Now | Target | Notes |
 | --- | --- | --- |
-| `Models/WordPair.swift` | `VocabularyDomain` | Unchanged apart from `public`. |
-| `LessonRequest` (in `Views/LessonView.swift`) | `VocabularyDomain` | Its `canStart` references `LessonBuilder.pairsPerExercise`, a Matching rule. Move the check to Matching. |
-| `Models/VocabWord.swift`, `Models/Deck.swift` | `VocabularyData` | `Deck.canStartLesson` has the same Matching dependency. |
-| `Models/MistakeLog.swift` | `VocabularyDomain` (the arithmetic) + `VocabularyData` (the write) | Becomes `RecordLessonResultsUseCase` and `ClearMistakesUseCase`. |
-| `Models/SampleVocabulary.swift` | `VocabularyData` | Seeding stays a data concern, triggered once at launch. |
-| `Models/Preferences.swift` | split: `DrillDomain` / `MatchingDomain` settings, storage in each `Data` | Keys and raw values unchanged. |
-| `Models/PreviewData.swift` | `VocabularyTestSupport` or preview fixtures | |
+| `Core/Domain/*` | `CoreDomain` | |
+| `Core/Persistence/*` | `CorePersistence` | |
+| `Core/UI/*` | `CoreUI` | |
+| `Vocabulary/{Domain,Data,UI,DI}/*` | `Vocabulary{Domain,Data,UI,DI}` | Done in folders. |
+| `Drill/{Domain,Data,UI,DI}/*` | `Drill{Domain,Data,UI,DI}` | Done in folders. |
+| `Drill/TestSupport/ScriptedRecogniser.swift` | `DrillTestSupport` | |
+| `Models/Preferences.swift` | keys shared by `DrillData`, `MatchingData` and `SettingsUI` | Keys and raw values unchanged. |
 | `Game/LessonPlan.swift`, `Game/MatchBoard.swift` | `MatchingDomain` | |
 | `Game/LessonSession.swift` | `MatchingUI` as `MatchingViewModel` | |
-| `Game/SpeakPlan.swift` | `DrillDomain` | |
-| `Game/DrillLesson.swift` | `DrillDomain` | Done in folders (was `SpeakSession`). |
-| `Drill/*` | `DrillUI`, except `DrillFactory` → `DrillDI` | Done in folders. |
-| `Speech/AnswerGrader.swift`, `MatchStrictness.swift`, `Endpointing.swift` | `DrillDomain` | |
-| `Speech/SpeechRecognising.swift` | `DrillDomain` (protocol, `SpeechOutcome`, `SpeechAvailability`) + `DrillTestSupport` (`ScriptedRecogniser`) | |
-| `Speech/DictationRecogniser.swift` | `DrillData` | |
-| `Speech/SpeechLog.swift` | `DrillData`, reached through a seam | |
 | `Audio/MatchSounds.swift`, `Audio/AudioSessionSwitching.swift` | `CoreDomain` | The `shared` global is deleted once matching migrates. |
 | `Audio/ToneEngine.swift` | `CoreAudio` | Also implements `AudioSessionSwitching`. |
 | `Theme.swift`, `Views/LessonProgressBar.swift` | `CoreDesignSystem` | |
 | `Views/LessonCompleteView.swift` | `CoreUI` | Two consumers. |
-| `Views/HomeView.swift` | `VocabularyUI` as Home Route/Screen/ViewModel | |
-| `Views/WordLibraryView.swift`, `WordEditorView.swift`, `DeckDetailView.swift`, `WordRow.swift` | `VocabularyUI` | |
 | `Views/LessonView.swift`, `MatchBoardView.swift`, `WordTileView.swift` | `MatchingUI` | |
 | `Views/SettingsView.swift` | `SettingsUI` | |
-| `MandoJiaoApp.swift`, `ContentView.swift` | `Application` | Builds the `ModelContainer` from each package's schema, registers seams. |
+| `MandoJiaoApp.swift`, `ContentView.swift` | `Application` | Opens the store, seeds it, registers `ErrorLog`, builds the factories. |
 
 ---
 
@@ -99,9 +92,9 @@ extraction is then a move plus access control, never a redesign at the same time
    driven by a fake recogniser, and nothing about storage changes. It proves the
    pattern in folders before paying for packages.
 
-2. **Repositories, still in folders.** This is where the domain and data layers first
+2. **Done. Repositories, still in folders.** This is where the domain and data layers first
    exist as layers rather than as habits.
-   - **Vocabulary.** Put `WordRepository` in front of SwiftData behind a `@ModelActor`
+   - **Vocabulary.** Put `VocabularyRepository` in front of SwiftData behind a `@ModelActor`
      local source, replace `MistakeLog` with `RecordLessonResultsUseCase` and
      `ClearMistakesUseCase`, and move the four store-owning views onto view models.
      This is where `@Query` goes, and where the cost of
@@ -168,8 +161,9 @@ built as `ModelContainer(for: VocabWord.self, Deck.self)` with no `VersionedSche
 Whether moving the `@Model` classes into another module changes how SwiftData
 identifies them in an existing store is **not verified**. Before step 3 ships, install
 the current App Store build, add words and mistakes, upgrade to the packaged build on
-the same device, and check nothing is lost. Step 2 adds a `VersionedSchema` for the
-current shape first, so there is a defined schema to migrate from if the check fails.
+the same device, and check nothing is lost. Step 2 ran this on the simulator for the
+V1 to V2 migration and it passed; moving the entities into a package is a different
+change and needs its own check, on a device this time.
 
 **`@testable import MandoJiao` stops being enough.** Tests move with their code, into
 package test targets. The app scheme must include each package test target, and the
@@ -183,16 +177,20 @@ repository instead.
 
 ## Known untidiness
 
-**Failed saves are silently dropped.** `MistakeLog.apply` and `clearAll` use
-`try? context.save()`, and `MistakeLog.apply` returns early if the fetch fails. A lost
-mistakes update is invisible. Step 2 gives these a classification and a log line.
+**The quick practice card shows the default round count.** It says
+`LessonBuilder.exercisesPerLesson` rounds, not the rounds setting the lesson actually
+uses. Carried over unchanged; step 4 can pass the setting in.
 
-**`MistakeLog.apply` fetches every word to update a few.** Fine at 65 words, and a
-predicate on `uuid` in the local source fixes it when it matters.
+**`recordResults` still visits every word.** Fine at 65 words. A predicate on the ids
+in the results fixes it when it matters.
 
-**`LessonRequest.canStart` and `Deck.canStartLesson` reach into Matching.** Both use
-`LessonBuilder.pairsPerExercise`. The five-word floor is a matching rule, so the check
-belongs in Matching, and the drill has no floor at all.
+**A failed read leaves screens on their last snapshot.** `vocabulary()` is an
+`AsyncStream`, which cannot carry an error, so a read failure after a write is not
+shown. The write itself did succeed. Worth revisiting if reads ever fail in practice.
+
+**Vocabulary is handed Matching's numbers.** The five-word floor and the round count
+reach Home and deck detail as plain integers from `MandoJiaoApp`, so `Vocabulary`
+never imports Matching and step 4 cannot create a package cycle.
 
 **The audio session switch now lives in `DrillViewModel`,** through
 `AudioSessionSwitching`, rather than in the recogniser implementation. It stays there

@@ -15,8 +15,9 @@ repeating mistakes already made.
 ## Architecture (target)
 
 The app is moving to MVI + Clean Architecture in SPM packages, with a domain layer
-shaped for possible KMP sharing. The drill (`MandoJiao/Drill/`) is migrated to
-MVI and is the reference; see `Documentation/modularisation-migration.md` for the
+shaped for possible KMP sharing. `MandoJiao/Drill/` and `MandoJiao/Vocabulary/` are
+layered (`Domain/`, `Data/`, `UI/`, `DI/`) and are the reference; Vocabulary shows the
+repository and the store. See `Documentation/modularisation-migration.md` for the
 state and the order.
 
 - `Documentation/architecture.md`: the layers, UDF, and the reasoning behind each decision
@@ -66,7 +67,7 @@ test files and reports a pass for tests that never ran. This has happened three
 times; once it reported `TEST SUCCEEDED` while eight new tests were skipped. A
 green result on its own is not evidence that anything ran.
 
-Current suite: 114 tests in 10 suites.
+Current suite: 159 tests in 18 suites.
 
 ## Decisions already settled
 
@@ -110,6 +111,14 @@ not enough; if the behaviour reverses, a test should say so.
 `git log` is the design record for grading.
 
 ## Traps specific to this project
+
+- **Protocols and extensions take the default isolation too.** Domain and data
+  protocols are `nonisolated protocol`, and extensions on nonisolated types need
+  `nonisolated extension`. Details in `Documentation/working-on-this.md`.
+- **Never instantiate a `VocabularySchemaV1` model in-process.** It resolves to the
+  version 2 entity and crashes. Migration is tested against a real v1 store fixture.
+- **A test that blocks the main actor breaks the timing tests.** Heavy synchronous
+  work goes in a `nonisolated` suite.
 
 - **Default arguments are evaluated in the caller's context.** With
   `SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor`, any `static let` used as a default

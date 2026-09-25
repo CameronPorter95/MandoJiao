@@ -6,10 +6,9 @@ walks per change, so every item is a single assertion that is either true or fal
 the diff in front of you.
 
 Rules are stated here and justified there. Where an item links a decision, the
-reasoning lives in that decision and is not repeated. The drill in
-`MandoJiao/Drill/` is the reference implementation for the UI-layer items; copying it
-is the fastest way to pass them. No vertical has a repository yet, so the data-layer
-items have no example.
+reasoning lives in that decision and is not repeated. `MandoJiao/Vocabulary/` is the
+reference implementation for every layer, and `MandoJiao/Drill/` for a view model
+driving platform seams; copying them is the fastest way to pass this list.
 
 Module and target dependency rules are not repeated here either; they are in
 [modularisation.md](modularisation.md).
@@ -21,8 +20,8 @@ Module and target dependency rules are not repeated here either; they are in
 Applies to code in layer targets (`{X}Domain`, `{X}Data`, `{X}UI`, `{X}DI`) and to any
 new vertical.
 
-Does **not** apply to code still in the app target's `Views/`, `Game/`, `Speech/`,
-`Audio/` and `Models/` folders. Those follow their local convention until their
+Does **not** apply to code still in the app target's `Views/`, `Game/`, `Audio/` and
+`Models/` folders. Those follow their local convention until their
 vertical moves; see [modularisation-migration.md](modularisation-migration.md).
 Holding unmigrated code to this list would block ordinary feature work for nothing.
 
@@ -43,7 +42,8 @@ The project rules in [CLAUDE.md](../CLAUDE.md) apply everywhere, migrated or not
       and delegates to the repository. A rule that needs no data (grading, dealing a
       board) is a domain rule type, not a use case.
 - [ ] **D4** Domain operations are untyped `async throws`. No typed throws, no
-      completion handlers, no `Result` in the contract.
+      completion handlers, no `Result` in the contract. A read of a local value that
+      cannot fail (`DrillSettingsRepository`) may be synchronous.
       ([why](architecture.md#3-untyped-throws-not-typed-throws))
 - [ ] **D5** The domain error is a bare `Sendable` enum classifying the *cause*
       (`persistence`, `unexpected`, plus any expected outcome the UI must branch on),
@@ -53,6 +53,8 @@ The project rules in [CLAUDE.md](../CLAUDE.md) apply everywhere, migrated or not
       logging.
 - [ ] **D7** Observation is exposed as an `AsyncStream` of domain models, not as a
       SwiftUI or Observation type. ([why](architecture.md#7-observing-the-store-without-query))
+- [ ] **D8** Domain types, protocols and their extensions are `nonisolated`, so the
+      app target's `MainActor` default does not pin them to the main actor.
 
 ---
 
@@ -69,8 +71,8 @@ The project rules in [CLAUDE.md](../CLAUDE.md) apply everywhere, migrated or not
       ladder, in this order:
       ```swift
       catch is CancellationError { throw CancellationError() }
-      catch let error as SwiftDataError { throw XDomainError.persistence(model: .init(error)) }
-      catch { throw XDomainError.unexpected(model: .init(error)) }
+      catch let error as LocalStoreError { throw XDomainError.persistence(model: error.model) }
+      catch { throw XDomainError.unexpected(model: DomainErrorModel(error)) }
       ```
       Cancellation is rethrown as cancellation, never reclassified as a failure, and the
       untyped final `catch` means no platform error can escape unclassified. No `try?`
@@ -98,24 +100,27 @@ The project rules in [CLAUDE.md](../CLAUDE.md) apply everywhere, migrated or not
       stored `var` is `private(set) var state`. Other stored properties are `private`
       and carry no `@ObservationIgnored`: the view reads only `state`, so nothing else
       is ever tracked.
-- [ ] **U2** One-shot concerns (showing an error, firing a haptic, dismissing) are
-      `Effect` cases over the `AsyncStream`, never fields on `State`. No counters in
-      state whose only job is to trigger a one-shot.
-      ([why](architecture.md#9-effects-over-asyncstream-state-over-the-observable-property))
+- [ ] **U2** One-shot concerns (showing an error, firing a haptic, navigating,
+      dismissing) are `Effect` cases sent through an `EffectChannel`, never fields on
+      `State`. No counters in state whose only job is to trigger a one-shot. A presented
+      sheet or dialog is the opposite: it lasts until dismissed, so it is state, with an
+      action for the dismissal.
+      ([why](architecture.md#9-effects-through-a-channel-state-over-the-observable-property))
 - [ ] **U3** The `Screen` is stateless: `state` in, `onAction` out, previewable. The
       `Route` owns the view model, consumes effects, and holds the environmental wiring
       (navigation, scene phase, haptics).
       ([why](architecture.md#8-route--screen-split))
 - [ ] **U4** Mutations update state optimistically and revert on failure.
-- [ ] **U5** Exactly one place iterates `viewModel.effects`, and it is the `Route`. An
-      `AsyncStream` hands each element to a single consumer, so a second `for await` over
-      the same stream splits the effects between the two and each sees only some of them.
-      ([why](architecture.md#9-effects-over-asyncstream-state-over-the-observable-property))
-- [ ] **U6** The view model's lifetime does not exceed the `Route`'s. It is passed to the
-      `Route`'s `init` and held as `@State`, never owned by a parent view or the
-      environment. Cancelling the task that iterates `effects` terminates the stream
-      permanently, so a view model that outlives its `Route` still takes actions and
-      still renders state while every effect it yields goes nowhere.
+- [ ] **U5** Effects are exposed as `func effects() -> AsyncStream<Effect>` backed by an
+      `EffectChannel`, and the only caller is the `Route`, in `.task`. Never a stored
+      `AsyncStream` property: `.task` is cancelled whenever the view disappears,
+      including when a screen is pushed over it, and a cancelled consumer ends a bare
+      stream permanently, so every later effect would go nowhere.
+      ([why](architecture.md#9-effects-through-a-channel-state-over-the-observable-property))
+- [ ] **U6** The view model is passed to the `Route`'s `init` and held as `@State`, never
+      owned by a parent view or the environment. A view model that observes a stream
+      subscribes on `.appeared` and cancels on `.disappeared`, so a popped screen stops
+      listening.
 - [ ] **U7** The view model, state, action, effect and display error use no UIKit and no
       iOS-only API. The view model imports `Observation`, not `SwiftUI`.
       ([why](modularisation.md#building-for-macos))
@@ -152,11 +157,12 @@ This is the section most easily missed, because nothing about it fails to compil
       let domainError = error as? XDomainError ?? .unexpected(model: .init(error))
       ```
 - [ ] **E5** Each failure path mints the display error, calls `log()` on it, and *then*
-      yields the effect. The log call is the easy one to drop, and dropping it is silent.
+      sends the effect. In Vocabulary, `VocabularyError.performing` does all three, and
+      a write goes through it rather than repeating the ladder. The log call is the easy one to drop, and dropping it is silent.
       ```swift
       let displayError = XError.saveFailed(domainError: domainError)
       displayError.log()
-      effectContinuation.yield(.showError(displayError))
+      effectChannel.send(.showError(displayError))
       ```
 - [ ] **E6** Logging happens in the view model only. A `Route`, `Screen` or factory
       never calls `log()`.

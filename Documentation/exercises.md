@@ -16,9 +16,11 @@ the interesting parts be tested without a simulator, a store or a microphone.
 ```
 Views/          SwiftUI. Owns presentation, the microphone, and writing results back.
 Game/           Exercise logic. Pure values and @Observable drivers. No SwiftData.
-Speech/         Grading and recognition. AnswerGrader is Foundation-only.
+Drill/          The speech drill, split into Domain/, Data/, UI/, DI/.
+Vocabulary/     Words, decks, the mistakes list, home and library screens, same split.
+Core/           Shared error, effect and persistence plumbing.
 Audio/          Tone synthesis and the audio session.
-Models/         SwiftData entities, preferences, seed data.
+Models/         Preferences keys.
 ```
 
 ## Storage and the detachment boundary
@@ -32,8 +34,8 @@ is edited while it is open, and none of the exercise code can reach a managed
 object. `VocabWord.uuid` exists so a pair keeps a stable identity across that
 boundary, since `persistentModelID` is not a `UUID`.
 
-Results come back the other way through `MistakeLog`, which takes two plain
-dictionaries keyed by that uuid.
+Results come back the other way as `LessonResults`, two plain dictionaries keyed by
+that uuid, through `RecordLessonResultsUseCase`.
 
 ## The two exercises
 
@@ -57,7 +59,7 @@ capped. Dropping the five-at-a-time floor is the entire reason the drill exists:
 the matching board had to pad a three-word mistakes list with unrelated words.
 
 Both sessions expose `missesByPairID` and `cleanSolvesByPairID` in the same
-shape, which is what lets one `MistakeLog` and one review screen serve both.
+shape, which is what lets one `LessonResults` and one review screen serve both.
 
 ## The mistakes list
 

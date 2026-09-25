@@ -1,8 +1,8 @@
 import Foundation
 
-/// One place for the `@AppStorage` keys and their defaults, so a screen reading a setting
-/// and a screen writing it cannot drift apart on either.
-enum Preferences {
+/// One place for the `@AppStorage` keys, so a screen reading a setting and a screen
+/// writing it cannot drift apart. Changing a key strands every saved value under it.
+nonisolated enum Preferences {
     enum Key {
         static let speechStrictness = "speechStrictness"
         static let showsPinyin = "showsPinyinInLessons"
@@ -12,14 +12,4 @@ enum Preferences {
 
     static let matchingRoundsRange = 5...20
     static let drillCardLimitRange = 5...40
-    static let defaultDrillCardLimit = 20
-
-    static var strictness: MatchStrictness {
-        let raw = UserDefaults.standard.string(forKey: Key.speechStrictness)
-        return raw.flatMap(MatchStrictness.init(rawValue:)) ?? .default
-    }
-
-    static var drillCardLimit: Int {
-        UserDefaults.standard.object(forKey: Key.drillCardLimit) as? Int ?? defaultDrillCardLimit
-    }
 }

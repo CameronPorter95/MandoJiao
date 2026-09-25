@@ -72,15 +72,15 @@ the whole drill.
 
 ## Checking behaviour without the app
 
-The pure types — `AnswerGrader`, `MatchBoard`, both builders, `MistakeLog` — can
+The pure types (`AnswerGrader`, `MatchBoard`, both builders, `MistakeUpdate`) can
 be compiled into a command-line program with `swiftc` and run directly. This is
 how reported transcripts get replayed through all four strictness levels before
 deciding anything. Far quicker than a simulator round trip, and it produces real
 numbers instead of an estimate.
 
 ```sh
-swiftc -o check MandoJiao/Models/WordPair.swift MandoJiao/Speech/AnswerGrader.swift \
-    MandoJiao/Speech/MatchStrictness.swift MandoJiao/Speech/SpeechRecognising.swift main.swift
+swiftc -o check MandoJiao/Vocabulary/Domain/WordPair.swift MandoJiao/Drill/Domain/AnswerGrader.swift \
+    MandoJiao/Drill/Domain/MatchStrictness.swift MandoJiao/Drill/Domain/SpeechRecognising.swift main.swift
 ```
 
 ## The app icon is generated
@@ -116,3 +116,24 @@ and the test says which.
 
 Commit messages carry the reasoning. `git log` is the record of why grading works
 the way it does, including the things that were tried and did not work.
+
+## Traps found moving to layers
+
+- **Protocols pick up the default isolation too.** Under
+  `SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor` a plain `protocol` is main-actor
+  isolated, and an `actor` cannot conform to it. Domain and data protocols are
+  declared `nonisolated protocol`, and domain types `nonisolated struct`. Extensions
+  on them need `nonisolated extension` as well; they do not inherit it.
+- **Never create a version 1 model object in a process that has opened version 2.**
+  SwiftData resolves `VocabularySchemaV1.Deck` to version 2's `Deck` entity and
+  throws on the missing `uuid`. The migration test migrates a copy of a real store
+  written by the old build (`MandoJiaoTests/Fixtures/VocabularyV1.store`) instead.
+- **A test that blocks the main actor breaks the timing tests.** Every suite shares
+  the main actor, and `EndpointingTests` needs a 100ms sleep to wake before a 150ms
+  window. The migration test opens an on-disk store synchronously, which starved it
+  on every run. Heavy synchronous work goes in a `nonisolated` suite.
+- **The simulator refuses back-to-back launches sometimes** ("Application failed
+  preflight checks", "Busy"). The run reports zero tests. Wait a few seconds and run
+  again; it is not a test failure.
+- **Xcode 27 did not resolve `name=iPhone 17 Pro`** as a destination here. Use the
+  simulator's id from `xcrun simctl list devices available`.

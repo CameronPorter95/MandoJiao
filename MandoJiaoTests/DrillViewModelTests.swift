@@ -210,8 +210,8 @@ struct DrillViewModelTests {
         drill.viewModel.send(.typedAnswerSubmitted("shui"))
 
         #expect(await waitUntil { drill.audio.events == ["enter", "exit", "fanfare"] })
-        #expect(drill.recorded.count == 1)
-        #expect(drill.recorded.first?.cleanSolves == [water.id: 1])
+        #expect(await waitUntil { await drill.recorded().count == 1 })
+        #expect(await drill.recorded().first?.cleanSolves == [water.id: 1])
     }
 
     @Test("closing after finishing does not record the results twice")
@@ -224,7 +224,8 @@ struct DrillViewModelTests {
         drill.viewModel.send(.closeTapped)
 
         #expect(await drill.effects.contains(.close))
-        #expect(drill.recorded.count == 1)
+        await settle()
+        #expect(await drill.recorded().count == 1)
     }
 
     @Test("practising again starts over and takes the audio session back")
@@ -262,11 +263,35 @@ struct DrillViewModelTests {
 
         drill.viewModel.send(.closeTapped)
         #expect(drill.viewModel.state.isConfirmingQuit)
-        #expect(drill.recorded.isEmpty)
+        await settle()
+        #expect(await drill.recorded().isEmpty)
 
         drill.viewModel.send(.quitConfirmed)
         #expect(await drill.effects.contains(.close))
-        #expect(drill.recorded.first?.misses == [water.id: 1])
+        #expect(await waitUntil { await drill.recorded().first?.misses == [water.id: 1] })
+    }
+
+    @Test("a failed save is shown and logged, and the drill still closes")
+    func failedSave() async {
+        let drill = Drill(cards: [water, phone])
+        await drill.repository.failWrites()
+        await drill.appear()
+        for _ in 0..<3 { drill.viewModel.send(.typedAnswerSubmitted("x")) }
+
+        drill.viewModel.send(.closeTapped)
+        drill.viewModel.send(.quitConfirmed)
+
+        #expect(await drill.effects.contains(.close))
+        #expect(await drill.effects.contains(.showError(.recordResultsFailed(FakeVocabularyRepository.failure))))
+    }
+
+    @Test("the card limit and strictness come from settings")
+    func settings() async {
+        let drill = Drill(cards: [water, phone, green], settings: DrillSettings(strictness: .strict, cardLimit: 2))
+        await drill.appear()
+
+        #expect(drill.viewModel.state.lesson?.plan.cardCount == 2)
+        #expect(drill.viewModel.state.lesson?.strictness == .strict)
     }
 
     @Test("cancelling a quit keeps the drill going")
@@ -281,7 +306,7 @@ struct DrillViewModelTests {
 
         #expect(!drill.viewModel.state.isConfirmingQuit)
         #expect(!drill.effects.effects.contains(.close))
-        #expect(drill.recorded.isEmpty)
+        #expect(await drill.recorded().isEmpty)
     }
 }
 
@@ -292,16 +317,16 @@ private final class Drill {
     let viewModel: DrillViewModel
     let recogniser: FakeRecogniser
     let audio = FakeAudio()
-    let effects: EffectLog
-    private(set) var recorded: [(misses: [UUID: Int], cleanSolves: [UUID: Int])] = []
+    let effects: EffectLog<DrillEffect>
+    let repository = FakeVocabularyRepository()
 
     /// Settles as soon as anything has been heard, and runs out otherwise.
-    static let settleOnSpeech: DrillViewModel.WaitForEnd = { transcript in
+    nonisolated static let settleOnSpeech: DrillViewModel.WaitForEnd = { transcript in
         transcript().isEmpty ? .reachedLimit : .settled
     }
 
     /// Keeps listening until something stops it.
-    static let untilCancelled: DrillViewModel.WaitForEnd = { _ in
+    nonisolated static let untilCancelled: DrillViewModel.WaitForEnd = { _ in
         while !Task.isCancelled { try? await Task.sleep(for: .milliseconds(5)) }
         return .reachedLimit
     }
@@ -311,25 +336,25 @@ private final class Drill {
         availability: SpeechAvailability = .ready,
         heard: [String] = [],
         advanceDelay: Duration = .milliseconds(1),
-        waitForEnd: @escaping DrillViewModel.WaitForEnd = settleOnSpeech
+        waitForEnd: @escaping DrillViewModel.WaitForEnd = settleOnSpeech,
+        settings: DrillSettings = .default
     ) {
         recogniser = FakeRecogniser(preparesTo: availability, heard: heard)
-        var record: DrillViewModel.RecordResults = { _, _ in }
         viewModel = DrillViewModel(
             request: LessonRequest(title: "t", pool: cards),
             recogniser: recogniser,
             audioSession: audio,
             sounds: audio,
-            strictness: .default,
-            cardLimit: 20,
-            recordResults: { record($0, $1) },
+            getSettings: GetDrillSettingsUseCase(repository: FixedDrillSettings(value: settings)),
+            recordResults: RecordLessonResultsUseCase(repository: repository),
             advanceDelay: advanceDelay,
             waitForEnd: waitForEnd
         )
-        effects = EffectLog(viewModel.effects)
-        record = { [weak self] misses, cleanSolves in
-            self?.recorded.append((misses, cleanSolves))
-        }
+        effects = EffectLog(viewModel.effects())
+    }
+
+    func recorded() async -> [LessonResults] {
+        await repository.recordedResults
     }
 
     func appear() async {
@@ -394,42 +419,7 @@ private final class FakeAudio: AudioSessionSwitching, MatchSoundPlaying {
     func playLessonComplete() { events.append("fanfare") }
 }
 
-@MainActor
-private final class EffectLog {
-    private(set) var effects: [DrillEffect] = []
-    private var task: Task<Void, Never>?
-
-    init(_ stream: AsyncStream<DrillEffect>) {
-        task = Task { [weak self] in
-            for await effect in stream { self?.effects.append(effect) }
-        }
-    }
-
-    deinit { task?.cancel() }
-
-    func contains(_ effect: DrillEffect) async -> Bool {
-        await waitUntil { self.effects.contains(effect) }
-    }
-
-    func equals(_ expected: [DrillEffect]) async -> Bool {
-        await waitUntil { self.effects == expected }
-    }
-}
-
-@MainActor
-private func waitUntil(
-    timeout: Duration = .seconds(2),
-    _ condition: () -> Bool
-) async -> Bool {
-    let deadline = ContinuousClock.now.advanced(by: timeout)
-    while !condition() {
-        guard ContinuousClock.now < deadline else { return false }
-        try? await Task.sleep(for: .milliseconds(5))
-    }
-    return true
-}
-
-/// Long enough for any queued work to land, for asserting that something did not happen.
-private func settle() async {
-    try? await Task.sleep(for: .milliseconds(100))
+private struct FixedDrillSettings: DrillSettingsRepository {
+    let value: DrillSettings
+    func settings() -> DrillSettings { value }
 }

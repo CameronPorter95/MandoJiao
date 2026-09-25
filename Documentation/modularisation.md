@@ -337,7 +337,7 @@ source layout. Not one per layer.
 
 **`{X}TestSupport`** holds shared test doubles and fixtures, depends on `{X}Domain`, and
 is depended on by `{X}Tests` and peers' tests. `ScriptedRecogniser` belongs in
-`DrillTestSupport`; a fake `WordRepository` belongs in `VocabularyTestSupport`. A fake
+`DrillTestSupport`; a fake `VocabularyRepository` belongs in `VocabularyTestSupport`. A fake
 used by exactly one test file stays private to that file; hoist when a second consumer
 appears.
 

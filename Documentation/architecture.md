@@ -134,7 +134,7 @@ Swift; it does **not** go to KMP.
 | **Local source** (protocol + impl) | Talks to the store. A `@ModelActor`, so its `ModelContext` is private and off the main actor (see [decision 11](#11-the-local-source-keeps-its-context-private)). Returns domain models or plain values, never entities. |
 | **Network source** (protocol + impl) | Does not exist. MandoJiao has no backend. If sync arrives, it slots in behind the repository and nothing above the data layer changes. That is the point of [decision 1](#1-the-repository-is-a-domain-protocol-orchestration-is-a-data-detail). |
 | **Platform service** | Implements a seam protocol: `DictationRecogniser` for `SpeechRecognising`, `ToneEngine` for `MatchSoundPlaying`. Owns the framework it wraps and nothing else. |
-| **Repository implementation** | Orchestrates the sources and **classifies raw errors into domain errors**. The only place that knows the store exists. |
+| **Repository implementation** | Orchestrates the sources and **classifies raw errors into domain errors**: a `LocalStoreError` from the local source becomes `persistence`, anything else `unexpected`. The only place that knows the store exists. |
 
 ### UI layer: presentation (platform-specific)
 
@@ -146,7 +146,7 @@ headlessly on macOS (see [principle 7](#guiding-principles)).
 | --- | --- |
 | **State** | `Equatable` value type. The single source of truth for the screen. |
 | **Action** | An enum of user intents (`onAppear`, `submit`, `tapMicrophone`, `retry`, …). |
-| **Effect** | An enum of *one-shot* side effects (show an error, play a haptic, dismiss) delivered over an `AsyncStream`. |
+| **Effect** | An enum of *one-shot* side effects (show an error, fire a haptic, navigate, dismiss) delivered through an `EffectChannel`. A presented sheet or dialog is not an effect: it lasts until dismissed, so it is state. |
 | **ViewModel** | `@Observable @MainActor`. Reduces actions into state, launches use cases, drives seams, emits effects. Mints the **display error** from the domain error. `DrillViewModel` is the reference. |
 | **Route** | Owns the view model and consumes its effects; wires in navigation, scene phase, and error presentation. The only stateful view. |
 | **Screen** | Stateless. A pure function of `state` plus an `onAction` closure. Previewable. |
@@ -253,11 +253,10 @@ So the flow is: the data layer *classifies* the cause (portable), and the
 presentation layer *decides display and logging* from that classification
 (platform-specific). Neither concern leaks into the other.
 
-Today the app mostly has no failure paths to speak of, because it swallows them:
-`MistakeLog` saves with `try?`, and a recogniser that fails to start quietly returns
-to idle. The split matters the moment a failure should be shown or counted, and a
-crash reporter added later plugs into `LoggedError.log()` without touching a view
-model.
+Store writes used to be saved with `try?`, so a failure vanished. They now reach the
+user as an alert and the device log through `ErrorLog`, and a crash reporter added
+later plugs into that seam without touching a view model. `VocabularyError.performing`
+is the one place the mint, log, show sequence is written.
 
 > **KMP:** the domain error becomes a Kotlin `sealed class`; only the repository's
 > mapping (raw platform error to classification) is rewritten per platform. The view
@@ -282,9 +281,9 @@ the change goes through a use case to the repository, which writes the store in 
 same operation. Views never call `context.insert`, `context.delete` or
 `context.save`.
 
-Why: today four views mutate the store directly and `MistakeLog` fetches every word
-to update a few. Routing writes through one type means one place to get the save
-right, one place to classify its failure, and one place a future sync hooks in.
+Why: four views used to mutate the store directly. Routing writes through one type
+means one place to get the save right, one place to classify its failure, and one
+place a future sync hooks in.
 
 ### 7. Observing the store without `@Query`
 
@@ -293,13 +292,17 @@ the view directly to the entity type. Its replacement is a repository method tha
 returns an `AsyncStream` of domain models, re-emitting after each write:
 
 ```swift
-protocol WordRepository: Sendable {
-    func words() -> AsyncStream<[WordPair]>
-    func recordResults(misses: [UUID: Int], cleanSolves: [UUID: Int]) async throws
+nonisolated protocol VocabularyRepository: Sendable {
+    func vocabulary() -> AsyncStream<Vocabulary>
+    func recordResults(_ results: LessonResults) async throws
+    // …the other writes
 }
 ```
 
-The view model consumes the stream in `.onAppear` and folds it into state. This is
+Each subscription starts with the current snapshot, and every write through the
+repository publishes a new one to every subscriber, so the home screen, the library
+and a deck open at the same time stay in step. The view model subscribes on
+`.appeared` and cancels on `.disappeared`, folding each snapshot into state. This is
 the one place the pattern costs more than it saves in a small app: `@Query` is
 genuinely less code. The trade is taken for testability and because an observable
 stream is also the KMP shape (`Flow` bridges to `AsyncSequence`).
@@ -314,7 +317,7 @@ Why: a stateless screen is trivial to preview and to test in isolation, and all 
 stateful wiring is quarantined in one place. `DrillScreen` and `DrillRoute` are the
 reference.
 
-### 9. Effects over `AsyncStream`; state over the observable property
+### 9. Effects through a channel; state over the observable property
 
 State is durable and drives rendering; effects are one-shot (show error, fire a
 haptic, dismiss). They use different channels so a one-shot action does not replay
@@ -325,13 +328,19 @@ second identical failure would show nothing. Two yields are two events. This is
 exactly what the drill's old `feedbackToken` worked around: two wrong answers in a
 row leave `phase` equal, so a counter had to force the haptic.
 
-`AsyncStream` is the transport because it buffers: an effect yielded while the `Route`
-is still sending `.onAppear` survives until the loop starts. Two constraints come with
-it, neither compiler-checked ([U5](feature-checklist.md#ui-layer-state-actions-effects),
-U6). An element goes to exactly one consumer, so only the `Route` may iterate. And
-cancelling the iterating task ends the stream permanently rather than leaving it open
-to a later consumer, so the view model must not outlive the `Route`; holding it as
-`@State` there gives producer and consumer one lifetime.
+The transport is an `EffectChannel`, not a bare `AsyncStream` held by the view model,
+and this is a deliberate departure from the pattern this document was ported from. A
+Route consumes effects in `.task`, which SwiftUI cancels whenever the view disappears,
+and that includes another screen being pushed over it. Cancelling a consumer ends an
+`AsyncStream` for good, so a home screen that had pushed the library once would
+silently drop every effect afterwards: no navigation, no error, no log.
+
+So `effects()` is a method. Each appearance takes a fresh stream, which replaces the
+previous one, and an effect sent while nobody is listening is held for the next
+listener. One consumer at a time is still the rule
+([U5](feature-checklist.md#ui-layer-state-actions-effects)), but it is now enforced by
+the channel rather than by convention, and the view model's lifetime no longer has to
+match one `.task`'s.
 
 ### 10. Every source and platform service sits behind a protocol
 
@@ -362,6 +371,14 @@ a feature entity.
 
 Why: SwiftData has no single model file, so unlike Core Data there is no readability
 reason to co-locate entities in Core. Entities live with the feature that owns them.
+
+Today `Vocabulary` is the only package that persists, so `VocabularyFactory.makeContainer`
+builds the container on its own. Composition becomes real when a second package
+stores something.
+
+Each package's schema is versioned (`VocabularySchemaV1`, `V2`, and a
+`SchemaMigrationPlan`), and a new version keeps every previous one in code, exactly as
+shipped, so an old store can still be opened and migrated.
 
 ### 13. Dependency injection via a composition-root factory
 
@@ -438,10 +455,12 @@ module boundary.
 > signal, not a style nit.
 
 > [!NOTE]
-> The drill is the worked example for the UI layer: `MandoJiao/Drill/` holds
-> `DrillState`, `DrillAction`, `DrillEffect`, `DrillViewModel`, `DrillRoute`,
-> `DrillScreen`, `DrillNavigation` and `DrillFactory`, with `DrillLesson` as its
-> domain value. It is still in folders, and has no repository yet. See
+> Two worked examples, still in folders laid out like the targets to come.
+> `MandoJiao/Vocabulary/` is the full vertical: domain models, use cases and a
+> repository protocol in `Domain/`, the `@ModelActor` local source, repository and
+> versioned schema in `Data/`, four screens in `UI/`, and `VocabularyFactory` in `DI/`.
+> `MandoJiao/Drill/` shows a view model driving platform seams (the recogniser, the
+> audio session) and a settings repository. See
 > [modularisation-migration.md](modularisation-migration.md#sequencing).
 >
 > Full rules and the target dependency table are in
@@ -457,7 +476,8 @@ Each layer is tested in isolation through its seams. Tests use Swift Testing.
 | --- | --- | --- |
 | **Domain rules** | Nothing | Grading at every strictness, board dealing, plan building. The existing `AnswerGraderTests`, `StrictnessTests`, `MatchBoardTests` and builder tests are already this. |
 | **Repository** | The local source (protocol fake) | Mapping, error classification (`persistence` vs `unexpected`), cancellation propagating. |
-| **Local source** | Nothing, use a real in-memory SwiftData container | Round-trip, the mistakes-list arithmetic, deck membership. `MistakeLogTests` is already this. |
+| **Local source** | Nothing, use a real in-memory SwiftData container, through the repository | Round-trip, the mistakes-list arithmetic, deck membership. `VocabularyRepositoryTests`. |
+| **Schema migration** | Nothing, migrate a copy of a real store from the previous version | Every record survives, and the migration's own fix-ups hold. `VocabularyMigrationTests`. |
 | **View model** | The use cases (via a fake repository) + the recogniser + injected timing | Action → state, the three-attempt rule, auto-listen after a correct answer, the heard-nothing rule, error effect emission. |
 
 Notes:

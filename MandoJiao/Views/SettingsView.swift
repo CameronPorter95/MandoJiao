@@ -4,7 +4,7 @@ struct SettingsView: View {
     @AppStorage(Preferences.Key.speechStrictness) private var strictnessRaw = MatchStrictness.default.rawValue
     @AppStorage(Preferences.Key.showsPinyin) private var showsPinyin = false
     @AppStorage(Preferences.Key.matchingRounds) private var matchingRounds = 10
-    @AppStorage(Preferences.Key.drillCardLimit) private var drillCardLimit = Preferences.defaultDrillCardLimit
+    @AppStorage(Preferences.Key.drillCardLimit) private var drillCardLimit = DrillSettings.defaultCardLimit
 
     private var strictness: MatchStrictness {
         MatchStrictness(rawValue: strictnessRaw) ?? .default

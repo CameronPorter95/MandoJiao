@@ -1,39 +1,10 @@
-import SwiftData
 import SwiftUI
-
-/// What a lesson is drawn from. Kept as detached pairs so the lesson is stable
-/// even if the library is edited while it is open.
-struct LessonRequest: Identifiable, Hashable {
-    let id: UUID
-    let title: String
-    let pool: [WordPair]
-
-    init(id: UUID = UUID(), title: String, pool: [WordPair]) {
-        self.id = id
-        self.title = title
-        self.pool = pool
-    }
-
-    var canStart: Bool { pool.count >= LessonBuilder.pairsPerExercise }
-}
-
-/// Which exercise a lesson opens into.
-enum LessonRoute: Identifiable, Hashable {
-    case matching(LessonRequest)
-    case speaking(LessonRequest)
-
-    var id: UUID {
-        switch self {
-        case .matching(let request), .speaking(let request): return request.id
-        }
-    }
-}
 
 struct LessonView: View {
     let request: LessonRequest
+    /// Fire and forget: the lesson does not wait on the store.
+    let saveResults: (LessonResults) -> Void
     let onClose: () -> Void
-
-    @Environment(\.modelContext) private var context
 
     @State private var session: LessonSession?
     @State private var isConfirmingQuit = false
@@ -229,11 +200,7 @@ struct LessonView: View {
     private func recordResults() {
         guard let session, !didRecordResults else { return }
         didRecordResults = true
-        MistakeLog.apply(
-            misses: session.missesByPairID,
-            cleanSolves: session.cleanSolvesByPairID,
-            in: context
-        )
+        saveResults(LessonResults(misses: session.missesByPairID, cleanSolves: session.cleanSolvesByPairID))
     }
 
     private func feedback(for result: TapResult?) -> SensoryFeedback? {
@@ -253,6 +220,7 @@ struct LessonView: View {
 #Preview {
     LessonView(
         request: LessonRequest(title: "All words", pool: SampleVocabulary.previewPairs),
+        saveResults: { _ in },
         onClose: {}
     )
 }
