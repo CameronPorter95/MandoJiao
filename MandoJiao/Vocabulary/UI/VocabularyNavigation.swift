@@ -10,7 +10,7 @@ enum HomeDestination: Hashable {
 @MainActor
 struct HomeNavigation {
     var didRequestMatching: (LessonRequest) -> Void
-    var didRequestDrill: (LessonRequest) -> Void
+    var didRequestSpeaking: (LessonRequest) -> Void
 }
 
 @MainActor

@@ -2,7 +2,7 @@ import Foundation
 
 /// Hands the audio session to the microphone and back.
 ///
-/// Foundation-only, like `MatchSoundPlaying`, so the drill's logic compiles and can be
+/// Foundation-only, like `MatchSoundPlaying`, so the speaking lesson's logic compiles and can be
 /// driven where `AVAudioSession` does not exist. `ToneEngine` is the implementation.
 @MainActor
 protocol AudioSessionSwitching: AnyObject {

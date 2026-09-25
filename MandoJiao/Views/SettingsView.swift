@@ -1,20 +1,20 @@
 import SwiftUI
 
 struct SettingsView: View {
-    @AppStorage(Preferences.Key.speechStrictness) private var strictnessRaw = MatchStrictness.default.rawValue
+    @AppStorage(Preferences.Key.speechStrictness) private var strictnessRaw = AnswerStrictness.default.rawValue
     @AppStorage(Preferences.Key.showsPinyin) private var showsPinyin = false
     @AppStorage(Preferences.Key.matchingRounds) private var matchingRounds = 10
-    @AppStorage(Preferences.Key.drillCardLimit) private var drillCardLimit = DrillSettings.defaultCardLimit
+    @AppStorage(Preferences.Key.speakingCardLimit) private var speakingCardLimit = SpeakingSettings.defaultCardLimit
 
-    private var strictness: MatchStrictness {
-        MatchStrictness(rawValue: strictnessRaw) ?? .default
+    private var strictness: AnswerStrictness {
+        AnswerStrictness(rawValue: strictnessRaw) ?? .default
     }
 
     var body: some View {
         List {
             Section {
                 Picker("Strictness", selection: $strictnessRaw) {
-                    ForEach(MatchStrictness.allCases) { level in
+                    ForEach(AnswerStrictness.allCases) { level in
                         Text(level.title).tag(level.rawValue)
                     }
                 }
@@ -44,14 +44,14 @@ struct SettingsView: View {
                     in: Preferences.matchingRoundsRange
                 )
                 Stepper(
-                    "Drill card limit: \(drillCardLimit)",
-                    value: $drillCardLimit,
-                    in: Preferences.drillCardLimitRange
+                    "Drill card limit: \(speakingCardLimit)",
+                    value: $speakingCardLimit,
+                    in: Preferences.speakingCardLimitRange
                 )
             } header: {
                 Text("Lesson length")
             } footer: {
-                Text("A matching lesson is this many rounds of \(LessonBuilder.pairsPerExercise) pairs. A mistakes drill is one card per word, stopping at the limit when the list is longer.")
+                Text("A matching lesson is this many rounds of \(MatchingPlanBuilder.pairsPerExercise) pairs. A mistakes drill is one card per word, stopping at the limit when the list is longer.")
             }
         }
         .navigationTitle("Settings")

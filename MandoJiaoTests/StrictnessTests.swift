@@ -20,7 +20,7 @@ struct StrictnessTests {
 
     @Test("a homophone written differently already passed, at every level")
     func homophonePasses() {
-        for level in MatchStrictness.allCases {
+        for level in AnswerStrictness.allCases {
             #expect(AnswerGrader.isCorrect("完城", for: complete, strictness: level))
         }
     }
@@ -33,7 +33,7 @@ struct StrictnessTests {
         // A recogniser pads one word into something sentence-shaped. The speaker did not
         // say 了, so failing them for it would be judging the recogniser's phrasing
         // rather than their pronunciation.
-        for level in MatchStrictness.allCases {
+        for level in AnswerStrictness.allCases {
             #expect(AnswerGrader.isCorrect(answer, for: complete, strictness: level))
         }
     }
@@ -74,7 +74,7 @@ struct StrictnessTests {
 
     @Test("a different word is still wrong at every level")
     func genuinelyWrongAnswers() {
-        for level in MatchStrictness.allCases {
+        for level in AnswerStrictness.allCases {
             // The other failure reported: wanzuo heard for wancheng.
             #expect(!AnswerGrader.isCorrect("wanzuo", for: complete, strictness: level))
             #expect(!AnswerGrader.isCorrect("茶", for: water, strictness: level))
@@ -168,12 +168,12 @@ struct StrictnessTests {
 
     @Test("the default level is Relaxed")
     func defaultLevel() {
-        #expect(MatchStrictness.default == .relaxed)
+        #expect(AnswerStrictness.default == .relaxed)
     }
 
     @Test("levels are ordered tightest to loosest")
     func ordering() {
-        #expect(MatchStrictness.allCases == [.strict, .balanced, .relaxed, .lenient])
+        #expect(AnswerStrictness.allCases == [.strict, .balanced, .relaxed, .lenient])
     }
 
     @Test(

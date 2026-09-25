@@ -49,9 +49,9 @@ final class HomeViewModel {
             requestMatching(title: "All words", pool: state.vocabulary.usableWords.pairs)
 
         case .practiseMistakesTapped:
-            // A drill is one card per word, so any number of mistakes works. No
+            // A speaking lesson is one card per word, so any number of mistakes works. No
             // five-word floor, and nothing is padded in to fill a round.
-            effectChannel.send(.requestDrill(LessonRequest(title: "Mistakes", pool: state.mistakeWords.pairs)))
+            effectChannel.send(.requestSpeaking(LessonRequest(title: "Mistakes", pool: state.mistakeWords.pairs)))
 
         case .practiseDeckTapped(let id):
             guard let deck = state.vocabulary.deck(id: id) else { return }

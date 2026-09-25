@@ -51,6 +51,6 @@ enum HomeAction: Equatable {
 
 enum HomeEffect: Equatable, Sendable {
     case requestMatching(LessonRequest)
-    case requestDrill(LessonRequest)
+    case requestSpeaking(LessonRequest)
     case showError(VocabularyError)
 }

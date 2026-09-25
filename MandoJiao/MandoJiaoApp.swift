@@ -5,7 +5,7 @@ import SwiftUI
 @main
 struct MandoJiaoApp: App {
     private let vocabulary: VocabularyFactory
-    private let drill: DrillFactory
+    private let speaking: SpeakingFactory
 
     init() {
         // The matching lesson reaches for sound through MatchSounds so its logic stays
@@ -24,10 +24,10 @@ struct MandoJiaoApp: App {
             SampleVocabulary.seedIfNeeded(container.mainContext)
             vocabulary = VocabularyFactory(
                 container: container,
-                minimumMatchingWords: LessonBuilder.pairsPerExercise,
-                quickPracticeRounds: LessonBuilder.exercisesPerLesson
+                minimumMatchingWords: MatchingPlanBuilder.pairsPerExercise,
+                quickPracticeRounds: MatchingPlanBuilder.exercisesPerLesson
             )
-            drill = DrillFactory(recordResults: vocabulary.recordLessonResults)
+            speaking = SpeakingFactory(recordResults: vocabulary.recordLessonResults)
         } catch {
             fatalError("Could not open the vocabulary store: \(error)")
         }
@@ -35,7 +35,7 @@ struct MandoJiaoApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView(vocabulary: vocabulary, drill: drill)
+            ContentView(vocabulary: vocabulary, speaking: speaking)
         }
     }
 }

@@ -15,7 +15,7 @@ repeating mistakes already made.
 ## Architecture (target)
 
 The app is moving to MVI + Clean Architecture in SPM packages, with a domain layer
-shaped for possible KMP sharing. `MandoJiao/Drill/` and `MandoJiao/Vocabulary/` are
+shaped for possible KMP sharing. `MandoJiao/Speaking/` and `MandoJiao/Vocabulary/` are
 layered (`Domain/`, `Data/`, `UI/`, `DI/`) and are the reference; Vocabulary shows the
 repository and the store. See `Documentation/modularisation-migration.md` for the
 state and the order.
@@ -27,7 +27,7 @@ state and the order.
 - `Documentation/code-comments.md`: when a comment is warranted, and how long
 
 Target packages: `Core` (`CoreDomain`, `CorePersistence`, `CoreAudio`,
-`CoreDesignSystem`, `CoreUI`), then `Vocabulary`, `Matching`, `Drill`, `Settings`,
+`CoreDesignSystem`, `CoreUI`), then `Vocabulary`, `Matching`, `Speaking`, `Settings`,
 each with up to four targets: `{X}Domain`, `{X}Data`, `{X}UI`, `{X}DI`. The rules most
 easily broken:
 
@@ -79,11 +79,11 @@ looking at real data, and several have tests pinning the consequence.
 - **Homophones pass.** Inherent to grading audio. Pinned by a test.
 - **A word inside a longer phrase counts at every level,** including Strict. The
   recogniser pads single words into phrases; the speaker never said `了`.
-- **The mistakes drill is speech, not matching.** It exists because the matching
+- **Mistakes are practised by speaking, not matching.** The speaking lesson exists because the matching
   board needed five pairs and padded short mistakes lists with unrelated words.
 - **Four strictness levels**, Relaxed by default. Raw values are storage, titles
   are display; rename titles freely, never raw values.
-- **The drill plays no per-card tones.** Two attempts to make them audible under
+- **The speaking lesson plays no per-card tones.** Two attempts to make them audible under
   `.measurement` failed. Haptics carry the feedback. Do not reintroduce them by
   weakening the audio session — recognition accuracy outranks tone volume, which
   was an explicit call by the owner. Pinned by a test.

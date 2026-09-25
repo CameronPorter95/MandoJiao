@@ -65,22 +65,22 @@ xcrun simctl launch <udid> com.cameronporter.MandoJiao
 xcrun simctl io <udid> screenshot out.png
 ```
 
-The drill's states are easier still: `DrillScreen` is a pure function of
-`DrillState`, so its previews show any state without a microphone, and
-`DrillViewModel` takes any `SpeechRecognising`, so `ScriptedRecogniser` can drive
-the whole drill.
+The speaking lesson's states are easier still: `SpeakingScreen` is a pure function of
+`SpeakingState`, so its previews show any state without a microphone, and
+`SpeakingViewModel` takes any `SpeechRecognising`, so `ScriptedRecogniser` can drive
+the whole speaking lesson.
 
 ## Checking behaviour without the app
 
-The pure types (`AnswerGrader`, `MatchBoard`, both builders, `MistakeUpdate`) can
+The pure types (`AnswerGrader`, `MatchingBoard`, both builders, `MistakeUpdate`) can
 be compiled into a command-line program with `swiftc` and run directly. This is
 how reported transcripts get replayed through all four strictness levels before
 deciding anything. Far quicker than a simulator round trip, and it produces real
 numbers instead of an estimate.
 
 ```sh
-swiftc -o check MandoJiao/Vocabulary/Domain/WordPair.swift MandoJiao/Drill/Domain/AnswerGrader.swift \
-    MandoJiao/Drill/Domain/MatchStrictness.swift MandoJiao/Drill/Domain/SpeechRecognising.swift main.swift
+swiftc -o check MandoJiao/Vocabulary/Domain/WordPair.swift MandoJiao/Speaking/Domain/AnswerGrader.swift \
+    MandoJiao/Speaking/Domain/AnswerStrictness.swift MandoJiao/Speaking/Domain/SpeechRecognising.swift main.swift
 ```
 
 ## The app icon is generated
@@ -102,7 +102,7 @@ main-actor isolated unless marked otherwise.
 
 The recurring trap: **a default argument is evaluated in the caller's context**,
 so `static let` values used as defaults must be `nonisolated`. This has caught
-`MatchSounds.shared`, `MatchStrictness.default`, `ToneEngine.scale` and
+`MatchSounds.shared`, `AnswerStrictness.default`, `ToneEngine.scale` and
 `Endpointing`'s constants. The warning is "main actor-isolated static property
 ... can not be referenced from a nonisolated context", and it is an error under
 Swift 6.

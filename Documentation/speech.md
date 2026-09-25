@@ -37,8 +37,8 @@ will not match the framework's own `zh-CN`.
 
 ## The seam
 
-`SpeechRecognising` is a protocol in a Foundation-only file. `DrillViewModel`
-drives it and hands each `SpeechOutcome` to `DrillLesson`, a plain value that never
+`SpeechRecognising` is a protocol in a Foundation-only file. `SpeakingViewModel`
+drives it and hands each `SpeechOutcome` to `SpeakingLesson`, a plain value that never
 sees the recogniser. Typed answers arrive the same way. That is what lets the
 three-attempt rule and the microphone rules (carrying on after a correct answer,
 not counting silence after an automatic listen) be tested with a fake recogniser,
@@ -90,9 +90,9 @@ Silence after an automatic start does not spend an attempt. The microphone can
 open before the word has been read, so hearing nothing there means "not ready
 yet". A tap is a deliberate go, and silence after one still counts.
 
-## The audio session, and why a drill is silent
+## The audio session, and why a speaking lesson is silent
 
-A drill runs `.playAndRecord` in `.measurement` mode with `.defaultToSpeaker`.
+A speaking lesson runs `.playAndRecord` in `.measurement` mode with `.defaultToSpeaker`.
 
 - `.measurement` stays. It is what leaves the recogniser's input unprocessed.
 - `.defaultToSpeaker` is not optional: under `.playAndRecord` output otherwise
@@ -104,15 +104,15 @@ failed: gain hit the clipping ceiling at about 2.9× the match tone's base, and
 shifting the tones up an octave into the most sensitive band of hearing helped
 but not enough.
 
-So **the drill plays no per-card tones at all.** Haptics still mark every right
+So **the speaking lesson plays no per-card tones at all.** Haptics still mark every right
 and wrong answer, so feedback is not lost, only its audio. The completion fanfare
-does play, because by then the drill is over: the view model hands the session back
+does play, because by then the speaking lesson is over: the view model hands the session back
 with `await exitRecordingMode()` before playing it, and it is heard at the normal
 level. That call is awaitable for exactly this reason — playing during the switch
 collapses the arpeggio to whichever note lands after the engine returns.
 
 The session is only taken over when the microphone is actually usable, so a
-typed-only drill leaves it alone. Practising again after finishing reclaims it,
+typed-only speaking lesson leaves it alone. Practising again after finishing reclaims it,
 since finishing hands it back.
 
 Session configuration runs off the main thread. `setActive` can block long enough

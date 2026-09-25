@@ -7,7 +7,7 @@ the diff in front of you.
 
 Rules are stated here and justified there. Where an item links a decision, the
 reasoning lives in that decision and is not repeated. `MandoJiao/Vocabulary/` is the
-reference implementation for every layer, and `MandoJiao/Drill/` for a view model
+reference implementation for every layer, and `MandoJiao/Speaking/` for a view model
 driving platform seams; copying them is the fastest way to pass this list.
 
 Module and target dependency rules are not repeated here either; they are in
@@ -43,7 +43,7 @@ The project rules in [CLAUDE.md](../CLAUDE.md) apply everywhere, migrated or not
       board) is a domain rule type, not a use case.
 - [ ] **D4** Domain operations are untyped `async throws`. No typed throws, no
       completion handlers, no `Result` in the contract. A read of a local value that
-      cannot fail (`DrillSettingsRepository`) may be synchronous.
+      cannot fail (`SpeakingSettingsRepository`) may be synchronous.
       ([why](architecture.md#3-untyped-throws-not-typed-throws))
 - [ ] **D5** The domain error is a bare `Sendable` enum classifying the *cause*
       (`persistence`, `unexpected`, plus any expected outcome the UI must branch on),
@@ -148,7 +148,7 @@ This is the section most easily missed, because nothing about it fails to compil
       ```swift
       catch is CancellationError { /* cancelled, not a failure */ }
       ```
-      No state change, no log, no effect. A drill closed mid-listen is not something the
+      No state change, no log, no effect. A speaking lesson closed mid-listen is not something the
       user did wrong. ([why](architecture.md#3-untyped-throws-not-typed-throws))
 - [ ] **E4** No view model *ends* its catch ladder on a typed catch. `catch let error as
       XDomainError` as the last rung leaves every other throw to vanish into the enclosing
@@ -201,7 +201,7 @@ Rules stated and justified in [modularisation.md](modularisation.md#navigation).
 - [ ] **N1** The screen receives a `{Screen}Navigation` value. It does not construct
       another package's screen inline.
 - [ ] **N2** Every closure is named for what happened, not where it goes.
-      `didRequestDrill`, `didFinishLesson`, `didClose`; never `presentSpeakLesson`,
+      `didRequestSpeaking`, `didFinishLesson`, `didClose`; never `presentSpeakLesson`,
       `showX`, `navigateToY`.
 - [ ] **N3** No navigation closure carries a `= { }` or `= { _ in }` default at its
       declaration site. A defaulted closure compiles, silently does nothing at runtime,

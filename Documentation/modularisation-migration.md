@@ -8,7 +8,7 @@ is the part that changes.
 
 ## Status
 
-**Steps 1 and 2 are done: the drill and the vocabulary are layered, still in one
+**Steps 1 and 2 are done: the speaking lesson and the vocabulary are layered, still in one
 target.** 159 tests in 18 suites. Work happens on `refactor/mvi`.
 
 ```
@@ -16,7 +16,7 @@ MandoJiao/
   Core/        Domain/ (DomainErrorModel, ErrorLog)  Persistence/ (LocalStoreError)
                UI/ (LoggedError, EffectChannel, errorAlert)
   Vocabulary/  Domain/  Data/  UI/  DI/     complete vertical, the reference
-  Drill/       Domain/  Data/  UI/  DI/  TestSupport/
+  Speaking/    Domain/  Data/  UI/  DI/  TestSupport/
   Game/  Views/  Audio/  Models/            Matching, Settings and shared audio, unmigrated
 ```
 
@@ -34,8 +34,8 @@ and a renamed deck added through sqlite, was upgraded by the new build with ever
 deck, date and membership byte-identical and six distinct deck ids. The same check is
 now a test against a fixture store from that build.
 
-**Drill.** Results go through `RecordLessonResultsUseCase`, and strictness and the card
-limit come from `DrillSettingsRepository`, reading the same `Preferences.Key` strings
+**Speaking.** Results go through `RecordLessonResultsUseCase`, and strictness and the card
+limit come from `SpeakingSettingsRepository`, reading the same `Preferences.Key` strings
 the settings screen writes. A failed save is shown and logged.
 
 **Effects moved to `EffectChannel`.** A Route's `.task` is cancelled when a screen is
@@ -45,12 +45,12 @@ appearance a fresh stream and holds effects sent in between. See
 
 What does not match yet:
 
-- **Matching is unmigrated.** `LessonView` still reaches `ToneEngine.shared`,
-  `LessonSession` defaults to `MatchSounds.shared`, and settings are read with
+- **Matching is unmigrated.** `MatchingLessonView` still reaches `ToneEngine.shared`,
+  `MatchingLesson` defaults to `MatchSounds.shared`, and settings are read with
   `@AppStorage`. Its results go through the use case, from a closure in `ContentView`
   that logs a failure because there is no view model to show one.
 - **Settings is unmigrated.** It writes through `@AppStorage` under the same keys the
-  drill's settings repository reads.
+  speaking lesson's settings repository reads.
 - **`ContentView` still decides the presentation** of lessons itself, pending
   `AppNavigation`.
 
@@ -64,16 +64,16 @@ What does not match yet:
 | `Core/Persistence/*` | `CorePersistence` | |
 | `Core/UI/*` | `CoreUI` | |
 | `Vocabulary/{Domain,Data,UI,DI}/*` | `Vocabulary{Domain,Data,UI,DI}` | Done in folders. |
-| `Drill/{Domain,Data,UI,DI}/*` | `Drill{Domain,Data,UI,DI}` | Done in folders. |
-| `Drill/TestSupport/ScriptedRecogniser.swift` | `DrillTestSupport` | |
-| `Models/Preferences.swift` | keys shared by `DrillData`, `MatchingData` and `SettingsUI` | Keys and raw values unchanged. |
-| `Game/LessonPlan.swift`, `Game/MatchBoard.swift` | `MatchingDomain` | |
-| `Game/LessonSession.swift` | `MatchingUI` as `MatchingViewModel` | |
+| `Speaking/{Domain,Data,UI,DI}/*` | `Speaking{Domain,Data,UI,DI}` | Done in folders. |
+| `Speaking/TestSupport/ScriptedRecogniser.swift` | `SpeakingTestSupport` | |
+| `Models/Preferences.swift` | keys shared by `SpeakingData`, `MatchingData` and `SettingsUI` | Keys and raw values unchanged. |
+| `Game/MatchingPlan.swift`, `Game/MatchingBoard.swift` | `MatchingDomain` | |
+| `Game/MatchingLesson.swift` | `MatchingUI` as `MatchingViewModel` | |
 | `Audio/MatchSounds.swift`, `Audio/AudioSessionSwitching.swift` | `CoreDomain` | The `shared` global is deleted once matching migrates. |
 | `Audio/ToneEngine.swift` | `CoreAudio` | Also implements `AudioSessionSwitching`. |
 | `Theme.swift`, `Views/LessonProgressBar.swift` | `CoreDesignSystem` | |
 | `Views/LessonCompleteView.swift` | `CoreUI` | Two consumers. |
-| `Views/LessonView.swift`, `MatchBoardView.swift`, `WordTileView.swift` | `MatchingUI` | |
+| `Views/MatchingLessonView.swift`, `MatchingBoardView.swift`, `WordTileView.swift` | `MatchingUI` | |
 | `Views/SettingsView.swift` | `SettingsUI` | |
 | `MandoJiaoApp.swift`, `ContentView.swift` | `Application` | Opens the store, seeds it, registers `ErrorLog`, builds the factories. |
 
@@ -85,7 +85,7 @@ Layer in folders first, then extract the verticals that are layered, so the comp
 starts enforcing the boundaries while most of the app is still unmigrated. Each
 extraction is then a move plus access control, never a redesign at the same time.
 
-1. **Done. The drill, without packages.** Introduce `DrillViewModel` with
+1. **Done. The speaking lesson, without packages.** Introduce `SpeakingViewModel` with
    State/Action/Effect, move the microphone rules out of `SpeakLessonView` into it,
    and split the view into Route and Screen. Inject the recogniser, sounds and audio
    session. This is the move with the best return: the untested rules become tests
@@ -99,20 +99,20 @@ extraction is then a move plus access control, never a redesign at the same time
      `ClearMistakesUseCase`, and move the four store-owning views onto view models.
      This is where `@Query` goes, and where the cost of
      [decision 7](architecture.md#7-observing-the-store-without-query) is paid.
-   - **Drill.** `DrillFactory` hands `DrillViewModel` the results use case instead of
+   - **Speaking.** `SpeakingFactory` hands `SpeakingViewModel` the results use case instead of
      the `MistakeLog` closure. Strictness and the card limit move behind a
-     `DrillSettingsRepository` in the drill's domain, backed by `UserDefaults` in its
+     `SpeakingSettingsRepository` in the speaking lesson's domain, backed by `UserDefaults` in its
      data layer, reading the existing `Preferences.Key` strings and raw values.
-   - **Folders mirror the targets to come.** `Vocabulary/` and `Drill/` each get
+   - **Folders mirror the targets to come.** `Vocabulary/` and `Speaking/` each get
      `Domain/`, `Data/`, `UI/` and `DI/` subfolders, so step 3 moves folders into
      targets rather than sorting files.
    - **Version the schema.** Add a `VersionedSchema` for the current `VocabWord` and
      `Deck` shape before step 3 moves them. Cheap insurance for the upgrade check
      there.
 
-3. **Extract `Core`, `Vocabulary` and `Drill`.** The first SPM packages, together
-   because `Drill` depends on `VocabularyDomain` for `WordPair`, `LessonRequest` and
-   the results use case. `DictationRecogniser` and `SpeechLog` land in `DrillData`,
+3. **Extract `Core`, `Vocabulary` and `Speaking`.** The first SPM packages, together
+   because `Speaking` depends on `VocabularyDomain` for `WordPair`, `LessonRequest` and
+   the results use case. `DictationRecogniser` and `SpeechLog` land in `SpeakingData`,
    `ToneEngine` in `CoreAudio`, `LessonCompleteView` in `CoreUI`, and the
    `ModelContainer` is built in the app from the packages' schemas. Each package lists
    `.macOS(.v26)`, and the domain and view model tests run headlessly from here on.
@@ -122,11 +122,11 @@ extraction is then a move plus access control, never a redesign at the same time
 
 4. **Matching, layered and extracted in one go.** The pattern is proven and the
    package plumbing exists, so there is no reason to stop in folders.
-   `LessonSession` becomes a view model, results go through the Vocabulary use case,
-   rounds and pinyin visibility get a `MatchingSettingsRepository`, and `LessonView`
+   `MatchingLesson` becomes a view model, results go through the Vocabulary use case,
+   rounds and pinyin visibility get a `MatchingSettingsRepository`, and `MatchingLessonView`
    stops reaching `ToneEngine.shared`. `MatchSounds.shared` is deleted.
 
-5. **Settings.** The screen moves to a `Settings` package editing drill and matching
+5. **Settings.** The screen moves to a `Settings` package editing speaking and matching
    settings through their domains. What remains in the app target is the entry point,
    `ContentView` and `AppNavigation`.
 
@@ -178,7 +178,7 @@ repository instead.
 ## Known untidiness
 
 **The quick practice card shows the default round count.** It says
-`LessonBuilder.exercisesPerLesson` rounds, not the rounds setting the lesson actually
+`MatchingPlanBuilder.exercisesPerLesson` rounds, not the rounds setting the lesson actually
 uses. Carried over unchanged; step 4 can pass the setting in.
 
 **`recordResults` still visits every word.** Fine at 65 words. A predicate on the ids
@@ -192,13 +192,13 @@ shown. The write itself did succeed. Worth revisiting if reads ever fail in prac
 reach Home and deck detail as plain integers from `MandoJiaoApp`, so `Vocabulary`
 never imports Matching and step 4 cannot create a package cycle.
 
-**The audio session switch now lives in `DrillViewModel`,** through
+**The audio session switch now lives in `SpeakingViewModel`,** through
 `AudioSessionSwitching`, rather than in the recogniser implementation. It stays there
 until there is a reason to move it. The rule in CLAUDE.md holds either way: recognition
 accuracy outranks tone volume, and the session is not weakened to make tones audible.
 
-**The drill's live transcript is mirrored, not read directly.** The screen used to read
-`recogniser.partialText` itself. It now reads `DrillState.partialText`, which the view
+**The speaking lesson's live transcript is mirrored, not read directly.** The screen used to read
+`recogniser.partialText` itself. It now reads `SpeakingState.partialText`, which the view
 model copies across on each observed change, one main-actor hop later. Whether that
 hop is visible while speaking has not been checked on a device.
 

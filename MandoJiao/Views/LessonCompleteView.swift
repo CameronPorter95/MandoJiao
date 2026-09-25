@@ -1,10 +1,10 @@
 import SwiftUI
 
 /// Shared review screen. Takes plain values rather than a session, so the matching
-/// lesson and the speech drill both end on the same screen.
+/// lesson and the speaking lesson both end on the same screen.
 struct LessonCompleteView: View {
     struct Results {
-        /// How many questions the lesson asked: matches for the board, cards for a drill.
+        /// How many questions the lesson asked: matches for the board, cards for a speaking lesson.
         let total: Int
         let totalLabel: String
         /// Failed attempts, not failed words.

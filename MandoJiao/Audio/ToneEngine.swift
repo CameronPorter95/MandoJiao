@@ -43,7 +43,7 @@ final class ToneEngine: MatchSoundPlaying, AudioSessionSwitching {
     ///
     /// Split out from `playMatch` so the climb can be asserted without audio hardware.
     ///
-    /// A board is five matches and fits the scale directly. A speech drill runs to
+    /// A board is five matches and fits the scale directly. A speaking lesson runs to
     /// twenty cards, and indexing the scale by step would sit on the octave from the
     /// eighth card onward, which stops the pitch telling you anything, so a long lesson
     /// spreads the scale across its whole length instead. With more cards than notes the

@@ -44,13 +44,13 @@ struct HomeViewModelTests {
         #expect(request.pool.count == 5)
     }
 
-    @Test("practising mistakes asks for a drill, worst first, with no floor")
+    @Test("practising mistakes asks for a speaking lesson, worst first, with no floor")
     func practiseMistakes() async {
         let (home, log) = await makeHome()
         home.send(.practiseMistakesTapped)
 
         #expect(await waitUntil { log.effects.count == 1 })
-        guard case .requestDrill(let request) = log.effects.first else {
+        guard case .requestSpeaking(let request) = log.effects.first else {
             Issue.record("expected a drill request")
             return
         }

@@ -78,18 +78,18 @@ that does the injecting, not a peer.
 | Package | Owns | Targets |
 | --- | --- | --- |
 | `Vocabulary` | Words, decks, the mistakes list, the library and word editor, deck detail, and the home screen. `WordPair`, `LessonRequest`, `VocabWord`, `Deck`, sample seeding. | all four |
-| `Matching` | The matching exercise. `LessonPlan`, `LessonBuilder`, `MatchBoard`, the matching view model, board and tile views, matching settings. | all four; `Data` holds only settings storage |
-| `Drill` | The speech drill. `SpeakPlan`, `SpeakLessonBuilder`, `AnswerGrader`, `MatchStrictness`, `Endpointing`, the `SpeechRecognising` seam and `DictationRecogniser`, `SpeechLog`, the drill view model and card views, drill settings. | all four |
-| `Settings` | The settings screen. Edits matching and drill settings through their domains. | `UI`, `DI` |
+| `Matching` | The matching exercise. `MatchingPlan`, `MatchingPlanBuilder`, `MatchingBoard`, the matching view model, board and tile views, matching settings. | all four; `Data` holds only settings storage |
+| `Speaking` | The speaking lesson. `SpeakingPlan`, `SpeakingPlanBuilder`, `AnswerGrader`, `AnswerStrictness`, `Endpointing`, the `SpeechRecognising` seam and `DictationRecogniser`, `SpeechLog`, the view model and card views, speaking settings. | all four |
+| `Settings` | The settings screen. Edits matching and speaking settings through their domains. | `UI`, `DI` |
 
 **The home screen lives in `Vocabulary`,** because everything on it is vocabulary data:
 the word count, the mistakes list, the decks. Starting a lesson is a navigation event
-(`didRequestMatching`, `didRequestDrill`) that `Application` turns into a presentation.
+(`didRequestMatching`, `didRequestSpeaking`) that `Application` turns into a presentation.
 
 **Settings are owned by the feature that reads them.** Strictness and the card limit
-belong to `Drill`; rounds and pinyin visibility belong to `Matching`. The settings
+belong to `Speaking`; rounds and pinyin visibility belong to `Matching`. The settings
 screen is a composition over both domains. The alternative, `Settings` owning every
-preference, forces `Drill → Settings → Drill`, which SPM rejects. Storage keys are
+preference, forces `Speaking → Settings → Speaking`, which SPM rejects. Storage keys are
 unchanged from `Preferences.Key`, and strictness raw values remain storage (see
 [CLAUDE.md](../CLAUDE.md#decisions-already-settled)).
 
@@ -151,7 +151,7 @@ floor the app already has. It changes nothing about the iOS build.
 **Build for macOS with `xcodebuild`:**
 
 ```
-xcodebuild -scheme DrillDomain -destination 'platform=macOS' build
+xcodebuild -scheme SpeakingDomain -destination 'platform=macOS' build
 ```
 
 **A seam is what keeps a platform service out of a target.** `MatchSoundPlaying` and
@@ -193,13 +193,13 @@ Package graph (target):
 
 ```
 Core        <- everyone
-Vocabulary  <- Matching, Drill
+Vocabulary  <- Matching, Speaking
 Matching    <- Settings
-Drill       <- Settings
+Speaking    <- Settings
 Settings    (no inbound edges)
 ```
 
-Only `Vocabulary`, `Matching` and `Drill` need a `Domain` seam for peers.
+Only `Vocabulary`, `Matching` and `Speaking` need a `Domain` seam for peers.
 
 ---
 
@@ -214,16 +214,16 @@ struct of closures, one per way of leaving.
 @MainActor
 public struct HomeNavigation {
   public var didRequestMatching: (LessonRequest) -> Void
-  public var didRequestDrill: (LessonRequest) -> Void
+  public var didRequestSpeaking: (LessonRequest) -> Void
   public var didRequestSettings: () -> Void
 }
 ```
 
-**Closures are named for the event, not the destination.** `didRequestDrill`, never
+**Closures are named for the event, not the destination.** `didRequestSpeaking`, never
 `presentSpeakLesson`. The moment a name says where it goes, the screen has taken a
 position on a stack it cannot see, and the same screen can no longer serve two flows.
-`DrillNavigation` is the first of these. `HomeView` still decides the presentation
-itself for now, and still builds `LessonView` inline.
+`SpeakingNavigation` is the first of these. `ContentView` still decides the presentation
+itself for now, and still builds `MatchingLessonView` inline.
 
 **One bundle per package.** `{X}Navigation` holds one member per screen, so a factory
 signature stays at a single navigation parameter however many screens the package
@@ -283,7 +283,7 @@ duplication. One grep finds the whole vertical.
 even though its data layer says `VocabWord` and `Deck`.
 
 **Existing names are not renamed for the sake of it.** `SpeakSession` splitting into
-`DrillLesson` and `DrillViewModel` was a rename with a reason (it became two things); `WordPair`
+`SpeakingLesson` and `SpeakingViewModel` was a rename with a reason (it became two things); `WordPair`
 becoming `Word` is not, and would churn every test for nothing.
 
 **The one hard rule:**
@@ -311,8 +311,8 @@ folder is `+Flow`.
    feature package and the Core question never arises. This is the common case.
 2. **Is the second consumer real?** A preview or a test is not a consumer.
 3. **Would deleting the feature delete this code?** If yes it belongs to the feature,
-   however generic it looks. Deleting the drill would delete `AnswerGrader`, so it
-   lives in `Drill` even though it is the most reusable code in the app.
+   however generic it looks. Deleting the speaking lesson would delete `AnswerGrader`, so it
+   lives in `Speaking` even though it is the most reusable code in the app.
 
 ### Share domain models, not entities
 
@@ -337,7 +337,7 @@ source layout. Not one per layer.
 
 **`{X}TestSupport`** holds shared test doubles and fixtures, depends on `{X}Domain`, and
 is depended on by `{X}Tests` and peers' tests. `ScriptedRecogniser` belongs in
-`DrillTestSupport`; a fake `VocabularyRepository` belongs in `VocabularyTestSupport`. A fake
+`SpeakingTestSupport`; a fake `VocabularyRepository` belongs in `VocabularyTestSupport`. A fake
 used by exactly one test file stays private to that file; hoist when a second consumer
 appears.
 

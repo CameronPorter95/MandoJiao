@@ -7,9 +7,9 @@ nonisolated enum Preferences {
         static let speechStrictness = "speechStrictness"
         static let showsPinyin = "showsPinyinInLessons"
         static let matchingRounds = "matchingRoundsPerLesson"
-        static let drillCardLimit = "drillCardLimit"
+        static let speakingCardLimit = "drillCardLimit"
     }
 
     static let matchingRoundsRange = 5...20
-    static let drillCardLimitRange = 5...40
+    static let speakingCardLimitRange = 5...40
 }

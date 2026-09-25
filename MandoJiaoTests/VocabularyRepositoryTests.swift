@@ -60,8 +60,8 @@ struct VocabularyRepositoryTests {
         #expect(await current().byEnglish["tea"]?.missCount == 1)
     }
 
-    @Test("a word at three mistakes takes three drills to clear")
-    func oneOffPerDrill() async throws {
+    @Test("a word at three mistakes takes three clean lessons to clear")
+    func oneOffPerLesson() async throws {
         let ids = try await addWaterTeaBook()
         try await repository.recordResults(LessonResults(misses: [ids.water: 3], cleanSolves: [:]))
 

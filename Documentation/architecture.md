@@ -116,8 +116,8 @@ Foundation-only.
 
 | Component | Responsibility |
 | --- | --- |
-| **Domain model** | Plain value type the rest of the app reasons about. `WordPair`, `LessonRequest`, `LessonPlan`, `SpeakPlan`, `MatchBoard`. Already-resolved shape, no storage concerns. |
-| **Domain rule** | A pure type holding a business rule that is not a use case: `AnswerGrader`, `LessonBuilder`, `SpeakLessonBuilder`, `MatchStrictness`. Static functions over values, testable with no fakes at all. |
+| **Domain model** | Plain value type the rest of the app reasons about. `WordPair`, `LessonRequest`, `MatchingPlan`, `SpeakingPlan`, `MatchingBoard`. Already-resolved shape, no storage concerns. |
+| **Domain rule** | A pure type holding a business rule that is not a use case: `AnswerGrader`, `MatchingPlanBuilder`, `SpeakingPlanBuilder`, `AnswerStrictness`. Static functions over values, testable with no fakes at all. |
 | **Repository protocol** | Defines *what* data operations exist, not *how* they happen. `async throws`. Returns domain models. Says nothing about SwiftData, or local vs network. |
 | **Seam protocol** | A platform capability the domain needs but cannot implement: `SpeechRecognising`, `MatchSoundPlaying`. Same rules as a repository protocol. |
 | **Use case** | One business action, invoked via `callAsFunction`. Thin: applies a business rule and delegates to the repository. `async throws` (untyped). |
@@ -147,7 +147,7 @@ headlessly on macOS (see [principle 7](#guiding-principles)).
 | **State** | `Equatable` value type. The single source of truth for the screen. |
 | **Action** | An enum of user intents (`onAppear`, `submit`, `tapMicrophone`, `retry`, …). |
 | **Effect** | An enum of *one-shot* side effects (show an error, fire a haptic, navigate, dismiss) delivered through an `EffectChannel`. A presented sheet or dialog is not an effect: it lasts until dismissed, so it is state. |
-| **ViewModel** | `@Observable @MainActor`. Reduces actions into state, launches use cases, drives seams, emits effects. Mints the **display error** from the domain error. `DrillViewModel` is the reference. |
+| **ViewModel** | `@Observable @MainActor`. Reduces actions into state, launches use cases, drives seams, emits effects. Mints the **display error** from the domain error. `SpeakingViewModel` is the reference. |
 | **Route** | Owns the view model and consumes its effects; wires in navigation, scene phase, and error presentation. The only stateful view. |
 | **Screen** | Stateless. A pure function of `state` plus an `onAction` closure. Previewable. |
 | **Display error** | The presentation error type (`LoggedError`, `LocalizedError`): owns the user-facing message *and* the logging call. Minted by the view model from the domain error. |
@@ -180,7 +180,7 @@ sequenceDiagram
 - **State** is durable and replayable; the view re-renders from it.
 - **Effects** are one-shot and must *not* live in state (an error banner or a haptic
   should fire once, not replay on every re-render). That is why effects go over an
-  `AsyncStream` and state over the observable property. The drill used to keep a
+  `AsyncStream` and state over the observable property. The speaking lesson used to keep a
   `feedbackToken` counter in state purely to make a haptic fire; it is now a
   `.haptic` effect.
 - **Optimistic updates:** for mutations, the view model updates state immediately,
@@ -225,7 +225,7 @@ Why: two reasons converge.
   from Kotlin. Untyped throws is the shape that survives the boundary.
 - **Cancellation.** With typed throws you cannot propagate `CancellationError`, so a
   cancelled operation would have to be mapped into your error enum. Untyped throws lets
-  cancellation propagate naturally, and the view model ignores it (a drill closed
+  cancellation propagate naturally, and the view model ignores it (a speaking lesson closed
   mid-listen is not a failure to show the user).
 
 The classification of *what kind* of failure occurred is done by value (the domain
@@ -314,7 +314,7 @@ the view model, consumes effects, and wires environmental concerns (navigation, 
 phase, error presentation, haptics).
 
 Why: a stateless screen is trivial to preview and to test in isolation, and all the
-stateful wiring is quarantined in one place. `DrillScreen` and `DrillRoute` are the
+stateful wiring is quarantined in one place. `SpeakingScreen` and `SpeakingRoute` are the
 reference.
 
 ### 9. Effects through a channel; state over the observable property
@@ -325,7 +325,7 @@ when the view re-renders.
 
 State is `Equatable` besides, so assigning the same error twice is not a change and the
 second identical failure would show nothing. Two yields are two events. This is
-exactly what the drill's old `feedbackToken` worked around: two wrong answers in a
+exactly what the speaking lesson's old `feedbackToken` worked around: two wrong answers in a
 row leave `phase` equal, so a counter had to force the haptic.
 
 The transport is an `EffectChannel`, not a bare `AsyncStream` held by the view model,
@@ -389,7 +389,7 @@ The factory lives in `{Feature}DI`, not `{Feature}UI`. It is the only thing that
 a concrete implementation, so it has to see all three layers, and putting it in the UI
 target would force a `UI` to `Data` dependency.
 
-The drill no longer reaches a global: `DrillFactory` hands `DrillViewModel` its
+The speaking lesson no longer reaches a global: `SpeakingFactory` hands `SpeakingViewModel` its
 recogniser, audio session and sounds. `MatchSounds.shared` remains for the matching
 lesson until it migrates.
 
@@ -440,7 +440,7 @@ packages may depend on.
 **Core owns mechanism, not features.** The audio engine, the SwiftData container
 plumbing, design tokens. Core owns a *resource* only when it is genuinely app-level.
 A resource with one real consumer belongs to that consumer, however generic it looks.
-The recogniser has one consumer, the drill, so it lives in `Drill`, not Core.
+The recogniser has one consumer, the speaking lesson, so it lives in `Speaking`, not Core.
 
 **Share domain models, never entities.** An entity is the data layer's private
 vocabulary for the current store schema; making it public turns that schema into a
@@ -459,7 +459,7 @@ module boundary.
 > `MandoJiao/Vocabulary/` is the full vertical: domain models, use cases and a
 > repository protocol in `Domain/`, the `@ModelActor` local source, repository and
 > versioned schema in `Data/`, four screens in `UI/`, and `VocabularyFactory` in `DI/`.
-> `MandoJiao/Drill/` shows a view model driving platform seams (the recogniser, the
+> `MandoJiao/Speaking/` shows a view model driving platform seams (the recogniser, the
 > audio session) and a settings repository. See
 > [modularisation-migration.md](modularisation-migration.md#sequencing).
 >
@@ -474,7 +474,7 @@ Each layer is tested in isolation through its seams. Tests use Swift Testing.
 
 | Layer | What to fake | What to assert |
 | --- | --- | --- |
-| **Domain rules** | Nothing | Grading at every strictness, board dealing, plan building. The existing `AnswerGraderTests`, `StrictnessTests`, `MatchBoardTests` and builder tests are already this. |
+| **Domain rules** | Nothing | Grading at every strictness, board dealing, plan building. The existing `AnswerGraderTests`, `StrictnessTests`, `MatchingBoardTests` and builder tests are already this. |
 | **Repository** | The local source (protocol fake) | Mapping, error classification (`persistence` vs `unexpected`), cancellation propagating. |
 | **Local source** | Nothing, use a real in-memory SwiftData container, through the repository | Round-trip, the mistakes-list arithmetic, deck membership. `VocabularyRepositoryTests`. |
 | **Schema migration** | Nothing, migrate a copy of a real store from the previous version | Every record survives, and the migration's own fix-ups hold. `VocabularyMigrationTests`. |
@@ -482,10 +482,10 @@ Each layer is tested in isolation through its seams. Tests use Swift Testing.
 
 Notes:
 - Back SwiftData tests with `ModelConfiguration(isStoredInMemoryOnly: true)`.
-- The view model tests are where the gain is. The drill's microphone rules
+- The view model tests are where the gain is. The speaking lesson's microphone rules
   (auto-listening into the next word, not counting silence after an automatic listen,
   stopping when the app leaves the foreground) used to live in a view with no tests.
-  `DrillViewModelTests` now drives them with a fake recogniser.
+  `SpeakingViewModelTests` now drives them with a fake recogniser.
 - Write view model tests so they could run on macOS: fakes for every use case and seam,
   and no UIKit. Once a package builds for macOS, those tests run without a simulator.
 - The rule in [CLAUDE.md](../CLAUDE.md) still applies: clean before testing when a test
@@ -503,7 +503,7 @@ How the Swift shapes chosen here map to a future shared Kotlin module (assuming
 | `suspend fun` | `async` | SKIE bridges to `async/await`; without SKIE it is a completion handler. |
 | `@Throws(...)` | `throws` (untyped) | Kotlin needs `@Throws` for the error to surface in Swift at all. |
 | typed throws | n/a | Not exported. Use untyped `throws` + a thrown classification value. |
-| `sealed class` | exhaustive `enum` | The domain error, `MatchStrictness` and `DrillLesson.Phase` shapes become sealed classes → Swift enums via SKIE. |
+| `sealed class` | exhaustive `enum` | The domain error, `AnswerStrictness` and `SpeakingLesson.Phase` shapes become sealed classes → Swift enums via SKIE. |
 | `Flow` / `StateFlow` | `AsyncSequence` | Via SKIE. This is why store observation is an `AsyncStream`, and why `SpeechRecognising.partialText` would become a stream of partials rather than an observable property. |
 | `data class` (primitives) | reference type | Kotlin data classes bridge as classes, not structs, so keep shared models primitive and `Sendable`. `WordPair` qualifies. |
 | `kotlin.Result` | n/a | Not exported; do not put it in the shared contract. |
@@ -513,8 +513,8 @@ The practical upshot: keep the domain contract to `async throws`, classify failu
 with a bare `Sendable` value (not a platform error type or typed throw), and keep all
 platform persistence, audio and recognition out of the domain.
 
-**What would actually be shared.** `AnswerGrader`, `MatchStrictness`, the two lesson
-builders, `MatchBoard`, the mistakes-list arithmetic and the plan types. The grader is
+**What would actually be shared.** `AnswerGrader`, `AnswerStrictness`, the two lesson
+builders, `MatchingBoard`, the mistakes-list arithmetic and the plan types. The grader is
 the part most worth sharing, because two platforms grading the same answer differently
 would be a visible bug. The caveat is that its levels were tuned against transcripts
 from Apple's `DictationTranscriber`. Another platform's recogniser pads, spaces and

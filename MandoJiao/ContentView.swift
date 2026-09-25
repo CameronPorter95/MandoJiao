@@ -15,7 +15,7 @@ enum LessonRoute: Identifiable, Hashable {
 /// The app's root: the home stack, and the lessons presented over it.
 struct ContentView: View {
     let vocabulary: VocabularyFactory
-    let drill: DrillFactory
+    let speaking: SpeakingFactory
 
     @State private var activeLesson: LessonRoute?
 
@@ -24,7 +24,7 @@ struct ContentView: View {
             vocabulary.makeHomeRoute(
                 navigation: HomeNavigation(
                     didRequestMatching: { activeLesson = .matching($0) },
-                    didRequestDrill: { activeLesson = .speaking($0) }
+                    didRequestSpeaking: { activeLesson = .speaking($0) }
                 ),
                 settings: { AnyView(SettingsView()) }
             )
@@ -32,9 +32,9 @@ struct ContentView: View {
         .fullScreenCover(item: $activeLesson) { route in
             switch route {
             case .matching(let request):
-                LessonView(request: request, saveResults: recordMatchingResults) { activeLesson = nil }
+                MatchingLessonView(request: request, saveResults: recordMatchingResults) { activeLesson = nil }
             case .speaking(let request):
-                drill.makeRoute(request: request, navigation: DrillNavigation(didClose: { activeLesson = nil }))
+                speaking.makeRoute(request: request, navigation: SpeakingNavigation(didClose: { activeLesson = nil }))
             }
         }
     }
@@ -61,5 +61,5 @@ struct ContentView: View {
         minimumMatchingWords: 5,
         quickPracticeRounds: 10
     )
-    ContentView(vocabulary: vocabulary, drill: DrillFactory(recordResults: vocabulary.recordLessonResults))
+    ContentView(vocabulary: vocabulary, speaking: SpeakingFactory(recordResults: vocabulary.recordLessonResults))
 }

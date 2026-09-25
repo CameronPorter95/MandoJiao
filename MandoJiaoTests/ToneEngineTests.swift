@@ -22,9 +22,9 @@ struct ToneEngineTests {
         )
     }
 
-    @Test("a long drill keeps climbing instead of sitting on the octave")
-    func longDrillDoesNotPlateauEarly() {
-        // The scale has eight notes and a drill runs to twenty cards. Indexing the scale
+    @Test("a long speaking lesson keeps climbing instead of sitting on the octave")
+    func longSpeakingLessonDoesNotPlateauEarly() {
+        // The scale has eight notes and a speaking lesson runs to twenty cards. Indexing the scale
         // by card number would put every card from the eighth onward on the same octave,
         // so the pitch would stop meaning anything well before the end.
         let steps = (0..<20).map { ToneEngine.semitones(forStep: $0, of: 20) }
@@ -34,7 +34,7 @@ struct ToneEngineTests {
         #expect(Set(steps).count >= 6, "a long drill should use most of the scale: \(steps)")
     }
 
-    @Test("a single-card drill plays the base note")
+    @Test("a single-card speaking lesson plays the base note")
     func singleCard() {
         #expect(ToneEngine.semitones(forStep: 0, of: 1) == 0)
     }

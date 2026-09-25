@@ -16,7 +16,7 @@ the interesting parts be tested without a simulator, a store or a microphone.
 ```
 Views/          SwiftUI. Owns presentation, the microphone, and writing results back.
 Game/           Exercise logic. Pure values and @Observable drivers. No SwiftData.
-Drill/          The speech drill, split into Domain/, Data/, UI/, DI/.
+Speaking/       The speaking lesson, split into Domain/, Data/, UI/, DI/.
 Vocabulary/     Words, decks, the mistakes list, home and library screens, same split.
 Core/           Shared error, effect and persistence plumbing.
 Audio/          Tone synthesis and the audio session.
@@ -42,20 +42,20 @@ that uuid, through `RecordLessonResultsUseCase`.
 They are deliberately separate rather than one generalised engine, because they
 differ in almost everything except where their results go.
 
-| | Matching | Drill |
+| | Matching | Speaking lesson |
 | --- | --- | --- |
-| Plan | `LessonPlan`, 10 rounds of 5 pairs | `SpeakPlan`, one card per word, max 20 |
-| Board | `MatchBoard`, a value type | no board, one card at a time |
-| Driver | `LessonSession` | `DrillViewModel`, over a `DrillLesson` value |
+| Plan | `MatchingPlan`, 10 rounds of 5 pairs | `SpeakingPlan`, one card per word, max 20 |
+| Board | `MatchingBoard`, a value type | no board, one card at a time |
+| Driver | `MatchingLesson` | `SpeakingViewModel`, over a `SpeakingLesson` value |
 | Minimum words | 5 | 1 |
 | Input | taps | speech, or typing |
 
-`LessonBuilder` deals pairs from a shuffled bag, refilling when it empties, so a
+`MatchingPlanBuilder` deals pairs from a shuffled bag, refilling when it empties, so a
 small pool repeats only after every word has had a turn. It also keeps any two
 tiles on a board from reading the same, which is what makes a board solvable.
 
-`SpeakLessonBuilder` does none of that. One card per word, in the order given,
-capped. Dropping the five-at-a-time floor is the entire reason the drill exists:
+`SpeakingPlanBuilder` does none of that. One card per word, in the order given,
+capped. Dropping the five-at-a-time floor is the entire reason the speaking lesson exists:
 the matching board had to pad a three-word mistakes list with unrelated words.
 
 Both sessions expose `missesByPairID` and `cleanSolvesByPairID` in the same
@@ -73,7 +73,7 @@ is later solved cleanly. Two rules matter:
   round again, which happens constantly with a small pool, and the list would
   stay permanently empty.
 
-`MatchBoard` tracks which pairs went wrong per board so a clean solve and a
+`MatchingBoard` tracks which pairs went wrong per board so a clean solve and a
 recovery can be told apart.
 
 ## Sound
@@ -87,12 +87,12 @@ be checked where `AVAudioSession` does not exist.
 what allows the pitch to climb. It runs a pool of six player nodes so rapid
 matches overlap instead of queueing behind each other.
 
-The drill makes no per-card sound calls at all, and a test pins that. See
+The speaking lesson makes no per-card sound calls at all, and a test pins that. See
 [`speech.md`](speech.md) for why.
 
 ## Settings
 
 Four `@AppStorage` values, with their keys and defaults in one place
 (`Preferences`) so a screen reading a setting and a screen writing it cannot
-drift. `MatchStrictness` keeps its raw values as storage and its titles as
+drift. `AnswerStrictness` keeps its raw values as storage and its titles as
 display, so labels can be reworded without stranding a saved preference.

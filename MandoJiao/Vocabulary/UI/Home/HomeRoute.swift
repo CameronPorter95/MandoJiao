@@ -33,7 +33,7 @@ struct HomeRoute: View {
     private func handle(_ effect: HomeEffect) {
         switch effect {
         case .requestMatching(let request): navigation.didRequestMatching(request)
-        case .requestDrill(let request): navigation.didRequestDrill(request)
+        case .requestSpeaking(let request): navigation.didRequestSpeaking(request)
         case .showError(let error): self.error = error
         }
     }
