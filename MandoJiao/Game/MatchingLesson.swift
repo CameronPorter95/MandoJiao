@@ -1,5 +1,7 @@
+import CoreDomain
 import Foundation
 import Observation
+import VocabularyDomain
 
 /// Drives one lesson: the current board, the sounds, and the hop to the next
 /// exercise once a board is cleared.

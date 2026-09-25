@@ -1,6 +1,10 @@
+import CoreDomain
+import CoreSound
 import OSLog
+import SpeakingDI
 import SwiftData
 import SwiftUI
+import VocabularyDI
 
 @main
 struct MandoJiaoApp: App {
@@ -20,8 +24,7 @@ struct MandoJiaoApp: App {
         }
 
         do {
-            let container = try VocabularyFactory.makeContainer()
-            SampleVocabulary.seedIfNeeded(container.mainContext)
+            let container = try VocabularyFactory.openStore()
             vocabulary = VocabularyFactory(
                 container: container,
                 minimumMatchingWords: MatchingPlanBuilder.pairsPerExercise,

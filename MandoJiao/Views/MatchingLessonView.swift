@@ -1,4 +1,9 @@
+import CoreDesignSystem
+import CoreDomain
+import CoreSound
+import CoreUI
 import SwiftUI
+import VocabularyDomain
 
 struct MatchingLessonView: View {
     let request: LessonRequest
@@ -189,10 +194,11 @@ struct MatchingLessonView: View {
             total: session.plan.exercises.reduce(0) { $0 + $1.count },
             totalLabel: "matches",
             missCount: session.missCount,
-            missedPairs: session.missedPairs,
+            missedPairs: session.missedPairs.map { (pair: $0.pair.reviewRow, misses: $0.misses) },
             cleanPairs: session.plan.distinctPairs
                 .filter { !missed.contains($0.id) }
                 .sorted { $0.english < $1.english }
+                .map(\.reviewRow)
         )
     }
 
@@ -223,4 +229,10 @@ struct MatchingLessonView: View {
         saveResults: { _ in },
         onClose: {}
     )
+}
+
+extension WordPair {
+    var reviewRow: LessonCompleteView.Row {
+        LessonCompleteView.Row(id: id, hanzi: hanzi, english: english, pinyin: pinyin)
+    }
 }

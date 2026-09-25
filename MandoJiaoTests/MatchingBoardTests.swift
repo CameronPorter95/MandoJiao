@@ -1,5 +1,6 @@
 import Testing
 @testable import MandoJiao
+import VocabularyDomain
 
 @Suite("Matching board")
 struct MatchingBoardTests {

@@ -15,10 +15,10 @@ repeating mistakes already made.
 ## Architecture (target)
 
 The app is moving to MVI + Clean Architecture in SPM packages, with a domain layer
-shaped for possible KMP sharing. `MandoJiao/Speaking/` and `MandoJiao/Vocabulary/` are
-layered (`Domain/`, `Data/`, `UI/`, `DI/`) and are the reference; Vocabulary shows the
-repository and the store. See `Documentation/modularisation-migration.md` for the
-state and the order.
+shaped for possible KMP sharing. `Core/`, `Vocabulary/` and `Speaking/` are SPM
+packages at the repo root, and `Vocabulary` is the reference vertical. Matching and
+Settings are still in the app target. See `Documentation/modularisation-migration.md`
+for the state and the order.
 
 - `Documentation/architecture.md`: the layers, UDF, and the reasoning behind each decision
 - `Documentation/modularisation.md`: packages, targets, dependency rules, navigation, naming
@@ -26,8 +26,8 @@ state and the order.
 - `Documentation/feature-checklist.md`: the per-change conformance list
 - `Documentation/code-comments.md`: when a comment is warranted, and how long
 
-Target packages: `Core` (`CoreDomain`, `CorePersistence`, `CoreAudio`,
-`CoreDesignSystem`, `CoreUI`), then `Vocabulary`, `Matching`, `Speaking`, `Settings`,
+Packages: `Core` (`CoreDomain`, `CorePersistence`, `CoreSound`, `CoreDesignSystem`,
+`CoreUI`, `CoreTestSupport`), `Vocabulary`, `Speaking`, and later `Matching`, `Settings`,
 each with up to four targets: `{X}Domain`, `{X}Data`, `{X}UI`, `{X}DI`. The rules most
 easily broken:
 
@@ -57,9 +57,17 @@ Moving code must not move a pinned cost out of the test suite.
 ## Build and test
 
 ```sh
-xcodebuild build -scheme MandoJiao -destination 'platform=iOS Simulator,name=iPhone 17 Pro'
-xcodebuild test  -scheme MandoJiao -destination 'platform=iOS Simulator,name=iPhone 17 Pro'
+# Everything, on the simulator: the app's tests and all three packages' tests.
+xcodebuild build -scheme MandoJiao -destination 'platform=iOS Simulator,id=<udid>'
+xcodebuild test  -scheme MandoJiao -destination 'platform=iOS Simulator,id=<udid>'
+
+# One package, headless on the Mac, in seconds.
+cd Speaking && swift test
+cd Speaking && swift test --filter StrictnessTests
 ```
+
+Get `<udid>` from `xcrun simctl list devices available`. Xcode 27 did not resolve
+`name=iPhone 17 Pro` here.
 
 **Run `xcodebuild clean` before `test` whenever a test file changed, and check
 the test count moved.** The incremental build silently skips recompiling changed
@@ -67,7 +75,10 @@ test files and reports a pass for tests that never ran. This has happened three
 times; once it reported `TEST SUCCEEDED` while eight new tests were skipped. A
 green result on its own is not evidence that anything ran.
 
-Current suite: 159 tests in 18 suites.
+`xcodebuild test` prints one `Test run with` line per test bundle, four in all.
+Add them up. Current suite: 159 tests in 18 suites: 16 in the app (matching), 8 in
+`Core`, 47 in `Vocabulary`, 88 in `Speaking`. If a bundle's line is missing, it did
+not run.
 
 ## Decisions already settled
 
@@ -92,8 +103,9 @@ looking at real data, and several have tests pinning the consequence.
 
 ## How to work here
 
-**Measure, do not estimate.** The pure types compile standalone with `swiftc`, so
-a reported transcript can be replayed through all four levels in seconds. Two
+**Measure, do not estimate.** The domain types run headlessly with `swift test` in
+their package, so a reported transcript can be replayed through all four levels in
+seconds by adding a case to `StrictnessTests`. Two
 claims in this project's history were wrong when checked: `往昌` was predicted to
 pass at Relaxed and does not, and gain compensation was tried twice before
 noticing the clipping ceiling made it impossible. Run it before saying it.
@@ -119,12 +131,21 @@ not enough; if the behaviour reverses, a test should say so.
   version 2 entity and crashes. Migration is tested against a real v1 store fixture.
 - **A test that blocks the main actor breaks the timing tests.** Heavy synchronous
   work goes in a `nonisolated` suite.
-
+- **Never name a target after an Apple framework.** `CoreAudio`, `Speech`,
+  `SwiftData` and `CoreData` all collide. The sound target is `CoreSound` because
+  `CoreAudio` failed with a module cycle through AVFoundation.
+- **A local package's test target needs a file reference in the project.** Without
+  one the scheme lists it and xcodebuild skips it silently, reporting a pass for the
+  app's tests alone.
+- **Moving a type into a package makes it internal.** Every type, member and init
+  used from another target needs `public`, including `public private(set)`, and a
+  struct's memberwise init is never public, so it needs an explicit one.
 - **Default arguments are evaluated in the caller's context.** With
   `SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor`, any `static let` used as a default
   must be `nonisolated`. Caught four separate times.
-- **Files are picked up from disk** (`PBXFileSystemSynchronizedRootGroup`). New
-  files need no project edit, which is also why incremental builds miss changes.
+- **Files are picked up from disk,** in the app target (`PBXFileSystemSynchronizedRootGroup`)
+  and in the packages alike. New files need no project edit, which is also why
+  incremental builds miss changes.
 - **The shared scheme's `TestAction` must not contain an empty `<TestPlans>`**, or
   xcodebuild reports the scheme as not configured for testing.
 - **`Logger` redacts interpolated strings** unless marked `privacy: .public`, and

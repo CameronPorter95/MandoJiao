@@ -1,0 +1,45 @@
+import Foundation
+import VocabularyDomain
+
+/// A speaking lesson: one card per word, in the order given.
+public struct SpeakingPlan: Identifiable, Hashable {
+    public let id: UUID
+    public let title: String
+    public let cards: [WordPair]
+
+    public init(id: UUID = UUID(), title: String, cards: [WordPair]) {
+        self.id = id
+        self.title = title
+        self.cards = cards
+    }
+
+    public var cardCount: Int { cards.count }
+}
+
+public enum SpeakingPlanBuilder {
+    public static let maxCards = 20
+    public static let attemptsPerCard = 3
+
+    /// One card per word, no repeats, keeping the pool's order so the worst offenders
+    /// come first.
+    ///
+    /// Unlike `MatchingPlanBuilder`, a single word is enough for a lesson. Dropping the
+    /// five-at-a-time floor is the point of this exercise: the matching board had to pad
+    /// a short mistakes list with unrelated words to fill a round.
+    public static func makeLesson(
+        title: String,
+        from pool: [WordPair],
+        maxCards: Int = maxCards
+    ) -> SpeakingPlan? {
+        var seen = Set<String>()
+        let cards = pool.filter { pair in
+            let hanzi = pair.hanzi.trimmingCharacters(in: .whitespacesAndNewlines)
+            let english = pair.english.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !hanzi.isEmpty, !english.isEmpty else { return false }
+            return seen.insert(hanzi).inserted
+        }
+
+        guard !cards.isEmpty else { return nil }
+        return SpeakingPlan(title: title, cards: Array(cards.prefix(max(1, maxCards))))
+    }
+}

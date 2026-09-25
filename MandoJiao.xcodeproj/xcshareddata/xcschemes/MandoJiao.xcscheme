@@ -52,6 +52,36 @@
                ReferencedContainer = "container:MandoJiao.xcodeproj">
             </BuildableReference>
          </TestableReference>
+         <TestableReference
+            skipped = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "CoreTests"
+               BuildableName = "CoreTests"
+               BlueprintName = "CoreTests"
+               ReferencedContainer = "container:Core">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "VocabularyTests"
+               BuildableName = "VocabularyTests"
+               BlueprintName = "VocabularyTests"
+               ReferencedContainer = "container:Vocabulary">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "SpeakingTests"
+               BuildableName = "SpeakingTests"
+               BlueprintName = "SpeakingTests"
+               ReferencedContainer = "container:Speaking">
+            </BuildableReference>
+         </TestableReference>
       </Testables>
    </TestAction>
    <LaunchAction

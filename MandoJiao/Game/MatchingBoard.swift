@@ -1,4 +1,5 @@
 import Foundation
+import VocabularyDomain
 
 enum TileSide: String, Hashable {
     case english

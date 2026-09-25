@@ -87,7 +87,7 @@ The project rules in [CLAUDE.md](../CLAUDE.md) apply everywhere, migrated or not
 - [ ] **Da6** Settings storage reads and writes the existing `Preferences.Key` strings
       and raw values. A renamed key or raw value strands every saved preference.
 - [ ] **Da7** The data target imports no UIKit and never touches `AVAudioSession`
-      directly. The audio session is `CoreAudio`'s.
+      directly. The audio session is `CoreSound`'s.
       ([why](modularisation.md#building-for-macos))
 
 ---

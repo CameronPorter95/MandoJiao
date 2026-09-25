@@ -28,7 +28,7 @@ seam and a future KMP `commonMain`, and concern targets scope framework dependen
 | Target | Contains | Depends on | Imported by |
 | --- | --- | --- | --- |
 | `{X}Domain` | Domain models, domain rules, repository and seam protocols, use cases, domain errors | `CoreDomain`, peers' `Domain` | Anyone, including other packages |
-| `{X}Data` | Repository impls, local sources, `@Model` entities, platform services, mapping | `{X}Domain`, `CorePersistence`, `CoreAudio` as needed | `{X}DI` only |
+| `{X}Data` | Repository impls, local sources, `@Model` entities, platform services, mapping | `{X}Domain`, `CorePersistence`, `CoreSound` as needed | `{X}DI` only |
 | `{X}UI` | Views, view models, state, actions, effects; the package's destination enum and navigation values | `{X}Domain`, `CoreUI`, `CoreDesignSystem` | `{X}DI` only |
 | `{X}DI` | Factories wiring sources → repository → use cases → view model; per-flow navigation constructors; the package's `@Model` types for the schema | all three above | `Application` |
 
@@ -66,6 +66,19 @@ hand use cases to a view model, and that something must see all three layers. Sw
 no Hilt, so the wiring is manual and needs a home. Keeping it out of `{X}UI` is what
 preserves the UI-to-Data non-dependency.
 
+**Keep the public surface small.** Moving code into a package makes everything
+internal, so every `public` is a decision.
+
+- `{X}Data` exposes one entry point and keeps its concrete types internal.
+  `VocabularyStore` opens the container, seeds it and builds the repository; nothing
+  outside `VocabularyData` names `VocabularyRepositoryImpl` or an entity.
+- `{X}DI` factories return `some View`, so `Application` never imports `{X}UI` types.
+  They take plain closures for navigation and build the navigation value inside.
+- `{X}Domain` is public nearly throughout, because it is the interface. Structs used
+  from another target need an explicit `public init`; a memberwise init is internal.
+- A test target uses `@testable import` for its own package's targets, so tests do
+  not force anything public.
+
 **Application may import `{X}DI`; a feature package may not.** `{X}Domain` hands out
 *types*, which is all a peer needs because it receives instances by injection. `{X}DI`
 hands out *instances*, which requires seeing implementations. Application is the root
@@ -101,11 +114,12 @@ One package, concern targets. Not sibling packages.
 
 | Target | Contains | Membership test |
 | --- | --- | --- |
-| `CoreDomain` | Shared pure types: `MatchSoundPlaying`, `AudioSessionSwitching`, `DomainErrorModel`, `ErrorLog` | Zero dependencies beyond Foundation |
+| `CoreDomain` | Shared pure types: `MatchSoundPlaying`, `AudioSessionSwitching`, `DomainErrorModel`, `ErrorLog`, and the `Preferences` key registry, since the settings screen writes what both lessons read | Zero dependencies beyond Foundation |
 | `CorePersistence` | SwiftData container plumbing: the `@ModelActor` base helpers, schema composition, in-memory configuration for tests | Names no feature entity |
-| `CoreAudio` | `ToneEngine` and the audio session | Implements `CoreDomain` seams, names no feature |
+| `CoreSound` | `ToneEngine` and the audio session | Implements `CoreDomain` seams, names no feature |
 | `CoreDesignSystem` | `Theme`, `LessonProgressBar`, view primitives, wrappers over iOS-only view APIs | Needs nothing but SwiftUI, and builds for macOS |
-| `CoreUI` | Screens shared by more than one feature: `LessonCompleteView` | Used by two or more packages |
+| `CoreUI` | `EffectChannel`, `LoggedError`, `errorAlert`, and screens shared by more than one feature: `LessonCompleteView`, which takes its own `Row` type so Core never learns what a word is | Used by two or more packages |
+| `CoreTestSupport` | `waitUntil`, `settle`, `EffectLog` | Test helpers with no feature in them |
 
 There is no `CoreNetworking`, because there is no backend, and no `CoreDI` until a DI
 primitive is shared by two packages. Add a target when its first real member exists,
@@ -138,11 +152,11 @@ extends it to whole screens.
 | Target | What it means |
 | --- | --- |
 | `{X}Domain` | Nothing extra. It is already platform-free. |
-| `{X}Data` | Should build for macOS. SwiftData, `Speech` and `AVAudioEngine` all exist there. `AVAudioSession` does not, which is why only `CoreAudio` may touch it. |
+| `{X}Data` | Should build for macOS. SwiftData, `Speech` and `AVAudioEngine` all exist there. `AVAudioSession` does not, which is why only `CoreSound` may touch it. |
 | `{X}UI`: view model, state, action, effect, display error | No UIKit and no iOS-only API. The view model imports `Observation` for `@Observable`, not `SwiftUI`, so it never sees a view type. A platform-bound call (haptics, a settings URL) is an effect the `Route` performs, or a seam injected with a production default. |
 | `{X}UI`: views | Cross-platform SwiftUI by default. An iOS-only modifier or UIKit bridge goes behind a `CoreDesignSystem` wrapper that compiles on both platforms. Never put `#if os(iOS)` in a feature view. |
 | `{X}DI` | No UIKit. It builds the graph and returns the `Route`. |
-| `CoreAudio` | The one sanctioned `#if os(iOS)`: audio session configuration. Everything else in it compiles on macOS. |
+| `CoreSound` | The one sanctioned `#if os(iOS)`: audio session configuration. Everything else in it compiles on macOS. |
 | `{X}Tests` | A test that needs UIKit goes in its own file wrapped in `#if canImport(UIKit)`. The rest of the target then still builds for macOS. |
 
 **A package opts in by listing `.macOS(.v26)` in `platforms`,** matching the iOS 26
@@ -335,7 +349,9 @@ and each half has an obvious home. Never invent a target named for shared-ness
 **One `{X}Tests` target per package**, organised by resource folder, mirroring the
 source layout. Not one per layer.
 
-**`{X}TestSupport`** holds shared test doubles and fixtures, depends on `{X}Domain`, and
+**`{X}TestSupport`** sits at the package root beside `Sources/` and `Tests/`, declared
+with `path: "TestSupport"`, because it is neither shipping code nor a test. It holds
+shared test doubles and fixtures, depends on `{X}Domain`, and
 is depended on by `{X}Tests` and peers' tests. `ScriptedRecogniser` belongs in
 `SpeakingTestSupport`; a fake `VocabularyRepository` belongs in `VocabularyTestSupport`. A fake
 used by exactly one test file stays private to that file; hoist when a second consumer

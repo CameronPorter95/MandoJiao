@@ -8,49 +8,54 @@ is the part that changes.
 
 ## Status
 
-**Steps 1 and 2 are done: the speaking lesson and the vocabulary are layered, still in one
-target.** 159 tests in 18 suites. Work happens on `refactor/mvi`.
+**Steps 1 to 3 are done.** `Core`, `Vocabulary` and `Speaking` are SPM packages at
+the repo root; Matching and Settings are still in the app target. 159 tests in 18
+suites: 16 in the app, 8 in `Core`, 47 in `Vocabulary`, 88 in `Speaking`. The
+package tests also run headlessly on the Mac with `swift test`. Work happens on
+`refactor/mvi`.
 
 ```
-MandoJiao/
-  Core/        Domain/ (DomainErrorModel, ErrorLog)  Persistence/ (LocalStoreError)
-               UI/ (LoggedError, EffectChannel, errorAlert)
-  Vocabulary/  Domain/  Data/  UI/  DI/     complete vertical, the reference
-  Speaking/    Domain/  Data/  UI/  DI/  TestSupport/
-  Game/  Views/  Audio/  Models/            Matching, Settings and shared audio, unmigrated
+Core/        CoreDomain  CorePersistence  CoreDesignSystem  CoreUI  CoreSound  CoreTestSupport
+Vocabulary/  VocabularyDomain  VocabularyData  VocabularyUI  VocabularyDI  VocabularyTestSupport
+Speaking/    SpeakingDomain  SpeakingData  SpeakingUI  SpeakingDI  SpeakingTestSupport
+MandoJiao/   the app: entry point, ContentView, Matching (Game/, Views/), SettingsView
 ```
 
-**Vocabulary.** `VocabularyRepository` sits in front of SwiftData. Writes go through
-nine use cases; reads are one `AsyncStream<Vocabulary>` that every screen subscribes
-to and that republishes after each write. The store is behind `VocabularyLocalSourceImpl`,
-a `@ModelActor`, and entities never leave `Data/`. Home, the library, the word editor
-and deck detail each have State, Action, Effect, a view model, a Route and a Screen.
-`@Query`, `modelContext` in views, `MistakeLog` and `PreviewData` are gone.
+Every package lists `.iOS(.v26)` and `.macOS(.v26)` and builds as Swift 5 language
+mode, matching the app, so step 3 was a move rather than a concurrency migration at
+the same time. Domain and data targets are nonisolated by default; UI, DI and test
+targets set `.defaultIsolation(MainActor.self)`.
 
-**The schema is versioned.** `VocabularySchemaV1` is the shape shipped before
-versioning, and `V2` adds `Deck.uuid`, with a custom stage giving each existing deck its
-own. Verified on the simulator: a store written by the previous build, with mistakes
-and a renamed deck added through sqlite, was upgraded by the new build with every word,
-deck, date and membership byte-identical and six distinct deck ids. The same check is
-now a test against a fixture store from that build.
+**The gate passed on the simulator.** A copy of a real store written before
+versioning was installed under the packaged build, which migrated it on launch: every
+word, deck, date and membership byte-identical, six distinct deck ids, and the home
+screen showed the data. The migration test does the same inside `VocabularyData`, a
+different module from the one that wrote the store, which is what shows SwiftData
+does not tie entities to their module. **Not checked on a device.**
 
-**Speaking.** Results go through `RecordLessonResultsUseCase`, and strictness and the card
-limit come from `SpeakingSettingsRepository`, reading the same `Preferences.Key` strings
-the settings screen writes. A failed save is shown and logged.
+What the move changed besides location:
 
-**Effects moved to `EffectChannel`.** A Route's `.task` is cancelled when a screen is
-pushed over it, which permanently ends a bare `AsyncStream`. The channel gives each
-appearance a fresh stream and holds effects sent in between. See
-[decision 9](architecture.md#9-effects-through-a-channel-state-over-the-observable-property).
+- `AnswerGrader` and friends import `VocabularyDomain`, so `SpeakingDomain` depends on
+  it. `Speaking` depends on `Vocabulary`, never the reverse.
+- The speaking view model logs attempts through an injected closure over a
+  `SpeechAttempt`, since `SpeechLog` is in `SpeakingData` and a UI target cannot see it.
+- `SampleVocabulary` is plain data in `VocabularyDomain`; the seeding that writes it
+  to the store is in `VocabularyStore`.
+- `LessonCompleteView` takes `LessonCompleteView.Row`, mapped from `WordPair` by each
+  lesson.
+- `textInputAutocapitalization` and `navigationBarTitleDisplayMode` go through
+  `neverAutocapitalize()` and `inlineNavigationTitle()` in `CoreDesignSystem`, so the
+  feature views build on macOS with no `#if`.
+- The audio target is `CoreSound`: `CoreAudio` collides with Apple's framework.
 
 What does not match yet:
 
-- **Matching is unmigrated.** `MatchingLessonView` still reaches `ToneEngine.shared`,
-  `MatchingLesson` defaults to `MatchSounds.shared`, and settings are read with
-  `@AppStorage`. Its results go through the use case, from a closure in `ContentView`
-  that logs a failure because there is no view model to show one.
-- **Settings is unmigrated.** It writes through `@AppStorage` under the same keys the
-  speaking lesson's settings repository reads.
+- **Matching is unmigrated,** in `Game/` and `Views/`. `MatchingLessonView` still
+  reaches `ToneEngine.shared`, `MatchingLesson` defaults to `MatchSounds.shared`, and
+  settings are read with `@AppStorage`. Its results go through the use case, from a
+  closure in `ContentView` that logs failures.
+- **Settings is unmigrated.** It writes through `@AppStorage` under the keys in
+  `Preferences`.
 - **`ContentView` still decides the presentation** of lessons itself, pending
   `AppNavigation`.
 
@@ -60,22 +65,12 @@ What does not match yet:
 
 | Now | Target | Notes |
 | --- | --- | --- |
-| `Core/Domain/*` | `CoreDomain` | |
-| `Core/Persistence/*` | `CorePersistence` | |
-| `Core/UI/*` | `CoreUI` | |
-| `Vocabulary/{Domain,Data,UI,DI}/*` | `Vocabulary{Domain,Data,UI,DI}` | Done in folders. |
-| `Speaking/{Domain,Data,UI,DI}/*` | `Speaking{Domain,Data,UI,DI}` | Done in folders. |
-| `Speaking/TestSupport/ScriptedRecogniser.swift` | `SpeakingTestSupport` | |
-| `Models/Preferences.swift` | keys shared by `SpeakingData`, `MatchingData` and `SettingsUI` | Keys and raw values unchanged. |
 | `Game/MatchingPlan.swift`, `Game/MatchingBoard.swift` | `MatchingDomain` | |
 | `Game/MatchingLesson.swift` | `MatchingUI` as `MatchingViewModel` | |
-| `Audio/MatchSounds.swift`, `Audio/AudioSessionSwitching.swift` | `CoreDomain` | The `shared` global is deleted once matching migrates. |
-| `Audio/ToneEngine.swift` | `CoreAudio` | Also implements `AudioSessionSwitching`. |
-| `Theme.swift`, `Views/LessonProgressBar.swift` | `CoreDesignSystem` | |
-| `Views/LessonCompleteView.swift` | `CoreUI` | Two consumers. |
-| `Views/MatchingLessonView.swift`, `MatchingBoardView.swift`, `WordTileView.swift` | `MatchingUI` | |
+| `Views/MatchingLessonView.swift` | `MatchingUI` as `MatchingRoute` and `MatchingScreen` | |
+| `Views/MatchingBoardView.swift`, `WordTileView.swift` | `MatchingUI` | |
 | `Views/SettingsView.swift` | `SettingsUI` | |
-| `MandoJiaoApp.swift`, `ContentView.swift` | `Application` | Opens the store, seeds it, registers `ErrorLog`, builds the factories. |
+| `MandoJiaoApp.swift`, `ContentView.swift` | `Application` | Opens the store, registers `ErrorLog`, builds the factories. |
 
 ---
 
@@ -110,10 +105,10 @@ extraction is then a move plus access control, never a redesign at the same time
      `Deck` shape before step 3 moves them. Cheap insurance for the upgrade check
      there.
 
-3. **Extract `Core`, `Vocabulary` and `Speaking`.** The first SPM packages, together
+3. **Done. Extract `Core`, `Vocabulary` and `Speaking`.** The first SPM packages, together
    because `Speaking` depends on `VocabularyDomain` for `WordPair`, `LessonRequest` and
    the results use case. `DictationRecogniser` and `SpeechLog` land in `SpeakingData`,
-   `ToneEngine` in `CoreAudio`, `LessonCompleteView` in `CoreUI`, and the
+   `ToneEngine` in `CoreSound`, `LessonCompleteView` in `CoreUI`, and the
    `ModelContainer` is built in the app from the packages' schemas. Each package lists
    `.macOS(.v26)`, and the domain and view model tests run headlessly from here on.
    The app target keeps `Matching` and `Settings`, which import only the new packages'
@@ -154,16 +149,15 @@ module.
 `SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor`. A package on tools version 6 defaults to
 the Swift 6 language mode and nonisolated types. Domain types moving to nonisolated is
 the intent, but expect every `@MainActor` assumption in them to surface as an error,
-and set the language mode per target deliberately rather than inheriting it.
+and set the language mode per target deliberately rather than inheriting it. Step 3
+chose Swift 5 mode for every package to match the app; moving to Swift 6 is its own
+change, best done one target at a time starting with the domains.
 
-**The SwiftData store has live user data and no versioned schema.** The container is
-built as `ModelContainer(for: VocabWord.self, Deck.self)` with no `VersionedSchema`.
-Whether moving the `@Model` classes into another module changes how SwiftData
-identifies them in an existing store is **not verified**. Before step 3 ships, install
-the current App Store build, add words and mistakes, upgrade to the packaged build on
-the same device, and check nothing is lost. Step 2 ran this on the simulator for the
-V1 to V2 migration and it passed; moving the entities into a package is a different
-change and needs its own check, on a device this time.
+**The SwiftData store has live user data.** It was unversioned until step 2 and is now
+`VocabularySchemaV1` and `V2`. Moving the `@Model` classes into a package did not
+change how SwiftData identifies them, on the simulator. Before this branch ships:
+install the current App Store build on a device, add words and mistakes, upgrade to
+this build, and check nothing is lost. That device run is the one check still owed.
 
 **`@testable import MandoJiao` stops being enough.** Tests move with their code, into
 package test targets. The app scheme must include each package test target, and the

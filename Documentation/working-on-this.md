@@ -3,9 +3,20 @@
 ## Build and test
 
 ```sh
-xcodebuild build -scheme MandoJiao -destination 'platform=iOS Simulator,name=iPhone 17 Pro'
-xcodebuild test  -scheme MandoJiao -destination 'platform=iOS Simulator,name=iPhone 17 Pro'
+# Everything, on the simulator: the app's tests and all three packages' tests.
+xcodebuild build -scheme MandoJiao -destination 'platform=iOS Simulator,id=<udid>'
+xcodebuild test  -scheme MandoJiao -destination 'platform=iOS Simulator,id=<udid>'
+
+# One package, headless on the Mac, in seconds.
+cd Speaking && swift test
+cd Speaking && swift test --filter StrictnessTests
 ```
+
+Get `<udid>` from `xcrun simctl list devices available`. Xcode 27 did not resolve
+`name=iPhone 17 Pro` here.
+
+The scheme's test action lists four test bundles: `MandoJiaoTests` and the three
+package test targets. Each prints its own `Test run with` line.
 
 The scheme is shared (`xcshareddata/xcschemes`), so a fresh clone can run the
 tests. Its `TestAction` must not carry an empty `<TestPlans>` element: that puts
@@ -72,16 +83,19 @@ the whole speaking lesson.
 
 ## Checking behaviour without the app
 
-The pure types (`AnswerGrader`, `MatchingBoard`, both builders, `MistakeUpdate`) can
-be compiled into a command-line program with `swiftc` and run directly. This is
-how reported transcripts get replayed through all four strictness levels before
-deciding anything. Far quicker than a simulator round trip, and it produces real
-numbers instead of an estimate.
+The domain types (`AnswerGrader`, both builders, `MistakeUpdate`, the view models
+with their fakes) live in packages that build for macOS, so their tests run headlessly
+with `swift test`, no simulator. This is how a reported transcript gets replayed
+through all four strictness levels before deciding anything: add the case to
+`StrictnessTests` and run it. About two seconds warm, and it produces real numbers
+instead of an estimate.
 
 ```sh
-swiftc -o check MandoJiao/Vocabulary/Domain/WordPair.swift MandoJiao/Speaking/Domain/AnswerGrader.swift \
-    MandoJiao/Speaking/Domain/AnswerStrictness.swift MandoJiao/Speaking/Domain/SpeechRecognising.swift main.swift
+cd Speaking && swift test --filter StrictnessTests
 ```
+
+The old `swiftc` one-liner no longer works, because the domain files now import
+each other's modules.
 
 ## The app icon is generated
 

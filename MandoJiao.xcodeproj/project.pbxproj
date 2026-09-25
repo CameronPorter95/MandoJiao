@@ -6,6 +6,17 @@
 	objectVersion = 90;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		000000000000000320000000 /* CoreDomain in Frameworks */ = {isa = PBXBuildFile; productRef = 000000000000000310000000 /* CoreDomain */; };
+		000000000000000320000001 /* CoreUI in Frameworks */ = {isa = PBXBuildFile; productRef = 000000000000000310000001 /* CoreUI */; };
+		000000000000000320000002 /* CoreDesignSystem in Frameworks */ = {isa = PBXBuildFile; productRef = 000000000000000310000002 /* CoreDesignSystem */; };
+		000000000000000320000003 /* CoreSound in Frameworks */ = {isa = PBXBuildFile; productRef = 000000000000000310000003 /* CoreSound */; };
+		000000000000000320000004 /* VocabularyDomain in Frameworks */ = {isa = PBXBuildFile; productRef = 000000000000000310000004 /* VocabularyDomain */; };
+		000000000000000320000005 /* VocabularyDI in Frameworks */ = {isa = PBXBuildFile; productRef = 000000000000000310000005 /* VocabularyDI */; };
+		000000000000000320000006 /* SpeakingDomain in Frameworks */ = {isa = PBXBuildFile; productRef = 000000000000000310000006 /* SpeakingDomain */; };
+		000000000000000320000007 /* SpeakingDI in Frameworks */ = {isa = PBXBuildFile; productRef = 000000000000000310000007 /* SpeakingDI */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		000000000000000260000000 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -19,6 +30,9 @@
 /* Begin PBXFileReference section */
 		000000000000000000000120 /* MandoJiao.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MandoJiao.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		000000000000000000000220 /* MandoJiaoTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MandoJiaoTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		000000000000000300000011 /* Core */ = {isa = PBXFileReference; lastKnownFileType = wrapper; path = Core; sourceTree = "<group>"; };
+		000000000000000300000012 /* Vocabulary */ = {isa = PBXFileReference; lastKnownFileType = wrapper; path = Vocabulary; sourceTree = "<group>"; };
+		000000000000000300000013 /* Speaking */ = {isa = PBXFileReference; lastKnownFileType = wrapper; path = Speaking; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -43,6 +57,14 @@
 		000000000000000130000000 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			files = (
+				000000000000000320000000 /* CoreDomain in Frameworks */,
+				000000000000000320000001 /* CoreUI in Frameworks */,
+				000000000000000320000002 /* CoreDesignSystem in Frameworks */,
+				000000000000000320000003 /* CoreSound in Frameworks */,
+				000000000000000320000004 /* VocabularyDomain in Frameworks */,
+				000000000000000320000005 /* VocabularyDI in Frameworks */,
+				000000000000000320000006 /* SpeakingDomain in Frameworks */,
+				000000000000000320000007 /* SpeakingDI in Frameworks */,
 			);
 		};
 		000000000000000230000000 /* Frameworks */ = {
@@ -56,6 +78,9 @@
 		000000000000000000000001 = {
 			isa = PBXGroup;
 			children = (
+				000000000000000300000011 /* Core */,
+				000000000000000300000012 /* Vocabulary */,
+				000000000000000300000013 /* Speaking */,
 				000000000000000000000010 /* MandoJiao */,
 				7E9B8BB43065DA1400230403 /* Documentation */,
 				000000000000000000000030 /* MandoJiaoTests */,
@@ -89,6 +114,16 @@
 				000000000000000000000010 /* MandoJiao */,
 			);
 			name = MandoJiao;
+			packageProductDependencies = (
+				000000000000000310000000 /* CoreDomain */,
+				000000000000000310000001 /* CoreUI */,
+				000000000000000310000002 /* CoreDesignSystem */,
+				000000000000000310000003 /* CoreSound */,
+				000000000000000310000004 /* VocabularyDomain */,
+				000000000000000310000005 /* VocabularyDI */,
+				000000000000000310000006 /* SpeakingDomain */,
+				000000000000000310000007 /* SpeakingDI */,
+			);
 			productName = MyApp;
 			productReference = 000000000000000000000120 /* MandoJiao.app */;
 			productType = "com.apple.product-type.application";
@@ -141,6 +176,11 @@
 			);
 			mainGroup = 000000000000000000000001;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				000000000000000300000001 /* XCLocalSwiftPackageReference "Core" */,
+				000000000000000300000002 /* XCLocalSwiftPackageReference "Vocabulary" */,
+				000000000000000300000003 /* XCLocalSwiftPackageReference "Speaking" */,
+			);
 			preferredProjectObjectVersion = 90;
 			productRefGroup = 000000000000000000000020 /* Products */;
 			projectDirPath = "";
@@ -473,6 +513,64 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		000000000000000300000001 /* XCLocalSwiftPackageReference "Core" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Core;
+		};
+		000000000000000300000002 /* XCLocalSwiftPackageReference "Vocabulary" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Vocabulary;
+		};
+		000000000000000300000003 /* XCLocalSwiftPackageReference "Speaking" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Speaking;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		000000000000000310000000 /* CoreDomain */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 000000000000000300000001 /* XCLocalSwiftPackageReference "Core" */;
+			productName = CoreDomain;
+		};
+		000000000000000310000001 /* CoreUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 000000000000000300000001 /* XCLocalSwiftPackageReference "Core" */;
+			productName = CoreUI;
+		};
+		000000000000000310000002 /* CoreDesignSystem */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 000000000000000300000001 /* XCLocalSwiftPackageReference "Core" */;
+			productName = CoreDesignSystem;
+		};
+		000000000000000310000003 /* CoreSound */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 000000000000000300000001 /* XCLocalSwiftPackageReference "Core" */;
+			productName = CoreSound;
+		};
+		000000000000000310000004 /* VocabularyDomain */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 000000000000000300000002 /* XCLocalSwiftPackageReference "Vocabulary" */;
+			productName = VocabularyDomain;
+		};
+		000000000000000310000005 /* VocabularyDI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 000000000000000300000002 /* XCLocalSwiftPackageReference "Vocabulary" */;
+			productName = VocabularyDI;
+		};
+		000000000000000310000006 /* SpeakingDomain */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 000000000000000300000003 /* XCLocalSwiftPackageReference "Speaking" */;
+			productName = SpeakingDomain;
+		};
+		000000000000000310000007 /* SpeakingDI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 000000000000000300000003 /* XCLocalSwiftPackageReference "Speaking" */;
+			productName = SpeakingDI;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 000000000000000000000000 /* Project object */;
 }

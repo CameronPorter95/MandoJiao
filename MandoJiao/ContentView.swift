@@ -1,4 +1,8 @@
+import CoreDomain
+import SpeakingDI
 import SwiftUI
+import VocabularyDI
+import VocabularyDomain
 
 /// Which exercise a lesson opens into.
 enum LessonRoute: Identifiable, Hashable {
@@ -22,10 +26,8 @@ struct ContentView: View {
     var body: some View {
         NavigationStack {
             vocabulary.makeHomeRoute(
-                navigation: HomeNavigation(
-                    didRequestMatching: { activeLesson = .matching($0) },
-                    didRequestSpeaking: { activeLesson = .speaking($0) }
-                ),
+                didRequestMatching: { activeLesson = .matching($0) },
+                didRequestSpeaking: { activeLesson = .speaking($0) },
                 settings: { AnyView(SettingsView()) }
             )
         }
@@ -34,7 +36,7 @@ struct ContentView: View {
             case .matching(let request):
                 MatchingLessonView(request: request, saveResults: recordMatchingResults) { activeLesson = nil }
             case .speaking(let request):
-                speaking.makeRoute(request: request, navigation: SpeakingNavigation(didClose: { activeLesson = nil }))
+                speaking.makeRoute(request: request, didClose: { activeLesson = nil })
             }
         }
     }
@@ -57,7 +59,7 @@ struct ContentView: View {
 
 #Preview {
     let vocabulary = VocabularyFactory(
-        container: try! VocabularyFactory.makeContainer(inMemory: true),
+        container: try! VocabularyFactory.openStore(inMemory: true),
         minimumMatchingWords: 5,
         quickPracticeRounds: 10
     )

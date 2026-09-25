@@ -1,3 +1,5 @@
+import CoreDomain
+import SpeakingDomain
 import SwiftUI
 
 struct SettingsView: View {

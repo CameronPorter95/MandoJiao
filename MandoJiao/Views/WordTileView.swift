@@ -1,4 +1,6 @@
+import CoreDesignSystem
 import SwiftUI
+import VocabularyDomain
 
 struct WordTileView: View {
     let tile: Tile
