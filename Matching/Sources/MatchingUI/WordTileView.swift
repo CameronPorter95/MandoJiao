@@ -1,4 +1,5 @@
 import CoreDesignSystem
+import MatchingDomain
 import SwiftUI
 import VocabularyDomain
 

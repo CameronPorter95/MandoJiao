@@ -1,20 +1,26 @@
 import Foundation
 import VocabularyDomain
 
-enum TileSide: String, Hashable {
+public enum TileSide: String, Hashable {
     case english
     case hanzi
 }
 
-struct Tile: Identifiable, Hashable {
-    let pairID: UUID
-    let side: TileSide
-    let text: String
+public struct Tile: Identifiable, Hashable {
+    public let pairID: UUID
+    public let side: TileSide
+    public let text: String
 
-    var id: String { "\(side.rawValue)-\(pairID.uuidString)" }
+    public init(pairID: UUID, side: TileSide, text: String) {
+        self.pairID = pairID
+        self.side = side
+        self.text = text
+    }
+
+    public var id: String { "\(side.rawValue)-\(pairID.uuidString)" }
 }
 
-enum TapResult: Equatable {
+public enum TapResult: Equatable {
     /// Nothing was selected, now this tile is.
     case selected
     /// The already-selected tile was tapped again.
@@ -36,20 +42,20 @@ enum TapResult: Equatable {
 ///
 /// Resolution is immediate on the second tap, from either side, so matches can
 /// be fired off back to back.
-struct MatchingBoard {
-    let pairs: [WordPair]
-    let englishTiles: [Tile]
-    let hanziTiles: [Tile]
+public struct MatchingBoard: Equatable {
+    public let pairs: [WordPair]
+    public let englishTiles: [Tile]
+    public let hanziTiles: [Tile]
 
-    private(set) var matchedPairIDs: Set<UUID> = []
-    private(set) var selected: Tile?
+    public private(set) var matchedPairIDs: Set<UUID> = []
+    public private(set) var selected: Tile?
     /// Tiles that were part of the most recent wrong guess, for the shake.
     /// Cleared on the next tap.
-    private(set) var missedTileIDs: Set<String> = []
+    public private(set) var missedTileIDs: Set<String> = []
     /// Every pair guessed wrong on this board, kept for the whole exercise.
-    private(set) var missedPairIDs: Set<UUID> = []
+    public private(set) var missedPairIDs: Set<UUID> = []
 
-    init(pairs: [WordPair]) {
+    public init(pairs: [WordPair]) {
         self.pairs = pairs
         self.englishTiles = pairs
             .map { Tile(pairID: $0.id, side: .english, text: $0.english) }
@@ -59,21 +65,21 @@ struct MatchingBoard {
             .shuffled()
     }
 
-    var isComplete: Bool { matchedPairIDs.count == pairs.count }
+    public var isComplete: Bool { matchedPairIDs.count == pairs.count }
 
-    var matchedCount: Int { matchedPairIDs.count }
+    public var matchedCount: Int { matchedPairIDs.count }
 
-    func isMatched(_ tile: Tile) -> Bool { matchedPairIDs.contains(tile.pairID) }
+    public func isMatched(_ tile: Tile) -> Bool { matchedPairIDs.contains(tile.pairID) }
 
-    func isSelected(_ tile: Tile) -> Bool { selected?.id == tile.id }
+    public func isSelected(_ tile: Tile) -> Bool { selected?.id == tile.id }
 
-    func isMissed(_ tile: Tile) -> Bool { missedTileIDs.contains(tile.id) }
+    public func isMissed(_ tile: Tile) -> Bool { missedTileIDs.contains(tile.id) }
 
-    func pinyin(for tile: Tile) -> String? {
+    public func pinyin(for tile: Tile) -> String? {
         pairs.first { $0.id == tile.pairID }?.pinyin
     }
 
-    mutating func tap(_ tile: Tile) -> TapResult {
+    public mutating func tap(_ tile: Tile) -> TapResult {
         guard !isMatched(tile) else { return .ignored }
         missedTileIDs = []
 

@@ -8,54 +8,41 @@ is the part that changes.
 
 ## Status
 
-**Steps 1 to 3 are done.** `Core`, `Vocabulary` and `Speaking` are SPM packages at
-the repo root; Matching and Settings are still in the app target. 160 tests in 18
-suites: 16 in the app, 8 in `Core`, 48 in `Vocabulary`, 88 in `Speaking`. The
-package tests also run headlessly on the Mac with `swift test`. Work happens on
-`refactor/mvi`.
+**Steps 1 to 4 are done.** `Core`, `Vocabulary`, `Speaking` and `Matching` are SPM
+packages at the repo root. Only the settings screen is left in the app target, beside
+the entry point and the composition root. 177 tests in 20 suites: 8 in `Core`, 48 in
+`Vocabulary`, 88 in `Speaking`, 33 in `Matching`, all runnable headlessly with
+`swift test` as well as through the scheme. Work happens on `refactor/mvi`.
 
 ```
-Core/        CoreDomain  CorePersistence  CoreDesignSystem  CoreUI  CoreSound  CoreTestSupport
+Core/        CoreDomain  CorePersistence  CoreDesignSystem  CoreUI  CoreSound  CoreDI  CoreTestSupport
 Vocabulary/  VocabularyDomain  VocabularyData  VocabularyUI  VocabularyDI  VocabularyTestSupport
 Speaking/    SpeakingDomain  SpeakingData  SpeakingUI  SpeakingDI  SpeakingTestSupport
-MandoJiao/   the app: entry point, ContentView, Matching (Game/, Views/), SettingsView
+Matching/    MatchingDomain  MatchingData  MatchingUI  MatchingDI
+MandoJiao/   the app: entry point, ContentView, LiveDependencies, SettingsView
 ```
 
 Every package lists `.iOS(.v26)` and `.macOS(.v26)` and builds as Swift 5 language
-mode, matching the app, so step 3 was a move rather than a concurrency migration at
-the same time. Domain and data targets are nonisolated by default; UI, DI and test
-targets set `.defaultIsolation(MainActor.self)`.
+mode, matching the app. Domain and data targets are nonisolated by default; UI, DI and
+test targets set `.defaultIsolation(MainActor.self)`.
 
-**The gate passed on the simulator.** A copy of a real store written before
-versioning was installed under the packaged build, which migrated it on launch: every
-word, deck, date and membership byte-identical, six distinct deck ids, and the home
-screen showed the data. The migration test does the same inside `VocabularyData`, a
-different module from the one that wrote the store, which is what shows SwiftData
-does not tie entities to their module. **Not checked on a device.**
+**Step 4, Matching.** Layered and extracted in one go, following the Speaking shape.
+`MatchingLesson` is a value holding the boards and tallies; `MatchingViewModel` owns
+the pause after a cleared board, the tones and haptics, and recording results, which
+now shows and logs a failure instead of going through a logging closure in
+`ContentView`. Rounds and pinyin visibility come from `MatchingSettingsRepository`,
+which also saves the pinyin toggle. `MatchSounds.shared` is gone: warming the engine
+is `MatchSoundPlaying.prepare()`, and only a factory names `ToneEngine`. The app's test
+target held only the two matching test files, so it went with them.
 
-What the move changed besides location:
-
-- `AnswerGrader` and friends import `VocabularyDomain`, so `SpeakingDomain` depends on
-  it. `Speaking` depends on `Vocabulary`, never the reverse.
-- The speaking view model logs attempts through an injected closure over a
-  `SpeechAttempt`, since `SpeechLog` is in `SpeakingData` and a UI target cannot see it.
-- `SampleVocabulary` is plain data in `VocabularyDomain`; the seeding that writes it
-  to the store is in `VocabularyStore`.
-- `LessonCompleteView` takes `LessonCompleteView.Row`, mapped from `WordPair` by each
-  lesson.
-- `textInputAutocapitalization` and `navigationBarTitleDisplayMode` go through
-  `neverAutocapitalize()` and `inlineNavigationTitle()` in `CoreDesignSystem`, so the
-  feature views build on macOS with no `#if`.
-- The audio target is `CoreSound`: `CoreAudio` collides with Apple's framework.
+**The store gate passed on the simulator in steps 2 and 3.** A real store written
+before versioning migrates under the packaged build with every record intact. **Not
+checked on a device.**
 
 What does not match yet:
 
-- **Matching is unmigrated,** in `Game/` and `Views/`. `MatchingLessonView` still
-  reaches `ToneEngine.shared`, `MatchingLesson` defaults to `MatchSounds.shared`, and
-  settings are read with `@AppStorage`. Its results go through the use case, from a
-  closure in `ContentView` that logs failures.
-- **Settings is unmigrated.** It writes through `@AppStorage` under the keys in
-  `Preferences`.
+- **Settings is unmigrated.** `SettingsView` writes through `@AppStorage` under the
+  keys in `Preferences`, which the matching and speaking settings repositories read.
 - **`ContentView` still decides the presentation** of lessons itself, pending
   `AppNavigation`.
 
@@ -65,12 +52,8 @@ What does not match yet:
 
 | Now | Target | Notes |
 | --- | --- | --- |
-| `Game/MatchingPlan.swift`, `Game/MatchingBoard.swift` | `MatchingDomain` | |
-| `Game/MatchingLesson.swift` | `MatchingUI` as `MatchingViewModel` | |
-| `Views/MatchingLessonView.swift` | `MatchingUI` as `MatchingRoute` and `MatchingScreen` | |
-| `Views/MatchingBoardView.swift`, `WordTileView.swift` | `MatchingUI` | |
-| `Views/SettingsView.swift` | `SettingsUI` | |
-| `MandoJiaoApp.swift`, `ContentView.swift` | `Application` | Opens the store, registers `ErrorLog`, builds the factories. |
+| `Views/SettingsView.swift` | `SettingsUI` | Edits matching and speaking settings through their domains. |
+| `MandoJiaoApp.swift`, `ContentView.swift`, `LiveDependencies.swift` | `Application` | Opens the store, registers `ErrorLog`, builds each screen through its factory. |
 
 ---
 
@@ -115,7 +98,7 @@ extraction is then a move plus access control, never a redesign at the same time
    `Domain` and `DI` products. **Gate:** the store upgrade check in
    [What will cost time](#what-will-cost-time) passes on a device before this ships.
 
-4. **Matching, layered and extracted in one go.** The pattern is proven and the
+4. **Done. Matching, layered and extracted in one go.** The pattern is proven and the
    package plumbing exists, so there is no reason to stop in folders.
    `MatchingLesson` becomes a view model, results go through the Vocabulary use case,
    rounds and pinyin visibility get a `MatchingSettingsRepository`, and `MatchingLessonView`
@@ -173,7 +156,9 @@ repository instead.
 
 **The quick practice card shows the default round count.** It says
 `MatchingPlanBuilder.exercisesPerLesson` rounds, not the rounds setting the lesson actually
-uses. Carried over unchanged; step 4 can pass the setting in.
+uses. Still carried over: the card is in `Vocabulary`, which cannot read Matching's
+settings, and `ContentView` builds `HomeInput` once rather than on every visit. Step 5,
+which owns the settings, is the natural place to fix it.
 
 **`recordResults` still visits every word.** Fine at 65 words. A predicate on the ids
 in the results fixes it when it matters.

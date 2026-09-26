@@ -20,8 +20,7 @@ Module and target dependency rules are not repeated here either; they are in
 Applies to code in layer targets (`{X}Domain`, `{X}Data`, `{X}UI`, `{X}DI`) and to any
 new vertical.
 
-Does **not** apply to code still in the app target's `Views/`, `Game/`, `Audio/` and
-`Models/` folders. Those follow their local convention until their
+Does **not** apply to code still in the app target's `Views/` folder. Those follow their local convention until their
 vertical moves; see [modularisation-migration.md](modularisation-migration.md).
 Holding unmigrated code to this list would block ordinary feature work for nothing.
 
@@ -127,7 +126,7 @@ The project rules in [CLAUDE.md](../CLAUDE.md) apply everywhere, migrated or not
       ([why](modularisation.md#building-for-macos))
 - [ ] **U8** The view model never reaches a platform service except through an injected
       seam. The recogniser, sounds and the audio session mode are all protocols handed
-      in by the factory. Nothing calls `ToneEngine.shared` or `MatchSounds.shared`.
+      in by the factory. Only a factory names `ToneEngine.shared`.
 - [ ] **U9** A view uses no iOS-only modifier or UIKit bridge directly. It goes through a
       `CoreDesignSystem` wrapper that compiles on macOS. No `#if os(iOS)` in a feature
       view. ([why](modularisation.md#building-for-macos))

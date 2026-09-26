@@ -1,11 +1,12 @@
 import CoreDomain
+import MatchingDomain
 import SpeakingDomain
 import SwiftUI
 
 struct SettingsView: View {
     @AppStorage(Preferences.Key.speechStrictness) private var strictnessRaw = AnswerStrictness.default.rawValue
     @AppStorage(Preferences.Key.showsPinyin) private var showsPinyin = false
-    @AppStorage(Preferences.Key.matchingRounds) private var matchingRounds = 10
+    @AppStorage(Preferences.Key.matchingRounds) private var matchingRounds = MatchingSettings.defaultRounds
     @AppStorage(Preferences.Key.speakingCardLimit) private var speakingCardLimit = SpeakingSettings.defaultCardLimit
 
     private var strictness: AnswerStrictness {

@@ -420,6 +420,7 @@ private final class FakeRecogniser: SpeechRecognising {
 private final class FakeAudio: AudioSessionSwitching, MatchSoundPlaying {
     private(set) var events: [String] = []
 
+    func prepare() {}
     func enterRecordingMode() { events.append("enter") }
     func exitRecordingMode() async { events.append("exit") }
     func playMatch(step: Int, of total: Int) { events.append("match") }

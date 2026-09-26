@@ -1,5 +1,7 @@
 import CoreDI
-import CoreDomain
+import MatchingDI
+import MatchingDomain
+import MatchingUI
 import SpeakingDI
 import SpeakingUI
 import SwiftUI
@@ -43,7 +45,14 @@ struct ContentView: View {
         .fullScreenCover(item: $activeLesson) { route in
             switch route {
             case .matching(let request):
-                MatchingLessonView(request: request, saveResults: recordMatchingResults) { activeLesson = nil }
+                MatchingFactory.makeRoute(
+                    dependencies: dependencies,
+                    navigation: MatchingNavigation(didClose: { activeLesson = nil }),
+                    input: MatchingInput(
+                        request: request,
+                        recordResults: VocabularyRepositoryFactory.makeRecordLessonResultsUseCase(dependencies: dependencies)
+                    )
+                )
             case .speaking(let request):
                 SpeakingFactory.makeRoute(
                     dependencies: dependencies,
@@ -53,21 +62,6 @@ struct ContentView: View {
                         recordResults: VocabularyRepositoryFactory.makeRecordLessonResultsUseCase(dependencies: dependencies)
                     )
                 )
-            }
-        }
-    }
-
-    /// The matching lesson has no view model yet to report a failure, so this logs it.
-    private func recordMatchingResults(_ results: LessonResults) {
-        let record = VocabularyRepositoryFactory.makeRecordLessonResultsUseCase(dependencies: dependencies)
-        Task {
-            do {
-                try await record(results)
-            } catch is CancellationError {
-                // Cancelled, not a failure.
-            } catch {
-                let model = (error as? VocabularyDomainError)?.model ?? DomainErrorModel(error)
-                ErrorLog.record(model, context: "recordMatchingResults")
             }
         }
     }

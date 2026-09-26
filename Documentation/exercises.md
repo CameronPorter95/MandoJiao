@@ -14,14 +14,15 @@ the interesting parts be tested without a simulator, a store or a microphone.
 ## Current layout
 
 ```
-Views/          SwiftUI. Owns presentation, the microphone, and writing results back.
-Game/           Exercise logic. Pure values and @Observable drivers. No SwiftData.
-Speaking/       The speaking lesson, split into Domain/, Data/, UI/, DI/.
-Vocabulary/     Words, decks, the mistakes list, home and library screens, same split.
-Core/           Shared error, effect and persistence plumbing.
-Audio/          Tone synthesis and the audio session.
-Models/         Preferences keys.
+Core/           Shared plumbing: errors, effects, the design system, DI, ToneEngine.
+Vocabulary/     Words, decks, the mistakes list, home and library screens.
+Speaking/       The speaking lesson.
+Matching/       The matching lesson.
+MandoJiao/      The app: entry point, composition root, settings screen.
 ```
+
+Each package splits into Domain, Data, UI and DI targets. See
+[`modularisation.md`](modularisation.md).
 
 ## Storage and the detachment boundary
 
@@ -46,7 +47,7 @@ differ in almost everything except where their results go.
 | --- | --- | --- |
 | Plan | `MatchingPlan`, 10 rounds of 5 pairs | `SpeakingPlan`, one card per word, max 20 |
 | Board | `MatchingBoard`, a value type | no board, one card at a time |
-| Driver | `MatchingLesson` | `SpeakingViewModel`, over a `SpeakingLesson` value |
+| Driver | `MatchingViewModel`, over a `MatchingLesson` value | `SpeakingViewModel`, over a `SpeakingLesson` value |
 | Minimum words | 5 | 1 |
 | Input | taps | speech, or typing |
 
@@ -78,10 +79,9 @@ recovery can be told apart.
 
 ## Sound
 
-`MatchSoundPlaying` is a protocol in a Foundation-only file, reached through
-`MatchSounds.shared`, which the app points at `ToneEngine` at launch. The
-exercises never reference `ToneEngine` directly, so their logic compiles and can
-be checked where `AVAudioSession` does not exist.
+`MatchSoundPlaying` is a protocol in `CoreDomain`, handed to each lesson's view
+model by its factory, which is the only place that names `ToneEngine`. The lessons'
+logic therefore compiles and is tested where `AVAudioSession` does not exist.
 
 `ToneEngine` synthesises sine buffers rather than playing sound files, which is
 what allows the pitch to climb. It runs a pool of six player nodes so rapid

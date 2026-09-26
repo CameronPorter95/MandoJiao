@@ -405,9 +405,8 @@ A cross-package use case arrives as input. `SpeakingFactory` takes
 `RecordLessonResultsUseCase` in `SpeakingInput`, because `Speaking` may not import
 `VocabularyDI`; the app, which sees both, builds it and hands it over.
 
-The speaking lesson no longer reaches a global: `SpeakingFactory` hands `SpeakingViewModel` its
-recogniser, audio session and sounds. `MatchSounds.shared` remains for the matching
-lesson until it migrates.
+No lesson reaches a global: `SpeakingFactory` and `MatchingFactory` hand their view
+models the recogniser, audio session and sounds. `MatchSounds.shared` is gone.
 
 ### 14. Test seams are injected, not hard-coded
 

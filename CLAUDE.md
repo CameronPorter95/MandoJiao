@@ -15,9 +15,9 @@ repeating mistakes already made.
 ## Architecture (target)
 
 The app is moving to MVI + Clean Architecture in SPM packages, with a domain layer
-shaped for possible KMP sharing. `Core/`, `Vocabulary/` and `Speaking/` are SPM
-packages at the repo root, and `Vocabulary` is the reference vertical. Matching and
-Settings are still in the app target. See `Documentation/modularisation-migration.md`
+shaped for possible KMP sharing. `Core/`, `Vocabulary/`, `Speaking/` and `Matching/` are
+SPM packages at the repo root, and `Vocabulary` is the reference vertical. Only the
+settings screen is still in the app target. See `Documentation/modularisation-migration.md`
 for the state and the order.
 
 - `Documentation/architecture.md`: the layers, UDF, and the reasoning behind each decision
@@ -27,8 +27,8 @@ for the state and the order.
 - `Documentation/code-comments.md`: when a comment is warranted, and how long
 
 Packages: `Core` (`CoreDomain`, `CorePersistence`, `CoreSound`, `CoreDesignSystem`,
-`CoreUI`, `CoreDI`, `CoreTestSupport`), `Vocabulary`, `Speaking`, and later `Matching`, `Settings`,
-each with up to four targets: `{X}Domain`, `{X}Data`, `{X}UI`, `{X}DI`. The rules most
+`CoreUI`, `CoreDI`, `CoreTestSupport`), `Vocabulary`, `Speaking`, `Matching`, and
+later `Settings`, each with up to four targets: `{X}Domain`, `{X}Data`, `{X}UI`, `{X}DI`. The rules most
 easily broken:
 
 - A feature package may depend only on another package's `Domain` product.
@@ -36,7 +36,7 @@ easily broken:
 - `{X}Domain` must not import SwiftUI, UIKit, SwiftData, Speech, AVFoundation or OSLog.
 - Domain and UI targets must build for macOS. A view model imports `Observation`, not
   `SwiftUI`, and reaches the recogniser, sounds and audio session only through
-  injected seams. Nothing calls `ToneEngine.shared` or `MatchSounds.shared`.
+  injected seams. Only a factory names `ToneEngine.shared`.
 - Views never touch `ModelContext` or `@Query`; the store is behind a repository.
 - A screen takes a `{Screen}Navigation` value. Its closures name what happened, not
   where to go, and are never defaulted to `{ }`.
@@ -57,7 +57,7 @@ Moving code must not move a pinned cost out of the test suite.
 ## Build and test
 
 ```sh
-# Everything, on the simulator: the app's tests and all three packages' tests.
+# Everything, on the simulator: all four packages' tests.
 xcodebuild build -scheme MandoJiao -destination 'platform=iOS Simulator,id=<udid>'
 xcodebuild test  -scheme MandoJiao -destination 'platform=iOS Simulator,id=<udid>'
 
@@ -76,9 +76,9 @@ times; once it reported `TEST SUCCEEDED` while eight new tests were skipped. A
 green result on its own is not evidence that anything ran.
 
 `xcodebuild test` prints one `Test run with` line per test bundle, four in all.
-Add them up. Current suite: 160 tests in 18 suites: 16 in the app (matching), 8 in
-`Core`, 48 in `Vocabulary`, 88 in `Speaking`. If a bundle's line is missing, it did
-not run.
+Add them up. Current suite: 177 tests in 20 suites: 8 in `Core`, 48 in `Vocabulary`,
+88 in `Speaking`, 33 in `Matching`. The app target has no tests of its own. If a
+bundle's line is missing, it did not run.
 
 ## Decisions already settled
 

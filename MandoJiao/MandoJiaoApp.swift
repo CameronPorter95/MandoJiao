@@ -1,5 +1,4 @@
 import CoreDomain
-import CoreSound
 import OSLog
 import SwiftData
 import SwiftUI
@@ -10,10 +9,6 @@ struct MandoJiaoApp: App {
     private let dependencies: LiveDependencies
 
     init() {
-        // The matching lesson reaches for sound through MatchSounds so its logic stays
-        // free of AVFoundation. This is the one place that decides what actually plays.
-        MatchSounds.shared = ToneEngine.shared
-
         let errorLog = Logger(subsystem: "com.cameronporter.MandoJiao", category: "errors")
         ErrorLog.sink = { model, context in
             errorLog.notice(

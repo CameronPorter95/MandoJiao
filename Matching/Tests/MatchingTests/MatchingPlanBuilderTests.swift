@@ -1,5 +1,5 @@
 import Testing
-@testable import MandoJiao
+@testable import MatchingDomain
 import VocabularyDomain
 
 @Suite("Matching lesson building")

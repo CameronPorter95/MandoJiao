@@ -238,8 +238,8 @@ public struct HomeNavigation {
 **Closures are named for the event, not the destination.** `didRequestSpeaking`, never
 `presentSpeakLesson`. The moment a name says where it goes, the screen has taken a
 position on a stack it cannot see, and the same screen can no longer serve two flows.
-`SpeakingNavigation` is the first of these. `ContentView` still decides the presentation
-itself for now, and still builds `MatchingLessonView` inline.
+`SpeakingNavigation` and `MatchingNavigation` are both of this shape. `ContentView`
+still decides the presentation of lessons itself, pending `AppNavigation`.
 
 **One bundle per package.** `{X}Navigation` holds one member per screen, so a factory
 signature stays at a single navigation parameter however many screens the package

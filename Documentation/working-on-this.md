@@ -3,7 +3,7 @@
 ## Build and test
 
 ```sh
-# Everything, on the simulator: the app's tests and all three packages' tests.
+# Everything, on the simulator: all four packages' tests.
 xcodebuild build -scheme MandoJiao -destination 'platform=iOS Simulator,id=<udid>'
 xcodebuild test  -scheme MandoJiao -destination 'platform=iOS Simulator,id=<udid>'
 
@@ -15,8 +15,8 @@ cd Speaking && swift test --filter StrictnessTests
 Get `<udid>` from `xcrun simctl list devices available`. Xcode 27 did not resolve
 `name=iPhone 17 Pro` here.
 
-The scheme's test action lists four test bundles: `MandoJiaoTests` and the three
-package test targets. Each prints its own `Test run with` line.
+The scheme's test action lists four test bundles, one per package: `CoreTests`,
+`VocabularyTests`, `SpeakingTests` and `MatchingTests`. The app has no test target. Each prints its own `Test run with` line.
 
 The scheme is shared (`xcshareddata/xcschemes`), so a fresh clone can run the
 tests. Its `TestAction` must not carry an empty `<TestPlans>` element: that puts
@@ -116,7 +116,7 @@ main-actor isolated unless marked otherwise.
 
 The recurring trap: **a default argument is evaluated in the caller's context**,
 so `static let` values used as defaults must be `nonisolated`. This has caught
-`MatchSounds.shared`, `AnswerStrictness.default`, `ToneEngine.scale` and
+`MatchSounds.shared` (since deleted), `AnswerStrictness.default`, `ToneEngine.scale` and
 `Endpointing`'s constants. The warning is "main actor-isolated static property
 ... can not be referenced from a nonisolated context", and it is an error under
 Swift 6.
@@ -141,7 +141,7 @@ the way it does, including the things that were tried and did not work.
 - **Never create a version 1 model object in a process that has opened version 2.**
   SwiftData resolves `VocabularySchemaV1.Deck` to version 2's `Deck` entity and
   throws on the missing `uuid`. The migration test migrates a copy of a real store
-  written by the old build (`MandoJiaoTests/Fixtures/VocabularyV1.store`) instead.
+  written by the old build (`Vocabulary/Tests/VocabularyTests/Fixtures/VocabularyV1.store`) instead.
 - **A test that blocks the main actor breaks the timing tests.** Every suite shares
   the main actor, and `EndpointingTests` needs a 100ms sleep to wake before a 150ms
   window. The migration test opens an on-disk store synchronously, which starved it

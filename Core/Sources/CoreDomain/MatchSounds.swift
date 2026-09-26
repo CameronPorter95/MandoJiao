@@ -2,6 +2,9 @@ import Foundation
 
 @MainActor
 public protocol MatchSoundPlaying {
+    /// Gets the engine ready ahead of the first sound. Activation is not instant, and
+    /// priming it when a lesson opens means the first match does not wait for it.
+    func prepare()
     /// `step` is 0-based; the last step of a board gets the top note.
     func playMatch(step: Int, of total: Int)
     func playMiss()
@@ -12,17 +15,8 @@ public protocol MatchSoundPlaying {
 @MainActor
 public struct SilentSounds: MatchSoundPlaying {
     public init() {}
+    public func prepare() {}
     public func playMatch(step: Int, of total: Int) {}
     public func playMiss() {}
     public func playLessonComplete() {}
-}
-
-/// Where the exercises get their sound from.
-///
-/// This indirection keeps the protocol in a file that imports Foundation only, so the
-/// exercise logic compiles and can be checked without `AVAudioSession`, which does not
-/// exist off iOS. The app points this at `ToneEngine` at launch.
-@MainActor
-public enum MatchSounds {
-    public static var shared: MatchSoundPlaying = SilentSounds()
 }
