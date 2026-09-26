@@ -11,11 +11,12 @@ import VocabularyTestSupport
 @MainActor
 struct HomeViewModelTests {
     private let repository = FakeVocabularyRepository(Fixtures.vocabulary)
+    private let rounds = Box(10)
 
     private func makeHome() async -> (HomeViewModel, EffectLog<HomeEffect>) {
         let viewModel = HomeViewModel(
             minimumMatchingWords: 5,
-            quickPracticeRounds: 10,
+            quickPracticeRounds: { rounds.value },
             observeVocabulary: ObserveVocabularyUseCase(repository: repository),
             createDeck: CreateDeckUseCase(repository: repository),
             deleteDeck: DeleteDeckUseCase(repository: repository),
@@ -118,6 +119,18 @@ struct HomeViewModelTests {
         #expect(home.state.vocabulary.decks.count == 2)
     }
 
+    @Test("the quick practice round count is asked again on every return")
+    func roundsReread() async {
+        let (home, _) = await makeHome()
+        #expect(home.state.quickPracticeRounds == 10)
+
+        home.send(.disappeared)
+        rounds.value = 15
+        home.send(.appeared)
+
+        #expect(home.state.quickPracticeRounds == 15)
+    }
+
     @Test("changes made while away show on return")
     func reappearing() async {
         let (home, _) = await makeHome()
@@ -129,4 +142,10 @@ struct HomeViewModelTests {
         home.send(.appeared)
         #expect(await waitUntil { home.state.vocabulary == .empty })
     }
+}
+
+@MainActor
+private final class Box {
+    var value: Int
+    init(_ value: Int) { self.value = value }
 }

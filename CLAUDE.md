@@ -12,13 +12,13 @@ repeating mistakes already made.
 - `Documentation/speech.md`: the recognition pipeline and the audio session
 - `Documentation/working-on-this.md`: build traps and verification
 
-## Architecture (target)
+## Architecture
 
-The app is moving to MVI + Clean Architecture in SPM packages, with a domain layer
-shaped for possible KMP sharing. `Core/`, `Vocabulary/`, `Speaking/` and `Matching/` are
-SPM packages at the repo root, and `Vocabulary` is the reference vertical. Only the
-settings screen is still in the app target. See `Documentation/modularisation-migration.md`
-for the state and the order.
+MVI + Clean Architecture in SPM packages, with a domain layer shaped for possible KMP
+sharing. `Core/`, `Vocabulary/`, `Speaking/`, `Matching/` and `Settings/` are SPM
+packages at the repo root, and `Vocabulary` is the reference vertical. The app target
+holds only the entry point and the composition root. See
+`Documentation/modularisation-migration.md` for the state and what is left.
 
 - `Documentation/architecture.md`: the layers, UDF, and the reasoning behind each decision
 - `Documentation/modularisation.md`: packages, targets, dependency rules, navigation, naming
@@ -27,9 +27,9 @@ for the state and the order.
 - `Documentation/code-comments.md`: when a comment is warranted, and how long
 
 Packages: `Core` (`CoreDomain`, `CorePersistence`, `CoreSound`, `CoreDesignSystem`,
-`CoreUI`, `CoreDI`, `CoreTestSupport`), `Vocabulary`, `Speaking`, `Matching`, and
-later `Settings`, each with up to four targets: `{X}Domain`, `{X}Data`, `{X}UI`, `{X}DI`. The rules most
-easily broken:
+`CoreUI`, `CoreDI`, `CoreTestSupport`), `Vocabulary`, `Speaking`, `Matching` and
+`Settings`, each with up to four targets: `{X}Domain`, `{X}Data`, `{X}UI`, `{X}DI`.
+The rules most easily broken:
 
 - A feature package may depend only on another package's `Domain` product.
 - `{X}UI` must never import `{X}Data`; wiring goes in `{X}DI`.
@@ -48,8 +48,7 @@ Before finishing work in a migrated vertical, check the diff against
 handles `CancellationError` first and ignores it, catches untyped rather than typed to
 the domain error, and calls `log()` on the display error before yielding the effect.
 
-Code still in the app target's folders follows its local convention until its vertical
-moves. Do not start a third pattern.
+New feature code goes in a package, never the app target.
 
 The settled decisions below are product rules and survive the migration unchanged.
 Moving code must not move a pinned cost out of the test suite.
@@ -57,7 +56,7 @@ Moving code must not move a pinned cost out of the test suite.
 ## Build and test
 
 ```sh
-# Everything, on the simulator: all four packages' tests.
+# Everything, on the simulator: all five packages' tests.
 xcodebuild build -scheme MandoJiao -destination 'platform=iOS Simulator,id=<udid>'
 xcodebuild test  -scheme MandoJiao -destination 'platform=iOS Simulator,id=<udid>'
 
@@ -75,10 +74,19 @@ test files and reports a pass for tests that never ran. This has happened three
 times; once it reported `TEST SUCCEEDED` while eight new tests were skipped. A
 green result on its own is not evidence that anything ran.
 
-`xcodebuild test` prints one `Test run with` line per test bundle, four in all.
-Add them up. Current suite: 177 tests in 20 suites: 8 in `Core`, 48 in `Vocabulary`,
-88 in `Speaking`, 33 in `Matching`. The app target has no tests of its own. If a
-bundle's line is missing, it did not run.
+`xcodebuild test` prints one `Test run with` line per test bundle, five in all.
+Add them up. Current suite: 190 tests in 23 suites: 8 in `Core`, 49 in `Vocabulary`,
+92 in `Speaking`, 37 in `Matching`, 4 in `Settings`. The app target has no tests of
+its own. If a bundle's line is missing, it did not run.
+
+```sh
+xcodebuild test -scheme MandoJiao -destination '...' | tee test.log
+grep "Test run with" test.log | sed -E 's/.*with ([0-9]+) tests? in ([0-9]+) suites?.*/\1 \2/' \
+  | awk '{t+=$1; s+=$2; n++} END {print n, "bundles,", t, "tests in", s, "suites"}'
+```
+
+Mind the singular: a bundle with one suite prints `1 suite`, and a pattern that only
+matches `suites` silently drops that bundle from the sum.
 
 ## Decisions already settled
 

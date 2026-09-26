@@ -218,4 +218,5 @@ private final class FakeMatchingSettings: MatchingSettingsRepository, @unchecked
 
     func settings() -> MatchingSettings { value }
     func setShowsPinyin(_ showsPinyin: Bool) { saved.append(showsPinyin) }
+    func setRounds(_ rounds: Int) {}
 }

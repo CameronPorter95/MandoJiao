@@ -3,7 +3,7 @@
 ## Build and test
 
 ```sh
-# Everything, on the simulator: all four packages' tests.
+# Everything, on the simulator: all five packages' tests.
 xcodebuild build -scheme MandoJiao -destination 'platform=iOS Simulator,id=<udid>'
 xcodebuild test  -scheme MandoJiao -destination 'platform=iOS Simulator,id=<udid>'
 
@@ -15,8 +15,10 @@ cd Speaking && swift test --filter StrictnessTests
 Get `<udid>` from `xcrun simctl list devices available`. Xcode 27 did not resolve
 `name=iPhone 17 Pro` here.
 
-The scheme's test action lists four test bundles, one per package: `CoreTests`,
-`VocabularyTests`, `SpeakingTests` and `MatchingTests`. The app has no test target. Each prints its own `Test run with` line.
+The scheme's test action lists five test bundles, one per package: `CoreTests`,
+`VocabularyTests`, `SpeakingTests`, `MatchingTests` and `SettingsTests`. The app has
+no test target. Each prints its own `Test run with` line; CLAUDE.md has the one-liner
+that adds them up.
 
 The scheme is shared (`xcshareddata/xcschemes`), so a fresh clone can run the
 tests. Its `TestAction` must not carry an empty `<TestPlans>` element: that puts

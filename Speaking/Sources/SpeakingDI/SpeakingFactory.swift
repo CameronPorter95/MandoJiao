@@ -1,7 +1,6 @@
 import CoreDI
 import CoreSound
 import SpeakingData
-import SpeakingDomain
 import SpeakingUI
 
 /// The only place that names the speaking lesson's concrete dependencies.
@@ -16,7 +15,7 @@ public enum SpeakingFactory: NavigationInputRouteFactory {
             recogniser: DictationRecogniser(),
             audioSession: ToneEngine.shared,
             sounds: ToneEngine.shared,
-            getSettings: GetSpeakingSettingsUseCase(repository: SpeakingSettingsRepositoryImpl()),
+            getSettings: SpeakingSettingsFactory.makeGetSettingsUseCase(dependencies: dependencies),
             recordResults: input.recordResults,
             logAttempt: SpeechLog.attempt
         )

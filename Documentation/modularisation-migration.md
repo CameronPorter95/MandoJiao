@@ -8,10 +8,10 @@ is the part that changes.
 
 ## Status
 
-**Steps 1 to 4 are done.** `Core`, `Vocabulary`, `Speaking` and `Matching` are SPM
-packages at the repo root. Only the settings screen is left in the app target, beside
-the entry point and the composition root. 177 tests in 20 suites: 8 in `Core`, 48 in
-`Vocabulary`, 88 in `Speaking`, 33 in `Matching`, all runnable headlessly with
+**All five steps are done.** Every feature is an SPM package at the repo root, and the
+app target is the composition root only: `MandoJiaoApp`, `ContentView` and
+`LiveDependencies`. 190 tests in 23 suites: 8 in `Core`, 49 in `Vocabulary`, 92 in
+`Speaking`, 37 in `Matching`, 4 in `Settings`, all runnable headlessly with
 `swift test` as well as through the scheme. Work happens on `refactor/mvi`.
 
 ```
@@ -19,41 +19,38 @@ Core/        CoreDomain  CorePersistence  CoreDesignSystem  CoreUI  CoreSound  C
 Vocabulary/  VocabularyDomain  VocabularyData  VocabularyUI  VocabularyDI  VocabularyTestSupport
 Speaking/    SpeakingDomain  SpeakingData  SpeakingUI  SpeakingDI  SpeakingTestSupport
 Matching/    MatchingDomain  MatchingData  MatchingUI  MatchingDI
-MandoJiao/   the app: entry point, ContentView, LiveDependencies, SettingsView
+Settings/    SettingsUI  SettingsDI
+MandoJiao/   the app: MandoJiaoApp, ContentView, LiveDependencies
 ```
 
 Every package lists `.iOS(.v26)` and `.macOS(.v26)` and builds as Swift 5 language
 mode, matching the app. Domain and data targets are nonisolated by default; UI, DI and
 test targets set `.defaultIsolation(MainActor.self)`.
 
-**Step 4, Matching.** Layered and extracted in one go, following the Speaking shape.
-`MatchingLesson` is a value holding the boards and tallies; `MatchingViewModel` owns
-the pause after a cleared board, the tones and haptics, and recording results, which
-now shows and logs a failure instead of going through a logging closure in
-`ContentView`. Rounds and pinyin visibility come from `MatchingSettingsRepository`,
-which also saves the pinyin toggle. `MatchSounds.shared` is gone: warming the engine
-is `MatchSoundPlaying.prepare()`, and only a factory names `ToneEngine`. The app's test
-target held only the two matching test files, so it went with them.
+**Step 5, Settings.** The screen has no domain or data of its own: every setting it
+edits is owned by the lesson that reads it. The speaking and matching settings
+repositories gained setters, each behind a use case that clamps to the setting's range
+(the ranges moved from `Preferences` into `SpeakingSettings` and `MatchingSettings`).
+`SettingsUI` cannot reach `SpeakingData` or `MatchingData`, so `SpeakingSettingsFactory`
+and `MatchingSettingsFactory` in each owner's DI hand out the use cases, and the app
+passes them in through `SettingsInput`. Tests pin that the repositories read and write
+exactly the keys and raw values the old `@AppStorage` properties used.
+
+The quick practice card now shows the rounds setting rather than the default: home asks
+for it through an injected closure every time it appears, so a change in settings shows
+on return.
 
 **The store gate passed on the simulator in steps 2 and 3.** A real store written
 before versioning migrates under the packaged build with every record intact. **Not
-checked on a device.**
+checked on a device**, and that is the last check before this branch ships.
 
-What does not match yet:
+What does not match the architecture yet:
 
-- **Settings is unmigrated.** `SettingsView` writes through `@AppStorage` under the
-  keys in `Preferences`, which the matching and speaking settings repositories read.
-- **`ContentView` still decides the presentation** of lessons itself, pending
-  `AppNavigation`.
-
----
-
-## Where each file goes
-
-| Now | Target | Notes |
-| --- | --- | --- |
-| `Views/SettingsView.swift` | `SettingsUI` | Edits matching and speaking settings through their domains. |
-| `MandoJiaoApp.swift`, `ContentView.swift`, `LiveDependencies.swift` | `Application` | Opens the store, registers `ErrorLog`, builds each screen through its factory. |
+- **`ContentView` still decides the presentation** of lessons itself, and builds each
+  navigation value inline. `AppNavigation` and per-flow constructors in each `{X}DI`
+  (N4) would replace that.
+- **The packages build as Swift 5.** Moving to Swift 6 language mode is its own change,
+  best done one target at a time starting with the domains.
 
 ---
 
@@ -104,7 +101,7 @@ extraction is then a move plus access control, never a redesign at the same time
    rounds and pinyin visibility get a `MatchingSettingsRepository`, and `MatchingLessonView`
    stops reaching `ToneEngine.shared`. `MatchSounds.shared` is deleted.
 
-5. **Settings.** The screen moves to a `Settings` package editing speaking and matching
+5. **Done. Settings.** The screen moves to a `Settings` package editing speaking and matching
    settings through their domains. What remains in the app target is the entry point,
    `ContentView` and `AppNavigation`.
 
@@ -153,12 +150,6 @@ repository instead.
 ---
 
 ## Known untidiness
-
-**The quick practice card shows the default round count.** It says
-`MatchingPlanBuilder.exercisesPerLesson` rounds, not the rounds setting the lesson actually
-uses. Still carried over: the card is in `Vocabulary`, which cannot read Matching's
-settings, and `ContentView` builds `HomeInput` once rather than on every visit. Step 5,
-which owns the settings, is the natural place to fix it.
 
 **`recordResults` still visits every word.** Fine at 65 words. A predicate on the ids
 in the results fixes it when it matters.

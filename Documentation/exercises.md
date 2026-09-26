@@ -18,7 +18,8 @@ Core/           Shared plumbing: errors, effects, the design system, DI, ToneEng
 Vocabulary/     Words, decks, the mistakes list, home and library screens.
 Speaking/       The speaking lesson.
 Matching/       The matching lesson.
-MandoJiao/      The app: entry point, composition root, settings screen.
+Settings/       The settings screen, editing what the two lessons own.
+MandoJiao/      The app: entry point and composition root.
 ```
 
 Each package splits into Domain, Data, UI and DI targets. See

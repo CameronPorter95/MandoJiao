@@ -8,12 +8,8 @@
 
 /* Begin PBXBuildFile section */
 		000000000000000320000000 /* CoreDomain in Frameworks */ = {isa = PBXBuildFile; productRef = 000000000000000310000000 /* CoreDomain */; };
-		000000000000000320000001 /* CoreUI in Frameworks */ = {isa = PBXBuildFile; productRef = 000000000000000310000001 /* CoreUI */; };
-		000000000000000320000002 /* CoreDesignSystem in Frameworks */ = {isa = PBXBuildFile; productRef = 000000000000000310000002 /* CoreDesignSystem */; };
-		000000000000000320000003 /* CoreSound in Frameworks */ = {isa = PBXBuildFile; productRef = 000000000000000310000003 /* CoreSound */; };
 		000000000000000320000004 /* VocabularyDomain in Frameworks */ = {isa = PBXBuildFile; productRef = 000000000000000310000004 /* VocabularyDomain */; };
 		000000000000000320000005 /* VocabularyDI in Frameworks */ = {isa = PBXBuildFile; productRef = 000000000000000310000005 /* VocabularyDI */; };
-		000000000000000320000006 /* SpeakingDomain in Frameworks */ = {isa = PBXBuildFile; productRef = 000000000000000310000006 /* SpeakingDomain */; };
 		000000000000000320000007 /* SpeakingDI in Frameworks */ = {isa = PBXBuildFile; productRef = 000000000000000310000007 /* SpeakingDI */; };
 		000000000000000320000008 /* CoreDI in Frameworks */ = {isa = PBXBuildFile; productRef = 000000000000000310000008 /* CoreDI */; };
 		000000000000000320000009 /* VocabularyUI in Frameworks */ = {isa = PBXBuildFile; productRef = 000000000000000310000009 /* VocabularyUI */; };
@@ -21,6 +17,7 @@
 		000000000000000320000011 /* MatchingDomain in Frameworks */ = {isa = PBXBuildFile; productRef = 000000000000000310000011 /* MatchingDomain */; };
 		000000000000000320000012 /* MatchingUI in Frameworks */ = {isa = PBXBuildFile; productRef = 000000000000000310000012 /* MatchingUI */; };
 		000000000000000320000013 /* MatchingDI in Frameworks */ = {isa = PBXBuildFile; productRef = 000000000000000310000013 /* MatchingDI */; };
+		000000000000000320000014 /* SettingsDI in Frameworks */ = {isa = PBXBuildFile; productRef = 000000000000000310000014 /* SettingsDI */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -29,6 +26,7 @@
 		000000000000000300000012 /* Vocabulary */ = {isa = PBXFileReference; lastKnownFileType = wrapper; path = Vocabulary; sourceTree = "<group>"; };
 		000000000000000300000013 /* Speaking */ = {isa = PBXFileReference; lastKnownFileType = wrapper; path = Speaking; sourceTree = "<group>"; };
 		000000000000000300000014 /* Matching */ = {isa = PBXFileReference; lastKnownFileType = wrapper; path = Matching; sourceTree = "<group>"; };
+		000000000000000300000015 /* Settings */ = {isa = PBXFileReference; lastKnownFileType = wrapper; path = Settings; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -49,12 +47,8 @@
 			isa = PBXFrameworksBuildPhase;
 			files = (
 				000000000000000320000000 /* CoreDomain in Frameworks */,
-				000000000000000320000001 /* CoreUI in Frameworks */,
-				000000000000000320000002 /* CoreDesignSystem in Frameworks */,
-				000000000000000320000003 /* CoreSound in Frameworks */,
 				000000000000000320000004 /* VocabularyDomain in Frameworks */,
 				000000000000000320000005 /* VocabularyDI in Frameworks */,
-				000000000000000320000006 /* SpeakingDomain in Frameworks */,
 				000000000000000320000007 /* SpeakingDI in Frameworks */,
 				000000000000000320000010 /* SpeakingUI in Frameworks */,
 				000000000000000320000009 /* VocabularyUI in Frameworks */,
@@ -62,6 +56,7 @@
 				000000000000000320000011 /* MatchingDomain in Frameworks */,
 				000000000000000320000012 /* MatchingUI in Frameworks */,
 				000000000000000320000013 /* MatchingDI in Frameworks */,
+				000000000000000320000014 /* SettingsDI in Frameworks */,
 			);
 		};
 /* End PBXFrameworksBuildPhase section */
@@ -75,6 +70,7 @@
 				000000000000000300000012 /* Vocabulary */,
 				000000000000000300000013 /* Speaking */,
 				000000000000000300000014 /* Matching */,
+				000000000000000300000015 /* Settings */,
 				000000000000000300000011 /* Core */,
 				000000000000000000000020 /* Products */,
 			);
@@ -107,12 +103,8 @@
 			name = MandoJiao;
 			packageProductDependencies = (
 				000000000000000310000000 /* CoreDomain */,
-				000000000000000310000001 /* CoreUI */,
-				000000000000000310000002 /* CoreDesignSystem */,
-				000000000000000310000003 /* CoreSound */,
 				000000000000000310000004 /* VocabularyDomain */,
 				000000000000000310000005 /* VocabularyDI */,
-				000000000000000310000006 /* SpeakingDomain */,
 				000000000000000310000007 /* SpeakingDI */,
 				000000000000000310000010 /* SpeakingUI */,
 				000000000000000310000009 /* VocabularyUI */,
@@ -120,6 +112,7 @@
 				000000000000000310000011 /* MatchingDomain */,
 				000000000000000310000012 /* MatchingUI */,
 				000000000000000310000013 /* MatchingDI */,
+				000000000000000310000014 /* SettingsDI */,
 			);
 			productName = MyApp;
 			productReference = 000000000000000000000120 /* MandoJiao.app */;
@@ -154,6 +147,7 @@
 				000000000000000300000002 /* XCLocalSwiftPackageReference "Vocabulary" */,
 				000000000000000300000003 /* XCLocalSwiftPackageReference "Speaking" */,
 				000000000000000300000004 /* XCLocalSwiftPackageReference "Matching" */,
+				000000000000000300000005 /* XCLocalSwiftPackageReference "Settings" */,
 			);
 			preferredProjectObjectVersion = 90;
 			productRefGroup = 000000000000000000000020 /* Products */;
@@ -434,6 +428,10 @@
 			isa = XCLocalSwiftPackageReference;
 			relativePath = Matching;
 		};
+		000000000000000300000005 /* XCLocalSwiftPackageReference "Settings" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Settings;
+		};
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -441,21 +439,6 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 000000000000000300000001 /* XCLocalSwiftPackageReference "Core" */;
 			productName = CoreDomain;
-		};
-		000000000000000310000001 /* CoreUI */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 000000000000000300000001 /* XCLocalSwiftPackageReference "Core" */;
-			productName = CoreUI;
-		};
-		000000000000000310000002 /* CoreDesignSystem */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 000000000000000300000001 /* XCLocalSwiftPackageReference "Core" */;
-			productName = CoreDesignSystem;
-		};
-		000000000000000310000003 /* CoreSound */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 000000000000000300000001 /* XCLocalSwiftPackageReference "Core" */;
-			productName = CoreSound;
 		};
 		000000000000000310000004 /* VocabularyDomain */ = {
 			isa = XCSwiftPackageProductDependency;
@@ -466,11 +449,6 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 000000000000000300000002 /* XCLocalSwiftPackageReference "Vocabulary" */;
 			productName = VocabularyDI;
-		};
-		000000000000000310000006 /* SpeakingDomain */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 000000000000000300000003 /* XCLocalSwiftPackageReference "Speaking" */;
-			productName = SpeakingDomain;
 		};
 		000000000000000310000007 /* SpeakingDI */ = {
 			isa = XCSwiftPackageProductDependency;
@@ -506,6 +484,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 000000000000000300000004 /* XCLocalSwiftPackageReference "Matching" */;
 			productName = MatchingDI;
+		};
+		000000000000000310000014 /* SettingsDI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 000000000000000300000005 /* XCLocalSwiftPackageReference "Settings" */;
+			productName = SettingsDI;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

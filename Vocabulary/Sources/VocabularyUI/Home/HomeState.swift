@@ -5,8 +5,9 @@ struct HomeState: Equatable {
     var vocabulary: Vocabulary = .empty
     /// The matching exercise's floor, handed in so this package need not know Matching.
     let minimumMatchingWords: Int
-    /// Shown on the quick practice card, from the same source for the same reason.
-    let quickPracticeRounds: Int
+    /// Shown on the quick practice card. Re-read on every appearance, since the settings
+    /// screen can change it while home is underneath.
+    var quickPracticeRounds: Int
     var isNamingDeck = false
     var newDeckName = ""
     var isConfirmingClear = false

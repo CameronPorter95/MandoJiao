@@ -80,7 +80,7 @@ a pass for tests that never ran. See `Documentation/working-on-this.md`.
 
 ### Architecture
 
-The app is moving to an **MVI + Clean Architecture** pattern (domain / data / UI
+The app is built on an **MVI + Clean Architecture** pattern (domain / data / UI
 layers, unidirectional data flow, SPM packages, and a KMP-ready domain layer).
 
 - [`Documentation/architecture.md`](Documentation/architecture.md): the reference template and the reasoning behind it

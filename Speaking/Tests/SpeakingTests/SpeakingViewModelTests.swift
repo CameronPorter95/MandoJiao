@@ -431,4 +431,6 @@ private final class FakeAudio: AudioSessionSwitching, MatchSoundPlaying {
 private struct FixedSpeakingSettings: SpeakingSettingsRepository {
     let value: SpeakingSettings
     func settings() -> SpeakingSettings { value }
+    func setStrictness(_ strictness: AnswerStrictness) {}
+    func setCardLimit(_ cardLimit: Int) {}
 }

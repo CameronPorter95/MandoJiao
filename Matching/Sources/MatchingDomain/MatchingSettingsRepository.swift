@@ -4,4 +4,5 @@ import Foundation
 public nonisolated protocol MatchingSettingsRepository: Sendable {
     func settings() -> MatchingSettings
     func setShowsPinyin(_ showsPinyin: Bool)
+    func setRounds(_ rounds: Int)
 }

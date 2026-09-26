@@ -18,4 +18,13 @@ public nonisolated struct SpeakingSettingsRepositoryImpl: SpeakingSettingsReposi
             ?? SpeakingSettings.defaultCardLimit
         return SpeakingSettings(strictness: strictness, cardLimit: cardLimit)
     }
+
+    /// The raw value is what is stored, so titles can be reworded freely.
+    public func setStrictness(_ strictness: AnswerStrictness) {
+        defaults.set(strictness.rawValue, forKey: Preferences.Key.speechStrictness)
+    }
+
+    public func setCardLimit(_ cardLimit: Int) {
+        defaults.set(cardLimit, forKey: Preferences.Key.speakingCardLimit)
+    }
 }

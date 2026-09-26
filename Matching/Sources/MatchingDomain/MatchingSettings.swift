@@ -2,6 +2,7 @@ import Foundation
 
 public nonisolated struct MatchingSettings: Equatable, Sendable {
     public static let defaultRounds = 10
+    public static let roundsRange = 5...20
     public static let `default` = MatchingSettings(showsPinyin: false, rounds: defaultRounds)
 
     /// Applies to every Hanzi tile at once, kept across lessons and launches.

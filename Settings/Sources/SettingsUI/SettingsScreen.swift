@@ -1,29 +1,26 @@
-import CoreDomain
+import CoreDesignSystem
 import MatchingDomain
 import SpeakingDomain
 import SwiftUI
 
-struct SettingsView: View {
-    @AppStorage(Preferences.Key.speechStrictness) private var strictnessRaw = AnswerStrictness.default.rawValue
-    @AppStorage(Preferences.Key.showsPinyin) private var showsPinyin = false
-    @AppStorage(Preferences.Key.matchingRounds) private var matchingRounds = MatchingSettings.defaultRounds
-    @AppStorage(Preferences.Key.speakingCardLimit) private var speakingCardLimit = SpeakingSettings.defaultCardLimit
-
-    private var strictness: AnswerStrictness {
-        AnswerStrictness(rawValue: strictnessRaw) ?? .default
-    }
+struct SettingsScreen: View {
+    let state: SettingsState
+    let onAction: (SettingsAction) -> Void
 
     var body: some View {
         List {
             Section {
-                Picker("Strictness", selection: $strictnessRaw) {
+                Picker(
+                    "Strictness",
+                    selection: Binding(get: { state.strictness }, set: { onAction(.strictnessChanged($0)) })
+                ) {
                     ForEach(AnswerStrictness.allCases) { level in
-                        Text(level.title).tag(level.rawValue)
+                        Text(level.title).tag(level)
                     }
                 }
                 .pickerStyle(.segmented)
 
-                Text(strictness.detail)
+                Text(state.strictness.detail)
                     .font(.footnote)
                     .foregroundStyle(.secondary)
             } header: {
@@ -35,21 +32,24 @@ struct SettingsView: View {
             }
 
             Section {
-                Toggle("Show pinyin", isOn: $showsPinyin)
+                Toggle(
+                    "Show pinyin",
+                    isOn: Binding(get: { state.showsPinyin }, set: { onAction(.showsPinyinChanged($0)) })
+                )
             } footer: {
                 Text("Shows pinyin under every Hanzi tile. The button in a lesson changes this too.")
             }
 
             Section {
                 Stepper(
-                    "Matching rounds: \(matchingRounds)",
-                    value: $matchingRounds,
-                    in: Preferences.matchingRoundsRange
+                    "Matching rounds: \(state.matchingRounds)",
+                    value: Binding(get: { state.matchingRounds }, set: { onAction(.matchingRoundsChanged($0)) }),
+                    in: MatchingSettings.roundsRange
                 )
                 Stepper(
-                    "Drill card limit: \(speakingCardLimit)",
-                    value: $speakingCardLimit,
-                    in: Preferences.speakingCardLimitRange
+                    "Drill card limit: \(state.speakingCardLimit)",
+                    value: Binding(get: { state.speakingCardLimit }, set: { onAction(.speakingCardLimitChanged($0)) }),
+                    in: SpeakingSettings.cardLimitRange
                 )
             } header: {
                 Text("Lesson length")
@@ -58,12 +58,12 @@ struct SettingsView: View {
             }
         }
         .navigationTitle("Settings")
-        .navigationBarTitleDisplayMode(.inline)
+        .inlineNavigationTitle()
     }
 }
 
 #Preview {
     NavigationStack {
-        SettingsView()
+        SettingsScreen(state: SettingsState(), onAction: { _ in })
     }
 }

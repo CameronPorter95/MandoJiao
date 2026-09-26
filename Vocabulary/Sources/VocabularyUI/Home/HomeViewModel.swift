@@ -13,17 +13,19 @@ public final class HomeViewModel {
     private let createDeck: CreateDeckUseCase
     private let deleteDeck: DeleteDeckUseCase
     private let clearMistakes: ClearMistakesUseCase
+    private let quickPracticeRounds: () -> Int
     private var observation: Task<Void, Never>?
 
     public init(
         minimumMatchingWords: Int,
-        quickPracticeRounds: Int,
+        quickPracticeRounds: @escaping () -> Int,
         observeVocabulary: ObserveVocabularyUseCase,
         createDeck: CreateDeckUseCase,
         deleteDeck: DeleteDeckUseCase,
         clearMistakes: ClearMistakesUseCase
     ) {
-        state = HomeState(minimumMatchingWords: minimumMatchingWords, quickPracticeRounds: quickPracticeRounds)
+        state = HomeState(minimumMatchingWords: minimumMatchingWords, quickPracticeRounds: quickPracticeRounds())
+        self.quickPracticeRounds = quickPracticeRounds
         self.observeVocabulary = observeVocabulary
         self.createDeck = createDeck
         self.deleteDeck = deleteDeck
@@ -35,6 +37,7 @@ public final class HomeViewModel {
     func send(_ action: HomeAction) {
         switch action {
         case .appeared:
+            state.quickPracticeRounds = quickPracticeRounds()
             guard observation == nil else { return }
             let stream = observeVocabulary()
             observation = Task { [weak self] in

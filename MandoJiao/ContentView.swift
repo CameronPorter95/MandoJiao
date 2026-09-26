@@ -2,6 +2,7 @@ import CoreDI
 import MatchingDI
 import MatchingDomain
 import MatchingUI
+import SettingsDI
 import SpeakingDI
 import SpeakingUI
 import SwiftUI
@@ -37,8 +38,10 @@ struct ContentView: View {
                 ),
                 input: HomeInput(
                     minimumMatchingWords: MatchingPlanBuilder.pairsPerExercise,
-                    quickPracticeRounds: MatchingPlanBuilder.exercisesPerLesson,
-                    settings: { AnyView(SettingsView()) }
+                    quickPracticeRounds: { [dependencies] in
+                        MatchingSettingsFactory.makeGetSettingsUseCase(dependencies: dependencies)().rounds
+                    },
+                    settings: { [dependencies] in AnyView(settings(dependencies: dependencies)) }
                 )
             )
         }
@@ -65,6 +68,23 @@ struct ContentView: View {
             }
         }
     }
+}
+
+/// The settings screen edits what the speaking and matching lessons own, so each hands
+/// over its use cases.
+@MainActor
+private func settings(dependencies: Dependencies) -> some View {
+    SettingsFactory.makeRoute(
+        dependencies: dependencies,
+        input: SettingsInput(
+            getSpeakingSettings: SpeakingSettingsFactory.makeGetSettingsUseCase(dependencies: dependencies),
+            setStrictness: SpeakingSettingsFactory.makeSetStrictnessUseCase(dependencies: dependencies),
+            setSpeakingCardLimit: SpeakingSettingsFactory.makeSetCardLimitUseCase(dependencies: dependencies),
+            getMatchingSettings: MatchingSettingsFactory.makeGetSettingsUseCase(dependencies: dependencies),
+            setShowsPinyin: MatchingSettingsFactory.makeSetShowsPinyinUseCase(dependencies: dependencies),
+            setMatchingRounds: MatchingSettingsFactory.makeSetRoundsUseCase(dependencies: dependencies)
+        )
+    )
 }
 
 #Preview {

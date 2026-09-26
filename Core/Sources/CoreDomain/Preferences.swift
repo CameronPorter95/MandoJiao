@@ -12,7 +12,4 @@ public nonisolated enum Preferences {
         public static let matchingRounds = "matchingRoundsPerLesson"
         public static let speakingCardLimit = "drillCardLimit"
     }
-
-    public static let matchingRoundsRange = 5...20
-    public static let speakingCardLimitRange = 5...40
 }

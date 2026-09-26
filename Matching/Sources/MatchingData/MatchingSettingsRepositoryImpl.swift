@@ -21,4 +21,8 @@ public nonisolated struct MatchingSettingsRepositoryImpl: MatchingSettingsReposi
     public func setShowsPinyin(_ showsPinyin: Bool) {
         defaults.set(showsPinyin, forKey: Preferences.Key.showsPinyin)
     }
+
+    public func setRounds(_ rounds: Int) {
+        defaults.set(rounds, forKey: Preferences.Key.matchingRounds)
+    }
 }

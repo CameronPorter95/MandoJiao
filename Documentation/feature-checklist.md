@@ -20,9 +20,8 @@ Module and target dependency rules are not repeated here either; they are in
 Applies to code in layer targets (`{X}Domain`, `{X}Data`, `{X}UI`, `{X}DI`) and to any
 new vertical.
 
-Does **not** apply to code still in the app target's `Views/` folder. Those follow their local convention until their
-vertical moves; see [modularisation-migration.md](modularisation-migration.md).
-Holding unmigrated code to this list would block ordinary feature work for nothing.
+Every feature is migrated, so this applies to all feature code. The app target is the
+composition root only; see [modularisation-migration.md](modularisation-migration.md).
 
 The project rules in [CLAUDE.md](../CLAUDE.md) apply everywhere, migrated or not.
 
