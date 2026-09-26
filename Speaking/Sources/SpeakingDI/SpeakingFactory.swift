@@ -1,31 +1,25 @@
+import CoreDI
 import CoreSound
 import SpeakingData
 import SpeakingDomain
 import SpeakingUI
-import SwiftUI
-import VocabularyDomain
 
 /// The only place that names the speaking lesson's concrete dependencies.
-@MainActor
-public struct SpeakingFactory {
-    let recordResults: RecordLessonResultsUseCase
-    let settings: GetSpeakingSettingsUseCase
-
-    public init(recordResults: RecordLessonResultsUseCase) {
-        self.recordResults = recordResults
-        settings = GetSpeakingSettingsUseCase(repository: SpeakingSettingsRepositoryImpl())
-    }
-
-    public func makeRoute(request: LessonRequest, didClose: @escaping () -> Void) -> some View {
+public enum SpeakingFactory: NavigationInputRouteFactory {
+    public static func makeRoute(
+        dependencies: Dependencies,
+        navigation: SpeakingNavigation,
+        input: SpeakingInput
+    ) -> SpeakingRoute {
         let viewModel = SpeakingViewModel(
-            request: request,
+            request: input.request,
             recogniser: DictationRecogniser(),
             audioSession: ToneEngine.shared,
             sounds: ToneEngine.shared,
-            getSettings: settings,
-            recordResults: recordResults,
+            getSettings: GetSpeakingSettingsUseCase(repository: SpeakingSettingsRepositoryImpl()),
+            recordResults: input.recordResults,
             logAttempt: SpeechLog.attempt
         )
-        return SpeakingRoute(viewModel: viewModel, navigation: SpeakingNavigation(didClose: didClose))
+        return SpeakingRoute(viewModel: viewModel, navigation: navigation)
     }
 }

@@ -13,6 +13,7 @@ let package = Package(
         .library(name: "CoreDesignSystem", targets: ["CoreDesignSystem"]),
         .library(name: "CoreUI", targets: ["CoreUI"]),
         .library(name: "CoreSound", targets: ["CoreSound"]),
+        .library(name: "CoreDI", targets: ["CoreDI"]),
         .library(name: "CoreTestSupport", targets: ["CoreTestSupport"]),
     ],
     targets: [
@@ -21,6 +22,8 @@ let package = Package(
         .target(name: "CoreDesignSystem", swiftSettings: mainActorByDefault),
         .target(name: "CoreUI", dependencies: ["CoreDomain", "CoreDesignSystem"], swiftSettings: mainActorByDefault),
         .target(name: "CoreSound", dependencies: ["CoreDomain"], swiftSettings: mainActorByDefault),
+        // DI primitives only, never registrations.
+        .target(name: "CoreDI", swiftSettings: mainActorByDefault),
         .target(name: "CoreTestSupport", path: "TestSupport", swiftSettings: mainActorByDefault),
         .testTarget(
             name: "CoreTests",

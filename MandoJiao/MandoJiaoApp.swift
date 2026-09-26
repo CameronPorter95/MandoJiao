@@ -1,15 +1,13 @@
 import CoreDomain
 import CoreSound
 import OSLog
-import SpeakingDI
 import SwiftData
 import SwiftUI
 import VocabularyDI
 
 @main
 struct MandoJiaoApp: App {
-    private let vocabulary: VocabularyFactory
-    private let speaking: SpeakingFactory
+    private let dependencies: LiveDependencies
 
     init() {
         // The matching lesson reaches for sound through MatchSounds so its logic stays
@@ -24,13 +22,7 @@ struct MandoJiaoApp: App {
         }
 
         do {
-            let container = try VocabularyFactory.openStore()
-            vocabulary = VocabularyFactory(
-                container: container,
-                minimumMatchingWords: MatchingPlanBuilder.pairsPerExercise,
-                quickPracticeRounds: MatchingPlanBuilder.exercisesPerLesson
-            )
-            speaking = SpeakingFactory(recordResults: vocabulary.recordLessonResults)
+            dependencies = LiveDependencies(modelContainer: try VocabularyRepositoryFactory.openStore())
         } catch {
             fatalError("Could not open the vocabulary store: \(error)")
         }
@@ -38,7 +30,7 @@ struct MandoJiaoApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView(vocabulary: vocabulary, speaking: speaking)
+            ContentView(dependencies: dependencies)
         }
     }
 }

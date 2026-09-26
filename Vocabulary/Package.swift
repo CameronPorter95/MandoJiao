@@ -10,6 +10,8 @@ let package = Package(
     products: [
         .library(name: "VocabularyDomain", targets: ["VocabularyDomain"]),
         .library(name: "VocabularyDI", targets: ["VocabularyDI"]),
+        // For the app's navigation values only.
+        .library(name: "VocabularyUI", targets: ["VocabularyUI"]),
         .library(name: "VocabularyTestSupport", targets: ["VocabularyTestSupport"]),
     ],
     dependencies: [
@@ -40,7 +42,10 @@ let package = Package(
         ),
         .target(
             name: "VocabularyDI",
-            dependencies: ["VocabularyDomain", "VocabularyData", "VocabularyUI"],
+            dependencies: [
+                "VocabularyDomain", "VocabularyData", "VocabularyUI",
+                .product(name: "CoreDI", package: "Core"),
+            ],
             swiftSettings: mainActorByDefault
         ),
         .target(

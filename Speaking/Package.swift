@@ -10,6 +10,8 @@ let package = Package(
     products: [
         .library(name: "SpeakingDomain", targets: ["SpeakingDomain"]),
         .library(name: "SpeakingDI", targets: ["SpeakingDI"]),
+        // For the app's navigation values only.
+        .library(name: "SpeakingUI", targets: ["SpeakingUI"]),
     ],
     dependencies: [
         .package(path: "../Core"),
@@ -45,6 +47,7 @@ let package = Package(
                 "SpeakingDomain", "SpeakingData", "SpeakingUI",
                 .product(name: "VocabularyDomain", package: "Vocabulary"),
                 .product(name: "CoreSound", package: "Core"),
+                .product(name: "CoreDI", package: "Core"),
             ],
             swiftSettings: mainActorByDefault
         ),

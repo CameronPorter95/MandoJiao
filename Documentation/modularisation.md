@@ -30,7 +30,7 @@ seam and a future KMP `commonMain`, and concern targets scope framework dependen
 | `{X}Domain` | Domain models, domain rules, repository and seam protocols, use cases, domain errors | `CoreDomain`, peers' `Domain` | Anyone, including other packages |
 | `{X}Data` | Repository impls, local sources, `@Model` entities, platform services, mapping | `{X}Domain`, `CorePersistence`, `CoreSound` as needed | `{X}DI` only |
 | `{X}UI` | Views, view models, state, actions, effects; the package's destination enum and navigation values | `{X}Domain`, `CoreUI`, `CoreDesignSystem` | `{X}DI` only |
-| `{X}DI` | Factories wiring sources → repository → use cases → view model; per-flow navigation constructors; the package's `@Model` types for the schema | all three above | `Application` |
+| `{X}DI` | Stateless factories wiring repository → use cases → view model → Route; per-flow navigation constructors | all three above, plus `CoreDI` | `Application` |
 
 ```mermaid
 flowchart TD
@@ -72,8 +72,10 @@ internal, so every `public` is a decision.
 - `{X}Data` exposes one entry point and keeps its concrete types internal.
   `VocabularyStore` opens the container, seeds it and builds the repository; nothing
   outside `VocabularyData` names `VocabularyRepositoryImpl` or an entity.
-- `{X}DI` factories return `some View`, so `Application` never imports `{X}UI` types.
-  They take plain closures for navigation and build the navigation value inside.
+- `{X}DI` factories are stateless enums, one per screen, conforming to a `CoreDI` route
+  factory protocol. `Application` builds each screen's navigation value, so `{X}UI` is
+  also a product, for `Application` only. A screen from another package is an input
+  closure declared in the consumer's `DI` (`HomeInput.settings`).
 - `{X}Domain` is public nearly throughout, because it is the interface. Structs used
   from another target need an explicit `public init`; a memberwise init is internal.
 - A test target uses `@testable import` for its own package's targets, so tests do
@@ -120,10 +122,10 @@ One package, concern targets. Not sibling packages.
 | `CoreDesignSystem` | `Theme`, `LessonProgressBar`, view primitives, wrappers over iOS-only view APIs | Needs nothing but SwiftUI, and builds for macOS |
 | `CoreUI` | `EffectChannel`, `LoggedError`, `errorAlert`, and screens shared by more than one feature: `LessonCompleteView`, which takes its own `Row` type so Core never learns what a word is | Used by two or more packages |
 | `CoreTestSupport` | `waitUntil`, `settle`, `EffectLog` | Test helpers with no feature in them |
+| `CoreDI` | `Dependencies`, and the route factory protocols every screen's factory conforms to | DI primitives, never registrations |
 
-There is no `CoreNetworking`, because there is no backend, and no `CoreDI` until a DI
-primitive is shared by two packages. Add a target when its first real member exists,
-not in anticipation.
+There is no `CoreNetworking`, because there is no backend. Add a target when its first
+real member exists, not in anticipation.
 
 > [!WARNING]
 > The persistence target must not be called `SwiftData`. It collides with Apple's.

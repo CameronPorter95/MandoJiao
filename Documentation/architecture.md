@@ -151,7 +151,7 @@ headlessly on macOS (see [principle 7](#guiding-principles)).
 | **Route** | Owns the view model and consumes its effects; wires in navigation, scene phase, and error presentation. The only stateful view. |
 | **Screen** | Stateless. A pure function of `state` plus an `onAction` closure. Previewable. |
 | **Display error** | The presentation error type (`LoggedError`, `LocalizedError`): owns the user-facing message *and* the logging call. Minted by the view model from the domain error. |
-| **Factory** | The composition root: builds the sources, repository, use cases, seams and view model, and returns the Route. Receives its dependencies injected (the `ModelContainer`, the recogniser), so it never reaches for a global. |
+| **Factory** | The composition root for one screen: a stateless `enum` whose `makeRoute(dependencies:…)` builds the use cases, seams and view model and returns the Route. Everything arrives as an argument (`Dependencies`, navigation, input), so it holds nothing and never reaches for a global. |
 
 ---
 
@@ -372,8 +372,8 @@ a feature entity.
 Why: SwiftData has no single model file, so unlike Core Data there is no readability
 reason to co-locate entities in Core. Entities live with the feature that owns them.
 
-Today `Vocabulary` is the only package that persists, so `VocabularyFactory.makeContainer`
-builds the container on its own. Composition becomes real when a second package
+Today `Vocabulary` is the only package that persists, so
+`VocabularyRepositoryFactory.openStore` builds the container on its own. Composition becomes real when a second package
 stores something.
 
 Each package's schema is versioned (`VocabularySchemaV1`, `V2`, and a
@@ -388,6 +388,22 @@ view model → Route). The view never sees concrete data types.
 The factory lives in `{Feature}DI`, not `{Feature}UI`. It is the only thing that names
 a concrete implementation, so it has to see all three layers, and putting it in the UI
 target would force a `UI` to `Data` dependency.
+
+**Factories are stateless.** Each screen has a `public enum` conforming to one of the
+route factory protocols in `CoreDI` (`RouteFactory`, `NavigationRouteFactory`,
+`InputRouteFactory`, `NavigationInputRouteFactory`), named for what it takes beyond
+`Dependencies`. A repository factory (`VocabularyRepositoryFactory`) hands out the
+repository and any use case another package needs. `Dependencies` is a protocol in
+`CoreDI`, and `LiveDependencies` in the app is its only production conformance.
+
+State that must be shared lives in the data layer, not in a factory. Every screen asks
+for the vocabulary repository, and `VocabularyStore` returns the same one per store,
+because each subscription belongs to the repository it came through: two instances would
+leave the library deaf to the word editor's saves. A test pins that.
+
+A cross-package use case arrives as input. `SpeakingFactory` takes
+`RecordLessonResultsUseCase` in `SpeakingInput`, because `Speaking` may not import
+`VocabularyDI`; the app, which sees both, builds it and hands it over.
 
 The speaking lesson no longer reaches a global: `SpeakingFactory` hands `SpeakingViewModel` its
 recogniser, audio session and sounds. `MatchSounds.shared` remains for the matching
@@ -458,7 +474,8 @@ module boundary.
 > Two worked examples, still in folders laid out like the targets to come.
 > `MandoJiao/Vocabulary/` is the full vertical: domain models, use cases and a
 > repository protocol in `Domain/`, the `@ModelActor` local source, repository and
-> versioned schema in `Data/`, four screens in `UI/`, and `VocabularyFactory` in `DI/`.
+> versioned schema in `Data/`, four screens in `UI/`, and a stateless factory per screen
+> in `DI/`.
 > `MandoJiao/Speaking/` shows a view model driving platform seams (the recogniser, the
 > audio session) and a settings repository. See
 > [modularisation-migration.md](modularisation-migration.md#sequencing).

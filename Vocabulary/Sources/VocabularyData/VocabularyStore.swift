@@ -13,8 +13,26 @@ public enum VocabularyStore {
         )
     }
 
-    public static func makeRepository(container: ModelContainer) -> any VocabularyRepository {
-        VocabularyRepositoryImpl(localSource: VocabularyLocalSourceImpl(modelContainer: container))
+    /// One repository per store, however many screens ask. Each screen's subscription is
+    /// held by the repository it subscribed through, so a write through a second instance
+    /// would never reach it: the word editor would save and the library would not update.
+    @MainActor
+    public static func repository(for container: ModelContainer) -> any VocabularyRepository {
+        repositories.removeAll { $0.container == nil }
+        if let shared = repositories.first(where: { $0.container === container }) {
+            return shared.repository
+        }
+        let repository = VocabularyRepositoryImpl(localSource: VocabularyLocalSourceImpl(modelContainer: container))
+        repositories.append(SharedRepository(container: container, repository: repository))
+        return repository
+    }
+
+    @MainActor private static var repositories: [SharedRepository] = []
+
+    /// Weak, so a test's in-memory store and its repository go when the test does.
+    private struct SharedRepository {
+        weak var container: ModelContainer?
+        let repository: any VocabularyRepository
     }
 
     /// Only touches an empty store, so it never fights the user's own edits.

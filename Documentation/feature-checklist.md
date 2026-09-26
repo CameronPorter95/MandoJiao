@@ -39,7 +39,8 @@ The project rules in [CLAUDE.md](../CLAUDE.md) apply everywhere, migrated or not
       models, never `@Model` types.
       ([why](architecture.md#1-the-repository-is-a-domain-protocol-orchestration-is-a-data-detail))
 - [ ] **D3** Each use case is one business action invoked through `callAsFunction`, thin,
-      and delegates to the repository. A rule that needs no data (grading, dealing a
+      and delegates to the repository. It lives in its own file in the domain target's
+      `UseCases/` folder, never beside the model or the repository protocol. A rule that needs no data (grading, dealing a
       board) is a domain rule type, not a use case.
 - [ ] **D4** Domain operations are untyped `async throws`. No typed throws, no
       completion handlers, no `Result` in the contract. A read of a local value that
@@ -178,9 +179,11 @@ This is the section most easily missed, because nothing about it fails to compil
 
 ## Wiring
 
-- [ ] **W1** The factory lives in `{X}DI` and builds the whole graph: sources,
-      repository, use cases, seams, view model, Route. It is the only place naming a
-      concrete implementation.
+- [ ] **W1** The factory lives in `{X}DI` and builds the whole graph: repository, use
+      cases, seams, view model, Route. It is the only place naming a concrete
+      implementation. It is a stateless `public enum` conforming to a `CoreDI` route
+      factory protocol, taking `Dependencies` and holding nothing. Shared state, such as
+      the one repository per store, lives in the data layer.
       ([why](architecture.md#13-dependency-injection-via-a-composition-root-factory))
 - [ ] **W2** `{X}UI` does not import `{X}Data`, and no type constructs its own
       dependencies inline (`recogniser ?? DictationRecogniser()` in a view is service

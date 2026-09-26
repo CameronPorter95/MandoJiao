@@ -27,7 +27,7 @@ for the state and the order.
 - `Documentation/code-comments.md`: when a comment is warranted, and how long
 
 Packages: `Core` (`CoreDomain`, `CorePersistence`, `CoreSound`, `CoreDesignSystem`,
-`CoreUI`, `CoreTestSupport`), `Vocabulary`, `Speaking`, and later `Matching`, `Settings`,
+`CoreUI`, `CoreDI`, `CoreTestSupport`), `Vocabulary`, `Speaking`, and later `Matching`, `Settings`,
 each with up to four targets: `{X}Domain`, `{X}Data`, `{X}UI`, `{X}DI`. The rules most
 easily broken:
 
@@ -76,8 +76,8 @@ times; once it reported `TEST SUCCEEDED` while eight new tests were skipped. A
 green result on its own is not evidence that anything ran.
 
 `xcodebuild test` prints one `Test run with` line per test bundle, four in all.
-Add them up. Current suite: 159 tests in 18 suites: 16 in the app (matching), 8 in
-`Core`, 47 in `Vocabulary`, 88 in `Speaking`. If a bundle's line is missing, it did
+Add them up. Current suite: 160 tests in 18 suites: 16 in the app (matching), 8 in
+`Core`, 48 in `Vocabulary`, 88 in `Speaking`. If a bundle's line is missing, it did
 not run.
 
 ## Decisions already settled

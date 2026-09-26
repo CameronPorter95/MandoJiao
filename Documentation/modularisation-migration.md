@@ -9,8 +9,8 @@ is the part that changes.
 ## Status
 
 **Steps 1 to 3 are done.** `Core`, `Vocabulary` and `Speaking` are SPM packages at
-the repo root; Matching and Settings are still in the app target. 159 tests in 18
-suites: 16 in the app, 8 in `Core`, 47 in `Vocabulary`, 88 in `Speaking`. The
+the repo root; Matching and Settings are still in the app target. 160 tests in 18
+suites: 16 in the app, 8 in `Core`, 48 in `Vocabulary`, 88 in `Speaking`. The
 package tests also run headlessly on the Mac with `swift test`. Work happens on
 `refactor/mvi`.
 

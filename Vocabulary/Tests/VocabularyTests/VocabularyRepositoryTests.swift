@@ -175,6 +175,20 @@ struct VocabularyRepositoryTests {
         #expect(await waitUntil { log.snapshots.last?.words.map(\.english) == ["water"] })
     }
 
+    @Test("every screen shares one repository per store, so one screen's write reaches another's list")
+    func sharedAcrossScreens() async throws {
+        // Factories are stateless and each asks for the repository. If each got its own,
+        // the word editor would save and the library behind it would never hear.
+        let library = VocabularyStore.repository(for: container)
+        let editor = VocabularyStore.repository(for: container)
+        let log = SnapshotLog(library.vocabulary())
+        #expect(await waitUntil { log.snapshots.last?.words.isEmpty == true })
+
+        try await editor.saveWord(id: nil, draft: WordDraft(english: "water", hanzi: "水"))
+
+        #expect(await waitUntil { log.snapshots.last?.words.map(\.english) == ["water"] })
+    }
+
     // MARK: - Helpers
 
     private func addWaterTeaBook() async throws -> (water: UUID, tea: UUID, book: UUID) {
