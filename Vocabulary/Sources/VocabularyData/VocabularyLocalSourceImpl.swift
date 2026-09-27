@@ -15,10 +15,13 @@ actor VocabularyLocalSourceImpl: VocabularyLocalSource {
             if let id {
                 guard let word = try word(id: id) else { return }
                 word.english = draft.english
+                word.meanings = draft.meanings
                 word.hanzi = draft.hanzi
                 word.pinyin = draft.pinyin
             } else {
-                modelContext.insert(VocabWord(english: draft.english, hanzi: draft.hanzi, pinyin: draft.pinyin))
+                let word = VocabWord(english: draft.english, hanzi: draft.hanzi, pinyin: draft.pinyin)
+                word.meanings = draft.meanings
+                modelContext.insert(word)
             }
             try modelContext.save()
         }
@@ -195,7 +198,7 @@ extension VocabWord {
     nonisolated var domainWord: Word {
         Word(
             id: uuid,
-            english: english,
+            meanings: meanings.isEmpty ? (english.isEmpty ? [] : [english]) : meanings,
             hanzi: hanzi,
             pinyin: pinyin,
             missCount: missCount,

@@ -99,9 +99,12 @@ nonisolated enum VocabularySchemaV3: VersionedSchema {
     @Model
     final class VocabWord {
         var uuid: UUID = UUID()
-        var english: String = ""
         var hanzi: String = ""
         var pinyin: String = ""
+        /// The headline, kept equal to `meanings.first` so a store saved before meanings reads.
+        var english: String = ""
+        /// Empty in a store saved before meanings, where `english` is the only one.
+        var meanings: [String] = []
         var createdAt: Date = Date.now
         var decks: [Deck] = []
         var missCount: Int = 0

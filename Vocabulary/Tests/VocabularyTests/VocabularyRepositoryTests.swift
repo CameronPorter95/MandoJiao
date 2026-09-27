@@ -145,6 +145,22 @@ struct VocabularyRepositoryTests {
         #expect(renamed.createdAt == created.createdAt)
     }
 
+    @Test("a word keeps every meaning in order, and one saved before meanings reads as its one")
+    func meanings() async throws {
+        try await repository.saveWord(id: nil, draft: WordDraft(meanings: ["to drink", "to shout"], hanzi: "喝"))
+        let saved = try #require(await current().words.first)
+        #expect(saved.meanings == ["to drink", "to shout"])
+
+        try await repository.saveWord(id: saved.id, draft: WordDraft(meanings: ["to shout", "to drink"], hanzi: "喝"))
+        #expect(await current().words.first?.meanings == ["to shout", "to drink"])
+        let stored = try container.mainContext.fetch(FetchDescriptor<VocabWord>()).first
+        #expect(stored?.english == "to shout")
+
+        container.mainContext.insert(VocabWord(english: "water", hanzi: "水"))
+        try container.mainContext.save()
+        #expect(await current().words.first { $0.hanzi == "水" }?.meanings == ["water"])
+    }
+
     @Test("deleting a deck leaves its words in the library")
     func deletingADeck() async throws {
         let ids = try await addWaterTeaBook()

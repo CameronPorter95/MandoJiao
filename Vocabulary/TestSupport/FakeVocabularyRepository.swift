@@ -38,7 +38,7 @@ public actor FakeVocabularyRepository: VocabularyRepository {
 
     public func saveWord(id: UUID?, draft: WordDraft) throws {
         try write("saveWord \(id.map { _ in "existing" } ?? "new") \(draft.english)|\(draft.hanzi)|\(draft.pinyin)") {
-            let word = Word(id: id ?? UUID(), english: draft.english, hanzi: draft.hanzi, pinyin: draft.pinyin)
+            let word = Word(id: id ?? UUID(), meanings: draft.meanings, hanzi: draft.hanzi, pinyin: draft.pinyin)
             if let index = snapshot.words.firstIndex(where: { $0.id == id }) {
                 snapshot.words[index] = word
             } else {
@@ -117,7 +117,7 @@ public actor FakeVocabularyRepository: VocabularyRepository {
     public func clearMistakes() throws {
         try write("clearMistakes") {
             snapshot.words = snapshot.words.map {
-                Word(id: $0.id, english: $0.english, hanzi: $0.hanzi, pinyin: $0.pinyin, createdAt: $0.createdAt)
+                Word(id: $0.id, meanings: $0.meanings, hanzi: $0.hanzi, pinyin: $0.pinyin, createdAt: $0.createdAt)
             }
         }
     }

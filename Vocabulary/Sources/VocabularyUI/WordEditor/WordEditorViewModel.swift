@@ -26,7 +26,7 @@ public final class WordEditorViewModel {
     ) {
         state = WordEditorState(
             wordID: word?.id,
-            draft: WordDraft(english: word?.english ?? "", hanzi: word?.hanzi ?? "", pinyin: word?.pinyin ?? "")
+            draft: WordDraft(meanings: word?.meanings ?? [], hanzi: word?.hanzi ?? "", pinyin: word?.pinyin ?? "")
         )
         self.saveWord = saveWord
         self.deleteWords = deleteWords

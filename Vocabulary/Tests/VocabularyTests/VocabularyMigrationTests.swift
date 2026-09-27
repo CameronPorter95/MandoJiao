@@ -41,6 +41,7 @@ nonisolated struct VocabularyMigrationTests {
         #expect(Set(decks.map(\.uuid)).count == 6)
         #expect(decks.reduce(0) { $0 + $1.words.count } == 65)
         #expect(decks.allSatisfy { $0.folder == nil && $0.builtInKey == nil })
+        #expect(words.allSatisfy { $0.meanings.isEmpty && $0.domainWord.meanings == [$0.english] })
         #expect(try context.fetchCount(FetchDescriptor<Folder>()) == 0)
     }
 }
