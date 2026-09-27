@@ -12,6 +12,7 @@ nonisolated enum VocabularyError: LoggedError, Equatable, Sendable {
     case updateDeckFailed(VocabularyDomainError)
     case deleteDeckFailed(VocabularyDomainError)
     case clearMistakesFailed(VocabularyDomainError)
+    case suggestWordFailed(VocabularyDomainError)
 
     var errorDescription: String? {
         switch self {
@@ -22,6 +23,7 @@ nonisolated enum VocabularyError: LoggedError, Equatable, Sendable {
         case .updateDeckFailed: "The deck's words could not be changed."
         case .deleteDeckFailed: "The deck could not be deleted."
         case .clearMistakesFailed: "The mistakes list could not be cleared."
+        case .suggestWordFailed: "No pinyin or English could be suggested."
         }
     }
 
@@ -29,7 +31,7 @@ nonisolated enum VocabularyError: LoggedError, Equatable, Sendable {
         switch self {
         case .saveWordFailed(let error), .deleteWordsFailed(let error), .createDeckFailed(let error),
              .renameDeckFailed(let error), .updateDeckFailed(let error), .deleteDeckFailed(let error),
-             .clearMistakesFailed(let error):
+             .clearMistakesFailed(let error), .suggestWordFailed(let error):
             error
         }
     }
@@ -45,6 +47,7 @@ nonisolated enum VocabularyError: LoggedError, Equatable, Sendable {
         case .updateDeckFailed: "updateDeck"
         case .deleteDeckFailed: "deleteDeck"
         case .clearMistakesFailed: "clearMistakes"
+        case .suggestWordFailed: "suggestWord"
         }
     }
 

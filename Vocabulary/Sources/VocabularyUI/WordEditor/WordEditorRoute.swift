@@ -20,6 +20,7 @@ public struct WordEditorRoute: View {
                     }
                 }
             }
+            .onAppear { viewModel.send(.appeared) }
             .errorAlert($error)
     }
 }

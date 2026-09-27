@@ -22,6 +22,10 @@ public enum VocabularyRepositoryFactory {
         VocabularyStore.repository(for: dependencies.modelContainer)
     }
 
+    public static func makeLexiconRepository() -> any LexiconRepository {
+        Lexicon.repository
+    }
+
     /// The seam other packages record results through, injected by the app.
     @MainActor
     public static func makeRecordLessonResultsUseCase(dependencies: Dependencies) -> RecordLessonResultsUseCase {
