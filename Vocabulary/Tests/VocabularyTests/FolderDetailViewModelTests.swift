@@ -18,8 +18,7 @@ struct FolderDetailViewModelTests {
             observeVocabulary: ObserveVocabularyUseCase(repository: repository),
             createDeck: CreateDeckUseCase(repository: repository),
             createFolder: CreateFolderUseCase(repository: repository),
-            deleteDeck: DeleteDeckUseCase(repository: repository),
-            moveDeck: MoveDeckUseCase(repository: repository)
+            deleteDeck: DeleteDeckUseCase(repository: repository)
         )
         let log = EffectLog(viewModel.effects())
         viewModel.send(.appeared)
@@ -88,17 +87,19 @@ struct FolderDetailViewModelTests {
         #expect(empty.state.subfolders.map(\.folder.name) == ["More"])
     }
 
-    @Test("dragging a deck reorders it within the folder, in either direction")
-    func reordering() async {
-        let (level1, _) = await makeDetail(Fixtures.level1.id)
-        level1.send(.decksMoved(from: [1], to: 0))
-        #expect(level1.state.decks.map(\.name) == ["Part 2", "Part 1"])
-
-        level1.send(.decksMoved(from: [0], to: 2))
-        #expect(level1.state.decks.map(\.name) == ["Part 1", "Part 2"])
-        #expect(await waitUntil {
-            await repository.writes == ["moveDeck Part 2 to Level 1 at 0", "moveDeck Part 2 to Level 1 at 1"]
-        })
+    @Test("the folder's name and decks show at once from the snapshot it was opened with")
+    func seeded() {
+        let viewModel = FolderDetailViewModel(
+            folderID: Fixtures.level1.id,
+            minimumMatchingWords: 5,
+            vocabulary: Fixtures.nested,
+            observeVocabulary: ObserveVocabularyUseCase(repository: repository),
+            createDeck: CreateDeckUseCase(repository: repository),
+            createFolder: CreateFolderUseCase(repository: repository),
+            deleteDeck: DeleteDeckUseCase(repository: repository)
+        )
+        #expect(viewModel.state.title == "Level 1")
+        #expect(viewModel.state.decks.map(\.name) == ["Part 1", "Part 2"])
     }
 
     @Test("a failed delete puts the deck back and says why")

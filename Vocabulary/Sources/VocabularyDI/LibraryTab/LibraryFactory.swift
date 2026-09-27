@@ -23,39 +23,44 @@ public enum LibraryFactory: NavigationInputRouteFactory {
             getLayout: GetLibraryLayoutUseCase(repository: layout),
             saveLayout: SaveLibraryLayoutUseCase(repository: layout)
         )
-        let folder = { (folderID: UUID, column: LibraryColumnNavigation) in
+        let folder = { (folderID: UUID, context: LibraryPageContext) in
             AnyView(FolderDetailFactory.makeRoute(
                 dependencies: dependencies,
                 navigation: .library(
                     presentMatching: navigation.library.didRequestMatching,
-                    openDeck: column.openDeck,
-                    openFolder: column.openFolder
+                    openDeck: context.openDeck,
+                    openFolder: context.openFolder
                 ),
                 input: FolderDetailInput(
                     folderID: folderID,
                     minimumMatchingWords: input.minimumMatchingWords,
-                    expansion: column.expansion(folderID)
+                    layout: context.layout(folderID),
+                    vocabulary: context.vocabulary
                 )
             ))
         }
         return LibraryRoute(
             viewModel: viewModel,
             navigation: navigation.library,
-            root: { selection, column in
+            root: { selection, context in
                 switch selection {
                 case .allWords: AnyView(WordLibraryFactory.makeRoute(dependencies: dependencies))
-                case .folder(let id): folder(id, column)
+                case .folder(let id): folder(id, context)
                 }
             },
-            page: { page, column in
+            page: { page, context in
                 switch page {
                 case .folder(let id):
-                    folder(id, column)
+                    folder(id, context)
                 case .deck(let id):
                     AnyView(DeckDetailFactory.makeRoute(
                         dependencies: dependencies,
                         navigation: navigation.deckDetail,
-                        input: DeckDetailInput(deckID: id, minimumMatchingWords: input.minimumMatchingWords)
+                        input: DeckDetailInput(
+                            deckID: id,
+                            minimumMatchingWords: input.minimumMatchingWords,
+                            vocabulary: context.vocabulary
+                        )
                     ))
                 }
             }

@@ -9,8 +9,8 @@ import SwiftUI
 public struct LibraryRoute: View {
     @State private var viewModel: LibraryViewModel
     private let navigation: LibraryNavigation
-    private let root: (LibrarySelection, LibraryColumnNavigation) -> AnyView
-    private let page: (LibraryPage, LibraryColumnNavigation) -> AnyView
+    private let root: (LibrarySelection, LibraryPageContext) -> AnyView
+    private let page: (LibraryPage, LibraryPageContext) -> AnyView
 
     @State private var error: VocabularyError?
     /// Not derived from the selection: popping the stack to its first screen reports `.sidebar`.
@@ -20,8 +20,8 @@ public struct LibraryRoute: View {
     public init(
         viewModel: LibraryViewModel,
         navigation: LibraryNavigation,
-        root: @escaping (LibrarySelection, LibraryColumnNavigation) -> AnyView,
-        page: @escaping (LibraryPage, LibraryColumnNavigation) -> AnyView
+        root: @escaping (LibrarySelection, LibraryPageContext) -> AnyView,
+        page: @escaping (LibraryPage, LibraryPageContext) -> AnyView
     ) {
         _viewModel = State(initialValue: viewModel)
         self.navigation = navigation
@@ -40,12 +40,12 @@ public struct LibraryRoute: View {
             NavigationStack(path: Binding(get: { viewModel.state.path }, set: { viewModel.send(.pathChanged($0)) })) {
                 Group {
                     if let selection = state.selection {
-                        root(selection, columnNavigation).id(selection)
+                        root(selection, pageContext).id(selection)
                     } else {
                         ContentUnavailableView("Choose a folder", systemImage: "folder")
                     }
                 }
-                .navigationDestination(for: LibraryPage.self) { page($0, columnNavigation) }
+                .navigationDestination(for: LibraryPage.self) { page($0, pageContext) }
             }
         }
         .onAppear { viewModel.send(.appeared) }
@@ -61,17 +61,20 @@ public struct LibraryRoute: View {
         .errorAlert($error)
     }
 
-    private var columnNavigation: LibraryColumnNavigation {
-        LibraryColumnNavigation(
+    private var pageContext: LibraryPageContext {
+        LibraryPageContext(
+            vocabulary: viewModel.state.vocabulary,
             openDeck: { viewModel.send(.opened(.deck($0))) },
             openFolder: { viewModel.send(.opened(.folder($0))) },
-            expansion: { folderID in
+            layout: { folderID in
                 let layout = viewModel.state.layout
-                return FolderExpansion(
+                return FolderLayout(
                     expanded: layout.expanded(in: .folder(folderID)),
-                    isSectionFolded: layout.foldedSections.contains(folderID),
+                    foldedSections: layout.foldedSections[folderID] ?? [],
+                    deckSort: layout.deckSort(in: folderID),
                     setExpanded: { viewModel.send(.folderExpanded($0, $1, in: .folder(folderID))) },
-                    toggleSection: { viewModel.send(.folderSectionToggled(folderID)) }
+                    toggle: { viewModel.send(.folderSectionToggled(folderID, $0)) },
+                    setDeckSort: { viewModel.send(.deckSortChanged(folderID, $0)) }
                 )
             }
         )

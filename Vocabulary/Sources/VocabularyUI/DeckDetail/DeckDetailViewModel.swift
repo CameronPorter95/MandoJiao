@@ -21,16 +21,23 @@ public final class DeckDetailViewModel {
     /// Writes run one after another, so rapid toggles land in the order they were made.
     private var lastWrite: Task<Void, Never>?
 
+    /// `vocabulary` is shown until the store's own snapshot arrives.
     public init(
         deckID: UUID,
         minimumMatchingWords: Int,
+        vocabulary: Vocabulary = .empty,
         observeVocabulary: ObserveVocabularyUseCase,
         renameDeck: RenameDeckUseCase,
         setMembership: SetDeckMembershipUseCase,
         moveDeck: MoveDeckUseCase,
         renameDelay: Duration = .milliseconds(300)
     ) {
-        state = DeckDetailState(deckID: deckID, minimumMatchingWords: minimumMatchingWords)
+        state = DeckDetailState(
+            deckID: deckID,
+            minimumMatchingWords: minimumMatchingWords,
+            vocabulary: vocabulary,
+            name: vocabulary.deck(id: deckID)?.name
+        )
         self.observeVocabulary = observeVocabulary
         self.renameDeck = renameDeck
         self.setMembership = setMembership

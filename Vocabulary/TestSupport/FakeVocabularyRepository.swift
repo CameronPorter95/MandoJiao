@@ -61,7 +61,7 @@ public actor FakeVocabularyRepository: VocabularyRepository {
     public func renameDeck(id: UUID, name: String) throws {
         try write("renameDeck \(name)") {
             guard let index = snapshot.decks.firstIndex(where: { $0.id == id }) else { return }
-            snapshot.decks[index] = snapshot.decks[index].with(name: name)
+            snapshot.decks[index] = snapshot.decks[index].with(name: name, editedAt: .now)
         }
     }
 

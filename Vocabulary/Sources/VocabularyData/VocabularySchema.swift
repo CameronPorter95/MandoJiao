@@ -121,6 +121,8 @@ nonisolated enum VocabularySchemaV3: VersionedSchema {
         var uuid: UUID = UUID()
         var name: String = ""
         var createdAt: Date = Date.now
+        /// Renamed, or a word added or taken away.
+        var editedAt: Date = Date.now
         var builtInKey: String?
         /// Order among its siblings.
         var position: Int = 0

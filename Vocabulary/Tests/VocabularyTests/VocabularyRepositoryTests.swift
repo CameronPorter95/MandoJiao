@@ -127,6 +127,24 @@ struct VocabularyRepositoryTests {
         #expect(deck.wordIDs == [ids.tea])
     }
 
+    @Test("renaming a deck or changing its words marks it edited, not created")
+    func editedDate() async throws {
+        let ids = try await addWaterTeaBook()
+        try await repository.createDeck(name: "Drinks", folderID: try await makeFolder())
+        let created = try #require(await current().decks.first)
+
+        try await Task.sleep(for: .milliseconds(20))
+        try await repository.setMembership(deckID: created.id, wordID: ids.water, isIncluded: true)
+        let added = try #require(await current().deck(id: created.id))
+        #expect(added.editedAt > created.editedAt)
+
+        try await Task.sleep(for: .milliseconds(20))
+        try await repository.renameDeck(id: created.id, name: "Hot drinks")
+        let renamed = try #require(await current().deck(id: created.id))
+        #expect(renamed.editedAt > added.editedAt)
+        #expect(renamed.createdAt == created.createdAt)
+    }
+
     @Test("deleting a deck leaves its words in the library")
     func deletingADeck() async throws {
         let ids = try await addWaterTeaBook()

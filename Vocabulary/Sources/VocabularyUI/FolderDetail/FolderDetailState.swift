@@ -27,6 +27,10 @@ struct FolderDetailState: Equatable {
     var folder: FolderSummary? { vocabulary.folder(id: folderID) }
     var title: String { folder?.displayName ?? "Folder" }
     var decks: [DeckSummary] { vocabulary.decks(in: folderID) }
+
+    func decks(sortedBy sort: DeckSort) -> [DeckSummary] {
+        vocabulary.decks(in: folderID, sortedBy: sort)
+    }
     var subfolders: [Subfolder] { subfolders(in: folderID) }
 
     /// "2 decks · 3 folders", counting every folder beneath, as Notes does.
@@ -65,7 +69,6 @@ enum FolderDetailAction: Equatable {
     case createCancelled
     case practiseDeckTapped(UUID)
     case deleteDeckTapped(UUID)
-    case decksMoved(from: IndexSet, to: Int)
 }
 
 enum FolderDetailEffect: Equatable, Sendable {

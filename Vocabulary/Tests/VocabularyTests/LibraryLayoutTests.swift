@@ -22,10 +22,28 @@ nonisolated struct LibraryLayoutTests {
         #expect(layout.expanded(in: .folder(a)).isEmpty)
     }
 
-    @Test("a section folds and unfolds per folder")
+    @Test("each section of each folder folds on its own")
     func sections() {
-        let layout = LibraryLayout().togglingSection(of: a).togglingSection(of: b).togglingSection(of: b)
-        #expect(layout.foldedSections == [a])
+        let layout = LibraryLayout()
+            .toggling(.folders, in: a)
+            .toggling(.decks, in: b)
+            .toggling(.folders, in: b)
+            .toggling(.decks, in: b)
+
+        #expect(layout.isFolded(.folders, in: a))
+        #expect(!layout.isFolded(.decks, in: a))
+        #expect(layout.isFolded(.folders, in: b))
+        #expect(!layout.isFolded(.decks, in: b))
+    }
+
+    @Test("each folder keeps its own deck sort, and one never set is the default")
+    func sorts() {
+        let byTitle = DeckSort(field: .title, ascending: true)
+        let layout = LibraryLayout().settingDeckSort(byTitle, in: a)
+
+        #expect(layout.deckSort(in: a) == byTitle)
+        #expect(layout.deckSort(in: b) == .default)
+        #expect(layout.settingDeckSort(.default, in: a) == LibraryLayout())
     }
 
     @Test("the layout survives a relaunch, and a store with none starts folded")
@@ -33,7 +51,10 @@ nonisolated struct LibraryLayoutTests {
         let repository = LibraryLayoutRepositoryImpl(defaults: defaults)
         #expect(repository.layout() == LibraryLayout())
 
-        let layout = LibraryLayout().settingExpanded(a, true, in: .folder(b)).togglingSection(of: a)
+        let layout = LibraryLayout()
+            .settingExpanded(a, true, in: .folder(b))
+            .toggling(.decks, in: a)
+            .settingDeckSort(DeckSort(field: .size, ascending: true), in: b)
         repository.save(layout)
         #expect(LibraryLayoutRepositoryImpl(defaults: defaults).layout() == layout)
     }

@@ -1,6 +1,7 @@
 import Foundation
 
-/// How the library was last left: which folders are unfolded, and where.
+/// How the library was last left: which folders are unfolded and where, which sections of
+/// each folder's screen are folded, and how each folder sorts its decks.
 ///
 /// The tree and each folder's screen keep their own record, so unfolding a folder in one
 /// never unfolds it in another.
@@ -11,19 +12,27 @@ public nonisolated struct LibraryLayout: Equatable, Sendable, Codable {
         case folder(UUID)
     }
 
+    /// A section of a folder's screen that folds away.
+    public enum Section: String, Hashable, Sendable, Codable {
+        case folders
+        case decks
+    }
+
     public private(set) var expandedInTree: Set<UUID>
     public private(set) var expandedInFolder: [UUID: Set<UUID>]
-    /// Folders whose screen has its Folders section folded away.
-    public private(set) var foldedSections: Set<UUID>
+    public private(set) var foldedSections: [UUID: Set<Section>]
+    public private(set) var deckSorts: [UUID: DeckSort]
 
     public init(
         expandedInTree: Set<UUID> = [],
         expandedInFolder: [UUID: Set<UUID>] = [:],
-        foldedSections: Set<UUID> = []
+        foldedSections: [UUID: Set<Section>] = [:],
+        deckSorts: [UUID: DeckSort] = [:]
     ) {
         self.expandedInTree = expandedInTree
         self.expandedInFolder = expandedInFolder
         self.foldedSections = foldedSections
+        self.deckSorts = deckSorts
     }
 
     /// Folded unless listed.
@@ -49,9 +58,25 @@ public nonisolated struct LibraryLayout: Equatable, Sendable, Codable {
         return copy
     }
 
-    public func togglingSection(of folderID: UUID) -> LibraryLayout {
+    public func isFolded(_ section: Section, in folderID: UUID) -> Bool {
+        foldedSections[folderID]?.contains(section) ?? false
+    }
+
+    public func toggling(_ section: Section, in folderID: UUID) -> LibraryLayout {
+        var folded = foldedSections[folderID] ?? []
+        if folded.remove(section) == nil { folded.insert(section) }
         var copy = self
-        if copy.foldedSections.remove(folderID) == nil { copy.foldedSections.insert(folderID) }
+        copy.foldedSections[folderID] = folded.isEmpty ? nil : folded
+        return copy
+    }
+
+    public func deckSort(in folderID: UUID) -> DeckSort {
+        deckSorts[folderID] ?? .default
+    }
+
+    public func settingDeckSort(_ sort: DeckSort, in folderID: UUID) -> LibraryLayout {
+        var copy = self
+        copy.deckSorts[folderID] = sort == .default ? nil : sort
         return copy
     }
 }

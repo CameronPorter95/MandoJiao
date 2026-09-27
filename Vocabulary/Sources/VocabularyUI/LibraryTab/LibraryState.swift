@@ -13,23 +13,28 @@ public enum LibraryPage: Hashable, Sendable {
     case deck(UUID)
 }
 
-/// How a screen the library shows asks it to push another.
+/// What a screen the library pushes starts from, and how it asks to push another.
 @MainActor
-public struct LibraryColumnNavigation {
+public struct LibraryPageContext {
+    /// The library's latest snapshot, so a pushed screen shows its name before its own
+    /// subscription delivers.
+    public let vocabulary: Vocabulary
     public let openDeck: (UUID) -> Void
     public let openFolder: (UUID) -> Void
-    /// The unfolded subfolders on one folder's screen, which are its own.
-    public let expansion: (UUID) -> FolderExpansion
+    /// One folder's screen's share of the layout, which is its own.
+    public let layout: (UUID) -> FolderLayout
 }
 
-/// One folder screen's share of the library's layout: which of its subfolders are unfolded,
-/// and whether its Folders section is.
+/// How one folder's screen was last left: its unfolded subfolders, its folded sections, and
+/// how it sorts its decks.
 @MainActor
-public struct FolderExpansion {
+public struct FolderLayout {
     public let expanded: Set<UUID>
-    public let isSectionFolded: Bool
+    public let foldedSections: Set<LibraryLayout.Section>
+    public let deckSort: DeckSort
     public let setExpanded: (UUID, Bool) -> Void
-    public let toggleSection: () -> Void
+    public let toggle: (LibraryLayout.Section) -> Void
+    public let setDeckSort: (DeckSort) -> Void
 }
 
 /// A folder about to be named: a new one, or an existing one being renamed.
@@ -78,7 +83,8 @@ enum LibraryAction: Equatable {
     /// The stack after going back.
     case pathChanged([LibraryPage])
     case folderExpanded(UUID, Bool, in: LibraryLayout.Scope)
-    case folderSectionToggled(UUID)
+    case folderSectionToggled(UUID, LibraryLayout.Section)
+    case deckSortChanged(UUID, DeckSort)
     case editTapped
     case folderMoved(id: UUID, parentID: UUID?, index: Int)
     case newFolderTapped(parentID: UUID?)

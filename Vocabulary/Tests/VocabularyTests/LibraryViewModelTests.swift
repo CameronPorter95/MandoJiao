@@ -165,13 +165,15 @@ struct LibraryViewModelTests {
 
         library.send(.folderExpanded(Fixtures.hsk.id, true, in: .tree))
         library.send(.folderExpanded(Fixtures.level1.id, true, in: .folder(Fixtures.hsk.id)))
-        library.send(.folderSectionToggled(Fixtures.level1.id))
+        library.send(.folderSectionToggled(Fixtures.level1.id, .decks))
 
         #expect(library.state.layout.expanded(in: .tree) == [Fixtures.hsk.id])
         #expect(library.state.layout.expanded(in: .folder(Fixtures.hsk.id)) == [Fixtures.level1.id])
         #expect(library.state.layout.expanded(in: .folder(Fixtures.level1.id)).isEmpty)
-        #expect(library.state.layout.foldedSections == [Fixtures.level1.id])
-        #expect(layout.saves == 3)
+        #expect(library.state.layout.isFolded(.decks, in: Fixtures.level1.id))
+        library.send(.deckSortChanged(Fixtures.level1.id, DeckSort(field: .title, ascending: true)))
+        #expect(library.state.layout.deckSort(in: Fixtures.level1.id).field == .title)
+        #expect(layout.saves == 4)
         #expect(layout.layout() == library.state.layout)
     }
 

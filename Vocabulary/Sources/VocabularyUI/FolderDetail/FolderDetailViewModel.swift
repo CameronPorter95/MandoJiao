@@ -13,27 +13,26 @@ public final class FolderDetailViewModel {
     private let createDeck: CreateDeckUseCase
     private let createFolder: CreateFolderUseCase
     private let deleteDeck: DeleteDeckUseCase
-    private let moveDeck: MoveDeckUseCase
 
     private var observation: Task<Void, Never>?
     /// Writes run one after another, so they land in the order they were made.
     private var lastWrite: Task<Void, Never>?
 
+    /// `vocabulary` is shown until the store's own snapshot arrives.
     public init(
         folderID: UUID,
         minimumMatchingWords: Int,
+        vocabulary: Vocabulary = .empty,
         observeVocabulary: ObserveVocabularyUseCase,
         createDeck: CreateDeckUseCase,
         createFolder: CreateFolderUseCase,
-        deleteDeck: DeleteDeckUseCase,
-        moveDeck: MoveDeckUseCase
+        deleteDeck: DeleteDeckUseCase
     ) {
-        state = FolderDetailState(folderID: folderID, minimumMatchingWords: minimumMatchingWords)
+        state = FolderDetailState(folderID: folderID, minimumMatchingWords: minimumMatchingWords, vocabulary: vocabulary)
         self.observeVocabulary = observeVocabulary
         self.createDeck = createDeck
         self.createFolder = createFolder
         self.deleteDeck = deleteDeck
-        self.moveDeck = moveDeck
     }
 
     func effects() -> AsyncStream<FolderDetailEffect> { effectChannel.stream() }
@@ -92,19 +91,6 @@ public final class FolderDetailViewModel {
             state.vocabulary.decks.removeAll { $0.id == id }
             enqueue(failure: VocabularyError.deleteDeckFailed, revertingTo: previous) { [deleteDeck] in
                 try await deleteDeck(id: id)
-            }
-
-        case .decksMoved(let offsets, let destination):
-            let decks = state.decks
-            guard offsets.count == 1, let from = offsets.first, decks.indices.contains(from) else { return }
-            // List reports the destination counting the row being moved; the domain does not.
-            let index = destination > from ? destination - 1 : destination
-            let deckID = decks[from].id
-            let folderID = state.folderID
-            let previous = state.vocabulary
-            state.vocabulary = previous.movingDeck(deckID, into: folderID, at: index)
-            enqueue(failure: VocabularyError.moveDeckFailed, revertingTo: previous) { [moveDeck] in
-                try await moveDeck(id: deckID, toFolder: folderID, at: index)
             }
         }
     }

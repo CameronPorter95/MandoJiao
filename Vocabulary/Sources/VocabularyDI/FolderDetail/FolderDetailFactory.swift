@@ -12,12 +12,12 @@ public enum FolderDetailFactory: NavigationInputRouteFactory {
         let viewModel = FolderDetailViewModel(
             folderID: input.folderID,
             minimumMatchingWords: input.minimumMatchingWords,
+            vocabulary: input.vocabulary,
             observeVocabulary: ObserveVocabularyUseCase(repository: repository),
             createDeck: CreateDeckUseCase(repository: repository),
             createFolder: CreateFolderUseCase(repository: repository),
-            deleteDeck: DeleteDeckUseCase(repository: repository),
-            moveDeck: MoveDeckUseCase(repository: repository)
+            deleteDeck: DeleteDeckUseCase(repository: repository)
         )
-        return FolderDetailRoute(viewModel: viewModel, navigation: navigation, expansion: input.expansion)
+        return FolderDetailRoute(viewModel: viewModel, navigation: navigation, layout: input.layout)
     }
 }

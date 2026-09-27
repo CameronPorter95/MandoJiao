@@ -46,6 +46,7 @@ actor VocabularyLocalSourceImpl: VocabularyLocalSource {
         try storeWork {
             guard let deck = try deck(id: id) else { return }
             deck.name = name
+            deck.editedAt = .now
             try modelContext.save()
         }
     }
@@ -59,6 +60,7 @@ actor VocabularyLocalSourceImpl: VocabularyLocalSource {
             case (false, let index?): deck.words.remove(at: index)
             default: return
             }
+            deck.editedAt = .now
             try modelContext.save()
         }
     }
@@ -209,6 +211,7 @@ extension Deck {
             id: uuid,
             name: name,
             createdAt: createdAt,
+            editedAt: editedAt,
             wordIDs: words.map(\.uuid),
             folderID: folder?.uuid,
             builtInKey: builtInKey

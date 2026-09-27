@@ -72,8 +72,12 @@ public final class LibraryViewModel {
             state.layout = state.layout.settingExpanded(id, isExpanded, in: scope)
             saveLayout(state.layout)
 
-        case .folderSectionToggled(let id):
-            state.layout = state.layout.togglingSection(of: id)
+        case .folderSectionToggled(let id, let section):
+            state.layout = state.layout.toggling(section, in: id)
+            saveLayout(state.layout)
+
+        case .deckSortChanged(let id, let sort):
+            state.layout = state.layout.settingDeckSort(sort, in: id)
             saveLayout(state.layout)
 
         case .editTapped:
