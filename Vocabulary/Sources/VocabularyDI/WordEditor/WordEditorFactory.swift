@@ -10,7 +10,8 @@ public enum WordEditorFactory: InputRouteFactory {
             viewModel: WordEditorViewModel(
                 word: word,
                 saveWord: SaveWordUseCase(repository: repository),
-                deleteWords: DeleteWordsUseCase(repository: repository)
+                deleteWords: DeleteWordsUseCase(repository: repository),
+                suggestWord: SuggestWordUseCase(repository: VocabularyRepositoryFactory.makeLexiconRepository())
             )
         )
     }

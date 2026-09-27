@@ -28,7 +28,8 @@ let package = Package(
                 "VocabularyDomain",
                 .product(name: "CoreDomain", package: "Core"),
                 .product(name: "CorePersistence", package: "Core"),
-            ]
+            ],
+            resources: [.copy("Resources/Lexicon.tsv")]
         ),
         .target(
             name: "VocabularyUI",

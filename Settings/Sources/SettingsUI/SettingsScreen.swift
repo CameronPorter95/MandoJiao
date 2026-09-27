@@ -56,6 +56,15 @@ struct SettingsScreen: View {
             } footer: {
                 Text("A matching lesson is this many rounds of \(MatchingPlanBuilder.pairsPerExercise) pairs. A mistakes drill is one card per word, stopping at the limit when the list is longer.")
             }
+
+            Section {
+                Link("CC-CEDICT", destination: URL(string: "https://cc-cedict.org/wiki/")!)
+                Link("CC BY-SA 4.0 licence", destination: URL(string: "https://creativecommons.org/licenses/by-sa/4.0/")!)
+            } header: {
+                Text("Acknowledgements")
+            } footer: {
+                Text("Suggested pinyin and English come from CC-CEDICT, shortened to one sense per word.")
+            }
         }
         .navigationTitle("Settings")
         .inlineNavigationTitle()
