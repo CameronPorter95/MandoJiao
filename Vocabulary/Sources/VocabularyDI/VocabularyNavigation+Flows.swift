@@ -10,7 +10,7 @@ public extension VocabularyNavigation {
         VocabularyNavigation(
             home: .app(presentMatching: presentMatching, presentSpeaking: presentSpeaking),
             deckDetail: .app(presentMatching: presentMatching),
-            folderDetail: .app(presentMatching: presentMatching)
+            library: .app(presentMatching: presentMatching)
         )
     }
 }

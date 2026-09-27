@@ -92,7 +92,7 @@ that does the injecting, not a peer.
 
 | Package | Owns | Targets |
 | --- | --- | --- |
-| `Vocabulary` | Words, decks, the mistakes list, the library and word editor, deck detail, and the home screen. `WordPair`, `LessonRequest`, `VocabWord`, `Deck`, sample seeding. | all four |
+| `Vocabulary` | Words, decks and folders, the mistakes list, the home and library tabs, the word editor and deck detail. `WordPair`, `LessonRequest`, `VocabWord`, `Deck`, sample seeding. | all four |
 | `Matching` | The matching exercise. `MatchingPlan`, `MatchingPlanBuilder`, `MatchingBoard`, the matching view model, board and tile views, matching settings. | all four; `Data` holds only settings storage |
 | `Speaking` | The speaking lesson. `SpeakingPlan`, `SpeakingPlanBuilder`, `AnswerGrader`, `AnswerStrictness`, `Endpointing`, the `SpeechRecognising` seam and `DictationRecogniser`, `SpeechLog`, the view model and card views, speaking settings. | all four |
 | `Settings` | The settings screen. Edits matching and speaking settings through their domains. | `UI`, `DI` |
@@ -243,8 +243,10 @@ are all of this shape.
 
 **One bundle per package.** `{X}Navigation` holds one member per screen, so a factory
 signature stays at a single navigation parameter however many screens the package
-gains. `VocabularyNavigation` holds `home` and `deckDetail`, and `HomeFactory` takes the
-whole bundle because it roots that stack. A package with one screen that has a way
+gains. `VocabularyNavigation` holds `home`, `deckDetail` and `library`, and `HomeFactory`
+and `LibraryFactory` take the whole bundle because each roots a tab. The library's middle
+column gets its `FolderDetailNavigation` from `LibraryFactory`, since "a deck was opened"
+goes to the library's own selection rather than out of the package. A package with one screen that has a way
 out, like `Speaking` or `Matching`, uses that screen's navigation as its bundle.
 
 **Flow constructors live in `{X}DI`,** named for the flow (`.app(...)`): the bundle's

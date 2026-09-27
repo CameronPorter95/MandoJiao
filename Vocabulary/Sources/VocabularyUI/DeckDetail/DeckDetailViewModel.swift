@@ -94,11 +94,9 @@ public final class DeckDetailViewModel {
 
         case .destinationChosen(let folderID):
             state.isChoosingDestination = false
-            guard state.vocabulary.canMoveDeck(state.deckID, into: folderID),
-                  let index = state.vocabulary.decks.firstIndex(where: { $0.id == state.deckID })
-            else { return }
+            guard state.vocabulary.canMoveDeck(state.deckID, into: folderID) else { return }
             let previous = state.vocabulary
-            state.vocabulary.decks[index] = previous.decks[index].with(folderID: .some(folderID))
+            state.vocabulary = previous.movingDeck(state.deckID, into: folderID, at: nil)
             let deckID = state.deckID
             enqueue(failure: VocabularyError.moveDeckFailed, revert: { [weak self] in
                 self?.state.vocabulary = previous

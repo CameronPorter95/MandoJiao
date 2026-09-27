@@ -20,7 +20,6 @@ struct DeckDetailState: Equatable {
     var selectedCount: Int { deck.map(vocabulary.usableWordCount(in:)) ?? 0 }
     var canStartLesson: Bool { selectedCount >= minimumMatchingWords }
 
-    var location: String { vocabulary.location(of: deck?.folderID) }
     var destinations: [MoveDestination] { vocabulary.destinations(forDeck: deckID) }
     /// Shown when there is nowhere to move to, so the row does not look broken.
     var moveUnavailableReason: String? {

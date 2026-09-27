@@ -72,12 +72,9 @@ public actor FakeVocabularyRepository: VocabularyRepository {
         }
     }
 
-    public func moveDeck(id: UUID, toFolder folderID: UUID?) throws {
-        try write("moveDeck \(snapshot.deck(id: id)?.name ?? "?") to \(destination(folderID))") {
-            guard snapshot.canMoveDeck(id, into: folderID),
-                  let index = snapshot.decks.firstIndex(where: { $0.id == id })
-            else { return }
-            snapshot.decks[index] = snapshot.decks[index].with(folderID: .some(folderID))
+    public func moveDeck(id: UUID, toFolder folderID: UUID?, at index: Int?) throws {
+        try write("moveDeck \(snapshot.deck(id: id)?.name ?? "?") to \(destination(folderID))\(at(index))") {
+            snapshot = snapshot.movingDeck(id, into: folderID, at: index)
         }
     }
 
@@ -99,12 +96,9 @@ public actor FakeVocabularyRepository: VocabularyRepository {
         }
     }
 
-    public func moveFolder(id: UUID, toParent parentID: UUID?) throws {
-        try write("moveFolder \(snapshot.folder(id: id)?.name ?? "?") to \(destination(parentID))") {
-            guard snapshot.canMoveFolder(id, into: parentID),
-                  let index = snapshot.folders.firstIndex(where: { $0.id == id })
-            else { return }
-            snapshot.folders[index] = snapshot.folders[index].with(parentID: .some(parentID))
+    public func moveFolder(id: UUID, toParent parentID: UUID?, at index: Int?) throws {
+        try write("moveFolder \(snapshot.folder(id: id)?.name ?? "?") to \(destination(parentID))\(at(index))") {
+            snapshot = snapshot.movingFolder(id, into: parentID, at: index)
         }
     }
 
@@ -130,6 +124,10 @@ public actor FakeVocabularyRepository: VocabularyRepository {
 
     private func inside(_ folderID: UUID?) -> String {
         folderID.flatMap(snapshot.folder(id:)).map { " inside \($0.name)" } ?? ""
+    }
+
+    private func at(_ index: Int?) -> String {
+        index.map { " at \($0)" } ?? ""
     }
 
     private func destination(_ folderID: UUID?) -> String {

@@ -4,99 +4,90 @@ import VocabularyDomain
 
 struct FolderDetailScreen: View {
     let state: FolderDetailState
+    /// The deck open in the next column, highlighted at regular width.
+    let openDeck: UUID?
     let onAction: (FolderDetailAction) -> Void
+    let onOpenDeck: (UUID) -> Void
 
     var body: some View {
-        List {
-            Section {
-                TextField(
-                    "Folder name",
-                    text: Binding(get: { state.name ?? "" }, set: { onAction(.nameChanged($0)) })
-                )
-
-                Button {
-                    onAction(.startLessonTapped)
-                } label: {
-                    Text("Start lesson")
-                        .font(.headline)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 4)
-                }
-                .buttonStyle(.borderedProminent)
-                .tint(Theme.accent)
-                .disabled(!state.canStartLesson)
-            } footer: {
-                if state.canStartLesson {
-                    Text("A lesson draws from all \(state.wordCount) words in the decks inside.")
-                } else {
-                    Text("The decks inside need at least \(state.minimumMatchingWords) words between them.")
+        List(selection: Binding(get: { openDeck }, set: { $0.map(onOpenDeck) })) {
+            if state.practisesAsWhole {
+                Section {
+                    Button {
+                        onAction(.startLessonTapped)
+                    } label: {
+                        Text("Start lesson")
+                            .font(.headline)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 4)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(Theme.accent)
+                    .disabled(!state.canStartLesson)
+                } footer: {
+                    if state.canStartLesson {
+                        Text("A lesson draws from all \(state.wordCount) words in this folder, including its folders.")
+                    } else {
+                        Text("The decks in this folder need at least \(state.minimumMatchingWords) words between them.")
+                    }
                 }
             }
 
             Section {
-                Button {
-                    onAction(.moveTapped)
-                } label: {
-                    LabeledContent("Inside", value: state.location)
-                }
-                .tint(.primary)
-                .disabled(state.moveUnavailableReason != nil)
-            } footer: {
-                if let reason = state.moveUnavailableReason {
-                    Text(reason)
-                }
-            }
-
-            Section {
-                if state.isEmpty {
-                    Text("Nothing here yet. Add a deck or a folder with the + button.")
+                if state.decks.isEmpty {
+                    Text("No decks here yet. Add one with the + button.")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
-                } else {
-                    FolderContents(
-                        folders: state.folders,
-                        decks: state.decks,
-                        vocabulary: state.vocabulary,
-                        minimumMatchingWords: state.minimumMatchingWords,
-                        onPractiseFolder: { onAction(.practiseFolderTapped($0)) },
-                        onPractiseDeck: { onAction(.practiseDeckTapped($0)) },
-                        onDeleteFolder: { onAction(.deleteFolderTapped($0)) },
-                        onDeleteDeck: { onAction(.deleteDeckTapped($0)) }
-                    )
                 }
+                ForEach(state.decks) { deck in
+                    DeckRow(deck: deck, vocabulary: state.vocabulary, minimumMatchingWords: state.minimumMatchingWords)
+                        .tag(deck.id)
+                        .swipeActions(edge: .leading) {
+                            Button {
+                                onAction(.practiseDeckTapped(deck.id))
+                            } label: {
+                                Label("Practise", systemImage: "play.fill")
+                            }
+                            .tint(Theme.accent)
+                        }
+                        .swipeActions(edge: .trailing) {
+                            Button(role: .destructive) {
+                                onAction(.deleteDeckTapped(deck.id))
+                            } label: {
+                                Label("Delete", systemImage: "trash")
+                            }
+                        }
+                }
+                .onMove { onAction(.decksMoved(from: $0, to: $1)) }
             } header: {
-                Text("Contents")
+                Text("Decks")
+            } footer: {
+                if !state.decks.isEmpty {
+                    Text("Swipe right to practise a deck. Edit to reorder.")
+                }
             }
         }
+        .insetGroupedList()
         .navigationTitle(state.title)
-        .inlineNavigationTitle()
         .toolbar {
-            NewItemMenu { onAction(.newItemTapped($0)) }
+            ToolbarItemGroup(placement: .primaryAction) {
+                EditModeButton()
+                Button {
+                    onAction(.newDeckTapped)
+                } label: {
+                    Label("New deck", systemImage: "rectangle.stack.badge.plus")
+                }
+            }
         }
-        .newItemAlert(
-            state.naming,
-            name: state.newItemName,
-            onNameChanged: { onAction(.newItemNameChanged($0)) },
-            onCreate: { onAction(.createConfirmed) },
-            onCancel: { onAction(.createCancelled) }
+        .namingAlert(
+            "New deck",
+            isPresented: state.isNamingDeck,
+            name: state.newDeckName,
+            message: "Give the deck a name, then pick its words.",
+            confirm: "Create",
+            onNameChanged: { onAction(.newDeckNameChanged($0)) },
+            onConfirm: { onAction(.createDeckConfirmed) },
+            onCancel: { onAction(.createDeckCancelled) }
         )
-        .folderDeletionDialog(
-            state.deletionWarning,
-            onConfirm: { onAction(.deleteFolderConfirmed) },
-            onCancel: { onAction(.deleteFolderCancelled) }
-        )
-        .sheet(
-            isPresented: Binding(
-                get: { state.isChoosingDestination },
-                set: { if !$0 { onAction(.moveCancelled) } }
-            )
-        ) {
-            MoveDestinationPicker(
-                title: "Move \(state.title)",
-                destinations: state.destinations,
-                onChoose: { onAction(.destinationChosen($0)) },
-                onCancel: { onAction(.moveCancelled) }
-            )
-        }
     }
 }

@@ -13,13 +13,10 @@ public enum FolderDetailFactory: NavigationInputRouteFactory {
             folderID: input.folderID,
             minimumMatchingWords: input.minimumMatchingWords,
             observeVocabulary: ObserveVocabularyUseCase(repository: repository),
-            renameFolder: RenameFolderUseCase(repository: repository),
-            moveFolder: MoveFolderUseCase(repository: repository),
             createDeck: CreateDeckUseCase(repository: repository),
-            createFolder: CreateFolderUseCase(repository: repository),
             deleteDeck: DeleteDeckUseCase(repository: repository),
-            deleteFolder: DeleteFolderUseCase(repository: repository)
+            moveDeck: MoveDeckUseCase(repository: repository)
         )
-        return FolderDetailRoute(viewModel: viewModel, navigation: navigation)
+        return FolderDetailRoute(viewModel: viewModel, navigation: navigation, openDeck: input.openDeck)
     }
 }

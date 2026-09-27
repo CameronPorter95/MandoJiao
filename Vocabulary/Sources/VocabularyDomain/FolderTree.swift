@@ -1,6 +1,7 @@
 import Foundation
 
 /// How folders nest. The store checks the same rules, so the UI only offers what will work.
+/// Siblings are listed in array order, which the store keeps as each one's position.
 public nonisolated extension Vocabulary {
     func folder(id: UUID) -> FolderSummary? {
         folders.first { $0.id == id }
@@ -59,17 +60,53 @@ public nonisolated extension Vocabulary {
         return path
     }
 
+    /// Its own folder counts, since that is a reorder.
     func canMoveDeck(_ deckID: UUID, into folderID: UUID?) -> Bool {
-        guard let deck = deck(id: deckID), deck.folderID != folderID else { return false }
+        guard deck(id: deckID) != nil else { return false }
         return folderID.map { folder(id: $0) != nil } ?? true
     }
 
-    /// Never into itself or anything beneath it.
+    /// Never into itself or anything beneath it. Its own parent counts, since that is a reorder.
     func canMoveFolder(_ folderID: UUID, into parentID: UUID?) -> Bool {
-        guard let folder = folder(id: folderID), folder.parentID != parentID else { return false }
+        guard folder(id: folderID) != nil else { return false }
         guard let parentID else { return true }
         return self.folder(id: parentID) != nil
             && parentID != folderID
             && !folders(beneath: folderID).contains { $0.id == parentID }
+    }
+
+    /// `index` counts the new siblings without the deck itself. Nil puts it last.
+    func movingDeck(_ deckID: UUID, into folderID: UUID?, at index: Int?) -> Vocabulary {
+        guard canMoveDeck(deckID, into: folderID) else { return self }
+        var copy = self
+        copy.decks = Self.moving(deckID, in: decks, at: index, parent: \.folderID) { $0.with(folderID: .some(folderID)) }
+        return copy
+    }
+
+    /// `index` counts the new siblings without the folder itself. Nil puts it last.
+    func movingFolder(_ folderID: UUID, into parentID: UUID?, at index: Int?) -> Vocabulary {
+        guard canMoveFolder(folderID, into: parentID) else { return self }
+        var copy = self
+        copy.folders = Self.moving(folderID, in: folders, at: index, parent: \.parentID) { $0.with(parentID: .some(parentID)) }
+        return copy
+    }
+
+    private static func moving<Item: Identifiable>(
+        _ id: Item.ID,
+        in items: [Item],
+        at index: Int?,
+        parent: KeyPath<Item, UUID?>,
+        reparent: (Item) -> Item
+    ) -> [Item] {
+        guard let from = items.firstIndex(where: { $0.id == id }) else { return items }
+        var items = items
+        let moved = reparent(items.remove(at: from))
+        let siblings = items.indices.filter { items[$0][keyPath: parent] == moved[keyPath: parent] }
+        if let index, index < siblings.count {
+            items.insert(moved, at: siblings[index])
+        } else {
+            items.insert(moved, at: siblings.last.map { $0 + 1 } ?? items.endIndex)
+        }
+        return items
     }
 }

@@ -171,18 +171,37 @@ struct VocabularyRepositoryTests {
         #expect(vocabulary.path(to: level1).map(\.name) == ["HSK", "HSK 1"])
         #expect(vocabulary.words(in: try #require(vocabulary.folder(id: hsk))).map(\.english) == ["water"])
 
-        try await repository.moveDeck(id: part1, toFolder: nil)
+        try await repository.moveDeck(id: part1, toFolder: nil, at: nil)
         #expect(await current().deck(id: part1)?.folderID == nil)
-        try await repository.moveDeck(id: part1, toFolder: level1)
-        try await repository.moveFolder(id: level1, toParent: nil)
+        try await repository.moveDeck(id: part1, toFolder: level1, at: nil)
+        try await repository.moveFolder(id: level1, toParent: nil, at: nil)
         #expect(await current().folder(id: level1)?.parentID == nil)
-        try await repository.moveFolder(id: level1, toParent: hsk)
+        try await repository.moveFolder(id: level1, toParent: hsk, at: nil)
 
         try await repository.deleteFolder(id: hsk)
         vocabulary = await current()
         #expect(vocabulary.folders.isEmpty)
         #expect(vocabulary.decks.isEmpty)
         #expect(vocabulary.words.count == 3)
+    }
+
+    @Test("folders and decks keep the order they are moved into, after the store is read again")
+    func order() async throws {
+        for name in ["A", "B", "C"] { try await repository.createFolder(name: name, parentID: nil) }
+        let ids = Dictionary(uniqueKeysWithValues: await current().folders.map { ($0.name, $0.id) })
+        #expect(await current().folders(in: nil).map(\.name) == ["A", "B", "C"])
+
+        try await repository.moveFolder(id: ids["C"]!, toParent: nil, at: 0)
+        try await repository.moveFolder(id: ids["A"]!, toParent: nil, at: 1)
+        #expect(await current().folders(in: nil).map(\.name) == ["C", "A", "B"])
+
+        for name in ["x", "y"] { try await repository.createDeck(name: name, folderID: ids["B"]) }
+        let y = try #require(await current().decks.first { $0.name == "y" }?.id)
+        try await repository.moveDeck(id: y, toFolder: ids["B"], at: 0)
+
+        let reread = try await VocabularyLocalSourceImpl(modelContainer: container).snapshot()
+        #expect(reread.folders(in: nil).map(\.name) == ["C", "A", "B"])
+        #expect(reread.decks(in: ids["B"]).map(\.name) == ["y", "x"])
     }
 
     @Test("the store refuses to move a folder into itself or beneath itself")
@@ -192,8 +211,8 @@ struct VocabularyRepositoryTests {
         try await repository.createFolder(name: "Child", parentID: parent)
         let child = try #require(await current().folders.first { $0.name == "Child" }?.id)
 
-        try await repository.moveFolder(id: parent, toParent: child)
-        try await repository.moveFolder(id: parent, toParent: parent)
+        try await repository.moveFolder(id: parent, toParent: child, at: nil)
+        try await repository.moveFolder(id: parent, toParent: parent, at: nil)
 
         #expect(await current().folder(id: parent)?.parentID == nil)
         #expect(await current().folder(id: child)?.parentID == parent)
@@ -301,11 +320,11 @@ private struct FailingLocalSource: VocabularyLocalSource {
     func createDeck(name: String, folderID: UUID?) async throws { throw error }
     func renameDeck(id: UUID, name: String) async throws { throw error }
     func setMembership(deckID: UUID, wordID: UUID, isIncluded: Bool) async throws { throw error }
-    func moveDeck(id: UUID, toFolder folderID: UUID?) async throws { throw error }
+    func moveDeck(id: UUID, toFolder folderID: UUID?, at index: Int?) async throws { throw error }
     func deleteDeck(id: UUID) async throws { throw error }
     func createFolder(name: String, parentID: UUID?) async throws { throw error }
     func renameFolder(id: UUID, name: String) async throws { throw error }
-    func moveFolder(id: UUID, toParent parentID: UUID?) async throws { throw error }
+    func moveFolder(id: UUID, toParent parentID: UUID?, at index: Int?) async throws { throw error }
     func deleteFolder(id: UUID) async throws { throw error }
     func recordResults(_ results: LessonResults) async throws { throw error }
     func clearMistakes() async throws { throw error }

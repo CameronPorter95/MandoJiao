@@ -17,29 +17,6 @@ struct HomeScreen: View {
                     mistakesCard
                 }
             }
-
-            Section {
-                if state.isEmptyOfDecks {
-                    Text("No decks yet. Create one to practise a smaller set of words, or a folder to group decks.")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                } else {
-                    FolderContents(
-                        folders: state.folders,
-                        decks: state.decks,
-                        vocabulary: state.vocabulary,
-                        minimumMatchingWords: state.minimumMatchingWords,
-                        onPractiseFolder: { onAction(.practiseFolderTapped($0)) },
-                        onPractiseDeck: { onAction(.practiseDeckTapped($0)) },
-                        onDeleteFolder: { onAction(.deleteFolderTapped($0)) },
-                        onDeleteDeck: { onAction(.deleteDeckTapped($0)) }
-                    )
-                }
-            } header: {
-                Text("Decks and folders")
-            } footer: {
-                Text("Swipe right to practise. A deck holds words, and a folder holds decks and other folders.")
-            }
         }
         .navigationTitle("MandoJiao")
         .toolbar {
@@ -47,20 +24,8 @@ struct HomeScreen: View {
                 NavigationLink(value: HomeDestination.settings) {
                     Label("Settings", systemImage: "gearshape")
                 }
-
-                NavigationLink(value: HomeDestination.library) {
-                    Label("Library", systemImage: "character.book.closed")
-                }
             }
-            NewItemMenu { onAction(.newItemTapped($0)) }
         }
-        .newItemAlert(
-            state.naming,
-            name: state.newItemName,
-            onNameChanged: { onAction(.newItemNameChanged($0)) },
-            onCreate: { onAction(.createConfirmed) },
-            onCancel: { onAction(.createCancelled) }
-        )
         .confirmationDialog(
             "Clear the mistakes list?",
             isPresented: Binding(
@@ -74,11 +39,6 @@ struct HomeScreen: View {
         } message: {
             Text("\(state.mistakeWords.count) words will be marked as learned.")
         }
-        .folderDeletionDialog(
-            state.deletionWarning,
-            onConfirm: { onAction(.deleteFolderConfirmed) },
-            onCancel: { onAction(.deleteFolderCancelled) }
-        )
     }
 
     // MARK: - Pieces

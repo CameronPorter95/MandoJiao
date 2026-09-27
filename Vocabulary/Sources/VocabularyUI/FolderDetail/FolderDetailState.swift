@@ -1,57 +1,36 @@
 import Foundation
 import VocabularyDomain
 
+/// The decks in one folder, or at the top level when `folderID` is nil. Subfolders are in
+/// the library's tree, as in Notes.
 struct FolderDetailState: Equatable {
-    let folderID: UUID
+    let folderID: UUID?
     let minimumMatchingWords: Int
     var vocabulary: Vocabulary = .empty
-    /// Nil until the folder first loads, then whatever has been typed.
-    var name: String?
-    /// What the naming alert will create, while it is up.
-    var naming: NewItemKind?
-    var newItemName = ""
-    var isChoosingDestination = false
-    /// A folder inside with something in it, waiting on confirmation before it goes.
-    var pendingFolderDeletion: UUID?
+    var isNamingDeck = false
+    var newDeckName = ""
 
-    var folder: FolderSummary? { vocabulary.folder(id: folderID) }
-    var title: String { (name ?? "").isEmpty ? "Folder" : name ?? "" }
-
-    var folders: [FolderSummary] { vocabulary.folders(in: folderID) }
+    var folder: FolderSummary? { folderID.flatMap(vocabulary.folder(id:)) }
+    var title: String { folderID == nil ? "Decks" : folder?.displayName ?? "Folder" }
     var decks: [DeckSummary] { vocabulary.decks(in: folderID) }
-    var isEmpty: Bool { folders.isEmpty && decks.isEmpty }
 
+    /// Only a real folder is practised as a whole. The top level has quick practice on home.
+    var practisesAsWhole: Bool { folder != nil }
     var wordCount: Int { folder.map(vocabulary.usableWordCount(in:)) ?? 0 }
     var canStartLesson: Bool { wordCount >= minimumMatchingWords }
-
-    var location: String { vocabulary.location(of: folder?.parentID) }
-    var destinations: [MoveDestination] { vocabulary.destinations(forFolder: folderID) }
-    /// Shown when there is nowhere to move to, so the row does not look broken.
-    var moveUnavailableReason: String? {
-        destinations.isEmpty ? "Make another folder first to move this one into." : nil
-    }
-
-    var deletionWarning: String? { pendingFolderDeletion.flatMap(vocabulary.deletionWarning(forFolder:)) }
 }
 
 enum FolderDetailAction: Equatable {
     case appeared
     case disappeared
-    case nameChanged(String)
     case startLessonTapped
-    case newItemTapped(NewItemKind)
-    case newItemNameChanged(String)
-    case createConfirmed
-    case createCancelled
-    case practiseFolderTapped(UUID)
+    case newDeckTapped
+    case newDeckNameChanged(String)
+    case createDeckConfirmed
+    case createDeckCancelled
     case practiseDeckTapped(UUID)
-    case deleteFolderTapped(UUID)
-    case deleteFolderConfirmed
-    case deleteFolderCancelled
     case deleteDeckTapped(UUID)
-    case moveTapped
-    case destinationChosen(UUID?)
-    case moveCancelled
+    case decksMoved(from: IndexSet, to: Int)
 }
 
 enum FolderDetailEffect: Equatable, Sendable {

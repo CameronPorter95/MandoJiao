@@ -1,28 +1,15 @@
 import Foundation
 import VocabularyDomain
 
-/// What the deck and folder screens show about the library, shared so they read alike.
+/// What the library screens show about decks and folders, shared so they read alike.
 extension Vocabulary {
     func canStartLesson(with deck: DeckSummary, minimumMatchingWords: Int) -> Bool {
         usableWordCount(in: deck) >= minimumMatchingWords
     }
 
-    func canStartLesson(with folder: FolderSummary, minimumMatchingWords: Int) -> Bool {
-        usableWordCount(in: folder) >= minimumMatchingWords
-    }
-
     func subtitle(for deck: DeckSummary, minimumMatchingWords: Int) -> String {
         let count = usableWordCount(in: deck)
         return count < minimumMatchingWords ? "\(count) words, needs \(minimumMatchingWords)" : "\(count) words"
-    }
-
-    func subtitle(for folder: FolderSummary, minimumMatchingWords: Int) -> String {
-        let contents = [
-            Self.counted(folders(in: folder.id).count, "folder"),
-            Self.counted(decks(in: folder.id).count, "deck"),
-        ].compactMap { $0 }
-        guard !contents.isEmpty else { return "Empty" }
-        return (contents + ["\(usableWordCount(in: folder)) words"]).joined(separator: ", ")
     }
 
     /// Where a deck or folder sits, as a path.
@@ -31,12 +18,16 @@ extension Vocabulary {
         return path(to: folderID).map(\.displayName).joined(separator: " › ")
     }
 
+    /// Everywhere but where it already is.
     func destinations(forDeck deckID: UUID) -> [MoveDestination] {
-        destinations { canMoveDeck(deckID, into: $0) }
+        let current = deck(id: deckID)?.folderID
+        return destinations { $0 != current && canMoveDeck(deckID, into: $0) }
     }
 
+    /// Everywhere but where it already is.
     func destinations(forFolder folderID: UUID) -> [MoveDestination] {
-        destinations { canMoveFolder(folderID, into: $0) }
+        let current = folder(id: folderID)?.parentID
+        return destinations { $0 != current && canMoveFolder(folderID, into: $0) }
     }
 
     /// Nil when the folder can go without asking, because it is empty.

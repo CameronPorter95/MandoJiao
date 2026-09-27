@@ -9,7 +9,7 @@ import VocabularyUI
 struct VocabularyNavigationTests {
     private let request = LessonRequest(title: "t", pool: [])
 
-    @Test("home's, a deck's and a folder's lessons all reach the presenter, each as its own kind")
+    @Test("home's, a deck's and the library's lessons all reach the presenter, each as its own kind")
     func lessonsReachThePresenter() {
         var presented: [String] = []
         let navigation = VocabularyNavigation.app(
@@ -20,7 +20,7 @@ struct VocabularyNavigationTests {
         navigation.home.didRequestMatching(request)
         navigation.home.didRequestSpeaking(request)
         navigation.deckDetail.didRequestMatching(request)
-        navigation.folderDetail.didRequestMatching(request)
+        navigation.library.didRequestMatching(request)
 
         #expect(presented == ["matching true", "speaking true", "matching true", "matching true"])
     }

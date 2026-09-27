@@ -122,17 +122,20 @@ nonisolated enum VocabularySchemaV3: VersionedSchema {
         var name: String = ""
         var createdAt: Date = Date.now
         var builtInKey: String?
+        /// Order among its siblings.
+        var position: Int = 0
 
         @Relationship(inverse: \VocabWord.decks)
         var words: [VocabWord] = []
 
         var folder: Folder?
 
-        init(name: String, words: [VocabWord] = [], folder: Folder? = nil) {
+        init(name: String, words: [VocabWord] = [], folder: Folder? = nil, position: Int = 0) {
             self.uuid = UUID()
             self.name = name
             self.words = words
             self.folder = folder
+            self.position = position
             self.createdAt = .now
         }
     }
@@ -143,6 +146,8 @@ nonisolated enum VocabularySchemaV3: VersionedSchema {
         var name: String = ""
         var createdAt: Date = Date.now
         var builtInKey: String?
+        /// Order among its siblings.
+        var position: Int = 0
 
         var parent: Folder?
         @Relationship(deleteRule: .cascade, inverse: \Folder.parent)
@@ -150,10 +155,11 @@ nonisolated enum VocabularySchemaV3: VersionedSchema {
         @Relationship(deleteRule: .cascade, inverse: \Deck.folder)
         var decks: [Deck] = []
 
-        init(name: String, parent: Folder? = nil) {
+        init(name: String, parent: Folder? = nil, position: Int = 0) {
             self.uuid = UUID()
             self.name = name
             self.parent = parent
+            self.position = position
             self.createdAt = .now
         }
     }

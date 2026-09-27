@@ -116,10 +116,9 @@ struct DeckDetailViewModelTests {
         #expect(log.effects.isEmpty)
     }
 
-    @Test("a deck shows where it lives, and moves into any folder or out to the top level")
+    @Test("a deck moves into any other folder or out to the top level")
     func moving() async {
         let (detail, _) = await makeDetail(Fixtures.part1, nested: true)
-        #expect(detail.state.location == "HSK › Level 1")
         #expect(detail.state.destinations.map(\.title) == ["Top level", "Empty", "HSK"])
 
         detail.send(.moveTapped)
@@ -127,7 +126,7 @@ struct DeckDetailViewModelTests {
         detail.send(.destinationChosen(Fixtures.hsk.id))
 
         #expect(!detail.state.isChoosingDestination)
-        #expect(detail.state.location == "HSK")
+        #expect(detail.state.deck?.folderID == Fixtures.hsk.id)
         #expect(await waitUntil { await nestedRepository.writes == ["moveDeck Part 1 to HSK"] })
     }
 
@@ -145,7 +144,6 @@ struct DeckDetailViewModelTests {
     @Test("with no folder to move into, the deck says so")
     func nowhereToMove() async {
         let (detail, _) = await makeDetail()
-        #expect(detail.state.location == "Top level")
         #expect(detail.state.destinations.isEmpty)
         #expect(detail.state.moveUnavailableReason == "Make a folder first to move this deck into.")
 

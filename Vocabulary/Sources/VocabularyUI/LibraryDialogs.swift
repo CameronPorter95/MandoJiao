@@ -1,23 +1,24 @@
 import SwiftUI
 
-/// The prompts home and the folder screen share, so creating and deleting read alike.
+/// Prompts for creating and deleting, shared so they read alike wherever they appear.
 extension View {
-    func newItemAlert(
-        _ kind: NewItemKind?,
+    /// A name prompt for creating or renaming. `confirm` is the button's title.
+    func namingAlert(
+        _ title: String,
+        isPresented: Bool,
         name: String,
+        message: String,
+        confirm: String,
         onNameChanged: @escaping (String) -> Void,
-        onCreate: @escaping () -> Void,
+        onConfirm: @escaping () -> Void,
         onCancel: @escaping () -> Void
     ) -> some View {
-        alert(
-            kind?.title ?? "",
-            isPresented: Binding(get: { kind != nil }, set: { if !$0 { onCancel() } })
-        ) {
+        alert(title, isPresented: Binding(get: { isPresented }, set: { if !$0 { onCancel() } })) {
             TextField("Name", text: Binding(get: { name }, set: onNameChanged))
-            Button("Create", action: onCreate)
+            Button(confirm, action: onConfirm)
             Button("Cancel", role: .cancel, action: onCancel)
         } message: {
-            Text(kind?.message ?? "")
+            Text(message)
         }
     }
 
@@ -38,20 +39,4 @@ extension View {
         }
     }
 
-}
-
-/// The + menu on home and the folder screen.
-struct NewItemMenu: ToolbarContent {
-    let onChoose: (NewItemKind) -> Void
-
-    var body: some ToolbarContent {
-        ToolbarItem(placement: .primaryAction) {
-            Menu {
-                Button { onChoose(.deck) } label: { Label("New deck", systemImage: "rectangle.stack") }
-                Button { onChoose(.folder) } label: { Label("New folder", systemImage: "folder") }
-            } label: {
-                Label("New", systemImage: "plus")
-            }
-        }
-    }
 }

@@ -15,7 +15,7 @@ the interesting parts be tested without a simulator, a store or a microphone.
 
 ```
 Core/           Shared plumbing: errors, effects, the design system, DI, ToneEngine.
-Vocabulary/     Words, decks, the mistakes list, home and library screens.
+Vocabulary/     Words, decks, folders, the mistakes list, home and library tabs.
 Speaking/       The speaking lesson.
 Matching/       The matching lesson.
 Settings/       The settings screen, editing what the two lessons own.
@@ -33,7 +33,8 @@ holds decks and other folders, so a deck of decks cannot exist. Deleting a folde
 cascades to everything beneath it; words always stay. The one nesting rule the
 types cannot express, that a folder never moves beneath itself, lives in
 `FolderTree.swift` in the domain, and the store checks the same function before it
-writes.
+writes. Siblings are listed in array order; the store keeps it as each one's
+`position`, rewritten from `movingFolder` and `movingDeck` after every move.
 
 `WordPair` is the same word as a plain struct. **Every lesson is built from
 `WordPair`, never from `VocabWord`.** A lesson is therefore stable if the library

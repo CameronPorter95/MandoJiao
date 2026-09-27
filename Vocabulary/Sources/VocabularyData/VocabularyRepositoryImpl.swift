@@ -43,8 +43,8 @@ actor VocabularyRepositoryImpl: VocabularyRepository {
         try await write { try await $0.setMembership(deckID: deckID, wordID: wordID, isIncluded: isIncluded) }
     }
 
-    func moveDeck(id: UUID, toFolder folderID: UUID?) async throws {
-        try await write { try await $0.moveDeck(id: id, toFolder: folderID) }
+    func moveDeck(id: UUID, toFolder folderID: UUID?, at index: Int?) async throws {
+        try await write { try await $0.moveDeck(id: id, toFolder: folderID, at: index) }
     }
 
     func deleteDeck(id: UUID) async throws {
@@ -59,8 +59,8 @@ actor VocabularyRepositoryImpl: VocabularyRepository {
         try await write { try await $0.renameFolder(id: id, name: name) }
     }
 
-    func moveFolder(id: UUID, toParent parentID: UUID?) async throws {
-        try await write { try await $0.moveFolder(id: id, toParent: parentID) }
+    func moveFolder(id: UUID, toParent parentID: UUID?, at index: Int?) async throws {
+        try await write { try await $0.moveFolder(id: id, toParent: parentID, at: index) }
     }
 
     func deleteFolder(id: UUID) async throws {

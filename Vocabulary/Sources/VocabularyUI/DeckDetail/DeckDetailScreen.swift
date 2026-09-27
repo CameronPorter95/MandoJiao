@@ -32,20 +32,6 @@ struct DeckDetailScreen: View {
             }
 
             Section {
-                Button {
-                    onAction(.moveTapped)
-                } label: {
-                    LabeledContent("Folder", value: state.location)
-                }
-                .tint(.primary)
-                .disabled(state.moveUnavailableReason != nil)
-            } footer: {
-                if let reason = state.moveUnavailableReason {
-                    Text(reason)
-                }
-            }
-
-            Section {
                 ForEach(state.filteredWords) { word in
                     Button {
                         onAction(.wordToggled(word.id))
@@ -75,6 +61,21 @@ struct DeckDetailScreen: View {
         )
         .navigationTitle(state.title)
         .inlineNavigationTitle()
+        .toolbar {
+            ToolbarItem(placement: .primaryAction) {
+                Menu {
+                    Button {
+                        onAction(.moveTapped)
+                    } label: {
+                        Label("Move to…", systemImage: "folder")
+                        if let reason = state.moveUnavailableReason { Text(reason) }
+                    }
+                    .disabled(state.moveUnavailableReason != nil)
+                } label: {
+                    Label("More", systemImage: "ellipsis.circle")
+                }
+            }
+        }
         .sheet(
             isPresented: Binding(
                 get: { state.isChoosingDestination },

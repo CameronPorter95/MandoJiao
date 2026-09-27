@@ -1,10 +1,13 @@
+import Foundation
 import VocabularyDomain
 import VocabularyUI
 
 public extension FolderDetailNavigation {
-    /// A folder opened from home or another folder. Its lesson is presented over the whole
-    /// stack, so the folder is still there underneath when the lesson closes.
-    static func app(presentMatching: @escaping (LessonRequest) -> Void) -> Self {
-        FolderDetailNavigation(didRequestMatching: presentMatching)
+    /// A folder in the library's middle column. A deck it opens goes in the next column.
+    static func library(
+        presentMatching: @escaping (LessonRequest) -> Void,
+        openDeck: @escaping (UUID) -> Void
+    ) -> Self {
+        FolderDetailNavigation(didRequestMatching: presentMatching, didOpenDeck: openDeck)
     }
 }

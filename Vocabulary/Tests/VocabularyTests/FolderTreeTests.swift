@@ -24,23 +24,42 @@ struct FolderTreeTests {
         #expect(vocabulary.path(to: Fixtures.level1.id).map(\.name) == ["HSK", "Level 1"])
     }
 
-    @Test("a deck moves into any folder or to the top level, but not where it already is")
+    @Test("a deck moves into any folder that exists, or to the top level, or within its own folder")
     func movingDecks() {
         #expect(vocabulary.canMoveDeck(Fixtures.part1.id, into: nil))
         #expect(vocabulary.canMoveDeck(Fixtures.part1.id, into: Fixtures.emptyFolder.id))
-        #expect(!vocabulary.canMoveDeck(Fixtures.part1.id, into: Fixtures.level1.id))
-        #expect(!vocabulary.canMoveDeck(Fixtures.fullDeck.id, into: nil))
+        #expect(vocabulary.canMoveDeck(Fixtures.part1.id, into: Fixtures.level1.id))
         #expect(!vocabulary.canMoveDeck(Fixtures.fullDeck.id, into: UUID()))
+        #expect(!vocabulary.canMoveDeck(UUID(), into: nil))
     }
 
-    @Test("a folder never moves into itself, beneath itself, or where it already is")
+    @Test("a folder never moves into itself or beneath itself, but may reorder within its parent")
     func movingFolders() {
         #expect(!vocabulary.canMoveFolder(Fixtures.hsk.id, into: Fixtures.hsk.id))
         #expect(!vocabulary.canMoveFolder(Fixtures.hsk.id, into: Fixtures.level1.id))
-        #expect(!vocabulary.canMoveFolder(Fixtures.hsk.id, into: nil))
-        #expect(!vocabulary.canMoveFolder(Fixtures.level1.id, into: Fixtures.hsk.id))
 
+        #expect(vocabulary.canMoveFolder(Fixtures.hsk.id, into: nil))
+        #expect(vocabulary.canMoveFolder(Fixtures.level1.id, into: Fixtures.hsk.id))
         #expect(vocabulary.canMoveFolder(Fixtures.level1.id, into: nil))
         #expect(vocabulary.canMoveFolder(Fixtures.hsk.id, into: Fixtures.emptyFolder.id))
+    }
+
+    @Test("a move places the item among its new siblings at the index given, or last")
+    func order() {
+        let reordered = vocabulary.movingFolder(Fixtures.emptyFolder.id, into: nil, at: 0)
+        #expect(reordered.folders(in: nil).map(\.name) == ["Empty", "HSK"])
+
+        let nested = vocabulary.movingFolder(Fixtures.emptyFolder.id, into: Fixtures.hsk.id, at: 0)
+        #expect(nested.folders(in: Fixtures.hsk.id).map(\.name) == ["Empty", "Level 1"])
+        #expect(nested.folders(in: nil).map(\.name) == ["HSK"])
+
+        let decks = vocabulary.movingDeck(Fixtures.part2.id, into: Fixtures.level1.id, at: 0)
+        #expect(decks.decks(in: Fixtures.level1.id).map(\.name) == ["Part 2", "Part 1"])
+
+        let last = vocabulary.movingDeck(Fixtures.fullDeck.id, into: Fixtures.level1.id, at: nil)
+        #expect(last.decks(in: Fixtures.level1.id).map(\.name) == ["Part 1", "Part 2", "Full"])
+        #expect(last.decks(in: nil).isEmpty)
+
+        #expect(vocabulary.movingFolder(Fixtures.hsk.id, into: Fixtures.level1.id, at: 0) == vocabulary)
     }
 }

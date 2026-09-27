@@ -41,7 +41,7 @@ actor VocabularyLocalSourceImpl: VocabularyLocalSource {
                 guard let found = try self.folder(id: folderID) else { return }
                 folder = found
             }
-            modelContext.insert(Deck(name: name, folder: folder))
+            modelContext.insert(Deck(name: name, folder: folder, position: try vocabulary().decks(in: folderID).count))
             try modelContext.save()
         }
     }
@@ -67,10 +67,15 @@ actor VocabularyLocalSourceImpl: VocabularyLocalSource {
         }
     }
 
-    func moveDeck(id: UUID, toFolder folderID: UUID?) throws {
+    func moveDeck(id: UUID, toFolder folderID: UUID?, at index: Int?) throws {
         try storeWork {
-            guard try vocabulary().canMoveDeck(id, into: folderID), let deck = try deck(id: id) else { return }
+            let vocabulary = try vocabulary()
+            guard vocabulary.canMoveDeck(id, into: folderID), let deck = try deck(id: id) else { return }
             deck.folder = try folderID.flatMap { try folder(id: $0) }
+            let decks = Dictionary(uniqueKeysWithValues: try modelContext.fetch(FetchDescriptor<Deck>()).map { ($0.uuid, $0) })
+            for (position, sibling) in vocabulary.movingDeck(id, into: folderID, at: index).decks(in: folderID).enumerated() {
+                decks[sibling.id]?.position = position
+            }
             try modelContext.save()
         }
     }
@@ -90,7 +95,7 @@ actor VocabularyLocalSourceImpl: VocabularyLocalSource {
                 guard let found = try folder(id: parentID) else { return }
                 parent = found
             }
-            modelContext.insert(Folder(name: name, parent: parent))
+            modelContext.insert(Folder(name: name, parent: parent, position: try vocabulary().folders(in: parentID).count))
             try modelContext.save()
         }
     }
@@ -103,10 +108,15 @@ actor VocabularyLocalSourceImpl: VocabularyLocalSource {
         }
     }
 
-    func moveFolder(id: UUID, toParent parentID: UUID?) throws {
+    func moveFolder(id: UUID, toParent parentID: UUID?, at index: Int?) throws {
         try storeWork {
-            guard try vocabulary().canMoveFolder(id, into: parentID), let folder = try folder(id: id) else { return }
+            let vocabulary = try vocabulary()
+            guard vocabulary.canMoveFolder(id, into: parentID), let folder = try folder(id: id) else { return }
             folder.parent = try parentID.flatMap { try self.folder(id: $0) }
+            let folders = Dictionary(uniqueKeysWithValues: try modelContext.fetch(FetchDescriptor<Folder>()).map { ($0.uuid, $0) })
+            for (position, sibling) in vocabulary.movingFolder(id, into: parentID, at: index).folders(in: parentID).enumerated() {
+                folders[sibling.id]?.position = position
+            }
             try modelContext.save()
         }
     }
@@ -155,8 +165,8 @@ actor VocabularyLocalSourceImpl: VocabularyLocalSource {
 
     private func vocabulary() throws -> Vocabulary {
         let words = try modelContext.fetch(FetchDescriptor<VocabWord>(sortBy: [SortDescriptor(\.createdAt)]))
-        let decks = try modelContext.fetch(FetchDescriptor<Deck>(sortBy: [SortDescriptor(\.createdAt)]))
-        let folders = try modelContext.fetch(FetchDescriptor<Folder>(sortBy: [SortDescriptor(\.createdAt)]))
+        let decks = try modelContext.fetch(FetchDescriptor<Deck>(sortBy: [SortDescriptor(\.position), SortDescriptor(\.createdAt)]))
+        let folders = try modelContext.fetch(FetchDescriptor<Folder>(sortBy: [SortDescriptor(\.position), SortDescriptor(\.createdAt)]))
         return Vocabulary(words: words.map(\.domainWord), decks: decks.map(\.summary), folders: folders.map(\.summary))
     }
 
