@@ -20,20 +20,6 @@
                ReferencedContainer = "container:MandoJiao.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
-         <BuildActionEntry
-            buildForTesting = "YES"
-            buildForRunning = "NO"
-            buildForProfiling = "NO"
-            buildForArchiving = "NO"
-            buildForAnalyzing = "YES">
-            <BuildableReference
-               BuildableIdentifier = "primary"
-               BlueprintIdentifier = "000000000000000200000000"
-               BuildableName = "MandoJiaoTests.xctest"
-               BlueprintName = "MandoJiaoTests"
-               ReferencedContainer = "container:MandoJiao.xcodeproj">
-            </BuildableReference>
-         </BuildActionEntry>
       </BuildActionEntries>
    </BuildAction>
    <TestAction
@@ -46,10 +32,50 @@
             skipped = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "000000000000000200000000"
-               BuildableName = "MandoJiaoTests.xctest"
-               BlueprintName = "MandoJiaoTests"
-               ReferencedContainer = "container:MandoJiao.xcodeproj">
+               BlueprintIdentifier = "CoreTests"
+               BuildableName = "CoreTests"
+               BlueprintName = "CoreTests"
+               ReferencedContainer = "container:Core">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "VocabularyTests"
+               BuildableName = "VocabularyTests"
+               BlueprintName = "VocabularyTests"
+               ReferencedContainer = "container:Vocabulary">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "SpeakingTests"
+               BuildableName = "SpeakingTests"
+               BlueprintName = "SpeakingTests"
+               ReferencedContainer = "container:Speaking">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "MatchingTests"
+               BuildableName = "MatchingTests"
+               BlueprintName = "MatchingTests"
+               ReferencedContainer = "container:Matching">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "SettingsTests"
+               BuildableName = "SettingsTests"
+               BlueprintName = "SettingsTests"
+               ReferencedContainer = "container:Settings">
             </BuildableReference>
          </TestableReference>
       </Testables>

@@ -69,11 +69,22 @@ whole app runs there apart from the microphone.
 
 Run `xcodebuild clean` before `test` after adding or changing a test file. The
 incremental build in this project will silently skip recompiling them and report
-a pass for tests that never ran. See `docs/working-on-this.md`.
+a pass for tests that never ran. See `Documentation/working-on-this.md`.
 
 ## Documentation
 
-- [`docs/architecture.md`](docs/architecture.md) — how the pieces fit together
-- [`docs/grading.md`](docs/grading.md) — why answer checking works the way it does
-- [`docs/speech.md`](docs/speech.md) — the microphone and recognition pipeline
-- [`docs/working-on-this.md`](docs/working-on-this.md) — build traps and how to verify changes
+- [`Documentation/exercises.md`](Documentation/exercises.md): how the exercises and the mistakes list work
+- [`Documentation/grading.md`](Documentation/grading.md): why answer checking works the way it does
+- [`Documentation/speech.md`](Documentation/speech.md): the microphone and recognition pipeline
+- [`Documentation/working-on-this.md`](Documentation/working-on-this.md): build traps and how to verify changes
+
+### Architecture
+
+The app is built on an **MVI + Clean Architecture** pattern (domain / data / UI
+layers, unidirectional data flow, SPM packages, and a KMP-ready domain layer).
+
+- [`Documentation/architecture.md`](Documentation/architecture.md): the reference template and the reasoning behind it
+- [`Documentation/modularisation.md`](Documentation/modularisation.md): packages, targets and dependency rules
+- [`Documentation/modularisation-migration.md`](Documentation/modularisation-migration.md): current state and sequencing
+- [`Documentation/feature-checklist.md`](Documentation/feature-checklist.md): the per-change conformance list
+- [`Documentation/code-comments.md`](Documentation/code-comments.md): comment rules
