@@ -238,20 +238,28 @@ public struct HomeNavigation {
 **Closures are named for the event, not the destination.** `didRequestSpeaking`, never
 `presentSpeakLesson`. The moment a name says where it goes, the screen has taken a
 position on a stack it cannot see, and the same screen can no longer serve two flows.
-`SpeakingNavigation` and `MatchingNavigation` are both of this shape. `ContentView`
-still decides the presentation of lessons itself, pending `AppNavigation`.
+`SpeakingNavigation`, `MatchingNavigation`, `HomeNavigation` and `DeckDetailNavigation`
+are all of this shape.
 
 **One bundle per package.** `{X}Navigation` holds one member per screen, so a factory
 signature stays at a single navigation parameter however many screens the package
-gains.
+gains. `VocabularyNavigation` holds `home` and `deckDetail`, and `HomeFactory` takes the
+whole bundle because it roots that stack. A package with one screen that has a way
+out, like `Speaking` or `Matching`, uses that screen's navigation as its bundle.
 
-**Flow constructors live in `{X}DI`,** as `{Type}Navigation+Flows.swift`. A constructor
-belongs with the stack it navigates, which is not always the package that declares the
-type.
+**Flow constructors live in `{X}DI`,** named for the flow (`.app(...)`): the bundle's
+`VocabularyNavigation+Flows.swift` at the target root composes each screen's
+`HomeNavigation+Flow.swift` and `DeckDetailNavigation+Flow.swift` in its screen folder.
+A constructor states what the flow does with each event, which is the decision, so it
+takes the app's actions (present a lesson, dismiss one) rather than building screens.
+A constructor belongs with the stack it navigates, which is not always the package that
+declares the type.
 
-**`AppNavigation` is the composition root's own bundle.** It is the only place that sees
-every package, so a cross-package jump (home to a lesson, home to settings) is
-expressed there.
+**`AppNavigation` is the composition root's own bundle,** one property per package,
+built once by `AppNavigation.main(coordinator:)`. It is the only place that sees every
+package, so a cross-package jump (home to a lesson) is expressed there. App-level
+presentation state, the lesson presented over home, lives in `AppNavigationCoordinator`
+rather than in a view's `@State`, and `ContentView` only reads both.
 
 **Never default a navigation closure.** A `= { }` at an injection site compiles, silently
 does nothing at runtime, and is the most common defect this pattern produces. Make it a

@@ -1,41 +1,24 @@
 import CoreDI
 import MatchingDI
 import MatchingDomain
-import MatchingUI
 import SettingsDI
 import SpeakingDI
-import SpeakingUI
 import SwiftUI
 import VocabularyDI
-import VocabularyDomain
-import VocabularyUI
-
-/// Which exercise a lesson opens into.
-enum LessonRoute: Identifiable, Hashable {
-    case matching(LessonRequest)
-    case speaking(LessonRequest)
-
-    var id: UUID {
-        switch self {
-        case .matching(let request), .speaking(let request): return request.id
-        }
-    }
-}
 
 /// The app's root: the home stack, and the lessons presented over it.
 struct ContentView: View {
     let dependencies: Dependencies
 
-    @State private var activeLesson: LessonRoute?
+    @State private var coordinator = AppNavigationCoordinator()
 
     var body: some View {
+        let navigation = AppNavigation.main(coordinator: coordinator)
+
         NavigationStack {
             HomeFactory.makeRoute(
                 dependencies: dependencies,
-                navigation: HomeNavigation(
-                    didRequestMatching: { activeLesson = .matching($0) },
-                    didRequestSpeaking: { activeLesson = .speaking($0) }
-                ),
+                navigation: navigation.vocabulary,
                 input: HomeInput(
                     minimumMatchingWords: MatchingPlanBuilder.pairsPerExercise,
                     quickPracticeRounds: { [dependencies] in
@@ -45,12 +28,12 @@ struct ContentView: View {
                 )
             )
         }
-        .fullScreenCover(item: $activeLesson) { route in
-            switch route {
+        .fullScreenCover(item: $coordinator.presentedLesson) { lesson in
+            switch lesson {
             case .matching(let request):
                 MatchingFactory.makeRoute(
                     dependencies: dependencies,
-                    navigation: MatchingNavigation(didClose: { activeLesson = nil }),
+                    navigation: navigation.matching,
                     input: MatchingInput(
                         request: request,
                         recordResults: VocabularyRepositoryFactory.makeRecordLessonResultsUseCase(dependencies: dependencies)
@@ -59,7 +42,7 @@ struct ContentView: View {
             case .speaking(let request):
                 SpeakingFactory.makeRoute(
                     dependencies: dependencies,
-                    navigation: SpeakingNavigation(didClose: { activeLesson = nil }),
+                    navigation: navigation.speaking,
                     input: SpeakingInput(
                         request: request,
                         recordResults: VocabularyRepositoryFactory.makeRecordLessonResultsUseCase(dependencies: dependencies)

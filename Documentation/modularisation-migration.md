@@ -10,7 +10,8 @@ is the part that changes.
 
 **All five steps are done.** Every feature is an SPM package at the repo root, and the
 app target is the composition root only: `MandoJiaoApp`, `ContentView` and
-`LiveDependencies`. 190 tests in 23 suites: 8 in `Core`, 49 in `Vocabulary`, 92 in
+`LiveDependencies`, with `AppNavigation` and its coordinator. 191 tests in 24 suites:
+8 in `Core`, 50 in `Vocabulary`, 92 in
 `Speaking`, 37 in `Matching`, 4 in `Settings`, all runnable headlessly with
 `swift test` as well as through the scheme. Work happens on `refactor/mvi`.
 
@@ -20,7 +21,7 @@ Vocabulary/  VocabularyDomain  VocabularyData  VocabularyUI  VocabularyDI  Vocab
 Speaking/    SpeakingDomain  SpeakingData  SpeakingUI  SpeakingDI  SpeakingTestSupport
 Matching/    MatchingDomain  MatchingData  MatchingUI  MatchingDI
 Settings/    SettingsUI  SettingsDI
-MandoJiao/   the app: MandoJiaoApp, ContentView, LiveDependencies
+MandoJiao/   the app: MandoJiaoApp, ContentView, LiveDependencies, AppNavigation
 ```
 
 Every package lists `.iOS(.v26)` and `.macOS(.v26)` and builds as Swift 5 language
@@ -40,15 +41,18 @@ The quick practice card now shows the rounds setting rather than the default: ho
 for it through an injected closure every time it appears, so a change in settings shows
 on return.
 
+**Follow-up, `AppNavigation`.** `ContentView` used to hold the presented lesson in its
+own `@State` and build every navigation value inline. `AppNavigation` now holds one
+bundle per package, built once from each `{X}DI`'s `.app(...)` constructors, and
+`AppNavigationCoordinator` holds the presented lesson. `HomeFactory` takes the whole
+`VocabularyNavigation` bundle instead of building deck detail's navigation itself.
+
 **The store gate passed on the simulator in steps 2 and 3.** A real store written
 before versioning migrates under the packaged build with every record intact. **Not
 checked on a device**, and that is the last check before this branch ships.
 
 What does not match the architecture yet:
 
-- **`ContentView` still decides the presentation** of lessons itself, and builds each
-  navigation value inline. `AppNavigation` and per-flow constructors in each `{X}DI`
-  (N4) would replace that.
 - **The packages build as Swift 5.** Moving to Swift 6 language mode is its own change,
   best done one target at a time starting with the domains.
 

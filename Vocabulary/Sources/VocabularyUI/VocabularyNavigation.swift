@@ -1,32 +1,14 @@
-import Foundation
-import VocabularyDomain
-
-/// Screens pushed onto the home stack.
-public enum HomeDestination: Hashable {
-    case library
-    case deck(UUID)
-    case settings
-}
-
+/// Every way out of the package's screens, one member per screen that has one.
+///
+/// The library and the word editor have none: the editor is a sheet its presenter
+/// dismisses, and the library is left with the back button.
 @MainActor
-public struct HomeNavigation {
-    public var didRequestMatching: (LessonRequest) -> Void
-    public var didRequestSpeaking: (LessonRequest) -> Void
+public struct VocabularyNavigation {
+    public var home: HomeNavigation
+    public var deckDetail: DeckDetailNavigation
 
-    public init(
-        didRequestMatching: @escaping (LessonRequest) -> Void,
-        didRequestSpeaking: @escaping (LessonRequest) -> Void
-    ) {
-        self.didRequestMatching = didRequestMatching
-        self.didRequestSpeaking = didRequestSpeaking
-    }
-}
-
-@MainActor
-public struct DeckDetailNavigation {
-    public var didRequestMatching: (LessonRequest) -> Void
-
-    public init(didRequestMatching: @escaping (LessonRequest) -> Void) {
-        self.didRequestMatching = didRequestMatching
+    public init(home: HomeNavigation, deckDetail: DeckDetailNavigation) {
+        self.home = home
+        self.deckDetail = deckDetail
     }
 }
