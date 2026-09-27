@@ -44,6 +44,8 @@ enum FolderNaming: Equatable {
 }
 
 struct LibraryState: Equatable {
+    /// The matching lesson's floor, which a folder must reach to be practised.
+    let minimumMatchingWords: Int
     var vocabulary: Vocabulary = .empty
     var selection: LibrarySelection?
     /// Pushed over the selection, in order.
@@ -57,6 +59,12 @@ struct LibraryState: Equatable {
     var pendingFolderDeletion: UUID?
 
     var deletionWarning: String? { pendingFolderDeletion.flatMap(vocabulary.deletionWarning(forFolder:)) }
+
+    func canPractise(_ folderID: UUID) -> Bool {
+        vocabulary.folder(id: folderID).map {
+            vocabulary.canStartLesson(with: $0, minimumMatchingWords: minimumMatchingWords)
+        } ?? false
+    }
 
     var namingTitle: String {
         switch naming {

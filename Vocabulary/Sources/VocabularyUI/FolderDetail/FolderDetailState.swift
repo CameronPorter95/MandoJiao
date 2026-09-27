@@ -51,6 +51,15 @@ struct FolderDetailState: Equatable {
 
     var deletionWarning: String? { pendingFolderDeletion.flatMap(vocabulary.deletionWarning(forFolder:)) }
 
+    /// Only offered where a lesson would start, for a folder or deck in this one.
+    func canPractise(folder id: UUID) -> Bool {
+        vocabulary.folder(id: id).map { vocabulary.canStartLesson(with: $0, minimumMatchingWords: minimumMatchingWords) } ?? false
+    }
+
+    func canPractise(_ deck: DeckSummary) -> Bool {
+        vocabulary.canStartLesson(with: deck, minimumMatchingWords: minimumMatchingWords)
+    }
+
     var wordCount: Int { folder.map(vocabulary.usableWordCount(in:)) ?? 0 }
     var canStartLesson: Bool { wordCount >= minimumMatchingWords }
 

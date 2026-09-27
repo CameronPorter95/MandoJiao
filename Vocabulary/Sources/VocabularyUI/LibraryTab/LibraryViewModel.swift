@@ -9,7 +9,6 @@ public final class LibraryViewModel {
     private(set) var state: LibraryState
 
     private let effectChannel = EffectChannel<LibraryEffect>()
-    private let minimumMatchingWords: Int
     private let observeVocabulary: ObserveVocabularyUseCase
     private let createFolder: CreateFolderUseCase
     private let renameFolder: RenameFolderUseCase
@@ -31,8 +30,7 @@ public final class LibraryViewModel {
         getLayout: GetLibraryLayoutUseCase,
         saveLayout: SaveLibraryLayoutUseCase
     ) {
-        state = LibraryState(layout: getLayout())
-        self.minimumMatchingWords = minimumMatchingWords
+        state = LibraryState(minimumMatchingWords: minimumMatchingWords, layout: getLayout())
         self.observeVocabulary = observeVocabulary
         self.createFolder = createFolder
         self.renameFolder = renameFolder
@@ -122,8 +120,8 @@ public final class LibraryViewModel {
 
         case .practiseFolderTapped(let id):
             guard let folder = state.vocabulary.folder(id: id) else { return }
+            guard state.canPractise(id) else { return }
             let pool = state.vocabulary.words(in: folder).pairs
-            guard pool.count >= minimumMatchingWords else { return }
             effectChannel.send(.requestMatching(LessonRequest(title: folder.name, pool: pool)))
 
         case .deleteFolderTapped(let id):

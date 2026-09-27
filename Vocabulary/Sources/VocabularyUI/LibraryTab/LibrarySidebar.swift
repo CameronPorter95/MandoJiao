@@ -23,6 +23,7 @@ struct LibrarySidebar: View {
             onSelect: { onAction(.selected(librarySelection($0))) },
             onExpand: { onAction(.folderExpanded($0, $1, in: .tree)) },
             actions: actions(for:),
+            canPractise: state.canPractise,
             onPractise: { onAction(.practiseFolderTapped($0)) },
             onDelete: { onAction(.deleteFolderTapped($0)) }
         )

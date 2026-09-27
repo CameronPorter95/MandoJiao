@@ -48,13 +48,14 @@ public struct FolderOutline<ID: Hashable & Sendable>: View {
     let onSelect: (OutlineSelection<ID>) -> Void
     let onExpand: (ID, Bool) -> Void
     let actions: (ID) -> [OutlineAction]
+    let canPractise: (ID) -> Bool
     let onPractise: (ID) -> Void
     let onDelete: (ID) -> Void
 
     /// `selection` is highlighted only at regular width, where the next column shows it.
     /// Rows are folded unless `expanded` holds them, and `onExpand` reports every change.
     /// `onPractise` and `onDelete` are the leading and trailing swipes on a row of the tree;
-    /// pinned rows have neither.
+    /// pinned rows have neither, and a row `canPractise` refuses has no leading swipe.
     public init(
         pinned: [OutlinePinnedRow] = [],
         nodes: [OutlineNode<ID>],
@@ -66,6 +67,7 @@ public struct FolderOutline<ID: Hashable & Sendable>: View {
         onSelect: @escaping (OutlineSelection<ID>) -> Void,
         onExpand: @escaping (ID, Bool) -> Void,
         actions: @escaping (ID) -> [OutlineAction],
+        canPractise: @escaping (ID) -> Bool,
         onPractise: @escaping (ID) -> Void,
         onDelete: @escaping (ID) -> Void
     ) {
@@ -79,6 +81,7 @@ public struct FolderOutline<ID: Hashable & Sendable>: View {
         self.onSelect = onSelect
         self.onExpand = onExpand
         self.actions = actions
+        self.canPractise = canPractise
         self.onPractise = onPractise
         self.onDelete = onDelete
     }
@@ -176,7 +179,9 @@ private final class OutlineCoordinator<ID: Hashable & Sendable>: NSObject, UICol
             return UISwipeActionsConfiguration(actions: [delete])
         }
         list.leadingSwipeActionsConfigurationProvider = { [weak self] indexPath in
-            guard let self, case .node(let id) = dataSource.itemIdentifier(for: indexPath) else { return nil }
+            guard let self, case .node(let id) = dataSource.itemIdentifier(for: indexPath),
+                  outline.canPractise(id)
+            else { return nil }
             let practise = UIContextualAction(style: .normal, title: "Practise") { [weak self] _, _, done in
                 self?.outline.onPractise(id)
                 done(true)

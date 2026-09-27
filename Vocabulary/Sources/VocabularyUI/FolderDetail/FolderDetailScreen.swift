@@ -43,6 +43,7 @@ struct FolderDetailScreen: View {
                                 subfolder: subfolder,
                                 layout: layout,
                                 onOpen: onOpenFolder,
+                                canPractise: { state.canPractise(folder: $0) },
                                 onPractise: { onAction(.practiseFolderTapped($0)) },
                                 onDelete: { onAction(.deleteFolderTapped($0)) }
                             )
@@ -134,12 +135,14 @@ struct FolderDetailScreen: View {
         }
         .tint(.primary)
         .swipeActions(edge: .leading) {
-            Button {
-                onAction(.practiseDeckTapped(deck.id))
-            } label: {
-                Label("Practise", systemImage: "play.fill")
+            if state.canPractise(deck) {
+                Button {
+                    onAction(.practiseDeckTapped(deck.id))
+                } label: {
+                    Label("Practise", systemImage: "play.fill")
+                }
+                .tint(Theme.accent)
             }
-            .tint(Theme.accent)
         }
         .swipeActions(edge: .trailing) {
             Button(role: .destructive) {
@@ -239,6 +242,7 @@ private struct SubfolderRow: View {
     let subfolder: FolderDetailState.Subfolder
     let layout: FolderLayout
     let onOpen: (UUID) -> Void
+    let canPractise: (UUID) -> Bool
     let onPractise: (UUID) -> Void
     let onDelete: (UUID) -> Void
 
@@ -249,7 +253,14 @@ private struct SubfolderRow: View {
                 set: { layout.setExpanded(subfolder.id, $0) }
             )) {
                 ForEach(children) {
-                    SubfolderRow(subfolder: $0, layout: layout, onOpen: onOpen, onPractise: onPractise, onDelete: onDelete)
+                    SubfolderRow(
+                        subfolder: $0,
+                        layout: layout,
+                        onOpen: onOpen,
+                        canPractise: canPractise,
+                        onPractise: onPractise,
+                        onDelete: onDelete
+                    )
                 }
             } label: {
                 row
@@ -263,13 +274,16 @@ private struct SubfolderRow: View {
         }
     }
 
+    @ViewBuilder
     private var practiseButton: some View {
-        Button {
-            onPractise(subfolder.id)
-        } label: {
-            Label("Practise", systemImage: "play.fill")
+        if canPractise(subfolder.id) {
+            Button {
+                onPractise(subfolder.id)
+            } label: {
+                Label("Practise", systemImage: "play.fill")
+            }
+            .tint(Theme.accent)
         }
-        .tint(Theme.accent)
     }
 
     private var deleteButton: some View {

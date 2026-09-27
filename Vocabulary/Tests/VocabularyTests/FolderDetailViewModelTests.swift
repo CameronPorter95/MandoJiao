@@ -180,4 +180,13 @@ struct FolderDetailViewModelTests {
         #expect(request.title == "Level 1")
         #expect(request.pool.count == 5)
     }
+
+    @Test("only a folder or deck with enough words for a lesson offers to be practised")
+    func practisable() async {
+        let (hsk, _) = await makeDetail(Fixtures.hsk.id)
+        #expect(hsk.state.canPractise(folder: Fixtures.level1.id))
+        #expect(!hsk.state.canPractise(folder: Fixtures.emptyFolder.id))
+        #expect(!hsk.state.canPractise(Fixtures.part2))
+        #expect(hsk.state.canPractise(Fixtures.fullDeck))
+    }
 }

@@ -7,6 +7,10 @@ extension Vocabulary {
         usableWordCount(in: deck) >= minimumMatchingWords
     }
 
+    func canStartLesson(with folder: FolderSummary, minimumMatchingWords: Int) -> Bool {
+        usableWordCount(in: folder) >= minimumMatchingWords
+    }
+
     func subtitle(for deck: DeckSummary, minimumMatchingWords: Int) -> String {
         let count = usableWordCount(in: deck)
         return count < minimumMatchingWords ? "\(count) words, needs \(minimumMatchingWords)" : "\(count) words"

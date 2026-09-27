@@ -183,4 +183,12 @@ struct LibraryViewModelTests {
         let (library, _) = await makeLibrary()
         #expect(library.state.layout.expanded(in: .tree) == [Fixtures.hsk.id])
     }
+
+    @Test("the tree offers to practise only a folder with enough words beneath it")
+    func practisable() async {
+        let (library, _) = await makeLibrary()
+        #expect(library.state.canPractise(Fixtures.hsk.id))
+        #expect(!library.state.canPractise(Fixtures.emptyFolder.id))
+        #expect(!library.state.canPractise(UUID()))
+    }
 }
