@@ -27,8 +27,10 @@ Each package splits into Domain, Data, UI and DI targets. See
 
 ## Storage and the detachment boundary
 
-`VocabWord` and `Deck` are the SwiftData entities. A word carries `english`,
-`hanzi`, `pinyin`, and its outstanding `missCount`. A deck holds words and a `Folder`
+`VocabWord` and `Deck` are the SwiftData entities. A word carries an ordered list of
+`meanings`, `hanzi`, `pinyin`, and its outstanding `missCount`. The first meaning is the
+headline, also stored as `english` so a word saved before meanings existed reads back
+as its one meaning. A deck holds words and a `Folder`
 holds decks and other folders, so a deck of decks cannot exist. Every deck is in a
 folder: the starter decks are seeded into one with the `starter` built-in key. Deleting a folder
 cascades to everything beneath it; words always stay. The one nesting rule the
@@ -61,7 +63,14 @@ differ in almost everything except where their results go.
 
 `MatchingPlanBuilder` deals pairs from a shuffled bag, refilling when it empties, so a
 small pool repeats only after every word has had a turn. It also keeps any two
-tiles on a board from reading the same, which is what makes a board solvable.
+words on a board from sharing hanzi or any meaning, which is what makes a board
+solvable. A tile shows only the headline, but 行 on "to walk" beside 可以 on "okay"
+would still be a board where "okay" fits both.
+
+A pair's `english` is the headline shortened with `Gloss.plain`, and `otherMeanings`
+the rest. Tiles and speaking prompts show the headline alone. The rest appear once
+the answer is out: on a solved English tile, in a speaking card's answer, and in the
+lesson summary.
 
 `SpeakingPlanBuilder` does none of that. One card per word, in the order given,
 capped. Dropping the five-at-a-time floor is the entire reason the speaking lesson exists:

@@ -31,8 +31,8 @@ public enum MatchingPlanBuilder {
     /// when it runs dry. A pool smaller than `exerciseCount * pairsPerExercise`
     /// just means words come around again, which is the point.
     ///
-    /// Within one exercise no two pairs share an English or Hanzi string, so a
-    /// board never has two identical-looking tiles with different answers.
+    /// Within one exercise no two pairs share Hanzi or any meaning, so a board
+    /// never has a tile that fits two answers.
     /// Returns `nil` when there are fewer than `pairsPerExercise` usable pairs.
     public static func makeLesson(
         title: String,
@@ -68,9 +68,7 @@ public enum MatchingPlanBuilder {
                 let candidate = bag.removeFirst()
                 if chosen.contains(where: { $0.id == candidate.id }) { continue }
 
-                let readsTheSame = chosen.contains {
-                    $0.english == candidate.english || $0.hanzi == candidate.hanzi
-                }
+                let readsTheSame = chosen.contains { $0.hanzi == candidate.hanzi || $0.sharesMeaning(with: candidate) }
                 // After two passes the constraint is unsatisfiable for this pool,
                 // so take the clash rather than spin forever.
                 if readsTheSame && refills < 2 {
@@ -96,5 +94,14 @@ public enum MatchingPlanBuilder {
             guard !english.isEmpty, !hanzi.isEmpty else { return false }
             return seen.insert("\(english.lowercased())|\(hanzi)").inserted
         }
+    }
+}
+
+private extension WordPair {
+    /// Any meaning, not just the headline on the tile: 行 showing "to walk" beside 可以
+    /// showing "okay" is a board where "okay" fits both.
+    func sharesMeaning(with other: WordPair) -> Bool {
+        let theirs = Set(other.meanings.map { $0.lowercased() })
+        return meanings.contains { theirs.contains($0.lowercased()) }
     }
 }

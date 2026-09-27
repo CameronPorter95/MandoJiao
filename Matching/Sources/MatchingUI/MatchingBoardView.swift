@@ -25,6 +25,7 @@ struct MatchingBoardView: View {
         WordTileView(
             tile: tile,
             pinyin: board.pinyin(for: tile),
+            otherMeanings: board.otherMeanings(for: tile),
             isSelected: board.isSelected(tile),
             isMatched: board.isMatched(tile),
             isMissed: board.isMissed(tile),

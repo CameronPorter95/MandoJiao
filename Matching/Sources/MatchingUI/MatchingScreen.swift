@@ -154,7 +154,7 @@ struct MatchingScreen: View {
 
 extension WordPair {
     var reviewRow: LessonCompleteView.Row {
-        LessonCompleteView.Row(id: id, hanzi: hanzi, english: english, pinyin: pinyin)
+        LessonCompleteView.Row(id: id, hanzi: hanzi, english: meanings.joined(separator: "; "), pinyin: pinyin)
     }
 }
 

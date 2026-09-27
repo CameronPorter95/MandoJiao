@@ -33,6 +33,18 @@ struct MatchingPlanBuilderTests {
         }
     }
 
+    @Test("no board holds two words sharing a meaning, even one not on a tile")
+    func noSharedMeanings() throws {
+        // 行's tile says "to walk", but "okay" fits it as well as it fits 可以.
+        let xing = WordPair(english: "to walk", hanzi: "行", pinyin: "", otherMeanings: ["okay"])
+        let keyi = WordPair(english: "Okay", hanzi: "可以", pinyin: "")
+        let plan = try #require(MatchingPlanBuilder.makeLesson(title: "t", from: pool + [xing, keyi]))
+        #expect(plan.exercises.contains { $0.contains(xing) || $0.contains(keyi) })
+        for exercise in plan.exercises {
+            #expect(!(exercise.contains(xing) && exercise.contains(keyi)))
+        }
+    }
+
     @Test("a pool below one board's worth cannot make a lesson")
     func tooFewWords() {
         #expect(MatchingPlanBuilder.makeLesson(title: "t", from: Array(pool.prefix(4))) == nil)
