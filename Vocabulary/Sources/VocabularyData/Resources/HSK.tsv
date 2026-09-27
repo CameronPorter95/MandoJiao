@@ -229,8 +229,6 @@
 1	2484	好吃	hǎochī	tasty, delicious
 1	2487	明年	míngnián	next year
 1	2487	再见	zàijiàn	goodbye
-1	2522	这儿	zhèr	here
-1	2534	哪儿	nǎr	where?
 1	2562	苹果	píngguǒ	apple
 1	2600	中午	zhōngwǔ	noon
 1	2645	起床	qǐchuáng	to get out of bed, to get up
@@ -248,7 +246,6 @@
 1	3207	下班	xiàbān	to finish work, to get off work
 1	3271	水果	shuǐguǒ	fruit
 1	3285	读书	dúshū	to read a book
-1	3421	那儿	nàr	there
 1	3479	商店	shāngdiàn	store, shop
 1	3501	鸡蛋	jīdàn	egg
 1	3541	没关系	méiguānxi	it doesn't matter
@@ -274,14 +271,14 @@
 1	6162	杯子	bēizi	cup
 1	6459	中文	Zhōngwén	Chinese language
 1	6748	早饭	zǎofàn	breakfast
-1	6921	一点儿	yīdiǎnr	a bit, a little bit
+1	6921	一点	yīdiǎn	a bit, a little bit
 1	7174	书店	shūdiàn	bookstore
 1	7577	星期天	Xīngqītiān	Sunday
 1	7705	看病	kànbìng	to visit a doctor
 1	7945	电影院	diànyǐngyuàn	cinema, movie theater
 1	9694	下课	xiàkè	to finish class
 1	10194	米饭	mǐfàn	rice
-1	11175	有点儿	yǒudiǎnr	slightly
+1	11175	有点	yǒudiǎn	a little
 1	11834	饺子	jiǎozi	dumpling
 1	12165	小学生	xiǎoxuéshēng	primary school student
 1	12319	外边	wàibian	outside
@@ -291,8 +288,8 @@
 1	16315	包子	bāozi	baozi, bao
 1	16723	不客气	bùkèqi	you're welcome
 1	19725	汉字	hànzì	Chinese character
-1	23411	好玩儿	hǎowánr	amusing
-1	1000000	面条儿	miàntiáor	noodles
+1	23411	好玩	hǎowán	amusing
+1	1000000	面条	miàntiáo	noodles
 2	15	就	jiù	in that case, then
 2	38	着	zhe	aspect particle indicating action in
 2	47	啊	a	modal particle ending sentence
@@ -429,7 +426,7 @@
 2	2127	上去	shàngqù	to go up
 2	2146	红色	hóngsè	red
 2	2164	游	yóu	to walk
-2	2207	一会儿	yīhuìr	a moment
+2	2207	一会	yīhuì	a moment
 2	2308	机场	jīchǎng	airport, airfield
 2	2330	踢	tī	to kick
 2	2343	舒服	shūfu	comfortable
@@ -484,12 +481,12 @@
 2	15567	绿茶	lǜchá	green tea
 2	15698	打车	dǎchē	to take a taxi
 2	16449	饭馆	fànguǎn	restaurant
-2	18271	女孩儿	nǚháir	erhua form of
+2	18271	女孩	nǚhái	girl, lass
 2	20075	奶茶	nǎichá	milk tea
 2	21109	红茶	hóngchá	black tea
-2	25607	小孩儿	xiǎoháir	child
+2	25607	小孩	xiǎohái	child
 2	1000000	公交车	gōngjiāochē	public transport vehicle
-2	1000000	男孩儿	nánháir	erhua form of
+2	1000000	男孩	nánhái	boy
 3	50	把	bǎ	to hold, to grasp
 3	54	被	bèi	quilt
 3	58	为	wèi	because of
@@ -947,7 +944,6 @@
 3	10838	东南	dōngnán	southeast
 3	11156	难看	nánkàn	ugly
 3	11159	外语	wàiyǔ	foreign language
-3	11449	一块儿	yīkuàir	a piece, a chunk
 3	11617	感兴趣	gǎnxìngqù	to be interested
 3	11698	运动会	yùndònghuì	sports competition
 3	11764	开花	kāihuā	to bloom, to blossom, to flower
@@ -975,7 +971,7 @@
 3	25367	高铁	gāotiě	high speed rail
 3	30576	课文	kèwén	text
 3	45713	后年	hòunián	the year after next
-3	102289	聊天儿	liáotiānr	to chat, to gossip
+3	102289	聊天	liáotiān	to chat, to gossip
 3	1000000	银行卡	yínhángkǎ	bank card
 4	75	而	ér	and
 4	100	将	jiāng	will
@@ -1935,7 +1931,7 @@
 4	19807	多样	duōyàng	diverse
 4	20368	口语	kǒuyǔ	colloquial speech
 4	21410	寒假	hánjià	winter vacation
-4	21664	差点儿	chàdiǎnr	almost
+4	21664	差点	chàdiǎn	almost
 4	21668	粗心	cūxīn	careless
 4	23743	报考	bàokǎo	to enter oneself for an examination
 4	25234	起到	qǐdào	to have, to play
@@ -1947,7 +1943,7 @@
 4	35984	月饼	yuèbǐng	mooncake
 4	36044	预习	yùxí	to prepare a lesson
 4	40061	京剧	Jīngjù	Beijing opera
-4	41800	干活儿	gànhuór	to work, to be employed
+4	41800	干活	gànhuó	to work, to be employed
 4	1000000	短信	duǎnxìn	text message
 5	159	所	suǒ	actually
 5	166	以	yǐ	to use
@@ -3491,7 +3487,7 @@
 5	37393	毛笔	máobǐ	writing brush
 5	38012	占线	zhànxiàn	busy
 5	40040	跳远	tiàoyuǎn	long jump
-5	41071	没法儿	méifǎr5	Can't
+5	41071	没法	méifǎ	at a loss
 5	48366	电子版	diànzǐbǎn	electronic edition
 5	50741	连忙	liánmáng	promptly, at once
 5	1000000	便利店	biànlìdiàn	convenience store
@@ -4978,7 +4974,7 @@
 6	14562	贴近	tiējìn	to press close to
 6	14592	踏实	tāshi	firmly-based
 6	14605	学问	xuéwèn	learning, knowledge, scholarship
-6	14629	大伙儿	dàhuǒr	everyone, all of us, all of you
+6	14629	大伙	dàhuǒ	everyone, all of us, all of you
 6	14630	晾	liàng	to dry in the air
 6	14655	简介	jiǎnjiè	summary
 6	14732	炎症	yánzhèng	inflammation
@@ -5154,7 +5150,7 @@
 6	28853	浏览器	liúlǎnqì	browser
 6	28932	拜年	bàinián	to pay a New Year call
 6	29081	水稻	shuǐdào	rice
-6	29610	模特儿	mótèr	model
+6	29610	模特	mótè	model
 6	29771	名胜	míngshèng	a place famous for its scenery or
 6	30322	好容易	hǎoróngyì	with great difficulty
 6	30562	工序	gōngxù	working procedure
@@ -5176,7 +5172,7 @@
 6	49606	汤圆	tāngyuán	boiled or deep-fried balls of glutinous
 6	50440	初等	chūděng	elementary
 6	88712	电饭锅	diànfànguō	electric rice cooker
-6	147151	小偷儿	xiǎotōur5	Thief
+6	147151	小偷	xiǎotōu	thief
 6	1000000	低碳	dītàn	low-carbon, low-carb
 6	1000000	薯片	shǔpiàn	fried potato chips
 6	1000000	性价比	xìngjiàbǐ	cost-performance ratio
@@ -7921,7 +7917,7 @@
 7	14160	开销	kāixiāo	to pay
 7	14163	招数	zhāoshù	move
 7	14168	沉闷	chénmèn	oppressive
-7	14169	玩意儿	wányìr	toy
+7	14169	玩意	wányì	toy
 7	14170	微不足道	wēibùzúdào	negligible, insignificant
 7	14182	钦佩	qīnpèi	to admire
 7	14183	收支	shōuzhī	cash flow
@@ -9988,9 +9984,9 @@
 7	54509	美滋滋	měizīzī	very happy, elated
 7	54646	怠工	dàigōng	to slacken off in one's work
 7	54775	单边	dānbiān	unilateral
-7	55268	没准儿	méizhǔnr	not sure
+7	55268	没准	méizhǔn	not sure
 7	55315	抑扬顿挫	yìyángdùncuò	cadence
-7	55439	心眼儿	xīnyǎnr	one's thoughts
+7	55439	心眼	xīnyǎn	heart
 7	55695	此致	cǐzhì	used at the end of a letter to introduce
 7	56118	有的放矢	yǒudìfàngshǐ	lit. to have a target in mind when
 7	56444	概论	gàilùn	outline
@@ -10005,12 +10001,12 @@
 7	59231	朝三暮四	zhāosānmùsì	lit. say three in the morning but four
 7	59477	内需	nèixū	domestic demand
 7	59499	敦厚	dūnhòu	genuine
-7	60338	老伴儿	lǎobànr	husband or wife
+7	60338	老伴	lǎobàn	husband or wife
 7	61564	红扑扑	hóngpūpū	red
 7	61816	迭起	diéqǐ	continuously arising
 7	61916	槐树	huáishù	locust tree
 7	62722	贺信	hèxìn	congratulatory letter or message
-7	62971	冰棍儿	bīnggùnr	ice lolly
+7	62971	冰棍	bīnggùn	popsicle
 7	63111	节衣缩食	jiéyīsuōshí	to save on food and clothing
 7	63826	张灯结彩	zhāngdēngjiécǎi	to be decorated with lanterns and
 7	65189	陶冶	táoyě	lit. to fire pots and smelt metal
@@ -10020,13 +10016,13 @@
 7	70510	深情厚谊	shēnqínghòuyì	deep friendship
 7	73010	酣畅	hānchàng	unrestrained
 7	75450	一毛不拔	yīmáobùbá	unwilling to spare a single hair
-7	77711	纳闷儿	nàmènr	puzzled
+7	77711	纳闷	nàmèn	puzzled
 7	80787	势不可当	shìbùkědāng	impossible to resist
 7	83856	不耻下问	bùchǐxiàwèn	not feel ashamed to ask and learn from
 7	84607	出口成章	chūkǒuchéngzhāng	eloquent
 7	85592	飞禽走兽	fēiqínzǒushòu	birds and animals
 7	86660	饱经沧桑	bǎojīngcāngsāng	having lived through many changes
-7	87095	个头儿	gètóur	size
+7	87095	个头	gètóu	size
 7	96545	长效	chángxiào	to be effective over an extended period
 7	108475	刻舟求剑	kèzhōuqiújiàn	lit. a notch on the side of a boat to
 7	114959	鹏程万里	péngchéngwànlǐ	the fabled roc flies ten thousand miles
@@ -10034,17 +10030,17 @@
 7	164953	得意扬扬	déyìyángyáng	joyfully satisfied
 7	379791	廉正	liánzhèng	upright and honest
 7	1000000	操控	cāokòng	to control
-7	1000000	打盹儿	dǎdǔnr	to doze off
+7	1000000	打盹	dǎdǔn	to doze off
 7	1000000	大数据	dàshùjù	big data
 7	1000000	防汛	fángxùn	flood control
 7	1000000	搞笑	gǎoxiào	to get people to laugh
 7	1000000	公示	gōngshì	to make known to the public
 7	1000000	后备箱	hòubèixiāng	trunk
-7	1000000	离谱儿	lípǔr5	Scientific
+7	1000000	离谱	lípǔ	inappropriate, improper, out of place
 7	1000000	咧嘴	liězuǐ	to draw back the corners of one's mouth
 7	1000000	领军	lǐngjūn	to lead troups
 7	1000000	难得一见	nándéyījiàn	rarely seen
-7	1000000	人缘儿	rényuánr	erhua form of
+7	1000000	人缘	rényuán	the quality of one's relationships with
 7	1000000	软实力	ruǎnshílì	soft power
 7	1000000	杀毒	shādú	to disinfect
 7	1000000	时好时坏	shíhǎoshíhuài	sometimes good, sometimes bad

@@ -11,10 +11,17 @@ import Foundation
 // Pinyin and English come from the lexicon when it knows the word, so they read as the word
 // editor's suggestions do. The source lists every reading of a character, not the one the
 // syllabus means, so the lexicon's reading picks among them.
+//
+// Words are in standard Mandarin, not Beijing erhua: 一点儿 becomes 一点. Where dropping the
+// 儿 changes the meaning, the standard word is used instead (哪儿 is 哪里, not 哪), and an
+// erhua word whose standard form is already in the syllabus is left out as a duplicate.
 
 struct Source: Decodable {
     struct Form: Decodable {
-        struct Transcriptions: Decodable { let pinyin: String }
+        struct Transcriptions: Decodable {
+            let pinyin: String
+            let numeric: String
+        }
         let transcriptions: Transcriptions
         let meanings: [String]
     }
@@ -44,12 +51,37 @@ func comparable(_ pinyin: String) -> String {
     pinyin.lowercased().filter { !$0.isWhitespace && $0 != "'" }
 }
 
+/// Where the erhua word's standard form is a different word, not the same one without 儿.
+let standardForms = ["哪儿": "哪里", "这儿": "这里", "那儿": "那里", "一块儿": "一起"]
+
+/// The source ends an erhua reading in a neutral r, as `r5` or glued on as `fǎr5`. A real
+/// 儿, as in 儿子, is `er2` and is kept.
+func isErhua(_ entry: Source) -> Bool {
+    entry.simplified.hasSuffix("儿") && entry.forms.contains {
+        $0.transcriptions.numeric.lowercased().hasSuffix("r5")
+    }
+}
+
+let syllabus = Set(entries.filter { $0.level.contains { $0.hasPrefix("newest-") } }.map(\.simplified))
+
 var lines: [(level: Int, rank: Int, line: String)] = []
+var standardised: [String] = []
 var ambiguous = 0
 var unknown: [String] = []
 for entry in entries {
     let levels = entry.level.compactMap { $0.hasPrefix("newest-") ? Int($0.dropFirst("newest-".count)) : nil }
     guard let level = levels.min() else { continue }
+
+    if isErhua(entry) {
+        let standard = standardForms[entry.simplified] ?? String(entry.simplified.dropLast())
+        guard !syllabus.contains(standard), let known = lexicon[standard] else {
+            standardised.append("\(entry.simplified) dropped")
+            continue
+        }
+        standardised.append("\(entry.simplified) → \(standard)")
+        lines.append((level, entry.frequency, "\(level)\t\(entry.frequency)\t\(standard)\t\(known.pinyin)\t\(known.english)"))
+        continue
+    }
 
     // A surname reading is never the syllabus word unless it is the only one.
     let forms = entry.forms.count == 1 ? entry.forms : entry.forms.filter { !($0.transcriptions.pinyin.first?.isUppercase ?? false) }
@@ -76,3 +108,4 @@ try ([header] + lines.map(\.line)).joined(separator: "\n").appending("\n")
 let counts = Dictionary(grouping: lines, by: \.level).mapValues(\.count).sorted { $0.key < $1.key }
 print("words by level:", counts.map { "\($0.key): \($0.value)" }.joined(separator: ", "))
 print("\(ambiguous) with several readings, \(unknown.count) not in the lexicon or read differently there")
+print("erhua made standard:", standardised.joined(separator: ", "))
