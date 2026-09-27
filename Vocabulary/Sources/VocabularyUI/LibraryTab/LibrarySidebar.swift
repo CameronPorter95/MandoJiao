@@ -16,12 +16,12 @@ struct LibrarySidebar: View {
             pinned: Self.pinned,
             nodes: nodes(in: nil),
             selection: outlineSelection,
-            expanded: state.expandedFolders,
+            expanded: state.layout.expanded(in: .tree),
             isEditing: state.isEditing,
             canMove: { state.vocabulary.canMoveFolder($0.item, into: $0.parent) },
             onMove: { onAction(.folderMoved(id: $0.item, parentID: $0.parent, index: $0.index)) },
             onSelect: { onAction(.selected(librarySelection($0))) },
-            onExpand: { onAction(.folderExpanded($0, $1)) },
+            onExpand: { onAction(.folderExpanded($0, $1, in: .tree)) },
             actions: actions(for:)
         )
         .navigationTitle("Library")

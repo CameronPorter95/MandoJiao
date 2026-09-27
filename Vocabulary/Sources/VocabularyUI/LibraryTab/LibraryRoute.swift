@@ -65,12 +65,15 @@ public struct LibraryRoute: View {
         LibraryColumnNavigation(
             openDeck: { viewModel.send(.opened(.deck($0))) },
             openFolder: { viewModel.send(.opened(.folder($0))) },
-            expansion: FolderExpansion(
-                expanded: viewModel.state.expandedFolders,
-                foldedSections: viewModel.state.foldedSections,
-                setExpanded: { viewModel.send(.folderExpanded($0, $1)) },
-                toggleSection: { viewModel.send(.folderSectionToggled($0)) }
-            )
+            expansion: { folderID in
+                let layout = viewModel.state.layout
+                return FolderExpansion(
+                    expanded: layout.expanded(in: .folder(folderID)),
+                    isSectionFolded: layout.foldedSections.contains(folderID),
+                    setExpanded: { viewModel.send(.folderExpanded($0, $1, in: .folder(folderID))) },
+                    toggleSection: { viewModel.send(.folderSectionToggled(folderID)) }
+                )
+            }
         )
     }
 }

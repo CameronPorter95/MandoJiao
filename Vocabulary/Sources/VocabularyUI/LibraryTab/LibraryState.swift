@@ -18,18 +18,18 @@ public enum LibraryPage: Hashable, Sendable {
 public struct LibraryColumnNavigation {
     public let openDeck: (UUID) -> Void
     public let openFolder: (UUID) -> Void
-    public let expansion: FolderExpansion
+    /// The unfolded subfolders on one folder's screen, which are its own.
+    public let expansion: (UUID) -> FolderExpansion
 }
 
-/// Which folders are unfolded, shared by the tree and every folder screen so each shows a
-/// folder the way it was last left.
+/// One folder screen's share of the library's layout: which of its subfolders are unfolded,
+/// and whether its Folders section is.
 @MainActor
 public struct FolderExpansion {
     public let expanded: Set<UUID>
-    /// Folders whose screen has its Folders section folded away.
-    public let foldedSections: Set<UUID>
+    public let isSectionFolded: Bool
     public let setExpanded: (UUID, Bool) -> Void
-    public let toggleSection: (UUID) -> Void
+    public let toggleSection: () -> Void
 }
 
 /// A folder about to be named: a new one, or an existing one being renamed.
@@ -43,9 +43,8 @@ struct LibraryState: Equatable {
     var selection: LibrarySelection?
     /// Pushed over the selection, in order.
     var path: [LibraryPage] = []
-    /// Folded unless listed, everywhere a folder appears in a tree.
-    var expandedFolders: Set<UUID> = []
-    var foldedSections: Set<UUID> = []
+    /// Saved after every change, so it is as it was left after a relaunch.
+    var layout = LibraryLayout()
     var isEditing = false
     var naming: FolderNaming?
     var name = ""
@@ -78,7 +77,7 @@ enum LibraryAction: Equatable {
     case opened(LibraryPage)
     /// The stack after going back.
     case pathChanged([LibraryPage])
-    case folderExpanded(UUID, Bool)
+    case folderExpanded(UUID, Bool, in: LibraryLayout.Scope)
     case folderSectionToggled(UUID)
     case editTapped
     case folderMoved(id: UUID, parentID: UUID?, index: Int)

@@ -15,6 +15,7 @@ public final class LibraryViewModel {
     private let renameFolder: RenameFolderUseCase
     private let moveFolder: MoveFolderUseCase
     private let deleteFolder: DeleteFolderUseCase
+    private let saveLayout: SaveLibraryLayoutUseCase
 
     private var observation: Task<Void, Never>?
     /// Writes run one after another, so drags land in the order they were made.
@@ -26,15 +27,18 @@ public final class LibraryViewModel {
         createFolder: CreateFolderUseCase,
         renameFolder: RenameFolderUseCase,
         moveFolder: MoveFolderUseCase,
-        deleteFolder: DeleteFolderUseCase
+        deleteFolder: DeleteFolderUseCase,
+        getLayout: GetLibraryLayoutUseCase,
+        saveLayout: SaveLibraryLayoutUseCase
     ) {
-        state = LibraryState()
+        state = LibraryState(layout: getLayout())
         self.minimumMatchingWords = minimumMatchingWords
         self.observeVocabulary = observeVocabulary
         self.createFolder = createFolder
         self.renameFolder = renameFolder
         self.moveFolder = moveFolder
         self.deleteFolder = deleteFolder
+        self.saveLayout = saveLayout
     }
 
     func effects() -> AsyncStream<LibraryEffect> { effectChannel.stream() }
@@ -64,15 +68,13 @@ public final class LibraryViewModel {
         case .pathChanged(let path):
             state.path = path
 
-        case .folderExpanded(let id, let isExpanded):
-            if isExpanded {
-                state.expandedFolders.insert(id)
-            } else {
-                state.expandedFolders.remove(id)
-            }
+        case .folderExpanded(let id, let isExpanded, let scope):
+            state.layout = state.layout.settingExpanded(id, isExpanded, in: scope)
+            saveLayout(state.layout)
 
         case .folderSectionToggled(let id):
-            if state.foldedSections.remove(id) == nil { state.foldedSections.insert(id) }
+            state.layout = state.layout.togglingSection(of: id)
+            saveLayout(state.layout)
 
         case .editTapped:
             state.isEditing.toggle()

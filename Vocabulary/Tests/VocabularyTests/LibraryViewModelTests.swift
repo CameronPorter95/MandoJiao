@@ -10,6 +10,7 @@ import VocabularyTestSupport
 @MainActor
 struct LibraryViewModelTests {
     private let repository = FakeVocabularyRepository(Fixtures.nested)
+    private let layout = FakeLibraryLayoutRepository()
 
     private func makeLibrary() async -> (LibraryViewModel, EffectLog<LibraryEffect>) {
         let viewModel = LibraryViewModel(
@@ -18,7 +19,9 @@ struct LibraryViewModelTests {
             createFolder: CreateFolderUseCase(repository: repository),
             renameFolder: RenameFolderUseCase(repository: repository),
             moveFolder: MoveFolderUseCase(repository: repository),
-            deleteFolder: DeleteFolderUseCase(repository: repository)
+            deleteFolder: DeleteFolderUseCase(repository: repository),
+            getLayout: GetLibraryLayoutUseCase(repository: layout),
+            saveLayout: SaveLibraryLayoutUseCase(repository: layout)
         )
         let log = EffectLog(viewModel.effects())
         viewModel.send(.appeared)
@@ -155,25 +158,27 @@ struct LibraryViewModelTests {
         #expect(request.pool.count == 5)
     }
 
-    @Test("folders start folded and stay as they were left, wherever they were unfolded")
+    @Test("the tree and each folder's screen unfold independently, and every change is saved")
     func expansion() async {
         let (library, _) = await makeLibrary()
-        #expect(library.state.expandedFolders.isEmpty)
+        #expect(library.state.layout == LibraryLayout())
 
-        library.send(.folderExpanded(Fixtures.hsk.id, true))
-        library.send(.folderExpanded(Fixtures.level1.id, true))
-        library.send(.folderExpanded(Fixtures.hsk.id, false))
-        library.send(.selected(.folder(Fixtures.hsk.id)))
-        library.send(.selected(nil))
-        #expect(library.state.expandedFolders == [Fixtures.level1.id])
+        library.send(.folderExpanded(Fixtures.hsk.id, true, in: .tree))
+        library.send(.folderExpanded(Fixtures.level1.id, true, in: .folder(Fixtures.hsk.id)))
+        library.send(.folderSectionToggled(Fixtures.level1.id))
+
+        #expect(library.state.layout.expanded(in: .tree) == [Fixtures.hsk.id])
+        #expect(library.state.layout.expanded(in: .folder(Fixtures.hsk.id)) == [Fixtures.level1.id])
+        #expect(library.state.layout.expanded(in: .folder(Fixtures.level1.id)).isEmpty)
+        #expect(library.state.layout.foldedSections == [Fixtures.level1.id])
+        #expect(layout.saves == 3)
+        #expect(layout.layout() == library.state.layout)
     }
 
-    @Test("a folder's Folders section folds and unfolds, and is remembered per folder")
-    func sections() async {
+    @Test("the library opens as it was left")
+    func restoring() async {
+        layout.save(LibraryLayout().settingExpanded(Fixtures.hsk.id, true, in: .tree))
         let (library, _) = await makeLibrary()
-        library.send(.folderSectionToggled(Fixtures.hsk.id))
-        library.send(.folderSectionToggled(Fixtures.level1.id))
-        library.send(.folderSectionToggled(Fixtures.level1.id))
-        #expect(library.state.foldedSections == [Fixtures.hsk.id])
+        #expect(library.state.layout.expanded(in: .tree) == [Fixtures.hsk.id])
     }
 }

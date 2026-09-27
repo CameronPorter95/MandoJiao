@@ -36,7 +36,7 @@ struct FolderDetailScreen: View {
             }
 
             if !state.subfolders.isEmpty {
-                let isSectionExpanded = !expansion.foldedSections.contains(state.folderID)
+                let isSectionExpanded = !expansion.isSectionFolded
                 Section {
                     if isSectionExpanded {
                         ForEach(state.subfolders) { subfolder in
@@ -45,7 +45,7 @@ struct FolderDetailScreen: View {
                     }
                 } header: {
                     Button {
-                        withAnimation { expansion.toggleSection(state.folderID) }
+                        withAnimation { expansion.toggleSection() }
                     } label: {
                         HStack {
                             Text("Folders")
@@ -129,7 +129,7 @@ struct FolderDetailScreen: View {
     }
 }
 
-/// A folder beneath the one shown, folded or not as it was last left anywhere in the library.
+/// A folder beneath the one shown, folded or not as it was last left on this screen.
 private struct SubfolderRow: View {
     let subfolder: FolderDetailState.Subfolder
     let expansion: FolderExpansion

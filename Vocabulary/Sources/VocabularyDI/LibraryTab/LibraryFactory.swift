@@ -12,13 +12,16 @@ public enum LibraryFactory: NavigationInputRouteFactory {
         input: LibraryInput
     ) -> LibraryRoute {
         let repository = VocabularyRepositoryFactory.makeRepository(dependencies: dependencies)
+        let layout = VocabularyRepositoryFactory.makeLibraryLayoutRepository()
         let viewModel = LibraryViewModel(
             minimumMatchingWords: input.minimumMatchingWords,
             observeVocabulary: ObserveVocabularyUseCase(repository: repository),
             createFolder: CreateFolderUseCase(repository: repository),
             renameFolder: RenameFolderUseCase(repository: repository),
             moveFolder: MoveFolderUseCase(repository: repository),
-            deleteFolder: DeleteFolderUseCase(repository: repository)
+            deleteFolder: DeleteFolderUseCase(repository: repository),
+            getLayout: GetLibraryLayoutUseCase(repository: layout),
+            saveLayout: SaveLibraryLayoutUseCase(repository: layout)
         )
         let folder = { (folderID: UUID, column: LibraryColumnNavigation) in
             AnyView(FolderDetailFactory.makeRoute(
@@ -31,7 +34,7 @@ public enum LibraryFactory: NavigationInputRouteFactory {
                 input: FolderDetailInput(
                     folderID: folderID,
                     minimumMatchingWords: input.minimumMatchingWords,
-                    expansion: column.expansion
+                    expansion: column.expansion(folderID)
                 )
             ))
         }
