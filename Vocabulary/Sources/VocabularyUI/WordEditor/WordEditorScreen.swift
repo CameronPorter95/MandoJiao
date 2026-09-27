@@ -37,13 +37,21 @@ struct WordEditorScreen: View {
                 }
                 meaningsSection
 
-                ForEach(state.entries, id: \.pinyin) { entry in
+                ForEach(state.tickableEntries, id: \.pinyin) { entry in
                     DictionarySensesSection(
                         entry: entry,
-                        isOnlyReading: state.entries.count == 1,
+                        isOnlyReading: state.tickableEntries.count == 1,
                         isChosen: state.isChosen,
                         onToggle: { onAction(.senseToggled($0)) }
                     )
+                }
+
+                if state.dictionaryHeadword != nil {
+                    Section {
+                        Button { onAction(.dictionaryTapped) } label: {
+                            Label("View in dictionary", systemImage: "character.book.closed")
+                        }
+                    }
                 }
 
                 if state.canDelete {

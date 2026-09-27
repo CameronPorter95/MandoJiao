@@ -78,6 +78,12 @@ public final class WordEditorViewModel {
                 meanings.insert(meaning, at: 0)
             }
 
+        case .dictionaryTapped:
+            state.dictionary = state.dictionaryHeadword
+
+        case .dictionaryDismissed:
+            state.dictionary = nil
+
         case .saveTapped:
             guard state.canSave else { return }
             let id = state.wordID

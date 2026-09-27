@@ -243,4 +243,33 @@ struct WordEditorViewModelTests {
         #expect(await lexicon.lookups.isEmpty)
         #expect(await dictionary.lookups.isEmpty)
     }
+
+    @Test("the dictionary opens on the Hanzi with the reading that would be saved")
+    func dictionary() async {
+        let (editor, _) = makeEditor(nil)
+        editor.send(.dictionaryTapped)
+        #expect(editor.state.dictionary == nil)
+
+        editor.send(.hanziChanged(" 行 "))
+        #expect(await waitUntil { editor.state.pinyinSuggestion == "xíng" })
+        editor.send(.senseToggled("to walk"))
+        editor.send(.senseToggled("profession"))
+        editor.send(.dictionaryTapped)
+        #expect(editor.state.dictionary == DictionaryHeadword(hanzi: "行", pinyin: "háng"))
+
+        editor.send(.dictionaryDismissed)
+        #expect(editor.state.dictionary == nil)
+    }
+
+    @Test("a reading with no senses offers nothing to tick, nor the suggested meaning")
+    func sensesless() async {
+        let empty = FakeDictionaryRepository.entry("了", "liǎo", preferred: true)
+        let le = FakeDictionaryRepository.entry("了", "le", preferred: false, "(completed action marker)")
+        let (editor, _) = makeEditor(nil, dictionary: FakeDictionaryRepository([empty, le]))
+        editor.send(.hanziChanged("了"))
+
+        #expect(await waitUntil { editor.state.meanings == ["(completed action marker)"] })
+        #expect(editor.state.tickableEntries.map(\.pinyin) == ["le"])
+        #expect(editor.state.pinyinSuggestion == "le")
+    }
 }

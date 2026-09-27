@@ -18,6 +18,7 @@ struct WordEditorState: Equatable {
     /// Until the meanings are touched, a new word takes the dictionary's first sense for
     /// whatever Hanzi is typed. After that they are the user's, whatever the Hanzi.
     var meaningsEdited: Bool
+    var dictionary: DictionaryHeadword?
 
     init(wordID: UUID?, draft: WordDraft, lookup: Lookup? = nil) {
         self.wordID = wordID
@@ -36,6 +37,17 @@ struct WordEditorState: Equatable {
         return lookup.entries
     }
 
+    /// Readings with senses to tick. Some entries have none, being only another's variant.
+    var tickableEntries: [DictionaryEntry] { entries.filter { !$0.senses.isEmpty } }
+
+    /// The Hanzi, with the reading that would be saved.
+    var dictionaryHeadword: DictionaryHeadword? {
+        let hanzi = draft.trimmed.hanzi
+        guard !hanzi.isEmpty else { return nil }
+        let pinyin = submission.trimmed.pinyin
+        return DictionaryHeadword(hanzi: hanzi, pinyin: pinyin.isEmpty ? nil : pinyin)
+    }
+
     /// In order, the headline first, as saved.
     var meanings: [String] { meaningsEdited ? draft.meanings : suggestedMeanings }
 
@@ -43,7 +55,7 @@ struct WordEditorState: Equatable {
     var meaningsAreSuggested: Bool { !meaningsEdited && !suggestedMeanings.isEmpty }
 
     private var suggestedMeanings: [String] {
-        entries.first?.senses.first.map { [$0] } ?? []
+        tickableEntries.first?.senses.first.map { [$0] } ?? []
     }
 
     /// Shown in place of an empty pinyin field, and saved unless typed over. The reading
@@ -90,6 +102,8 @@ enum WordEditorAction: Equatable {
     case meaningsMoved(from: IndexSet, to: Int)
     case meaningsRemoved(IndexSet)
     case meaningMadeHeadline(String)
+    case dictionaryTapped
+    case dictionaryDismissed
     case saveTapped
     case deleteTapped
     case cancelTapped

@@ -9,8 +9,10 @@ public enum WordLibraryFactory: RouteFactory {
             observeVocabulary: ObserveVocabularyUseCase(repository: repository),
             deleteWords: DeleteWordsUseCase(repository: repository)
         )
-        return WordLibraryRoute(viewModel: viewModel) { word in
-            WordEditorFactory.makeRoute(dependencies: dependencies, input: word)
-        }
+        return WordLibraryRoute(
+            viewModel: viewModel,
+            makeEditor: { WordEditorFactory.makeRoute(dependencies: dependencies, input: $0) },
+            makeDictionary: { DictionaryFactory.makeRoute(dependencies: dependencies, input: $0) }
+        )
     }
 }

@@ -44,6 +44,16 @@ struct WordLibraryViewModelTests {
         #expect(library.state.editor == .new)
     }
 
+    @Test("the dictionary opens on a word's Hanzi and its reading")
+    func dictionary() async {
+        let (library, _) = await makeLibrary()
+        library.send(.dictionaryTapped(Fixtures.water.id))
+        #expect(library.state.dictionary == DictionaryHeadword(hanzi: "水", pinyin: "shuǐ"))
+
+        library.send(.dictionaryDismissed)
+        #expect(library.state.dictionary == nil)
+    }
+
     @Test("deleting removes the word at once and from the store")
     func deleting() async {
         let (library, _) = await makeLibrary()

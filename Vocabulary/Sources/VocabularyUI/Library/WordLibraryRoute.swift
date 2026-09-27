@@ -5,12 +5,18 @@ import VocabularyDomain
 public struct WordLibraryRoute: View {
     @State private var viewModel: WordLibraryViewModel
     private let makeEditor: (Word?) -> WordEditorRoute
+    private let makeDictionary: (DictionaryHeadword) -> DictionaryRoute
 
     @State private var error: VocabularyError?
 
-    public init(viewModel: WordLibraryViewModel, makeEditor: @escaping (Word?) -> WordEditorRoute) {
+    public init(
+        viewModel: WordLibraryViewModel,
+        makeEditor: @escaping (Word?) -> WordEditorRoute,
+        makeDictionary: @escaping (DictionaryHeadword) -> DictionaryRoute
+    ) {
         _viewModel = State(initialValue: viewModel)
         self.makeEditor = makeEditor
+        self.makeDictionary = makeDictionary
     }
 
     public var body: some View {
@@ -22,6 +28,14 @@ public struct WordLibraryRoute: View {
                 )
             ) { target in
                 makeEditor(target.word)
+            }
+            .sheet(
+                item: Binding(
+                    get: { viewModel.state.dictionary },
+                    set: { if $0 == nil { viewModel.send(.dictionaryDismissed) } }
+                )
+            ) {
+                makeDictionary($0)
             }
             .onAppear { viewModel.send(.appeared) }
             .onDisappear { viewModel.send(.disappeared) }
