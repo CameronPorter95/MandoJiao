@@ -22,7 +22,8 @@ struct LibrarySidebar: View {
             onMove: { onAction(.folderMoved(id: $0.item, parentID: $0.parent, index: $0.index)) },
             onSelect: { onAction(.selected(librarySelection($0))) },
             onExpand: { onAction(.folderExpanded($0, $1, in: .tree)) },
-            actions: actions(for:)
+            actions: actions(for:),
+            onDelete: { onAction(.deleteFolderTapped($0)) }
         )
         .navigationTitle("Library")
         .toolbar {

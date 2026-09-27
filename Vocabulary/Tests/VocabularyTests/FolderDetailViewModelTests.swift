@@ -18,7 +18,8 @@ struct FolderDetailViewModelTests {
             observeVocabulary: ObserveVocabularyUseCase(repository: repository),
             createDeck: CreateDeckUseCase(repository: repository),
             createFolder: CreateFolderUseCase(repository: repository),
-            deleteDeck: DeleteDeckUseCase(repository: repository)
+            deleteDeck: DeleteDeckUseCase(repository: repository),
+            deleteFolder: DeleteFolderUseCase(repository: repository)
         )
         let log = EffectLog(viewModel.effects())
         viewModel.send(.appeared)
@@ -96,7 +97,8 @@ struct FolderDetailViewModelTests {
             observeVocabulary: ObserveVocabularyUseCase(repository: repository),
             createDeck: CreateDeckUseCase(repository: repository),
             createFolder: CreateFolderUseCase(repository: repository),
-            deleteDeck: DeleteDeckUseCase(repository: repository)
+            deleteDeck: DeleteDeckUseCase(repository: repository),
+            deleteFolder: DeleteFolderUseCase(repository: repository)
         )
         #expect(viewModel.state.title == "Level 1")
         #expect(viewModel.state.decks.map(\.name) == ["Part 1", "Part 2"])
@@ -119,5 +121,32 @@ struct FolderDetailViewModelTests {
         level1.send(.practiseDeckTapped(Fixtures.part2.id))
         await settle()
         #expect(log.effects.isEmpty)
+    }
+
+    @Test("deleting a subfolder with anything inside asks first, then takes it all")
+    func deletingASubfolder() async {
+        let (hsk, _) = await makeDetail(Fixtures.hsk.id)
+        hsk.send(.deleteFolderTapped(Fixtures.level1.id))
+        #expect(hsk.state.deletionWarning == "Level 1 and the 2 decks inside it will be deleted. Their words stay in the library.")
+        hsk.send(.deleteFolderCancelled)
+        await settle()
+        #expect(await repository.writes.isEmpty)
+
+        hsk.send(.deleteFolderTapped(Fixtures.level1.id))
+        hsk.send(.deleteFolderConfirmed)
+        #expect(hsk.state.subfolders.isEmpty)
+        #expect(await waitUntil { await repository.snapshot.decks.map(\.name) == ["Full"] })
+    }
+
+    @Test("an empty subfolder goes without asking, and a failed delete puts it back")
+    func deletingAnEmptySubfolder() async {
+        await repository.replace(Fixtures.nested.movingFolder(Fixtures.emptyFolder.id, into: Fixtures.hsk.id, at: nil))
+        let (hsk, log) = await makeDetail(Fixtures.hsk.id)
+        await repository.failWrites()
+        hsk.send(.deleteFolderTapped(Fixtures.emptyFolder.id))
+
+        #expect(hsk.state.pendingFolderDeletion == nil)
+        #expect(await log.contains(.showError(.deleteFolderFailed(FakeVocabularyRepository.failure))))
+        #expect(hsk.state.subfolders.map(\.folder.name) == ["Level 1", "Empty"])
     }
 }

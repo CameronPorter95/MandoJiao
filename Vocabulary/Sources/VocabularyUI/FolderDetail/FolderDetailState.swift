@@ -10,6 +10,8 @@ struct FolderDetailState: Equatable {
     /// What the naming alert will create, while it is up.
     var naming: NewItem?
     var newName = ""
+    /// A subfolder with something inside, waiting on confirmation before it goes.
+    var pendingFolderDeletion: UUID?
 
     enum NewItem: Equatable {
         case deck
@@ -44,6 +46,8 @@ struct FolderDetailState: Equatable {
         return parts.compactMap { $0 }.joined(separator: " · ")
     }
 
+    var deletionWarning: String? { pendingFolderDeletion.flatMap(vocabulary.deletionWarning(forFolder:)) }
+
     var wordCount: Int { folder.map(vocabulary.usableWordCount(in:)) ?? 0 }
     var canStartLesson: Bool { wordCount >= minimumMatchingWords }
 
@@ -69,6 +73,9 @@ enum FolderDetailAction: Equatable {
     case createCancelled
     case practiseDeckTapped(UUID)
     case deleteDeckTapped(UUID)
+    case deleteFolderTapped(UUID)
+    case deleteFolderConfirmed
+    case deleteFolderCancelled
 }
 
 enum FolderDetailEffect: Equatable, Sendable {

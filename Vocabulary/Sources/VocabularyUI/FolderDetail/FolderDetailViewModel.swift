@@ -13,6 +13,7 @@ public final class FolderDetailViewModel {
     private let createDeck: CreateDeckUseCase
     private let createFolder: CreateFolderUseCase
     private let deleteDeck: DeleteDeckUseCase
+    private let deleteFolder: DeleteFolderUseCase
 
     private var observation: Task<Void, Never>?
     /// Writes run one after another, so they land in the order they were made.
@@ -26,13 +27,15 @@ public final class FolderDetailViewModel {
         observeVocabulary: ObserveVocabularyUseCase,
         createDeck: CreateDeckUseCase,
         createFolder: CreateFolderUseCase,
-        deleteDeck: DeleteDeckUseCase
+        deleteDeck: DeleteDeckUseCase,
+        deleteFolder: DeleteFolderUseCase
     ) {
         state = FolderDetailState(folderID: folderID, minimumMatchingWords: minimumMatchingWords, vocabulary: vocabulary)
         self.observeVocabulary = observeVocabulary
         self.createDeck = createDeck
         self.createFolder = createFolder
         self.deleteDeck = deleteDeck
+        self.deleteFolder = deleteFolder
     }
 
     func effects() -> AsyncStream<FolderDetailEffect> { effectChannel.stream() }
@@ -92,6 +95,29 @@ public final class FolderDetailViewModel {
             enqueue(failure: VocabularyError.deleteDeckFailed, revertingTo: previous) { [deleteDeck] in
                 try await deleteDeck(id: id)
             }
+
+        case .deleteFolderTapped(let id):
+            if state.vocabulary.deletionWarning(forFolder: id) != nil {
+                state.pendingFolderDeletion = id
+            } else {
+                removeFolder(id)
+            }
+
+        case .deleteFolderConfirmed:
+            guard let id = state.pendingFolderDeletion else { return }
+            state.pendingFolderDeletion = nil
+            removeFolder(id)
+
+        case .deleteFolderCancelled:
+            state.pendingFolderDeletion = nil
+        }
+    }
+
+    private func removeFolder(_ id: UUID) {
+        let previous = state.vocabulary
+        state.vocabulary = previous.removingFolder(id)
+        enqueue(failure: VocabularyError.deleteFolderFailed, revertingTo: previous) { [deleteFolder] in
+            try await deleteFolder(id: id)
         }
     }
 

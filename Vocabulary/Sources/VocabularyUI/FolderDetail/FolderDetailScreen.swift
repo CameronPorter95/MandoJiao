@@ -39,7 +39,12 @@ struct FolderDetailScreen: View {
                 Section {
                     if !layout.foldedSections.contains(.folders) {
                         ForEach(state.subfolders) { subfolder in
-                            SubfolderRow(subfolder: subfolder, layout: layout, onOpen: onOpenFolder)
+                            SubfolderRow(
+                                subfolder: subfolder,
+                                layout: layout,
+                                onOpen: onOpenFolder,
+                                onDelete: { onAction(.deleteFolderTapped($0)) }
+                            )
                         }
                     }
                 } header: {
@@ -98,6 +103,11 @@ struct FolderDetailScreen: View {
             onNameChanged: { onAction(.newNameChanged($0)) },
             onConfirm: { onAction(.createConfirmed) },
             onCancel: { onAction(.createCancelled) }
+        )
+        .folderDeletionDialog(
+            state.deletionWarning,
+            onConfirm: { onAction(.deleteFolderConfirmed) },
+            onCancel: { onAction(.deleteFolderCancelled) }
         )
     }
 
@@ -214,6 +224,7 @@ private struct SubfolderRow: View {
     let subfolder: FolderDetailState.Subfolder
     let layout: FolderLayout
     let onOpen: (UUID) -> Void
+    let onDelete: (UUID) -> Void
 
     var body: some View {
         if let children = subfolder.children {
@@ -221,12 +232,22 @@ private struct SubfolderRow: View {
                 get: { layout.expanded.contains(subfolder.id) },
                 set: { layout.setExpanded(subfolder.id, $0) }
             )) {
-                ForEach(children) { SubfolderRow(subfolder: $0, layout: layout, onOpen: onOpen) }
+                ForEach(children) { SubfolderRow(subfolder: $0, layout: layout, onOpen: onOpen, onDelete: onDelete) }
             } label: {
                 row
             }
+            .swipeActions(edge: .trailing) { deleteButton }
         } else {
             row
+                .swipeActions(edge: .trailing) { deleteButton }
+        }
+    }
+
+    private var deleteButton: some View {
+        Button(role: .destructive) {
+            onDelete(subfolder.id)
+        } label: {
+            Label("Delete", systemImage: "trash")
         }
     }
 

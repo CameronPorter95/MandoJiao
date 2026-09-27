@@ -48,9 +48,11 @@ public struct FolderOutline<ID: Hashable & Sendable>: View {
     let onSelect: (OutlineSelection<ID>) -> Void
     let onExpand: (ID, Bool) -> Void
     let actions: (ID) -> [OutlineAction]
+    let onDelete: (ID) -> Void
 
     /// `selection` is highlighted only at regular width, where the next column shows it.
     /// Rows are folded unless `expanded` holds them, and `onExpand` reports every change.
+    /// `onDelete` is the trailing swipe on a row of the tree; pinned rows have none.
     public init(
         pinned: [OutlinePinnedRow] = [],
         nodes: [OutlineNode<ID>],
@@ -61,7 +63,8 @@ public struct FolderOutline<ID: Hashable & Sendable>: View {
         onMove: @escaping (OutlineMove<ID>) -> Void,
         onSelect: @escaping (OutlineSelection<ID>) -> Void,
         onExpand: @escaping (ID, Bool) -> Void,
-        actions: @escaping (ID) -> [OutlineAction]
+        actions: @escaping (ID) -> [OutlineAction],
+        onDelete: @escaping (ID) -> Void
     ) {
         self.pinned = pinned
         self.nodes = nodes
@@ -73,6 +76,7 @@ public struct FolderOutline<ID: Hashable & Sendable>: View {
         self.onSelect = onSelect
         self.onExpand = onExpand
         self.actions = actions
+        self.onDelete = onDelete
     }
 
     public var body: some View {
@@ -157,7 +161,17 @@ private final class OutlineCoordinator<ID: Hashable & Sendable>: NSObject, UICol
     }
 
     func makeCollectionView() -> UICollectionView {
-        let layout = UICollectionViewCompositionalLayout.list(using: UICollectionLayoutListConfiguration(appearance: .insetGrouped))
+        var list = UICollectionLayoutListConfiguration(appearance: .insetGrouped)
+        list.trailingSwipeActionsConfigurationProvider = { [weak self] indexPath in
+            guard let self, case .node(let id) = dataSource.itemIdentifier(for: indexPath) else { return nil }
+            let delete = UIContextualAction(style: .destructive, title: "Delete") { [weak self] _, _, done in
+                self?.outline.onDelete(id)
+                done(true)
+            }
+            delete.image = UIImage(systemName: "trash")
+            return UISwipeActionsConfiguration(actions: [delete])
+        }
+        let layout = UICollectionViewCompositionalLayout.list(using: list)
         let collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
         collectionView.delegate = self
         collectionView.dragDelegate = self
