@@ -11,6 +11,7 @@ public final class FolderDetailViewModel {
     private let effectChannel = EffectChannel<FolderDetailEffect>()
     private let observeVocabulary: ObserveVocabularyUseCase
     private let createDeck: CreateDeckUseCase
+    private let createFolder: CreateFolderUseCase
     private let deleteDeck: DeleteDeckUseCase
     private let moveDeck: MoveDeckUseCase
 
@@ -18,18 +19,19 @@ public final class FolderDetailViewModel {
     /// Writes run one after another, so they land in the order they were made.
     private var lastWrite: Task<Void, Never>?
 
-    /// Nil `folderID` lists the decks at the top level.
     public init(
-        folderID: UUID?,
+        folderID: UUID,
         minimumMatchingWords: Int,
         observeVocabulary: ObserveVocabularyUseCase,
         createDeck: CreateDeckUseCase,
+        createFolder: CreateFolderUseCase,
         deleteDeck: DeleteDeckUseCase,
         moveDeck: MoveDeckUseCase
     ) {
         state = FolderDetailState(folderID: folderID, minimumMatchingWords: minimumMatchingWords)
         self.observeVocabulary = observeVocabulary
         self.createDeck = createDeck
+        self.createFolder = createFolder
         self.deleteDeck = deleteDeck
         self.moveDeck = moveDeck
     }
@@ -55,23 +57,31 @@ public final class FolderDetailViewModel {
             guard let folder = state.folder, state.canStartLesson else { return }
             requestLesson(title: folder.name, pool: state.vocabulary.words(in: folder).pairs)
 
-        case .newDeckTapped:
-            state.newDeckName = ""
-            state.isNamingDeck = true
+        case .newItemTapped(let item):
+            state.newName = ""
+            state.naming = item
 
-        case .newDeckNameChanged(let name):
-            state.newDeckName = name
+        case .newNameChanged(let name):
+            state.newName = name
 
-        case .createDeckConfirmed:
-            state.isNamingDeck = false
-            let name = state.newDeckName
+        case .createConfirmed:
+            guard let item = state.naming else { return }
+            state.naming = nil
+            let name = state.newName
             let folderID = state.folderID
-            enqueue(failure: VocabularyError.createDeckFailed) { [createDeck] in
-                try await createDeck(name: name, folderID: folderID)
+            switch item {
+            case .deck:
+                enqueue(failure: VocabularyError.createDeckFailed) { [createDeck] in
+                    try await createDeck(name: name, folderID: folderID)
+                }
+            case .folder:
+                enqueue(failure: VocabularyError.createFolderFailed) { [createFolder] in
+                    try await createFolder(name: name, parentID: folderID)
+                }
             }
 
-        case .createDeckCancelled:
-            state.isNamingDeck = false
+        case .createCancelled:
+            state.naming = nil
 
         case .practiseDeckTapped(let id):
             guard let deck = state.vocabulary.deck(id: id) else { return }

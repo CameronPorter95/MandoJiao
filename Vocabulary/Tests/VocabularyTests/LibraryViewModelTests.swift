@@ -35,7 +35,7 @@ struct LibraryViewModelTests {
         library.send(.selected(.folder(Fixtures.level1.id)))
         #expect(library.state.openDeck == Fixtures.part1.id)
 
-        library.send(.selected(.topLevelDecks))
+        library.send(.selected(.folder(Fixtures.starter.id)))
         #expect(library.state.openDeck == nil)
 
         library.send(.deckOpened(Fixtures.fullDeck.id))
@@ -110,7 +110,7 @@ struct LibraryViewModelTests {
 
         #expect(library.state.selection == nil)
         #expect(library.state.openDeck == nil)
-        #expect(await waitUntil { await repository.snapshot.folders.map(\.name) == ["Empty"] })
+        #expect(await waitUntil { await repository.snapshot.folders.map(\.name) == ["Starter", "Empty"] })
     }
 
     @Test("an empty folder goes without asking")

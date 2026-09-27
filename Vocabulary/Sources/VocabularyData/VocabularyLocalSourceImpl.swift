@@ -34,13 +34,9 @@ actor VocabularyLocalSourceImpl: VocabularyLocalSource {
         }
     }
 
-    func createDeck(name: String, folderID: UUID?) throws {
+    func createDeck(name: String, folderID: UUID) throws {
         try storeWork {
-            var folder: Folder?
-            if let folderID {
-                guard let found = try self.folder(id: folderID) else { return }
-                folder = found
-            }
+            guard let folder = try self.folder(id: folderID) else { return }
             modelContext.insert(Deck(name: name, folder: folder, position: try vocabulary().decks(in: folderID).count))
             try modelContext.save()
         }

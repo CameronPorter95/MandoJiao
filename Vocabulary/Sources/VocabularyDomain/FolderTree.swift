@@ -60,10 +60,10 @@ public nonisolated extension Vocabulary {
         return path
     }
 
-    /// Its own folder counts, since that is a reorder.
+    /// Only into a folder, since every deck lives in one. Its own folder counts, as a reorder.
     func canMoveDeck(_ deckID: UUID, into folderID: UUID?) -> Bool {
-        guard deck(id: deckID) != nil else { return false }
-        return folderID.map { folder(id: $0) != nil } ?? true
+        guard deck(id: deckID) != nil, let folderID else { return false }
+        return folder(id: folderID) != nil
     }
 
     /// Never into itself or anything beneath it. Its own parent counts, since that is a reorder.

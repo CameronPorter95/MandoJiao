@@ -11,12 +11,13 @@ import VocabularyTestSupport
 struct FolderDetailViewModelTests {
     private let repository = FakeVocabularyRepository(Fixtures.nested)
 
-    private func makeDetail(_ folderID: UUID?) async -> (FolderDetailViewModel, EffectLog<FolderDetailEffect>) {
+    private func makeDetail(_ folderID: UUID) async -> (FolderDetailViewModel, EffectLog<FolderDetailEffect>) {
         let viewModel = FolderDetailViewModel(
             folderID: folderID,
             minimumMatchingWords: 5,
             observeVocabulary: ObserveVocabularyUseCase(repository: repository),
             createDeck: CreateDeckUseCase(repository: repository),
+            createFolder: CreateFolderUseCase(repository: repository),
             deleteDeck: DeleteDeckUseCase(repository: repository),
             moveDeck: MoveDeckUseCase(repository: repository)
         )
@@ -27,18 +28,29 @@ struct FolderDetailViewModelTests {
         return (viewModel, log)
     }
 
-    @Test("a folder lists its own decks, and the top level lists the loose ones")
+    @Test("a folder shows the folders beneath it as a tree, then its own decks")
     func contents() async {
-        let (level1, _) = await makeDetail(Fixtures.level1.id)
-        #expect(level1.state.title == "Level 1")
-        #expect(level1.state.decks.map(\.name) == ["Part 1", "Part 2"])
-        #expect(level1.state.practisesAsWhole)
-        #expect(level1.state.canStartLesson)
+        let (hsk, _) = await makeDetail(Fixtures.hsk.id)
+        #expect(hsk.state.title == "HSK")
+        #expect(hsk.state.subfolders.map(\.folder.name) == ["Level 1"])
+        #expect(hsk.state.subfolders.first?.deckCount == 2)
+        #expect(hsk.state.subfolders.first?.children == nil)
+        #expect(hsk.state.decks.isEmpty)
+        #expect(hsk.state.summary == "0 decks · 1 folder")
 
-        let (top, _) = await makeDetail(nil)
-        #expect(top.state.title == "Decks")
-        #expect(top.state.decks.map(\.name) == ["Full"])
-        #expect(!top.state.practisesAsWhole)
+        let (level1, _) = await makeDetail(Fixtures.level1.id)
+        #expect(level1.state.subfolders.isEmpty)
+        #expect(level1.state.decks.map(\.name) == ["Part 1", "Part 2"])
+        #expect(level1.state.summary == "2 decks")
+        #expect(level1.state.canStartLesson)
+    }
+
+    @Test("folders nest in the tree to any depth")
+    func deepTree() async {
+        await repository.replace(Fixtures.nested.movingFolder(Fixtures.emptyFolder.id, into: Fixtures.level1.id, at: 0))
+        let (hsk, _) = await makeDetail(Fixtures.hsk.id)
+        #expect(hsk.state.subfolders.first?.children?.map(\.folder.name) == ["Empty"])
+        #expect(hsk.state.summary == "0 decks · 2 folders")
     }
 
     @Test("a folder's lesson draws from every deck beneath it, even with no decks of its own")
@@ -56,21 +68,24 @@ struct FolderDetailViewModelTests {
         #expect(request.pool.map(\.english) == ["water", "tea", "book", "mobile phone", "green"])
     }
 
-    @Test("a new deck goes in the folder shown, or at the top level")
-    func creatingADeck() async {
+    @Test("a new deck or folder goes inside the folder shown")
+    func creating() async {
         let (empty, _) = await makeDetail(Fixtures.emptyFolder.id)
-        empty.send(.newDeckTapped)
-        #expect(empty.state.isNamingDeck)
-        empty.send(.newDeckNameChanged(" Colours "))
-        empty.send(.createDeckConfirmed)
-        #expect(!empty.state.isNamingDeck)
-        #expect(await waitUntil { empty.state.decks.map(\.name) == ["Colours"] })
+        empty.send(.newItemTapped(.deck))
+        #expect(empty.state.naming == .deck)
+        empty.send(.newNameChanged(" Colours "))
+        empty.send(.createConfirmed)
+        #expect(empty.state.naming == nil)
 
-        let (top, _) = await makeDetail(nil)
-        top.send(.newDeckTapped)
-        top.send(.newDeckNameChanged("Loose"))
-        top.send(.createDeckConfirmed)
-        #expect(await waitUntil { await repository.writes == ["createDeck Colours inside Empty", "createDeck Loose"] })
+        empty.send(.newItemTapped(.folder))
+        empty.send(.newNameChanged("More"))
+        empty.send(.createConfirmed)
+
+        #expect(await waitUntil {
+            await repository.writes == ["createDeck Colours inside Empty", "createFolder More inside Empty"]
+        })
+        #expect(await waitUntil { empty.state.decks.map(\.name) == ["Colours"] })
+        #expect(empty.state.subfolders.map(\.folder.name) == ["More"])
     }
 
     @Test("dragging a deck reorders it within the folder, in either direction")

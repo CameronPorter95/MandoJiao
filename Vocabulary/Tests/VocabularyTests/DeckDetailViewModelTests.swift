@@ -116,10 +116,10 @@ struct DeckDetailViewModelTests {
         #expect(log.effects.isEmpty)
     }
 
-    @Test("a deck moves into any other folder or out to the top level")
+    @Test("a deck moves into any other folder, never to the top level")
     func moving() async {
         let (detail, _) = await makeDetail(Fixtures.part1, nested: true)
-        #expect(detail.state.destinations.map(\.title) == ["Top level", "Empty", "HSK"])
+        #expect(detail.state.destinations.map(\.title) == ["Empty", "HSK", "Starter"])
 
         detail.send(.moveTapped)
         #expect(detail.state.isChoosingDestination)
@@ -134,8 +134,8 @@ struct DeckDetailViewModelTests {
     func failedMove() async {
         let (detail, log) = await makeDetail(Fixtures.part1, nested: true)
         await nestedRepository.failWrites()
-        detail.send(.destinationChosen(nil))
-        #expect(detail.state.deck?.folderID == nil)
+        detail.send(.destinationChosen(Fixtures.hsk.id))
+        #expect(detail.state.deck?.folderID == Fixtures.hsk.id)
 
         #expect(await log.contains(.showError(.moveDeckFailed(FakeVocabularyRepository.failure))))
         #expect(detail.state.deck?.folderID == Fixtures.level1.id)

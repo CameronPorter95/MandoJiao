@@ -42,12 +42,15 @@ public enum VocabularyStore {
         let existing = try? context.fetchCount(FetchDescriptor<VocabWord>())
         guard (existing ?? 0) == 0 else { return }
 
-        for plan in SampleVocabulary.deckPlan {
+        let starter = Folder(name: SampleVocabulary.folderName)
+        starter.builtInKey = SampleVocabulary.builtInKey
+        context.insert(starter)
+        for (position, plan) in SampleVocabulary.deckPlan.enumerated() {
             let words = plan.entries.map {
                 VocabWord(english: $0.english, hanzi: $0.hanzi, pinyin: $0.pinyin)
             }
             words.forEach(context.insert)
-            context.insert(Deck(name: plan.name, words: words))
+            context.insert(Deck(name: plan.name, words: words, folder: starter, position: position))
         }
 
         try? context.save()

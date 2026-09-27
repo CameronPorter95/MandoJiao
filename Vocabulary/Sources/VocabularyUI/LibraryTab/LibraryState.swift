@@ -4,8 +4,14 @@ import VocabularyDomain
 /// What the library's sidebar has open.
 public enum LibrarySelection: Hashable, Sendable {
     case allWords
-    case topLevelDecks
     case folder(UUID)
+}
+
+/// How a column the library shows asks it to open something else.
+@MainActor
+public struct LibraryColumnNavigation {
+    public let openDeck: (UUID) -> Void
+    public let openFolder: (UUID) -> Void
 }
 
 /// A folder about to be named: a new one, or an existing one being renamed.

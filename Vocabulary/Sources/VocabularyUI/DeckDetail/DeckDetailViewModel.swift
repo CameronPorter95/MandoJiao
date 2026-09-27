@@ -94,7 +94,7 @@ public final class DeckDetailViewModel {
 
         case .destinationChosen(let folderID):
             state.isChoosingDestination = false
-            guard state.vocabulary.canMoveDeck(state.deckID, into: folderID) else { return }
+            guard let folderID, state.vocabulary.canMoveDeck(state.deckID, into: folderID) else { return }
             let previous = state.vocabulary
             state.vocabulary = previous.movingDeck(state.deckID, into: folderID, at: nil)
             let deckID = state.deckID

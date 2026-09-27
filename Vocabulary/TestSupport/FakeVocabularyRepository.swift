@@ -51,9 +51,9 @@ public actor FakeVocabularyRepository: VocabularyRepository {
         try write("deleteWords \(ids.count)") { snapshot.words.removeAll { ids.contains($0.id) } }
     }
 
-    public func createDeck(name: String, folderID: UUID?) throws {
+    public func createDeck(name: String, folderID: UUID) throws {
         try write("createDeck \(name)\(inside(folderID))") {
-            if let folderID, snapshot.folder(id: folderID) == nil { return }
+            guard snapshot.folder(id: folderID) != nil else { return }
             snapshot.decks.append(DeckSummary(id: UUID(), name: name, createdAt: .now, wordIDs: [], folderID: folderID))
         }
     }
@@ -165,16 +165,20 @@ public nonisolated enum Fixtures {
 
     public static let words = [water, tea, book, phone, green, blank]
 
+    public static let starter = FolderSummary(id: UUID(), name: "Starter", createdAt: .now, builtInKey: "starter")
+
     /// Five usable words: exactly enough for a matching lesson.
     public static let fullDeck = DeckSummary(
         id: UUID(), name: "Full", createdAt: .now,
-        wordIDs: [water.id, tea.id, book.id, phone.id, green.id]
+        wordIDs: [water.id, tea.id, book.id, phone.id, green.id], folderID: starter.id
     )
-    public static let smallDeck = DeckSummary(id: UUID(), name: "Small", createdAt: .now, wordIDs: [water.id, blank.id])
+    public static let smallDeck = DeckSummary(
+        id: UUID(), name: "Small", createdAt: .now, wordIDs: [water.id, blank.id], folderID: starter.id
+    )
 
-    public static let vocabulary = Vocabulary(words: words, decks: [fullDeck, smallDeck])
+    public static let vocabulary = Vocabulary(words: words, decks: [fullDeck, smallDeck], folders: [starter])
 
-    /// The HSK folder holds Level 1, which holds two decks sharing tea. Empty holds nothing.
+    /// Starter holds Full. HSK holds Level 1, which holds two decks sharing tea. Empty holds nothing.
     public static let hsk = FolderSummary(id: UUID(), name: "HSK", createdAt: .now)
     public static let level1 = FolderSummary(id: UUID(), name: "Level 1", createdAt: .now, parentID: hsk.id)
     public static let part1 = DeckSummary(
@@ -188,6 +192,6 @@ public nonisolated enum Fixtures {
     public static let nested = Vocabulary(
         words: words,
         decks: [fullDeck, part1, part2],
-        folders: [hsk, level1, emptyFolder]
+        folders: [starter, hsk, level1, emptyFolder]
     )
 }

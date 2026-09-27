@@ -8,8 +8,8 @@ public nonisolated protocol VocabularyRepository: Sendable {
     func saveWord(id: UUID?, draft: WordDraft) async throws
     func deleteWords(ids: [UUID]) async throws
 
-    /// A nil folder means the top level, here and below.
-    func createDeck(name: String, folderID: UUID?) async throws
+    /// A deck always lives in a folder. Ignored when the folder does not exist.
+    func createDeck(name: String, folderID: UUID) async throws
     func renameDeck(id: UUID, name: String) async throws
     func setMembership(deckID: UUID, wordID: UUID, isIncluded: Bool) async throws
     /// As `Vocabulary.movingDeck` describes. Ignored where `canMoveDeck` is false.
@@ -17,6 +17,7 @@ public nonisolated protocol VocabularyRepository: Sendable {
     /// The deck's words stay in the library.
     func deleteDeck(id: UUID) async throws
 
+    /// A nil parent means the top level, here and below.
     func createFolder(name: String, parentID: UUID?) async throws
     func renameFolder(id: UUID, name: String) async throws
     /// As `Vocabulary.movingFolder` describes. Ignored where `canMoveFolder` is false.

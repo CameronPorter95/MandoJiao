@@ -29,7 +29,8 @@ Each package splits into Domain, Data, UI and DI targets. See
 
 `VocabWord` and `Deck` are the SwiftData entities. A word carries `english`,
 `hanzi`, `pinyin`, and its outstanding `missCount`. A deck holds words and a `Folder`
-holds decks and other folders, so a deck of decks cannot exist. Deleting a folder
+holds decks and other folders, so a deck of decks cannot exist. Every deck is in a
+folder: the starter decks are seeded into one with the `starter` built-in key. Deleting a folder
 cascades to everything beneath it; words always stay. The one nesting rule the
 types cannot express, that a folder never moves beneath itself, lives in
 `FolderTree.swift` in the domain, and the store checks the same function before it

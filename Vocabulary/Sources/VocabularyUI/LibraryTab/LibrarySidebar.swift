@@ -9,7 +9,6 @@ struct LibrarySidebar: View {
 
     private static let pinned = [
         OutlinePinnedRow(id: "allWords", title: "All words", systemImage: "character.book.closed"),
-        OutlinePinnedRow(id: "decks", title: "Decks", systemImage: "rectangle.stack"),
     ]
 
     var body: some View {
@@ -64,7 +63,6 @@ struct LibrarySidebar: View {
     private var outlineSelection: OutlineSelection<UUID>? {
         switch state.selection {
         case .allWords: .pinned("allWords")
-        case .topLevelDecks: .pinned("decks")
         case .folder(let id): .node(id)
         case nil: nil
         }
@@ -72,8 +70,7 @@ struct LibrarySidebar: View {
 
     private func librarySelection(_ selection: OutlineSelection<UUID>) -> LibrarySelection {
         switch selection {
-        case .pinned("allWords"): .allWords
-        case .pinned: .topLevelDecks
+        case .pinned: .allWords
         case .node(let id): .folder(id)
         }
     }

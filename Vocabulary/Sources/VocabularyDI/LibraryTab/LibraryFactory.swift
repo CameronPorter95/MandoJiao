@@ -23,22 +23,25 @@ public enum LibraryFactory: NavigationInputRouteFactory {
         return LibraryRoute(
             viewModel: viewModel,
             navigation: navigation.library,
-            content: { selection, openDeck, onOpenDeck in
-                let folderID: UUID?
+            content: { selection, openDeck, column in
                 switch selection {
-                case .allWords: return AnyView(WordLibraryFactory.makeRoute(dependencies: dependencies))
-                case .topLevelDecks: folderID = nil
-                case .folder(let id): folderID = id
+                case .allWords:
+                    return AnyView(WordLibraryFactory.makeRoute(dependencies: dependencies))
+                case .folder(let folderID):
+                    return AnyView(FolderDetailFactory.makeRoute(
+                        dependencies: dependencies,
+                        navigation: .library(
+                            presentMatching: navigation.library.didRequestMatching,
+                            openDeck: column.openDeck,
+                            openFolder: column.openFolder
+                        ),
+                        input: FolderDetailInput(
+                            folderID: folderID,
+                            minimumMatchingWords: input.minimumMatchingWords,
+                            openDeck: openDeck
+                        )
+                    ))
                 }
-                return AnyView(FolderDetailFactory.makeRoute(
-                    dependencies: dependencies,
-                    navigation: .library(presentMatching: navigation.library.didRequestMatching, openDeck: onOpenDeck),
-                    input: FolderDetailInput(
-                        folderID: folderID,
-                        minimumMatchingWords: input.minimumMatchingWords,
-                        openDeck: openDeck
-                    )
-                ))
             },
             detail: { deckID in
                 AnyView(DeckDetailFactory.makeRoute(

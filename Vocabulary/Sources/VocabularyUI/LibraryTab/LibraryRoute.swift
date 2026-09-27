@@ -6,16 +6,16 @@ import SwiftUI
 public struct LibraryRoute: View {
     @State private var viewModel: LibraryViewModel
     private let navigation: LibraryNavigation
-    private let content: (LibrarySelection, UUID?, @escaping (UUID) -> Void) -> AnyView
+    private let content: (LibrarySelection, UUID?, LibraryColumnNavigation) -> AnyView
     private let detail: (UUID) -> AnyView
 
     @State private var error: VocabularyError?
 
-    /// `content` is given what is selected, the open deck, and how to open another.
+    /// `content` is given what is selected, the open deck, and how to open something else.
     public init(
         viewModel: LibraryViewModel,
         navigation: LibraryNavigation,
-        content: @escaping (LibrarySelection, UUID?, @escaping (UUID) -> Void) -> AnyView,
+        content: @escaping (LibrarySelection, UUID?, LibraryColumnNavigation) -> AnyView,
         detail: @escaping (UUID) -> AnyView
     ) {
         _viewModel = State(initialValue: viewModel)
@@ -30,7 +30,7 @@ public struct LibraryRoute: View {
             LibrarySidebar(state: state, onAction: { viewModel.send($0) })
         } content: {
             if let selection = state.selection {
-                content(selection, state.openDeck) { viewModel.send(.deckOpened($0)) }
+                content(selection, state.openDeck, columnNavigation)
                     .id(selection)
             } else {
                 ContentUnavailableView("Choose a folder", systemImage: "folder")
@@ -53,6 +53,13 @@ public struct LibraryRoute: View {
             }
         }
         .errorAlert($error)
+    }
+
+    private var columnNavigation: LibraryColumnNavigation {
+        LibraryColumnNavigation(
+            openDeck: { viewModel.send(.deckOpened($0)) },
+            openFolder: { viewModel.send(.selected(.folder($0))) }
+        )
     }
 
     private var compactColumn: Binding<NavigationSplitViewColumn> {

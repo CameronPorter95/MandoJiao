@@ -19,7 +19,8 @@ public struct FolderDetailRoute: View {
             state: viewModel.state,
             openDeck: openDeck,
             onAction: { viewModel.send($0) },
-            onOpenDeck: { navigation.didOpenDeck($0) }
+            onOpenDeck: { navigation.didOpenDeck($0) },
+            onOpenFolder: { navigation.didOpenFolder($0) }
         )
         .onAppear { viewModel.send(.appeared) }
         .onDisappear { viewModel.send(.disappeared) }

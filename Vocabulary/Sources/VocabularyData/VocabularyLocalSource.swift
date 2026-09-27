@@ -9,7 +9,7 @@ nonisolated protocol VocabularyLocalSource: Sendable {
     func snapshot() async throws -> Vocabulary
     func saveWord(id: UUID?, draft: WordDraft) async throws
     func deleteWords(ids: [UUID]) async throws
-    func createDeck(name: String, folderID: UUID?) async throws
+    func createDeck(name: String, folderID: UUID) async throws
     func renameDeck(id: UUID, name: String) async throws
     func setMembership(deckID: UUID, wordID: UUID, isIncluded: Bool) async throws
     func moveDeck(id: UUID, toFolder folderID: UUID?, at index: Int?) async throws

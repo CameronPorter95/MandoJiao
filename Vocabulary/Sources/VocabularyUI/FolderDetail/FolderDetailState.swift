@@ -1,33 +1,68 @@
 import Foundation
 import VocabularyDomain
 
-/// The decks in one folder, or at the top level when `folderID` is nil. Subfolders are in
-/// the library's tree, as in Notes.
+/// One folder: the folders beneath it, then its own decks. The folders are shown to open,
+/// not to rearrange; that happens in the library's tree, as in Notes.
 struct FolderDetailState: Equatable {
-    let folderID: UUID?
+    let folderID: UUID
     let minimumMatchingWords: Int
     var vocabulary: Vocabulary = .empty
-    var isNamingDeck = false
-    var newDeckName = ""
+    /// What the naming alert will create, while it is up.
+    var naming: NewItem?
+    var newName = ""
 
-    var folder: FolderSummary? { folderID.flatMap(vocabulary.folder(id:)) }
-    var title: String { folderID == nil ? "Decks" : folder?.displayName ?? "Folder" }
+    enum NewItem: Equatable {
+        case deck
+        case folder
+    }
+
+    /// A folder beneath this one, with everything beneath it in turn.
+    struct Subfolder: Identifiable, Equatable {
+        let folder: FolderSummary
+        let deckCount: Int
+        let children: [Subfolder]?
+        var id: UUID { folder.id }
+    }
+
+    var folder: FolderSummary? { vocabulary.folder(id: folderID) }
+    var title: String { folder?.displayName ?? "Folder" }
     var decks: [DeckSummary] { vocabulary.decks(in: folderID) }
+    var subfolders: [Subfolder] { subfolders(in: folderID) }
 
-    /// Only a real folder is practised as a whole. The top level has quick practice on home.
-    var practisesAsWhole: Bool { folder != nil }
+    /// "2 decks · 3 folders", counting every folder beneath, as Notes does.
+    var summary: String {
+        let decks = decks.count
+        let folders = vocabulary.folders(beneath: folderID).count
+        let parts = [
+            decks == 1 ? "1 deck" : "\(decks) decks",
+            folders == 0 ? nil : folders == 1 ? "1 folder" : "\(folders) folders",
+        ]
+        return parts.compactMap { $0 }.joined(separator: " · ")
+    }
+
     var wordCount: Int { folder.map(vocabulary.usableWordCount(in:)) ?? 0 }
     var canStartLesson: Bool { wordCount >= minimumMatchingWords }
+
+    private func subfolders(in parentID: UUID) -> [Subfolder] {
+        vocabulary.folders(in: parentID).map { folder in
+            let children = subfolders(in: folder.id)
+            return Subfolder(
+                folder: folder,
+                deckCount: vocabulary.decks(beneath: folder.id).count,
+                children: children.isEmpty ? nil : children
+            )
+        }
+    }
 }
 
 enum FolderDetailAction: Equatable {
     case appeared
     case disappeared
     case startLessonTapped
-    case newDeckTapped
-    case newDeckNameChanged(String)
-    case createDeckConfirmed
-    case createDeckCancelled
+    case newItemTapped(FolderDetailState.NewItem)
+    case newNameChanged(String)
+    case createConfirmed
+    case createCancelled
     case practiseDeckTapped(UUID)
     case deleteDeckTapped(UUID)
     case decksMoved(from: IndexSet, to: Int)

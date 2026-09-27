@@ -14,6 +14,7 @@ public enum FolderDetailFactory: NavigationInputRouteFactory {
             minimumMatchingWords: input.minimumMatchingWords,
             observeVocabulary: ObserveVocabularyUseCase(repository: repository),
             createDeck: CreateDeckUseCase(repository: repository),
+            createFolder: CreateFolderUseCase(repository: repository),
             deleteDeck: DeleteDeckUseCase(repository: repository),
             moveDeck: MoveDeckUseCase(repository: repository)
         )

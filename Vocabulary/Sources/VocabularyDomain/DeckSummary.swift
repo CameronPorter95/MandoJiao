@@ -6,7 +6,7 @@ public nonisolated struct DeckSummary: Identifiable, Hashable, Sendable {
     public let name: String
     public let createdAt: Date
     public let wordIDs: [UUID]
-    /// Nil for a deck at the top level.
+    /// Every deck the app makes has one. Optional only so a store that lacks it still opens.
     public let folderID: UUID?
     /// Identifies a deck the app supplies, such as part of an HSK level, however it is renamed.
     public let builtInKey: String?

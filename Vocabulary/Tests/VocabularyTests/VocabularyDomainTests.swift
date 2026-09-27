@@ -52,7 +52,7 @@ struct VocabularyDomainTests {
     func useCaseGuards() async throws {
         let repository = FakeVocabularyRepository()
         try await SaveWordUseCase(repository: repository)(id: nil, draft: WordDraft(english: "water"))
-        try await CreateDeckUseCase(repository: repository)(name: "   ")
+        try await CreateDeckUseCase(repository: repository)(name: "   ", folderID: UUID())
         try await RecordLessonResultsUseCase(repository: repository)(LessonResults(misses: [:], cleanSolves: [:]))
         try await DeleteWordsUseCase(repository: repository)(ids: [])
 

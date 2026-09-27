@@ -31,7 +31,7 @@ actor VocabularyRepositoryImpl: VocabularyRepository {
         try await write { try await $0.deleteWords(ids: ids) }
     }
 
-    func createDeck(name: String, folderID: UUID?) async throws {
+    func createDeck(name: String, folderID: UUID) async throws {
         try await write { try await $0.createDeck(name: name, folderID: folderID) }
     }
 

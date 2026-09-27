@@ -7,8 +7,8 @@ public nonisolated struct MoveDeckUseCase: Sendable {
         self.repository = repository
     }
 
-    /// Nil `folderID` moves the deck to the top level, and a nil index puts it last.
-    public func callAsFunction(id: UUID, toFolder folderID: UUID?, at index: Int? = nil) async throws {
+    /// A nil index puts the deck last.
+    public func callAsFunction(id: UUID, toFolder folderID: UUID, at index: Int? = nil) async throws {
         try await repository.moveDeck(id: id, toFolder: folderID, at: index)
     }
 }
