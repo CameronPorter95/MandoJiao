@@ -51,8 +51,9 @@ level; `是` and `社` merge from Standard up; `想` and `兄` merge from Relaxe
 ## Word list
 
 Ships with 65 starter words across six decks. Add, edit and delete your own from
-the library, and group them into decks to practise a subset. A lesson draws from
-either the whole library or one deck.
+the library, and group them into decks to practise a subset. Folders hold decks
+and other folders, to any depth. A lesson draws from the whole library, one deck,
+or every deck beneath a folder.
 
 ## Building
 

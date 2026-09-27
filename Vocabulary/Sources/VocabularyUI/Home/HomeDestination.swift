@@ -4,5 +4,6 @@ import Foundation
 public enum HomeDestination: Hashable {
     case library
     case deck(UUID)
+    case folder(UUID)
     case settings
 }

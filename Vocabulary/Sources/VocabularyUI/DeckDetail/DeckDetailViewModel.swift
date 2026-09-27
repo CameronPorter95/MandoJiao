@@ -12,6 +12,7 @@ public final class DeckDetailViewModel {
     private let observeVocabulary: ObserveVocabularyUseCase
     private let renameDeck: RenameDeckUseCase
     private let setMembership: SetDeckMembershipUseCase
+    private let moveDeck: MoveDeckUseCase
     private let renameDelay: Duration
 
     private var observation: Task<Void, Never>?
@@ -26,12 +27,14 @@ public final class DeckDetailViewModel {
         observeVocabulary: ObserveVocabularyUseCase,
         renameDeck: RenameDeckUseCase,
         setMembership: SetDeckMembershipUseCase,
+        moveDeck: MoveDeckUseCase,
         renameDelay: Duration = .milliseconds(300)
     ) {
         state = DeckDetailState(deckID: deckID, minimumMatchingWords: minimumMatchingWords)
         self.observeVocabulary = observeVocabulary
         self.renameDeck = renameDeck
         self.setMembership = setMembership
+        self.moveDeck = moveDeck
         self.renameDelay = renameDelay
     }
 
@@ -85,6 +88,26 @@ public final class DeckDetailViewModel {
                 pool: state.vocabulary.words(in: deck).pairs
             )
             effectChannel.send(.startLesson(request))
+
+        case .moveTapped:
+            state.isChoosingDestination = true
+
+        case .destinationChosen(let folderID):
+            state.isChoosingDestination = false
+            guard state.vocabulary.canMoveDeck(state.deckID, into: folderID),
+                  let index = state.vocabulary.decks.firstIndex(where: { $0.id == state.deckID })
+            else { return }
+            let previous = state.vocabulary
+            state.vocabulary.decks[index] = previous.decks[index].with(folderID: .some(folderID))
+            let deckID = state.deckID
+            enqueue(failure: VocabularyError.moveDeckFailed, revert: { [weak self] in
+                self?.state.vocabulary = previous
+            }) { [moveDeck] in
+                try await moveDeck(id: deckID, toFolder: folderID)
+            }
+
+        case .moveCancelled:
+            state.isChoosingDestination = false
         }
     }
 

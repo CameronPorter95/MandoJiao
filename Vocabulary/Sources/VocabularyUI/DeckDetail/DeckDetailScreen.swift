@@ -1,5 +1,6 @@
 import CoreDesignSystem
 import SwiftUI
+import VocabularyDomain
 
 struct DeckDetailScreen: View {
     let state: DeckDetailState
@@ -27,6 +28,20 @@ struct DeckDetailScreen: View {
             } footer: {
                 if !state.canStartLesson {
                     Text("Pick at least \(state.minimumMatchingWords) words to practise this deck.")
+                }
+            }
+
+            Section {
+                Button {
+                    onAction(.moveTapped)
+                } label: {
+                    LabeledContent("Folder", value: state.location)
+                }
+                .tint(.primary)
+                .disabled(state.moveUnavailableReason != nil)
+            } footer: {
+                if let reason = state.moveUnavailableReason {
+                    Text(reason)
                 }
             }
 
@@ -60,5 +75,18 @@ struct DeckDetailScreen: View {
         )
         .navigationTitle(state.title)
         .inlineNavigationTitle()
+        .sheet(
+            isPresented: Binding(
+                get: { state.isChoosingDestination },
+                set: { if !$0 { onAction(.moveCancelled) } }
+            )
+        ) {
+            MoveDestinationPicker(
+                title: "Move \(state.title)",
+                destinations: state.destinations,
+                onChoose: { onAction(.destinationChosen($0)) },
+                onCancel: { onAction(.moveCancelled) }
+            )
+        }
     }
 }

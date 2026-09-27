@@ -14,7 +14,8 @@ public enum DeckDetailFactory: NavigationInputRouteFactory {
             minimumMatchingWords: input.minimumMatchingWords,
             observeVocabulary: ObserveVocabularyUseCase(repository: repository),
             renameDeck: RenameDeckUseCase(repository: repository),
-            setMembership: SetDeckMembershipUseCase(repository: repository)
+            setMembership: SetDeckMembershipUseCase(repository: repository),
+            moveDeck: MoveDeckUseCase(repository: repository)
         )
         return DeckDetailRoute(viewModel: viewModel, navigation: navigation)
     }

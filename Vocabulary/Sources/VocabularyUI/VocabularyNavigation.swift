@@ -6,9 +6,11 @@
 public struct VocabularyNavigation {
     public var home: HomeNavigation
     public var deckDetail: DeckDetailNavigation
+    public var folderDetail: FolderDetailNavigation
 
-    public init(home: HomeNavigation, deckDetail: DeckDetailNavigation) {
+    public init(home: HomeNavigation, deckDetail: DeckDetailNavigation, folderDetail: FolderDetailNavigation) {
         self.home = home
         self.deckDetail = deckDetail
+        self.folderDetail = folderDetail
     }
 }

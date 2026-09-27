@@ -20,6 +20,8 @@ struct HomeViewModelTests {
             observeVocabulary: ObserveVocabularyUseCase(repository: repository),
             createDeck: CreateDeckUseCase(repository: repository),
             deleteDeck: DeleteDeckUseCase(repository: repository),
+            createFolder: CreateFolderUseCase(repository: repository),
+            deleteFolder: DeleteFolderUseCase(repository: repository),
             clearMistakes: ClearMistakesUseCase(repository: repository)
         )
         let log = EffectLog(viewModel.effects())
@@ -83,12 +85,12 @@ struct HomeViewModelTests {
     @Test("a new deck is created with the typed name")
     func creatingADeck() async {
         let (home, _) = await makeHome()
-        home.send(.newDeckTapped)
-        #expect(home.state.isNamingDeck)
-        home.send(.newDeckNameChanged("  Colours "))
-        home.send(.createDeckConfirmed)
+        home.send(.newItemTapped(.deck))
+        #expect(home.state.naming == .deck)
+        home.send(.newItemNameChanged("  Colours "))
+        home.send(.createConfirmed)
 
-        #expect(!home.state.isNamingDeck)
+        #expect(home.state.naming == nil)
         #expect(await waitUntil { await repository.writes == ["createDeck Colours"] })
         #expect(await waitUntil { home.state.vocabulary.decks.count == 3 })
     }
@@ -141,6 +143,71 @@ struct HomeViewModelTests {
 
         home.send(.appeared)
         #expect(await waitUntil { home.state.vocabulary == .empty })
+    }
+
+    @Test("a new folder is created with the typed name")
+    func creatingAFolder() async {
+        let (home, _) = await makeHome()
+        home.send(.newItemTapped(.folder))
+        #expect(home.state.naming == .folder)
+        home.send(.newItemNameChanged("HSK"))
+        home.send(.createConfirmed)
+
+        #expect(await waitUntil { await repository.writes == ["createFolder HSK"] })
+        #expect(await waitUntil { home.state.folders.map(\.name) == ["HSK"] })
+    }
+
+    @Test("home lists top-level folders then decks, and a folder practises every word beneath it")
+    func folders() async {
+        let (home, log) = await makeHome()
+        await repository.replace(Fixtures.nested)
+        #expect(await waitUntil { home.state.vocabulary == Fixtures.nested })
+
+        #expect(home.state.folders.map(\.name) == ["HSK", "Empty"])
+        #expect(home.state.decks.map(\.name) == ["Full"])
+        #expect(home.state.vocabulary.subtitle(for: Fixtures.hsk, minimumMatchingWords: 5) == "1 folder, 5 words")
+        #expect(home.state.vocabulary.subtitle(for: Fixtures.level1, minimumMatchingWords: 5) == "2 decks, 5 words")
+        #expect(home.state.vocabulary.subtitle(for: Fixtures.emptyFolder, minimumMatchingWords: 5) == "Empty")
+
+        home.send(.practiseFolderTapped(Fixtures.hsk.id))
+        #expect(await waitUntil { log.effects.count == 1 })
+        guard case .requestMatching(let request) = log.effects.first else {
+            Issue.record("expected a matching request")
+            return
+        }
+        #expect(request.title == "HSK")
+        #expect(request.pool.map(\.english) == ["water", "tea", "book", "mobile phone", "green"])
+    }
+
+    @Test("deleting a folder with anything inside asks first, then takes it all")
+    func deletingAFolder() async {
+        let (home, _) = await makeHome()
+        await repository.replace(Fixtures.nested)
+        #expect(await waitUntil { home.state.vocabulary == Fixtures.nested })
+
+        home.send(.deleteFolderTapped(Fixtures.hsk.id))
+        #expect(home.state.deletionWarning == "HSK and the 1 folder and 2 decks inside it will be deleted. Their words stay in the library.")
+        home.send(.deleteFolderCancelled)
+        await settle()
+        #expect(await repository.writes.isEmpty)
+
+        home.send(.deleteFolderTapped(Fixtures.hsk.id))
+        home.send(.deleteFolderConfirmed)
+        #expect(home.state.pendingFolderDeletion == nil)
+        #expect(home.state.vocabulary.folders.map(\.name) == ["Empty"])
+        #expect(home.state.vocabulary.decks.map(\.name) == ["Full"])
+        #expect(await waitUntil { await repository.snapshot.decks.map(\.name) == ["Full"] })
+    }
+
+    @Test("deleting an empty folder does not ask")
+    func deletingAnEmptyFolder() async {
+        let (home, _) = await makeHome()
+        await repository.replace(Fixtures.nested)
+        #expect(await waitUntil { home.state.vocabulary == Fixtures.nested })
+
+        home.send(.deleteFolderTapped(Fixtures.emptyFolder.id))
+        #expect(home.state.pendingFolderDeletion == nil)
+        #expect(await waitUntil { await repository.writes == ["deleteFolder"] })
     }
 }
 

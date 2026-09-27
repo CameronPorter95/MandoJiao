@@ -31,8 +31,8 @@ actor VocabularyRepositoryImpl: VocabularyRepository {
         try await write { try await $0.deleteWords(ids: ids) }
     }
 
-    func createDeck(name: String) async throws {
-        try await write { try await $0.createDeck(name: name) }
+    func createDeck(name: String, folderID: UUID?) async throws {
+        try await write { try await $0.createDeck(name: name, folderID: folderID) }
     }
 
     func renameDeck(id: UUID, name: String) async throws {
@@ -43,8 +43,28 @@ actor VocabularyRepositoryImpl: VocabularyRepository {
         try await write { try await $0.setMembership(deckID: deckID, wordID: wordID, isIncluded: isIncluded) }
     }
 
+    func moveDeck(id: UUID, toFolder folderID: UUID?) async throws {
+        try await write { try await $0.moveDeck(id: id, toFolder: folderID) }
+    }
+
     func deleteDeck(id: UUID) async throws {
         try await write { try await $0.deleteDeck(id: id) }
+    }
+
+    func createFolder(name: String, parentID: UUID?) async throws {
+        try await write { try await $0.createFolder(name: name, parentID: parentID) }
+    }
+
+    func renameFolder(id: UUID, name: String) async throws {
+        try await write { try await $0.renameFolder(id: id, name: name) }
+    }
+
+    func moveFolder(id: UUID, toParent parentID: UUID?) async throws {
+        try await write { try await $0.moveFolder(id: id, toParent: parentID) }
+    }
+
+    func deleteFolder(id: UUID) async throws {
+        try await write { try await $0.deleteFolder(id: id) }
     }
 
     func recordResults(_ results: LessonResults) async throws {

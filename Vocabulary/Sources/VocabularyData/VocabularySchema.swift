@@ -4,8 +4,9 @@ import Foundation
 import VocabularyDomain
 import SwiftData
 
-typealias VocabWord = VocabularySchemaV2.VocabWord
-typealias Deck = VocabularySchemaV2.Deck
+typealias VocabWord = VocabularySchemaV3.VocabWord
+typealias Deck = VocabularySchemaV3.Deck
+typealias Folder = VocabularySchemaV3.Folder
 
 /// The store as shipped before versioning. Must match it exactly, attribute for
 /// attribute, or an existing store will not open.
@@ -90,9 +91,81 @@ nonisolated enum VocabularySchemaV2: VersionedSchema {
     }
 }
 
+/// Adds folders, and a key for decks and folders the app supplies.
+nonisolated enum VocabularySchemaV3: VersionedSchema {
+    static let versionIdentifier = Schema.Version(3, 0, 0)
+    static var models: [any PersistentModel.Type] { [VocabWord.self, Deck.self, Folder.self] }
+
+    @Model
+    final class VocabWord {
+        var uuid: UUID = UUID()
+        var english: String = ""
+        var hanzi: String = ""
+        var pinyin: String = ""
+        var createdAt: Date = Date.now
+        var decks: [Deck] = []
+        var missCount: Int = 0
+        var lastMissedAt: Date?
+
+        init(english: String, hanzi: String, pinyin: String = "") {
+            self.uuid = UUID()
+            self.english = english
+            self.hanzi = hanzi
+            self.pinyin = pinyin
+            self.createdAt = .now
+        }
+    }
+
+    @Model
+    final class Deck {
+        var uuid: UUID = UUID()
+        var name: String = ""
+        var createdAt: Date = Date.now
+        var builtInKey: String?
+
+        @Relationship(inverse: \VocabWord.decks)
+        var words: [VocabWord] = []
+
+        var folder: Folder?
+
+        init(name: String, words: [VocabWord] = [], folder: Folder? = nil) {
+            self.uuid = UUID()
+            self.name = name
+            self.words = words
+            self.folder = folder
+            self.createdAt = .now
+        }
+    }
+
+    @Model
+    final class Folder {
+        var uuid: UUID = UUID()
+        var name: String = ""
+        var createdAt: Date = Date.now
+        var builtInKey: String?
+
+        var parent: Folder?
+        @Relationship(deleteRule: .cascade, inverse: \Folder.parent)
+        var folders: [Folder] = []
+        @Relationship(deleteRule: .cascade, inverse: \Deck.folder)
+        var decks: [Deck] = []
+
+        init(name: String, parent: Folder? = nil) {
+            self.uuid = UUID()
+            self.name = name
+            self.parent = parent
+            self.createdAt = .now
+        }
+    }
+}
+
 nonisolated enum VocabularyMigrationPlan: SchemaMigrationPlan {
-    static var schemas: [any VersionedSchema.Type] { [VocabularySchemaV1.self, VocabularySchemaV2.self] }
-    static var stages: [MigrationStage] { [v1ToV2] }
+    static var schemas: [any VersionedSchema.Type] {
+        [VocabularySchemaV1.self, VocabularySchemaV2.self, VocabularySchemaV3.self]
+    }
+    static var stages: [MigrationStage] { [v1ToV2, v2ToV3] }
+
+    static let v2ToV3 = MigrationStage.lightweight(fromVersion: VocabularySchemaV2.self, toVersion: VocabularySchemaV3.self)
 
     /// Lightweight migration would give every existing deck the same default `uuid`, so
     /// each one is given its own afterwards.

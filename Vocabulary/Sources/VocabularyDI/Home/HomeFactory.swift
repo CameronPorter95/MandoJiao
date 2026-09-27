@@ -18,6 +18,8 @@ public enum HomeFactory: NavigationInputRouteFactory {
             observeVocabulary: ObserveVocabularyUseCase(repository: repository),
             createDeck: CreateDeckUseCase(repository: repository),
             deleteDeck: DeleteDeckUseCase(repository: repository),
+            createFolder: CreateFolderUseCase(repository: repository),
+            deleteFolder: DeleteFolderUseCase(repository: repository),
             clearMistakes: ClearMistakesUseCase(repository: repository)
         )
         return HomeRoute(viewModel: viewModel, navigation: navigation.home) { destination in
@@ -29,6 +31,12 @@ public enum HomeFactory: NavigationInputRouteFactory {
                     dependencies: dependencies,
                     navigation: navigation.deckDetail,
                     input: DeckDetailInput(deckID: id, minimumMatchingWords: input.minimumMatchingWords)
+                ))
+            case .folder(let id):
+                AnyView(FolderDetailFactory.makeRoute(
+                    dependencies: dependencies,
+                    navigation: navigation.folderDetail,
+                    input: FolderDetailInput(folderID: id, minimumMatchingWords: input.minimumMatchingWords)
                 ))
             case .settings:
                 input.settings()

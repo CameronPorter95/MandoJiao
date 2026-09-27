@@ -27,7 +27,7 @@ let package = Package(
         .target(name: "CoreTestSupport", path: "TestSupport", swiftSettings: mainActorByDefault),
         .testTarget(
             name: "CoreTests",
-            dependencies: ["CoreUI", "CoreSound", "CoreTestSupport"],
+            dependencies: ["CoreUI", "CoreSound", "CoreDesignSystem", "CoreTestSupport"],
             swiftSettings: mainActorByDefault
         ),
     ],

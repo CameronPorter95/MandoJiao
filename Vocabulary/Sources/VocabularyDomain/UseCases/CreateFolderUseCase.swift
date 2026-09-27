@@ -1,6 +1,6 @@
 import Foundation
 
-public nonisolated struct CreateDeckUseCase: Sendable {
+public nonisolated struct CreateFolderUseCase: Sendable {
     public let repository: any VocabularyRepository
 
     public init(repository: any VocabularyRepository) {
@@ -8,9 +8,9 @@ public nonisolated struct CreateDeckUseCase: Sendable {
     }
 
     /// A blank name creates nothing.
-    public func callAsFunction(name: String, folderID: UUID? = nil) async throws {
+    public func callAsFunction(name: String, parentID: UUID? = nil) async throws {
         let name = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !name.isEmpty else { return }
-        try await repository.createDeck(name: name, folderID: folderID)
+        try await repository.createFolder(name: name, parentID: parentID)
     }
 }

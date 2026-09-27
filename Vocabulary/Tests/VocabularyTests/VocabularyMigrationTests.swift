@@ -17,7 +17,7 @@ import VocabularyTestSupport
 /// to starve the timing-sensitive suites that share it.
 @Suite("Vocabulary schema migration")
 nonisolated struct VocabularyMigrationTests {
-    @Test("a version 1 store opens as version 2, keeping everything and giving each deck its own id")
+    @Test("a version 1 store opens as the current version, keeping everything and giving each deck its own id")
     func v1ToV2() throws {
         let fixture = try #require(Bundle.module.url(forResource: "VocabularyV1", withExtension: "store"))
         let url = URL.temporaryDirectory.appending(path: "\(UUID().uuidString).store")
@@ -25,7 +25,7 @@ nonisolated struct VocabularyMigrationTests {
         defer { try? FileManager.default.removeItem(at: url) }
 
         let container = try ModelContainer(
-            for: Schema(versionedSchema: VocabularySchemaV2.self),
+            for: Schema(versionedSchema: VocabularySchemaV3.self),
             migrationPlan: VocabularyMigrationPlan.self,
             configurations: ModelConfiguration(url: url)
         )
@@ -40,6 +40,8 @@ nonisolated struct VocabularyMigrationTests {
         #expect(decks.contains { $0.name == "Renamed deck" })
         #expect(Set(decks.map(\.uuid)).count == 6)
         #expect(decks.reduce(0) { $0 + $1.words.count } == 65)
+        #expect(decks.allSatisfy { $0.folder == nil && $0.builtInKey == nil })
+        #expect(try context.fetchCount(FetchDescriptor<Folder>()) == 0)
     }
 }
 

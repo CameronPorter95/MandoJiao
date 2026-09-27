@@ -7,11 +7,7 @@ import SwiftData
 @ModelActor
 actor VocabularyLocalSourceImpl: VocabularyLocalSource {
     func snapshot() throws -> Vocabulary {
-        try storeWork {
-            let words = try modelContext.fetch(FetchDescriptor<VocabWord>(sortBy: [SortDescriptor(\.createdAt)]))
-            let decks = try modelContext.fetch(FetchDescriptor<Deck>(sortBy: [SortDescriptor(\.createdAt)]))
-            return Vocabulary(words: words.map(\.domainWord), decks: decks.map(\.summary))
-        }
+        try storeWork { try vocabulary() }
     }
 
     func saveWord(id: UUID?, draft: WordDraft) throws {
@@ -38,9 +34,14 @@ actor VocabularyLocalSourceImpl: VocabularyLocalSource {
         }
     }
 
-    func createDeck(name: String) throws {
+    func createDeck(name: String, folderID: UUID?) throws {
         try storeWork {
-            modelContext.insert(Deck(name: name))
+            var folder: Folder?
+            if let folderID {
+                guard let found = try self.folder(id: folderID) else { return }
+                folder = found
+            }
+            modelContext.insert(Deck(name: name, folder: folder))
             try modelContext.save()
         }
     }
@@ -66,10 +67,55 @@ actor VocabularyLocalSourceImpl: VocabularyLocalSource {
         }
     }
 
+    func moveDeck(id: UUID, toFolder folderID: UUID?) throws {
+        try storeWork {
+            guard try vocabulary().canMoveDeck(id, into: folderID), let deck = try deck(id: id) else { return }
+            deck.folder = try folderID.flatMap { try folder(id: $0) }
+            try modelContext.save()
+        }
+    }
+
     func deleteDeck(id: UUID) throws {
         try storeWork {
             guard let deck = try deck(id: id) else { return }
             modelContext.delete(deck)
+            try modelContext.save()
+        }
+    }
+
+    func createFolder(name: String, parentID: UUID?) throws {
+        try storeWork {
+            var parent: Folder?
+            if let parentID {
+                guard let found = try folder(id: parentID) else { return }
+                parent = found
+            }
+            modelContext.insert(Folder(name: name, parent: parent))
+            try modelContext.save()
+        }
+    }
+
+    func renameFolder(id: UUID, name: String) throws {
+        try storeWork {
+            guard let folder = try folder(id: id) else { return }
+            folder.name = name
+            try modelContext.save()
+        }
+    }
+
+    func moveFolder(id: UUID, toParent parentID: UUID?) throws {
+        try storeWork {
+            guard try vocabulary().canMoveFolder(id, into: parentID), let folder = try folder(id: id) else { return }
+            folder.parent = try parentID.flatMap { try self.folder(id: $0) }
+            try modelContext.save()
+        }
+    }
+
+    /// Everything beneath goes by the relationships' cascade.
+    func deleteFolder(id: UUID) throws {
+        try storeWork {
+            guard let folder = try folder(id: id) else { return }
+            modelContext.delete(folder)
             try modelContext.save()
         }
     }
@@ -107,12 +153,23 @@ actor VocabularyLocalSourceImpl: VocabularyLocalSource {
 
     // MARK: - Helpers
 
+    private func vocabulary() throws -> Vocabulary {
+        let words = try modelContext.fetch(FetchDescriptor<VocabWord>(sortBy: [SortDescriptor(\.createdAt)]))
+        let decks = try modelContext.fetch(FetchDescriptor<Deck>(sortBy: [SortDescriptor(\.createdAt)]))
+        let folders = try modelContext.fetch(FetchDescriptor<Folder>(sortBy: [SortDescriptor(\.createdAt)]))
+        return Vocabulary(words: words.map(\.domainWord), decks: decks.map(\.summary), folders: folders.map(\.summary))
+    }
+
     private func word(id: UUID) throws -> VocabWord? {
         try modelContext.fetch(FetchDescriptor<VocabWord>(predicate: #Predicate { $0.uuid == id })).first
     }
 
     private func deck(id: UUID) throws -> Deck? {
         try modelContext.fetch(FetchDescriptor<Deck>(predicate: #Predicate { $0.uuid == id })).first
+    }
+
+    private func folder(id: UUID) throws -> Folder? {
+        try modelContext.fetch(FetchDescriptor<Folder>(predicate: #Predicate { $0.uuid == id })).first
     }
 
     /// Wraps every store failure so the repository can tell it from anything else.
@@ -142,6 +199,19 @@ extension VocabWord {
 
 extension Deck {
     nonisolated var summary: DeckSummary {
-        DeckSummary(id: uuid, name: name, createdAt: createdAt, wordIDs: words.map(\.uuid))
+        DeckSummary(
+            id: uuid,
+            name: name,
+            createdAt: createdAt,
+            wordIDs: words.map(\.uuid),
+            folderID: folder?.uuid,
+            builtInKey: builtInKey
+        )
+    }
+}
+
+extension Folder {
+    nonisolated var summary: FolderSummary {
+        FolderSummary(id: uuid, name: name, createdAt: createdAt, parentID: parent?.uuid, builtInKey: builtInKey)
     }
 }
