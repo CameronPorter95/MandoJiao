@@ -78,6 +78,12 @@ public final class LibraryViewModel {
             state.layout = state.layout.settingDeckSort(sort, in: id)
             saveLayout(state.layout)
 
+        case .hskLevelsTapped:
+            state.isShowingHSKLevels = true
+
+        case .hskLevelsDismissed:
+            state.isShowingHSKLevels = false
+
         case .editTapped:
             state.isEditing.toggle()
 

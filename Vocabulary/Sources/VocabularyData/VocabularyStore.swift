@@ -42,6 +42,8 @@ public enum VocabularyStore {
         let existing = try? context.fetchCount(FetchDescriptor<VocabWord>())
         guard (existing ?? 0) == 0 else { return }
 
+        // One time for everything seeded, so a date sort falls back to names; see BuiltInInstaller.
+        let seededAt = Date.now
         let starter = Folder(name: SampleVocabulary.folderName)
         starter.builtInKey = SampleVocabulary.builtInKey
         context.insert(starter)
@@ -50,9 +52,16 @@ public enum VocabularyStore {
                 VocabWord(english: $0.english, hanzi: $0.hanzi, pinyin: $0.pinyin)
             }
             words.forEach(context.insert)
-            context.insert(Deck(name: plan.name, words: words, folder: starter, position: position))
+            let deck = Deck(name: plan.name, words: words, folder: starter, position: position)
+            deck.createdAt = seededAt
+            deck.editedAt = seededAt
+            context.insert(deck)
         }
-
         try? context.save()
+
+        // A fresh install starts with HSK 1; the other levels are added from the library.
+        if let words = try? BundledHSK.words() {
+            try? BuiltInInstaller.install(HSK.plan(level: 1, words: words, topLevelFolders: 1), in: context)
+        }
     }
 }

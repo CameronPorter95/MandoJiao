@@ -110,6 +110,35 @@ public actor FakeVocabularyRepository: VocabularyRepository {
         }
     }
 
+    public func install(_ plan: BuiltInPlan) throws {
+        try write("install \(plan.decks.count) decks") {
+            var folders = Dictionary(
+                snapshot.folders.compactMap { folder in folder.builtInKey.map { ($0, folder.id) } },
+                uniquingKeysWith: { first, _ in first }
+            )
+            for planned in plan.folders where folders[planned.key] == nil {
+                let parentID = planned.parentKey.flatMap { folders[$0] }
+                if planned.parentKey != nil, parentID == nil { continue }
+                let folder = FolderSummary(id: UUID(), name: planned.name, createdAt: .now, parentID: parentID, builtInKey: planned.key)
+                snapshot.folders.append(folder)
+                folders[planned.key] = folder.id
+            }
+            let present = Set(snapshot.decks.compactMap(\.builtInKey))
+            for planned in plan.decks where !present.contains(planned.key) {
+                guard let folderID = folders[planned.folderKey] else { continue }
+                let wordIDs = planned.words.map { draft in
+                    if let existing = snapshot.words.first(where: { $0.hanzi == draft.hanzi }) { return existing.id }
+                    let word = Word(english: draft.english, hanzi: draft.hanzi, pinyin: draft.pinyin)
+                    snapshot.words.append(word)
+                    return word.id
+                }
+                snapshot.decks.append(DeckSummary(
+                    id: UUID(), name: planned.name, createdAt: .now, wordIDs: wordIDs, folderID: folderID, builtInKey: planned.key
+                ))
+            }
+        }
+    }
+
     public func recordResults(_ results: LessonResults) throws {
         try write("recordResults") { recordedResults.append(results) }
     }

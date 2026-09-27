@@ -36,6 +36,13 @@ struct LibrarySidebar: View {
                 } label: {
                     Label("New folder", systemImage: "folder.badge.plus")
                 }
+                Menu {
+                    Button { onAction(.hskLevelsTapped) } label: {
+                        Label("HSK levels…", systemImage: "graduationcap")
+                    }
+                } label: {
+                    Label("More", systemImage: "ellipsis")
+                }
             }
         }
         .namingAlert(

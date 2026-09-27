@@ -63,7 +63,8 @@ public enum LibraryFactory: NavigationInputRouteFactory {
                         )
                     ))
                 }
-            }
+            },
+            hskLevels: { AnyView(HSKLevelsFactory.makeRoute(dependencies: dependencies)) }
         )
     }
 }

@@ -191,4 +191,13 @@ struct LibraryViewModelTests {
         #expect(!library.state.canPractise(Fixtures.emptyFolder.id))
         #expect(!library.state.canPractise(UUID()))
     }
+
+    @Test("HSK levels opens as a sheet and closes")
+    func hskLevels() async {
+        let (library, _) = await makeLibrary()
+        library.send(.hskLevelsTapped)
+        #expect(library.state.isShowingHSKLevels)
+        library.send(.hskLevelsDismissed)
+        #expect(!library.state.isShowingHSKLevels)
+    }
 }

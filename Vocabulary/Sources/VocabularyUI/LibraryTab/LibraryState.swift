@@ -57,6 +57,7 @@ struct LibraryState: Equatable {
     var name = ""
     /// A folder with something inside, waiting on confirmation before it goes.
     var pendingFolderDeletion: UUID?
+    var isShowingHSKLevels = false
 
     var deletionWarning: String? { pendingFolderDeletion.flatMap(vocabulary.deletionWarning(forFolder:)) }
 
@@ -93,6 +94,8 @@ enum LibraryAction: Equatable {
     case folderExpanded(UUID, Bool, in: LibraryLayout.Scope)
     case folderSectionToggled(UUID, LibraryLayout.Section)
     case deckSortChanged(UUID, DeckSort)
+    case hskLevelsTapped
+    case hskLevelsDismissed
     case editTapped
     case folderMoved(id: UUID, parentID: UUID?, index: Int)
     case newFolderTapped(parentID: UUID?)

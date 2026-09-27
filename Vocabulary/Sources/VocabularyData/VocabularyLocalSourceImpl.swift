@@ -131,6 +131,10 @@ actor VocabularyLocalSourceImpl: VocabularyLocalSource {
         }
     }
 
+    func install(_ plan: BuiltInPlan) throws {
+        try storeWork { try BuiltInInstaller.install(plan, in: modelContext) }
+    }
+
     func recordResults(_ results: LessonResults) throws {
         try storeWork {
             var changed = false

@@ -30,6 +30,10 @@ public enum VocabularyRepositoryFactory {
         CEDICT.dictionary
     }
 
+    public static func makeHSKRepository() -> any HSKRepository {
+        HSKSource.repository
+    }
+
     public static func makeLibraryLayoutRepository() -> any LibraryLayoutRepository {
         LibraryLayoutRepositoryImpl()
     }

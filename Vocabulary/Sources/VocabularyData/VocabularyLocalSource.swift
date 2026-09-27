@@ -18,6 +18,7 @@ nonisolated protocol VocabularyLocalSource: Sendable {
     func renameFolder(id: UUID, name: String) async throws
     func moveFolder(id: UUID, toParent parentID: UUID?, at index: Int?) async throws
     func deleteFolder(id: UUID) async throws
+    func install(_ plan: BuiltInPlan) async throws
     func recordResults(_ results: LessonResults) async throws
     func clearMistakes() async throws
 }
