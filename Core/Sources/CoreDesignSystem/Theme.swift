@@ -1,6 +1,7 @@
 import SwiftUI
 
 public enum Theme {
+    /// Also the app's AccentColor asset, which tints everything system-drawn; change both together.
     public static let accent = Color(red: 0.98, green: 0.52, blue: 0.13)
     public static let success = Color(red: 0.34, green: 0.78, blue: 0.33)
     public static let miss = Color(red: 0.91, green: 0.33, blue: 0.33)
