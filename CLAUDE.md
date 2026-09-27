@@ -75,7 +75,7 @@ times; once it reported `TEST SUCCEEDED` while eight new tests were skipped. A
 green result on its own is not evidence that anything ran.
 
 `xcodebuild test` prints one `Test run with` line per test bundle, five in all.
-Add them up. Current suite: 265 tests in 33 suites: 13 in `Core`, 117 in `Vocabulary`,
+Add them up. Current suite: 270 tests in 33 suites: 13 in `Core`, 122 in `Vocabulary`,
 92 in `Speaking`, 39 in `Matching`, 4 in `Settings`. The app target has no tests of
 its own. If a bundle's line is missing, it did not run.
 
@@ -135,6 +135,10 @@ not enough; if the behaviour reverses, a test should say so.
 - **Protocols and extensions take the default isolation too.** Domain and data
   protocols are `nonisolated protocol`, and extensions on nonisolated types need
   `nonisolated extension`. Details in `Documentation/working-on-this.md`.
+- **Never change a schema version that has been built, add one.** A store written by
+  any other shape of that version fails to open with "unknown model version", and
+  the app traps at launch. Each migration is tested against a real store fixture
+  written by the build before it.
 - **Never instantiate a `VocabularySchemaV1` model in-process.** It resolves to the
   version 2 entity and crashes. Migration is tested against a real v1 store fixture.
 - **A callback closure inside a main-actor type is main-actor, checked at runtime.**
