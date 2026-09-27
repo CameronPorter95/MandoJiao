@@ -1,17 +1,20 @@
 import Foundation
 
-// Builds the lexicon the word editor suggests pinyin and English from.
+// Builds the dictionary: every CC-CEDICT entry with all its senses. The word editor's
+// suggestions are read from it too, from each headword's preferred entry.
 //
 // Download CC-CEDICT from https://www.mdbg.net/chinese/dictionary?page=cc-cedict, then
 // run from the repository root:
-//   swift Tools/MakeLexicon/main.swift cedict_ts.u8 Vocabulary/Sources/VocabularyData/Resources/Lexicon.tsv
+//   swift Tools/MakeDictionary/main.swift cedict_ts.u8 Vocabulary/Sources/VocabularyData/Resources/Dictionary.tsv
 //
-// Output is one line per simplified headword: hanzi, pinyin with tone marks, and one
-// short English gloss, tab separated. CC-CEDICT is CC BY-SA 4.0, so the output is too,
-// and its header line carries the attribution.
+// One line per entry: simplified, traditional, pinyin with tone marks, 1 if it is the
+// headword's preferred entry, and its senses, tab separated, senses split by U+001F.
+// CC-CEDICT is CC BY-SA 4.0, so the output is too, and its header line carries the
+// attribution.
 
 struct Entry {
     let simplified: String
+    let traditional: String
     let pinyin: String
     let glosses: [String]
     let order: Int
@@ -21,7 +24,7 @@ struct Entry {
 
 let arguments = CommandLine.arguments
 guard arguments.count == 3 else {
-    FileHandle.standardError.write(Data("usage: main.swift <cedict_ts.u8> <Lexicon.tsv>\n".utf8))
+    FileHandle.standardError.write(Data("usage: main.swift <cedict_ts.u8> <Dictionary.tsv>\n".utf8))
     exit(1)
 }
 
@@ -44,6 +47,7 @@ for (index, line) in source.split(whereSeparator: \.isNewline).enumerated() {
         .filter { !$0.isEmpty }
     entries.append(Entry(
         simplified: String(headwords[1]),
+        traditional: String(headwords[0]),
         pinyin: String(line[line.index(after: open)..<close]),
         glosses: glosses,
         order: index
@@ -56,18 +60,28 @@ func isHan(_ scalar: Unicode.Scalar) -> Bool {
     (0x3400...0x9FFF).contains(scalar.value) || (0x20000...0x2FFFF).contains(scalar.value)
 }
 
-/// Removes every parenthesised aside, including nested ones.
-func strippingAsides(_ text: String) -> String {
+/// Removes the top-level parenthesised asides that `matching` picks, nested ones included.
+func strippingAsides(_ text: String, containing matching: (String) -> Bool) -> String {
     var depth = 0
     var kept = ""
+    var aside = ""
     for character in text {
         switch character {
-        case "(": depth += 1
-        case ")": depth = max(0, depth - 1)
-        default: if depth == 0 { kept.append(character) }
+        case "(":
+            depth += 1
+            aside.append(character)
+        case ")" where depth > 0:
+            depth -= 1
+            aside.append(character)
+            if depth == 0 {
+                if !matching(aside) { kept += aside }
+                aside = ""
+            }
+        default:
+            if depth == 0 { kept.append(character) } else { aside.append(character) }
         }
     }
-    return kept
+    return kept + aside
 }
 
 let referencePrefixes = [
@@ -85,25 +99,6 @@ func strippingReferences(_ text: String) -> String {
     )
 }
 
-/// Long glosses are cut back to their leading senses, then to whole words.
-func shortened(_ text: String, limit: Int = 40) -> String {
-    guard text.count > limit else { return text }
-    let first = text.components(separatedBy: " – ")[0]
-    var kept: [Substring] = []
-    for sense in first.split(separator: ", ") {
-        if !kept.isEmpty, (kept + [sense]).joined(separator: ", ").count > limit { break }
-        kept.append(sense)
-    }
-    let joined = kept.joined(separator: ", ")
-    guard joined.count > limit else { return joined }
-    var words: [Substring] = []
-    for word in joined.split(separator: " ") {
-        if !words.isEmpty, (words + [word]).joined(separator: " ").count > limit { break }
-        words.append(word)
-    }
-    return words.joined(separator: " ")
-}
-
 /// The headword a cross reference like `see 西安市[Xi1 an1 Shi4]` points at.
 func referencedHeadword(_ gloss: String) -> String? {
     let prefixes = ["see ", "variant of ", "erhua variant of ", "old variant of ", "also written "]
@@ -113,24 +108,27 @@ func referencedHeadword(_ gloss: String) -> String? {
     return gloss[match].split(separator: "|").last.map(String.init)
 }
 
-/// A gloss worth showing as a suggestion, or nil for a cross reference or a surname.
-func usableGloss(_ raw: String) -> String? {
+/// A sense worth keeping, or nil for a cross reference, a surname or a measure word list.
+/// Asides are kept, since they say how a sense is used, unless they only point elsewhere.
+func sense(_ raw: String) -> String? {
     if referencePrefixes.contains(where: raw.hasPrefix) { return nil }
-    var text = strippingReferences(strippingAsides(raw))
-    if text.trimmingCharacters(in: .whitespaces).isEmpty {
-        // A gloss that is only an aside, like 了's "(completed action marker)", is the meaning.
-        text = String(raw.dropFirst().dropLast())
-    }
-    text = text
+    let text = strippingReferences(strippingAsides(raw, containing: isReference))
         .replacingOccurrences(of: "\\s+([,;])", with: "$1", options: .regularExpression)
         .replacingOccurrences(of: "; ", with: ", ")
         .split(separator: " ", omittingEmptySubsequences: true)
         .joined(separator: " ")
         .trimmingCharacters(in: CharacterSet(charactersIn: " ,;."))
     if text.isEmpty || text.contains("[") || text.unicodeScalars.contains(where: isHan) { return nil }
-    if referencePrefixes.contains(where: text.hasPrefix) { return nil }
-    return shortened(text)
+    if text == "()" || referencePrefixes.contains(where: text.hasPrefix) { return nil }
+    // A sense that is only an aside, like "(used in place names)", reads as its inside.
+    var plain = strippingAsides(text, containing: { _ in true }).trimmingCharacters(in: .whitespaces)
+    if plain.isEmpty { plain = String(text.dropFirst().dropLast()) }
+    if referencePrefixes.contains(where: plain.hasPrefix) { return nil }
+    return text
 }
+
+/// An aside that points elsewhere, like `(Taiwan pr. [xing4])` or `(used with 得[de2])`.
+func isReference(_ aside: String) -> Bool { aside.contains("[") || aside.unicodeScalars.contains(where: isHan) }
 
 // MARK: Pinyin
 
@@ -211,8 +209,8 @@ func compoundScore(_ entry: Entry) -> Int {
 func rank(_ candidates: [Entry]) -> Entry {
     let system = candidates[0].simplified.count == 1 ? systemReading(candidates[0].simplified) : nil
     return candidates.min { a, b in
-        let aGlosses = a.glosses.compactMap(usableGloss).count
-        let bGlosses = b.glosses.compactMap(usableGloss).count
+        let aGlosses = a.glosses.compactMap(sense).count
+        let bGlosses = b.glosses.compactMap(sense).count
         if (aGlosses > 0) != (bGlosses > 0) { return aGlosses > 0 }
         if a.isProperNoun != b.isProperNoun { return !a.isProperNoun }
         if let system {
@@ -226,17 +224,22 @@ func rank(_ candidates: [Entry]) -> Entry {
     }!
 }
 
-let chosen = Dictionary(grouping: entries, by: \.simplified).mapValues(rank)
-let english = chosen.mapValues { $0.glosses.lazy.compactMap(usableGloss).first ?? "" }
+let grouped = Dictionary(grouping: entries, by: \.simplified)
+let preferred = Set(grouped.values.map { rank($0).order })
+let sensesByOrder = Dictionary(uniqueKeysWithValues: entries.map { ($0.order, $0.glosses.compactMap(sense)) })
+let preferredSenses = Dictionary(uniqueKeysWithValues: grouped.map { ($0.key, sensesByOrder[rank($0.value).order] ?? []) })
 
 var lines = ["# CC-CEDICT \(date), CC BY-SA 4.0, https://cc-cedict.org"]
-for simplified in chosen.keys.sorted() {
-    let entry = chosen[simplified]!
-    var gloss = english[simplified]!
-    if gloss.isEmpty {
-        gloss = entry.glosses.lazy.compactMap(referencedHeadword).compactMap { english[$0] }.first { !$0.isEmpty } ?? ""
+var empty = 0
+for entry in entries.sorted(by: { ($0.simplified, $0.order) < ($1.simplified, $1.order) }) {
+    var senses = sensesByOrder[entry.order] ?? []
+    if senses.isEmpty {
+        // A pure cross reference, like 西安's "see 西安市", takes the senses it points at.
+        senses = entry.glosses.lazy.compactMap(referencedHeadword).compactMap { preferredSenses[$0] }.first { !$0.isEmpty } ?? []
     }
-    lines.append("\(simplified)\t\(displayPinyin(entry.pinyin))\t\(gloss)")
+    if senses.isEmpty { empty += 1 }
+    let isPreferred = preferred.contains(entry.order) ? "1" : "0"
+    lines.append([entry.simplified, entry.traditional, displayPinyin(entry.pinyin), isPreferred, senses.joined(separator: "\u{1F}")].joined(separator: "\t"))
 }
 try (lines.joined(separator: "\n") + "\n").write(toFile: arguments[2], atomically: true, encoding: .utf8)
-print("\(lines.count - 1) headwords from \(entries.count) entries")
+print("\(lines.count - 1) entries for \(grouped.count) headwords, \(empty) with no senses")
