@@ -5,7 +5,6 @@ public struct DeckDetailRoute: View {
     @State private var viewModel: DeckDetailViewModel
     private let navigation: DeckDetailNavigation
 
-    @Environment(\.dismiss) private var dismiss
     @State private var error: VocabularyError?
 
     public init(viewModel: DeckDetailViewModel, navigation: DeckDetailNavigation) {
@@ -21,8 +20,9 @@ public struct DeckDetailRoute: View {
                 for await effect in viewModel.effects() {
                     switch effect {
                     case .startLesson(let request):
+                        // Stays pushed: the lesson is presented over the deck, and closing
+                        // it comes back here rather than to home.
                         navigation.didRequestMatching(request)
-                        dismiss()
                     case .showError(let error):
                         self.error = error
                     }
