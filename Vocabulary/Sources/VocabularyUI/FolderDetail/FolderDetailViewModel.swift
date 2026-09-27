@@ -12,6 +12,7 @@ public final class FolderDetailViewModel {
     private let observeVocabulary: ObserveVocabularyUseCase
     private let createDeck: CreateDeckUseCase
     private let createFolder: CreateFolderUseCase
+    private let renameFolder: RenameFolderUseCase
     private let deleteDeck: DeleteDeckUseCase
     private let deleteFolder: DeleteFolderUseCase
 
@@ -27,6 +28,7 @@ public final class FolderDetailViewModel {
         observeVocabulary: ObserveVocabularyUseCase,
         createDeck: CreateDeckUseCase,
         createFolder: CreateFolderUseCase,
+        renameFolder: RenameFolderUseCase,
         deleteDeck: DeleteDeckUseCase,
         deleteFolder: DeleteFolderUseCase
     ) {
@@ -34,6 +36,7 @@ public final class FolderDetailViewModel {
         self.observeVocabulary = observeVocabulary
         self.createDeck = createDeck
         self.createFolder = createFolder
+        self.renameFolder = renameFolder
         self.deleteDeck = deleteDeck
         self.deleteFolder = deleteFolder
     }
@@ -59,31 +62,39 @@ public final class FolderDetailViewModel {
             guard let folder = state.folder, state.canStartLesson else { return }
             requestLesson(title: folder.name, pool: state.vocabulary.words(in: folder).pairs)
 
-        case .newItemTapped(let item):
-            state.newName = ""
-            state.naming = item
+        case .namingTapped(let naming):
+            state.newName = naming == .rename ? state.folder?.name ?? "" : ""
+            state.naming = naming
 
         case .newNameChanged(let name):
             state.newName = name
 
-        case .createConfirmed:
-            guard let item = state.naming else { return }
+        case .namingConfirmed:
+            guard let naming = state.naming else { return }
             state.naming = nil
             let name = state.newName
             let folderID = state.folderID
-            switch item {
-            case .deck:
+            switch naming {
+            case .newDeck:
                 enqueue(failure: VocabularyError.createDeckFailed) { [createDeck] in
                     try await createDeck(name: name, folderID: folderID)
                 }
-            case .folder:
+            case .newFolder:
                 enqueue(failure: VocabularyError.createFolderFailed) { [createFolder] in
                     try await createFolder(name: name, parentID: folderID)
                 }
+            case .rename:
+                enqueue(failure: VocabularyError.renameFolderFailed) { [renameFolder] in
+                    try await renameFolder(id: folderID, name: name)
+                }
             }
 
-        case .createCancelled:
+        case .namingCancelled:
             state.naming = nil
+
+        case .practiseFolderTapped(let id):
+            guard let folder = state.vocabulary.folder(id: id) else { return }
+            requestLesson(title: folder.name, pool: state.vocabulary.words(in: folder).pairs)
 
         case .practiseDeckTapped(let id):
             guard let deck = state.vocabulary.deck(id: id) else { return }

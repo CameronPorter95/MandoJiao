@@ -43,6 +43,7 @@ struct FolderDetailScreen: View {
                                 subfolder: subfolder,
                                 layout: layout,
                                 onOpen: onOpenFolder,
+                                onPractise: { onAction(.practiseFolderTapped($0)) },
                                 onDelete: { onAction(.deleteFolderTapped($0)) }
                             )
                         }
@@ -75,17 +76,17 @@ struct FolderDetailScreen: View {
         .navigationTitle(state.title)
         .toolbar {
             ToolbarItemGroup(placement: .primaryAction) {
-                Menu {
-                    Button { onAction(.newItemTapped(.deck)) } label: {
-                        Label("New deck", systemImage: "rectangle.stack.badge.plus")
-                    }
-                    Button { onAction(.newItemTapped(.folder)) } label: {
-                        Label("New folder", systemImage: "folder.badge.plus")
-                    }
-                } label: {
-                    Label("New", systemImage: "plus")
+                Button { onAction(.namingTapped(.newDeck)) } label: {
+                    Label("New deck", systemImage: "plus")
                 }
                 Menu {
+                    Button { onAction(.namingTapped(.newFolder)) } label: {
+                        Label("New folder", systemImage: "folder.badge.plus")
+                    }
+                    Button { onAction(.namingTapped(.rename)) } label: {
+                        Label("Rename", systemImage: "pencil")
+                    }
+                    Divider()
                     DeckSortMenu(sort: layout.deckSort, onChange: layout.setDeckSort)
                 } label: {
                     Label("More", systemImage: "ellipsis")
@@ -93,22 +94,36 @@ struct FolderDetailScreen: View {
             }
         }
         .namingAlert(
-            state.naming == .folder ? "New folder" : "New deck",
+            namingTitle,
             isPresented: state.naming != nil,
             name: state.newName,
-            message: state.naming == .folder
-                ? "It goes inside \(state.title)."
-                : "Give the deck a name, then pick its words.",
-            confirm: "Create",
+            message: namingMessage,
+            confirm: state.naming == .rename ? "Rename" : "Create",
             onNameChanged: { onAction(.newNameChanged($0)) },
-            onConfirm: { onAction(.createConfirmed) },
-            onCancel: { onAction(.createCancelled) }
+            onConfirm: { onAction(.namingConfirmed) },
+            onCancel: { onAction(.namingCancelled) }
         )
         .folderDeletionDialog(
             state.deletionWarning,
             onConfirm: { onAction(.deleteFolderConfirmed) },
             onCancel: { onAction(.deleteFolderCancelled) }
         )
+    }
+
+    private var namingTitle: String {
+        switch state.naming {
+        case .newFolder: "New folder"
+        case .rename: "Rename folder"
+        case .newDeck, nil: "New deck"
+        }
+    }
+
+    private var namingMessage: String {
+        switch state.naming {
+        case .newFolder: "It goes inside \(state.title)."
+        case .rename: ""
+        case .newDeck, nil: "Give the deck a name, then pick its words."
+        }
     }
 
     private func deckRow(_ deck: DeckSummary) -> some View {
@@ -224,6 +239,7 @@ private struct SubfolderRow: View {
     let subfolder: FolderDetailState.Subfolder
     let layout: FolderLayout
     let onOpen: (UUID) -> Void
+    let onPractise: (UUID) -> Void
     let onDelete: (UUID) -> Void
 
     var body: some View {
@@ -232,15 +248,28 @@ private struct SubfolderRow: View {
                 get: { layout.expanded.contains(subfolder.id) },
                 set: { layout.setExpanded(subfolder.id, $0) }
             )) {
-                ForEach(children) { SubfolderRow(subfolder: $0, layout: layout, onOpen: onOpen, onDelete: onDelete) }
+                ForEach(children) {
+                    SubfolderRow(subfolder: $0, layout: layout, onOpen: onOpen, onPractise: onPractise, onDelete: onDelete)
+                }
             } label: {
                 row
             }
+            .swipeActions(edge: .leading) { practiseButton }
             .swipeActions(edge: .trailing) { deleteButton }
         } else {
             row
+                .swipeActions(edge: .leading) { practiseButton }
                 .swipeActions(edge: .trailing) { deleteButton }
         }
+    }
+
+    private var practiseButton: some View {
+        Button {
+            onPractise(subfolder.id)
+        } label: {
+            Label("Practise", systemImage: "play.fill")
+        }
+        .tint(Theme.accent)
     }
 
     private var deleteButton: some View {

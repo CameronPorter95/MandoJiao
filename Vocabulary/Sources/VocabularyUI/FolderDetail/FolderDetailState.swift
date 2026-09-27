@@ -7,15 +7,18 @@ struct FolderDetailState: Equatable {
     let folderID: UUID
     let minimumMatchingWords: Int
     var vocabulary: Vocabulary = .empty
-    /// What the naming alert will create, while it is up.
-    var naming: NewItem?
+    /// What the naming alert is for, while it is up.
+    var naming: Naming?
     var newName = ""
     /// A subfolder with something inside, waiting on confirmation before it goes.
     var pendingFolderDeletion: UUID?
 
-    enum NewItem: Equatable {
-        case deck
-        case folder
+    enum Naming: Equatable {
+        case newDeck
+        /// Inside this folder, as a subfolder.
+        case newFolder
+        /// This folder.
+        case rename
     }
 
     /// A folder beneath this one, with everything beneath it in turn.
@@ -67,10 +70,11 @@ enum FolderDetailAction: Equatable {
     case appeared
     case disappeared
     case startLessonTapped
-    case newItemTapped(FolderDetailState.NewItem)
+    case namingTapped(FolderDetailState.Naming)
     case newNameChanged(String)
-    case createConfirmed
-    case createCancelled
+    case namingConfirmed
+    case namingCancelled
+    case practiseFolderTapped(UUID)
     case practiseDeckTapped(UUID)
     case deleteDeckTapped(UUID)
     case deleteFolderTapped(UUID)

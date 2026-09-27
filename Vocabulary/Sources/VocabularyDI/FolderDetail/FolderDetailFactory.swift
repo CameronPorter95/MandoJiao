@@ -16,6 +16,7 @@ public enum FolderDetailFactory: NavigationInputRouteFactory {
             observeVocabulary: ObserveVocabularyUseCase(repository: repository),
             createDeck: CreateDeckUseCase(repository: repository),
             createFolder: CreateFolderUseCase(repository: repository),
+            renameFolder: RenameFolderUseCase(repository: repository),
             deleteDeck: DeleteDeckUseCase(repository: repository),
             deleteFolder: DeleteFolderUseCase(repository: repository)
         )

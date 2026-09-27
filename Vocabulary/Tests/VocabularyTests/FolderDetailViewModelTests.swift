@@ -18,6 +18,7 @@ struct FolderDetailViewModelTests {
             observeVocabulary: ObserveVocabularyUseCase(repository: repository),
             createDeck: CreateDeckUseCase(repository: repository),
             createFolder: CreateFolderUseCase(repository: repository),
+            renameFolder: RenameFolderUseCase(repository: repository),
             deleteDeck: DeleteDeckUseCase(repository: repository),
             deleteFolder: DeleteFolderUseCase(repository: repository)
         )
@@ -71,15 +72,15 @@ struct FolderDetailViewModelTests {
     @Test("a new deck or folder goes inside the folder shown")
     func creating() async {
         let (empty, _) = await makeDetail(Fixtures.emptyFolder.id)
-        empty.send(.newItemTapped(.deck))
-        #expect(empty.state.naming == .deck)
+        empty.send(.namingTapped(.newDeck))
+        #expect(empty.state.naming == .newDeck)
         empty.send(.newNameChanged(" Colours "))
-        empty.send(.createConfirmed)
+        empty.send(.namingConfirmed)
         #expect(empty.state.naming == nil)
 
-        empty.send(.newItemTapped(.folder))
+        empty.send(.namingTapped(.newFolder))
         empty.send(.newNameChanged("More"))
-        empty.send(.createConfirmed)
+        empty.send(.namingConfirmed)
 
         #expect(await waitUntil {
             await repository.writes == ["createDeck Colours inside Empty", "createFolder More inside Empty"]
@@ -97,6 +98,7 @@ struct FolderDetailViewModelTests {
             observeVocabulary: ObserveVocabularyUseCase(repository: repository),
             createDeck: CreateDeckUseCase(repository: repository),
             createFolder: CreateFolderUseCase(repository: repository),
+            renameFolder: RenameFolderUseCase(repository: repository),
             deleteDeck: DeleteDeckUseCase(repository: repository),
             deleteFolder: DeleteFolderUseCase(repository: repository)
         )
@@ -148,5 +150,34 @@ struct FolderDetailViewModelTests {
         #expect(hsk.state.pendingFolderDeletion == nil)
         #expect(await log.contains(.showError(.deleteFolderFailed(FakeVocabularyRepository.failure))))
         #expect(hsk.state.subfolders.map(\.folder.name) == ["Level 1", "Empty"])
+    }
+
+    @Test("renaming starts from the folder's name and saves what was typed")
+    func renaming() async {
+        let (level1, _) = await makeDetail(Fixtures.level1.id)
+        level1.send(.namingTapped(.rename))
+        #expect(level1.state.newName == "Level 1")
+        level1.send(.newNameChanged("HSK 1"))
+        level1.send(.namingConfirmed)
+
+        #expect(await waitUntil { await repository.writes == ["renameFolder HSK 1"] })
+        #expect(await waitUntil { level1.state.title == "HSK 1" })
+    }
+
+    @Test("practising a subfolder draws from everything beneath it, and one too small does not start")
+    func practisingASubfolder() async {
+        let (hsk, log) = await makeDetail(Fixtures.hsk.id)
+        await repository.replace(Fixtures.nested.movingFolder(Fixtures.emptyFolder.id, into: Fixtures.hsk.id, at: nil))
+        #expect(await waitUntil { hsk.state.subfolders.count == 2 })
+        hsk.send(.practiseFolderTapped(Fixtures.emptyFolder.id))
+        hsk.send(.practiseFolderTapped(Fixtures.level1.id))
+
+        #expect(await waitUntil { log.effects.count == 1 })
+        guard case .startLesson(let request) = log.effects.first else {
+            Issue.record("expected a lesson request")
+            return
+        }
+        #expect(request.title == "Level 1")
+        #expect(request.pool.count == 5)
     }
 }
