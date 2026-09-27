@@ -123,6 +123,14 @@ so `static let` values used as defaults must be `nonisolated`. This has caught
 ... can not be referenced from a nonisolated context", and it is an error under
 Swift 6.
 
+Everything builds in the Swift 6 language mode. The trap the compiler will not catch:
+**a closure written inside a main-actor type and handed to a callback API is inferred
+main-actor, and Swift 6 checks that at runtime.** If the framework calls it on another
+thread, the process traps. `AVAudioEngine`'s input tap is the case in this app: it runs
+on the audio thread, so the recogniser's tap is `@Sendable` and works from local copies
+of what it needs. Any new callback into Speech or AVFAudio needs the same look, and none
+of it can be exercised on the simulator.
+
 ## Recording decisions
 
 Where a rule has a cost, there is a test asserting the cost rather than a comment

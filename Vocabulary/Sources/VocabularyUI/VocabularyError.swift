@@ -4,7 +4,7 @@ import Foundation
 import VocabularyDomain
 
 /// What the user is told when a library change fails, and what gets logged.
-enum VocabularyError: LoggedError, Equatable, Sendable {
+nonisolated enum VocabularyError: LoggedError, Equatable, Sendable {
     case saveWordFailed(VocabularyDomainError)
     case deleteWordsFailed(VocabularyDomainError)
     case createDeckFailed(VocabularyDomainError)

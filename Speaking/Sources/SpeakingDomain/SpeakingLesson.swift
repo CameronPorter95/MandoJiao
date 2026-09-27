@@ -6,8 +6,8 @@ import VocabularyDomain
 /// A value with no timers, audio or microphone. `SpeakingViewModel` owns those and feeds
 /// transcripts in through `submit`, so the three-attempt rule is exercised without audio
 /// hardware. Typed answers go through the same door.
-public struct SpeakingLesson: Equatable {
-    public enum Phase: Equatable {
+public struct SpeakingLesson: Equatable, Sendable {
+    public enum Phase: Equatable, Sendable {
         case idle
         case wrong(heard: String, attemptsLeft: Int)
         case correct(heard: String)

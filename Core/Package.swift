@@ -31,5 +31,5 @@ let package = Package(
             swiftSettings: mainActorByDefault
         ),
     ],
-    swiftLanguageModes: [.v5]
+    swiftLanguageModes: [.v6]
 )

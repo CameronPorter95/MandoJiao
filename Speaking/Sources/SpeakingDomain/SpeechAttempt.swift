@@ -2,7 +2,7 @@ import Foundation
 import VocabularyDomain
 
 /// One graded answer, as the attempt log records it.
-public struct SpeechAttempt {
+public struct SpeechAttempt: Sendable {
     public let card: WordPair
     public let outcome: SpeechOutcome
     public let strictness: AnswerStrictness

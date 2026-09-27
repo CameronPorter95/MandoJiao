@@ -3,7 +3,7 @@ import VocabularyDomain
 
 /// A whole lesson, fully decided up front: a fixed list of exercises, each one
 /// a set of pairs to match.
-public struct MatchingPlan: Identifiable, Hashable {
+public struct MatchingPlan: Identifiable, Hashable, Sendable {
     public let id: UUID
     public let title: String
     public let exercises: [[WordPair]]

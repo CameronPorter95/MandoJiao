@@ -137,6 +137,10 @@ not enough; if the behaviour reverses, a test should say so.
   `nonisolated extension`. Details in `Documentation/working-on-this.md`.
 - **Never instantiate a `VocabularySchemaV1` model in-process.** It resolves to the
   version 2 entity and crashes. Migration is tested against a real v1 store fixture.
+- **A callback closure inside a main-actor type is main-actor, checked at runtime.**
+  Everything builds as Swift 6, which traps if a framework calls such a closure on
+  another thread. Audio taps and similar callbacks must be `@Sendable` and capture
+  copies. The compiler does not catch it, and the simulator cannot reach the audio path.
 - **A test that blocks the main actor breaks the timing tests.** Heavy synchronous
   work goes in a `nonisolated` suite.
 - **Never name a target after an Apple framework.** `CoreAudio`, `Speech`,

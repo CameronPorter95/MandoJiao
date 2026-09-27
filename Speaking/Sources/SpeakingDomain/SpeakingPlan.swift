@@ -2,7 +2,7 @@ import Foundation
 import VocabularyDomain
 
 /// A speaking lesson: one card per word, in the order given.
-public struct SpeakingPlan: Identifiable, Hashable {
+public struct SpeakingPlan: Identifiable, Hashable, Sendable {
     public let id: UUID
     public let title: String
     public let cards: [WordPair]

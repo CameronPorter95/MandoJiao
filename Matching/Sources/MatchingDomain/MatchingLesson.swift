@@ -6,7 +6,7 @@ import VocabularyDomain
 ///
 /// A value with no timers or sound. `MatchingViewModel` owns the pause after a cleared
 /// board and the tones, so the tallying rules are exercised without either.
-public struct MatchingLesson: Equatable {
+public struct MatchingLesson: Equatable, Sendable {
     public let plan: MatchingPlan
 
     public private(set) var exerciseIndex = 0

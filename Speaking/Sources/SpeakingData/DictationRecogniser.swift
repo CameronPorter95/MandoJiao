@@ -217,10 +217,14 @@ public final class DictationRecogniser: SpeechRecognising {
             converter = nil
         }
 
-        input.installTap(onBus: 0, bufferSize: 4096, format: inputFormat) { [weak self] buffer, _ in
-            guard let self else { return }
-            let converted = Self.convert(buffer, using: self.converter, to: self.analyzerFormat)
-            self.inputContinuation?.yield(AnalyzerInput(buffer: converted))
+        // The tap runs on the audio thread, so it must not touch this actor's state. It
+        // takes its own copies; the tap is removed before any of them is cleared.
+        let converter = converter
+        let format = analyzerFormat
+        let continuation = inputContinuation
+        input.installTap(onBus: 0, bufferSize: 4096, format: inputFormat) { @Sendable buffer, _ in
+            let converted = Self.convert(buffer, using: converter, to: format)
+            continuation?.yield(AnalyzerInput(buffer: converted))
         }
 
         engine.prepare()

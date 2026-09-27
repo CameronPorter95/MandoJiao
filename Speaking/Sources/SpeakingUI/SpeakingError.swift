@@ -3,7 +3,7 @@ import CoreUI
 import Foundation
 import VocabularyDomain
 
-enum SpeakingError: LoggedError, Equatable, Sendable {
+nonisolated enum SpeakingError: LoggedError, Equatable, Sendable {
     case recordResultsFailed(VocabularyDomainError)
 
     var errorDescription: String? {

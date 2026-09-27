@@ -1,7 +1,7 @@
 import Foundation
 
 /// Why the microphone path is or is not usable right now.
-public enum SpeechAvailability: Equatable {
+public enum SpeechAvailability: Equatable, Sendable {
     case notPrepared
     case ready
     /// Microphone or speech recognition permission was refused.
@@ -18,7 +18,7 @@ public enum SpeechAvailability: Equatable {
 /// The recogniser offers runner-up transcriptions alongside its best guess. Grading only
 /// the best guess throws that away, and on isolated words the right answer is often
 /// sitting in second place.
-public struct SpeechOutcome: Equatable {
+public struct SpeechOutcome: Equatable, Sendable {
     public let best: String
     public let alternatives: [String]
 

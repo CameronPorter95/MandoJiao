@@ -1,12 +1,12 @@
 import Foundation
 import VocabularyDomain
 
-public enum TileSide: String, Hashable {
+public enum TileSide: String, Hashable, Sendable {
     case english
     case hanzi
 }
 
-public struct Tile: Identifiable, Hashable {
+public struct Tile: Identifiable, Hashable, Sendable {
     public let pairID: UUID
     public let side: TileSide
     public let text: String
@@ -20,7 +20,7 @@ public struct Tile: Identifiable, Hashable {
     public var id: String { "\(side.rawValue)-\(pairID.uuidString)" }
 }
 
-public enum TapResult: Equatable {
+public enum TapResult: Equatable, Sendable {
     /// Nothing was selected, now this tile is.
     case selected
     /// The already-selected tile was tapped again.
@@ -42,7 +42,7 @@ public enum TapResult: Equatable {
 ///
 /// Resolution is immediate on the second tap, from either side, so matches can
 /// be fired off back to back.
-public struct MatchingBoard: Equatable {
+public struct MatchingBoard: Equatable, Sendable {
     public let pairs: [WordPair]
     public let englishTiles: [Tile]
     public let hanziTiles: [Tile]

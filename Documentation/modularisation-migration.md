@@ -24,8 +24,8 @@ Settings/    SettingsUI  SettingsDI
 MandoJiao/   the app: MandoJiaoApp, ContentView, LiveDependencies, AppNavigation
 ```
 
-Every package lists `.iOS(.v26)` and `.macOS(.v26)` and builds as Swift 5 language
-mode, matching the app. Domain and data targets are nonisolated by default; UI, DI and
+Every package lists `.iOS(.v26)` and `.macOS(.v26)`, and everything, packages and app,
+builds in the Swift 6 language mode. Domain and data targets are nonisolated by default; UI, DI and
 test targets set `.defaultIsolation(MainActor.self)`.
 
 **Step 5, Settings.** The screen has no domain or data of its own: every setting it
@@ -51,10 +51,17 @@ bundle per package, built once from each `{X}DI`'s `.app(...)` constructors, and
 before versioning migrates under the packaged build with every record intact. **Not
 checked on a device**, and that is the last check before this branch ships.
 
-What does not match the architecture yet:
+**Follow-up, Swift 6.** Every package and the app now build in the Swift 6 language
+mode. The compiler found four errors: `SpeechOutcome` was not `Sendable`, and the three
+display errors conformed to `LocalizedError` from main-actor code. The domain values
+that cross actors are now `Sendable`, and the display errors and `LoggedError` are
+`nonisolated`. It found nothing in the one place that mattered most: the recogniser's
+audio tap read main-actor state from the audio thread, a data race under Swift 5 that
+Swift 6's runtime isolation check would have turned into a trap the moment the
+microphone opened. The tap now works from its own copies and is `@Sendable`. That was
+found by reading, not by any test, and cannot be exercised on the simulator.
 
-- **The packages build as Swift 5.** Moving to Swift 6 language mode is its own change,
-  best done one target at a time starting with the domains.
+Nothing in the ported architecture is left undone.
 
 ---
 
@@ -134,8 +141,8 @@ module.
 the Swift 6 language mode and nonisolated types. Domain types moving to nonisolated is
 the intent, but expect every `@MainActor` assumption in them to surface as an error,
 and set the language mode per target deliberately rather than inheriting it. Step 3
-chose Swift 5 mode for every package to match the app; moving to Swift 6 is its own
-change, best done one target at a time starting with the domains.
+chose Swift 5 mode for every package to match the app, and a follow-up moved everything
+to Swift 6 at once, since the compiler found only four errors.
 
 **The SwiftData store has live user data.** It was unversioned until step 2 and is now
 `VocabularySchemaV1` and `V2`. Moving the `@Model` classes into a package did not
