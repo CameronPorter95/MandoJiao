@@ -4,6 +4,7 @@ import VocabularyDomain
 
 struct FolderDetailScreen: View {
     let state: FolderDetailState
+    let expansion: FolderExpansion
     let onAction: (FolderDetailAction) -> Void
     let onOpenDeck: (UUID) -> Void
     let onOpenFolder: (UUID) -> Void
@@ -35,10 +36,26 @@ struct FolderDetailScreen: View {
             }
 
             if !state.subfolders.isEmpty {
-                Section("Folders") {
-                    ForEach(state.subfolders) { subfolder in
-                        SubfolderRow(subfolder: subfolder, onOpen: onOpenFolder)
+                let isSectionExpanded = !expansion.foldedSections.contains(state.folderID)
+                Section {
+                    if isSectionExpanded {
+                        ForEach(state.subfolders) { subfolder in
+                            SubfolderRow(subfolder: subfolder, expansion: expansion, onOpen: onOpenFolder)
+                        }
                     }
+                } header: {
+                    Button {
+                        withAnimation { expansion.toggleSection(state.folderID) }
+                    } label: {
+                        HStack {
+                            Text("Folders")
+                            Spacer()
+                            Image(systemName: "chevron.down")
+                                .rotationEffect(.degrees(isSectionExpanded ? 0 : -90))
+                                .accessibilityLabel(isSectionExpanded ? "Collapse" : "Expand")
+                        }
+                    }
+                    .tint(.secondary)
                 }
             }
 
@@ -112,17 +129,19 @@ struct FolderDetailScreen: View {
     }
 }
 
-/// A folder beneath the one shown. Whether it is folded is this row's own concern, so it
-/// lives here rather than in the view model.
+/// A folder beneath the one shown, folded or not as it was last left anywhere in the library.
 private struct SubfolderRow: View {
     let subfolder: FolderDetailState.Subfolder
+    let expansion: FolderExpansion
     let onOpen: (UUID) -> Void
-    @State private var isExpanded = false
 
     var body: some View {
         if let children = subfolder.children {
-            DisclosureGroup(isExpanded: $isExpanded) {
-                ForEach(children) { SubfolderRow(subfolder: $0, onOpen: onOpen) }
+            DisclosureGroup(isExpanded: Binding(
+                get: { expansion.expanded.contains(subfolder.id) },
+                set: { expansion.setExpanded(subfolder.id, $0) }
+            )) {
+                ForEach(children) { SubfolderRow(subfolder: $0, expansion: expansion, onOpen: onOpen) }
             } label: {
                 row
             }

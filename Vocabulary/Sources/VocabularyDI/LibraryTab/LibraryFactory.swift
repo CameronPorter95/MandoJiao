@@ -28,7 +28,11 @@ public enum LibraryFactory: NavigationInputRouteFactory {
                     openDeck: column.openDeck,
                     openFolder: column.openFolder
                 ),
-                input: FolderDetailInput(folderID: folderID, minimumMatchingWords: input.minimumMatchingWords)
+                input: FolderDetailInput(
+                    folderID: folderID,
+                    minimumMatchingWords: input.minimumMatchingWords,
+                    expansion: column.expansion
+                )
             ))
         }
         return LibraryRoute(

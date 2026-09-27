@@ -4,17 +4,20 @@ import SwiftUI
 public struct FolderDetailRoute: View {
     @State private var viewModel: FolderDetailViewModel
     private let navigation: FolderDetailNavigation
+    private let expansion: FolderExpansion
 
     @State private var error: VocabularyError?
 
-    public init(viewModel: FolderDetailViewModel, navigation: FolderDetailNavigation) {
+    public init(viewModel: FolderDetailViewModel, navigation: FolderDetailNavigation, expansion: FolderExpansion) {
         _viewModel = State(initialValue: viewModel)
         self.navigation = navigation
+        self.expansion = expansion
     }
 
     public var body: some View {
         FolderDetailScreen(
             state: viewModel.state,
+            expansion: expansion,
             onAction: { viewModel.send($0) },
             onOpenDeck: { navigation.didOpenDeck($0) },
             onOpenFolder: { navigation.didOpenFolder($0) }

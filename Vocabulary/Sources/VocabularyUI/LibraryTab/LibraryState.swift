@@ -18,6 +18,18 @@ public enum LibraryPage: Hashable, Sendable {
 public struct LibraryColumnNavigation {
     public let openDeck: (UUID) -> Void
     public let openFolder: (UUID) -> Void
+    public let expansion: FolderExpansion
+}
+
+/// Which folders are unfolded, shared by the tree and every folder screen so each shows a
+/// folder the way it was last left.
+@MainActor
+public struct FolderExpansion {
+    public let expanded: Set<UUID>
+    /// Folders whose screen has its Folders section folded away.
+    public let foldedSections: Set<UUID>
+    public let setExpanded: (UUID, Bool) -> Void
+    public let toggleSection: (UUID) -> Void
 }
 
 /// A folder about to be named: a new one, or an existing one being renamed.
@@ -31,6 +43,9 @@ struct LibraryState: Equatable {
     var selection: LibrarySelection?
     /// Pushed over the selection, in order.
     var path: [LibraryPage] = []
+    /// Folded unless listed, everywhere a folder appears in a tree.
+    var expandedFolders: Set<UUID> = []
+    var foldedSections: Set<UUID> = []
     var isEditing = false
     var naming: FolderNaming?
     var name = ""
@@ -63,6 +78,8 @@ enum LibraryAction: Equatable {
     case opened(LibraryPage)
     /// The stack after going back.
     case pathChanged([LibraryPage])
+    case folderExpanded(UUID, Bool)
+    case folderSectionToggled(UUID)
     case editTapped
     case folderMoved(id: UUID, parentID: UUID?, index: Int)
     case newFolderTapped(parentID: UUID?)

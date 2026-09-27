@@ -154,4 +154,26 @@ struct LibraryViewModelTests {
         #expect(request.title == "HSK")
         #expect(request.pool.count == 5)
     }
+
+    @Test("folders start folded and stay as they were left, wherever they were unfolded")
+    func expansion() async {
+        let (library, _) = await makeLibrary()
+        #expect(library.state.expandedFolders.isEmpty)
+
+        library.send(.folderExpanded(Fixtures.hsk.id, true))
+        library.send(.folderExpanded(Fixtures.level1.id, true))
+        library.send(.folderExpanded(Fixtures.hsk.id, false))
+        library.send(.selected(.folder(Fixtures.hsk.id)))
+        library.send(.selected(nil))
+        #expect(library.state.expandedFolders == [Fixtures.level1.id])
+    }
+
+    @Test("a folder's Folders section folds and unfolds, and is remembered per folder")
+    func sections() async {
+        let (library, _) = await makeLibrary()
+        library.send(.folderSectionToggled(Fixtures.hsk.id))
+        library.send(.folderSectionToggled(Fixtures.level1.id))
+        library.send(.folderSectionToggled(Fixtures.level1.id))
+        #expect(library.state.foldedSections == [Fixtures.hsk.id])
+    }
 }

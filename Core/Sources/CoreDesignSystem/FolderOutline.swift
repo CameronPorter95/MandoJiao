@@ -41,30 +41,37 @@ public struct FolderOutline<ID: Hashable & Sendable>: View {
     let pinned: [OutlinePinnedRow]
     let nodes: [OutlineNode<ID>]
     let selection: OutlineSelection<ID>?
+    let expanded: Set<ID>
     let isEditing: Bool
     let canMove: (OutlineMove<ID>) -> Bool
     let onMove: (OutlineMove<ID>) -> Void
     let onSelect: (OutlineSelection<ID>) -> Void
+    let onExpand: (ID, Bool) -> Void
     let actions: (ID) -> [OutlineAction]
 
     /// `selection` is highlighted only at regular width, where the next column shows it.
+    /// Rows are folded unless `expanded` holds them, and `onExpand` reports every change.
     public init(
         pinned: [OutlinePinnedRow] = [],
         nodes: [OutlineNode<ID>],
         selection: OutlineSelection<ID>?,
+        expanded: Set<ID>,
         isEditing: Bool,
         canMove: @escaping (OutlineMove<ID>) -> Bool,
         onMove: @escaping (OutlineMove<ID>) -> Void,
         onSelect: @escaping (OutlineSelection<ID>) -> Void,
+        onExpand: @escaping (ID, Bool) -> Void,
         actions: @escaping (ID) -> [OutlineAction]
     ) {
         self.pinned = pinned
         self.nodes = nodes
         self.selection = selection
+        self.expanded = expanded
         self.isEditing = isEditing
         self.canMove = canMove
         self.onMove = onMove
         self.onSelect = onSelect
+        self.onExpand = onExpand
         self.actions = actions
     }
 
@@ -110,7 +117,7 @@ private struct OutlineCollection<ID: Hashable & Sendable>: UIViewRepresentable {
 
     func updateUIView(_ collectionView: UICollectionView, context: Context) {
         context.coordinator.outline = outline
-        context.coordinator.apply(pinned: outline.pinned, nodes: outline.nodes)
+        context.coordinator.apply(pinned: outline.pinned, nodes: outline.nodes, expanded: outline.expanded)
         if collectionView.isEditing != outline.isEditing {
             collectionView.isEditing = outline.isEditing
         }
@@ -140,8 +147,7 @@ private final class OutlineCoordinator<ID: Hashable & Sendable>: NSObject, UICol
     private var dataSource: UICollectionViewDiffableDataSource<Int, Item>!
     private var nodesByID: [ID: OutlineNode<ID>] = [:]
     private var pinnedByID: [String: OutlinePinnedRow] = [:]
-    private var applied: (pinned: [OutlinePinnedRow], nodes: [OutlineNode<ID>])?
-    private var collapsed: Set<ID> = []
+    private var applied: (pinned: [OutlinePinnedRow], nodes: [OutlineNode<ID>], expanded: Set<ID>)?
     /// Where a drop between rows would land. UIKit's own gap is never opened, because
     /// shifting rows under the finger changes which row it is over and the drop flickers.
     private let insertionLine = UIView()
@@ -185,10 +191,10 @@ private final class OutlineCoordinator<ID: Hashable & Sendable>: NSObject, UICol
         }
 
         dataSource.sectionSnapshotHandlers.willCollapseItem = { [weak self] item in
-            if case .node(let id) = item { self?.collapsed.insert(id) }
+            if case .node(let id) = item { self?.outline.onExpand(id, false) }
         }
         dataSource.sectionSnapshotHandlers.willExpandItem = { [weak self] item in
-            if case .node(let id) = item { self?.collapsed.remove(id) }
+            if case .node(let id) = item { self?.outline.onExpand(id, true) }
         }
         return collectionView
     }
@@ -217,10 +223,10 @@ private final class OutlineCoordinator<ID: Hashable & Sendable>: NSObject, UICol
         return accessories
     }
 
-    func apply(pinned: [OutlinePinnedRow], nodes: [OutlineNode<ID>]) {
-        if let applied, applied.pinned == pinned, applied.nodes == nodes { return }
+    func apply(pinned: [OutlinePinnedRow], nodes: [OutlineNode<ID>], expanded: Set<ID>) {
+        if let applied, applied.pinned == pinned, applied.nodes == nodes, applied.expanded == expanded { return }
         let animate = applied != nil
-        applied = (pinned, nodes)
+        applied = (pinned, nodes, expanded)
         pinnedByID = Dictionary(uniqueKeysWithValues: pinned.map { ($0.id, $0) })
         nodesByID = [:]
 
@@ -235,7 +241,7 @@ private final class OutlineCoordinator<ID: Hashable & Sendable>: NSObject, UICol
             }
         }
         add(nodes, to: nil)
-        tree.expand(nodesByID.keys.filter { !collapsed.contains($0) }.map(Item.node))
+        tree.expand(nodesByID.keys.filter(expanded.contains).map(Item.node))
 
         dataSource.apply(pinnedSnapshot, to: Self.pinnedSection, animatingDifferences: animate)
         dataSource.apply(tree, to: Self.treeSection, animatingDifferences: animate)

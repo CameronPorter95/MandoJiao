@@ -18,6 +18,6 @@ public enum FolderDetailFactory: NavigationInputRouteFactory {
             deleteDeck: DeleteDeckUseCase(repository: repository),
             moveDeck: MoveDeckUseCase(repository: repository)
         )
-        return FolderDetailRoute(viewModel: viewModel, navigation: navigation)
+        return FolderDetailRoute(viewModel: viewModel, navigation: navigation, expansion: input.expansion)
     }
 }

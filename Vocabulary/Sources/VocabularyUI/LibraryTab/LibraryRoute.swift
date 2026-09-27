@@ -13,6 +13,8 @@ public struct LibraryRoute: View {
     private let page: (LibraryPage, LibraryColumnNavigation) -> AnyView
 
     @State private var error: VocabularyError?
+    /// Not derived from the selection: popping the stack to its first screen reports `.sidebar`.
+    @State private var compactColumn = NavigationSplitViewColumn.sidebar
 
     /// `root` builds what the sidebar selects, and `page` what is pushed over it.
     public init(
@@ -29,8 +31,11 @@ public struct LibraryRoute: View {
 
     public var body: some View {
         let state = viewModel.state
-        NavigationSplitView(preferredCompactColumn: compactColumn) {
-            LibrarySidebar(state: state, onAction: { viewModel.send($0) })
+        NavigationSplitView(preferredCompactColumn: $compactColumn) {
+            LibrarySidebar(state: state, onAction: { action in
+                viewModel.send(action)
+                if case .selected(.some) = action { compactColumn = .detail }
+            })
         } detail: {
             NavigationStack(path: Binding(get: { viewModel.state.path }, set: { viewModel.send(.pathChanged($0)) })) {
                 Group {
@@ -59,14 +64,13 @@ public struct LibraryRoute: View {
     private var columnNavigation: LibraryColumnNavigation {
         LibraryColumnNavigation(
             openDeck: { viewModel.send(.opened(.deck($0))) },
-            openFolder: { viewModel.send(.opened(.folder($0))) }
-        )
-    }
-
-    private var compactColumn: Binding<NavigationSplitViewColumn> {
-        Binding(
-            get: { viewModel.state.selection == nil ? .sidebar : .detail },
-            set: { if $0 == .sidebar { viewModel.send(.selected(nil)) } }
+            openFolder: { viewModel.send(.opened(.folder($0))) },
+            expansion: FolderExpansion(
+                expanded: viewModel.state.expandedFolders,
+                foldedSections: viewModel.state.foldedSections,
+                setExpanded: { viewModel.send(.folderExpanded($0, $1)) },
+                toggleSection: { viewModel.send(.folderSectionToggled($0)) }
+            )
         )
     }
 }

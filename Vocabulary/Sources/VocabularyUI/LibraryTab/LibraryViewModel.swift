@@ -64,6 +64,16 @@ public final class LibraryViewModel {
         case .pathChanged(let path):
             state.path = path
 
+        case .folderExpanded(let id, let isExpanded):
+            if isExpanded {
+                state.expandedFolders.insert(id)
+            } else {
+                state.expandedFolders.remove(id)
+            }
+
+        case .folderSectionToggled(let id):
+            if state.foldedSections.remove(id) == nil { state.foldedSections.insert(id) }
+
         case .editTapped:
             state.isEditing.toggle()
 
