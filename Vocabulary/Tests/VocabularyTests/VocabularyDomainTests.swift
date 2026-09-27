@@ -85,9 +85,5 @@ struct VocabularyDomainTests {
         #expect(draft.trimmed.meanings == ["to drink", "to shout"])
         #expect(draft.isComplete)
         #expect(!WordDraft(meanings: ["  "], hanzi: "喝").isComplete)
-
-        var edited = draft
-        edited.english = "to sip"
-        #expect(edited.meanings == ["to sip", "", "To Drink", "to shout"])
     }
 }

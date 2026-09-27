@@ -13,6 +13,7 @@ public final class WordEditorViewModel {
     private let saveWord: SaveWordUseCase
     private let deleteWords: DeleteWordsUseCase
     private let suggestWord: SuggestWordUseCase
+    private let lookUpDictionary: LookUpDictionaryUseCase
     private let suggestionDelay: Duration
     private var suggestionTask: Task<Void, Never>?
 
@@ -22,6 +23,7 @@ public final class WordEditorViewModel {
         saveWord: SaveWordUseCase,
         deleteWords: DeleteWordsUseCase,
         suggestWord: SuggestWordUseCase,
+        lookUpDictionary: LookUpDictionaryUseCase,
         suggestionDelay: Duration = .milliseconds(250)
     ) {
         state = WordEditorState(
@@ -31,6 +33,7 @@ public final class WordEditorViewModel {
         self.saveWord = saveWord
         self.deleteWords = deleteWords
         self.suggestWord = suggestWord
+        self.lookUpDictionary = lookUpDictionary
         self.suggestionDelay = suggestionDelay
     }
 
@@ -41,15 +44,39 @@ public final class WordEditorViewModel {
         case .appeared:
             suggest()
 
-        case .englishChanged(let text):
-            state.draft.english = text
-
         case .hanziChanged(let text):
             state.draft.hanzi = text
             suggest()
 
         case .pinyinChanged(let text):
             state.draft.pinyin = text
+
+        case .senseToggled(let sense):
+            state.editMeanings { meanings in
+                if let index = meanings.firstIndex(of: sense) {
+                    meanings.remove(at: index)
+                } else {
+                    meanings.append(sense)
+                }
+            }
+
+        case .meaningAdded(let text):
+            let meaning = text.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !meaning.isEmpty, !state.meanings.contains(where: { $0.caseInsensitiveCompare(meaning) == .orderedSame })
+            else { return }
+            state.editMeanings { $0.append(meaning) }
+
+        case .meaningsMoved(let from, let to):
+            state.editMeanings { $0.move(fromOffsets: from, toOffset: to) }
+
+        case .meaningsRemoved(let offsets):
+            state.editMeanings { $0.remove(atOffsets: offsets) }
+
+        case .meaningMadeHeadline(let meaning):
+            state.editMeanings { meanings in
+                meanings.removeAll { $0 == meaning }
+                meanings.insert(meaning, at: 0)
+            }
 
         case .saveTapped:
             guard state.canSave else { return }
@@ -70,22 +97,43 @@ public final class WordEditorViewModel {
         }
     }
 
+    /// The lexicon and the dictionary are asked separately, so either failing still leaves
+    /// what the other knows.
     private func suggest() {
         suggestionTask?.cancel()
-        let hanzi = state.draft.hanzi
-        suggestionTask = Task { [suggestWord, suggestionDelay] in
+        let hanzi = state.draft.trimmed.hanzi
+        suggestionTask = Task { [suggestWord, lookUpDictionary, suggestionDelay] in
             do {
                 try await Task.sleep(for: suggestionDelay)
-                let suggestion = try await suggestWord(hanzi: hanzi)
-                guard !Task.isCancelled else { return }
-                state.suggestion = suggestion
-            } catch is CancellationError {
-                // Superseded by later typing, not a failure.
             } catch {
-                // Logged but not shown: an alert while typing would cost more than a missing hint.
-                let domainError = error as? VocabularyDomainError ?? .unexpected(model: DomainErrorModel(error))
-                VocabularyError.suggestWordFailed(domainError).log()
+                return // Superseded by later typing, not a failure.
             }
+            async let suggestion = Self.hint(failure: VocabularyError.suggestWordFailed) {
+                try await suggestWord(hanzi: hanzi)
+            }
+            async let entries = Self.hint(failure: VocabularyError.lookUpDictionaryFailed) {
+                try await lookUpDictionary(hanzi: hanzi)
+            }
+            let lookup = WordEditorState.Lookup(hanzi: hanzi, suggestion: await suggestion ?? nil, entries: await entries ?? [])
+            guard !Task.isCancelled else { return }
+            state.lookup = lookup
+        }
+    }
+
+    /// Nil on failure, which is logged but not shown: an alert while typing would cost more
+    /// than a missing hint.
+    private nonisolated static func hint<T: Sendable>(
+        failure makeError: (VocabularyDomainError) -> VocabularyError,
+        _ work: () async throws -> T
+    ) async -> T? {
+        do {
+            return try await work()
+        } catch is CancellationError {
+            return nil
+        } catch {
+            let domainError = error as? VocabularyDomainError ?? .unexpected(model: DomainErrorModel(error))
+            makeError(domainError).log()
+            return nil
         }
     }
 

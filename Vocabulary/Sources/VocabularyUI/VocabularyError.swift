@@ -18,6 +18,7 @@ nonisolated enum VocabularyError: LoggedError, Equatable, Sendable {
     case deleteFolderFailed(VocabularyDomainError)
     case clearMistakesFailed(VocabularyDomainError)
     case suggestWordFailed(VocabularyDomainError)
+    case lookUpDictionaryFailed(VocabularyDomainError)
 
     var errorDescription: String? {
         switch self {
@@ -33,7 +34,8 @@ nonisolated enum VocabularyError: LoggedError, Equatable, Sendable {
         case .moveFolderFailed: "The folder could not be moved."
         case .deleteFolderFailed: "The folder could not be deleted."
         case .clearMistakesFailed: "The mistakes list could not be cleared."
-        case .suggestWordFailed: "No pinyin or English could be suggested."
+        case .suggestWordFailed: "No pinyin could be suggested."
+        case .lookUpDictionaryFailed: "The dictionary could not be read."
         }
     }
 
@@ -43,7 +45,7 @@ nonisolated enum VocabularyError: LoggedError, Equatable, Sendable {
              .renameDeckFailed(let error), .updateDeckFailed(let error), .deleteDeckFailed(let error),
              .moveDeckFailed(let error), .createFolderFailed(let error), .renameFolderFailed(let error),
              .moveFolderFailed(let error), .deleteFolderFailed(let error), .clearMistakesFailed(let error),
-             .suggestWordFailed(let error):
+             .suggestWordFailed(let error), .lookUpDictionaryFailed(let error):
             error
         }
     }
@@ -65,6 +67,7 @@ nonisolated enum VocabularyError: LoggedError, Equatable, Sendable {
         case .deleteFolderFailed: "deleteFolder"
         case .clearMistakesFailed: "clearMistakes"
         case .suggestWordFailed: "suggestWord"
+        case .lookUpDictionaryFailed: "lookUpDictionary"
         }
     }
 

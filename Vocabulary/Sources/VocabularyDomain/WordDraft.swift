@@ -18,14 +18,8 @@ public nonisolated struct WordDraft: Equatable, Sendable {
         self.init(meanings: english.isEmpty ? [] : [english], hanzi: hanzi, pinyin: pinyin)
     }
 
-    /// The headline. Setting it replaces the headline and keeps the other meanings.
-    public var english: String {
-        get { meanings.first ?? "" }
-        set {
-            let others = meanings.dropFirst()
-            meanings = (newValue.isEmpty ? [] : [newValue]) + others
-        }
-    }
+    /// The headline.
+    public var english: String { meanings.first ?? "" }
 
     /// Every field trimmed, and blank or repeated meanings dropped, keeping the first of each.
     public var trimmed: WordDraft {
