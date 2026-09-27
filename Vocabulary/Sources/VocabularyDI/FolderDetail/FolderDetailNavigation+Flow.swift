@@ -3,8 +3,7 @@ import VocabularyDomain
 import VocabularyUI
 
 public extension FolderDetailNavigation {
-    /// A folder in the library's middle column. A deck it opens goes in the next column; a
-    /// folder it opens takes its place, and is highlighted in the sidebar.
+    /// A folder in the library's stack. Decks and folders it opens are pushed over it.
     static func library(
         presentMatching: @escaping (LessonRequest) -> Void,
         openDeck: @escaping (UUID) -> Void,

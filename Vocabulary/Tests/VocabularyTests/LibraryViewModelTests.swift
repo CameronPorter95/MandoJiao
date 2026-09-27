@@ -27,21 +27,39 @@ struct LibraryViewModelTests {
         return (viewModel, log)
     }
 
-    @Test("choosing somewhere else in the sidebar closes the open deck, going back clears both")
-    func selection() async {
+    @Test("folders and decks opened from a folder push onto its stack, and the sidebar starts a new one")
+    func stack() async {
         let (library, _) = await makeLibrary()
-        library.send(.selected(.folder(Fixtures.level1.id)))
-        library.send(.deckOpened(Fixtures.part1.id))
-        library.send(.selected(.folder(Fixtures.level1.id)))
-        #expect(library.state.openDeck == Fixtures.part1.id)
+        library.send(.selected(.folder(Fixtures.hsk.id)))
+        library.send(.opened(.folder(Fixtures.level1.id)))
+        library.send(.opened(.deck(Fixtures.part1.id)))
+        #expect(library.state.path == [.folder(Fixtures.level1.id), .deck(Fixtures.part1.id)])
+
+        library.send(.pathChanged([.folder(Fixtures.level1.id)]))
+        #expect(library.state.path == [.folder(Fixtures.level1.id)])
 
         library.send(.selected(.folder(Fixtures.starter.id)))
-        #expect(library.state.openDeck == nil)
+        #expect(library.state.path.isEmpty)
 
-        library.send(.deckOpened(Fixtures.fullDeck.id))
+        library.send(.opened(.deck(Fixtures.fullDeck.id)))
         library.send(.selected(nil))
         #expect(library.state.selection == nil)
-        #expect(library.state.openDeck == nil)
+        #expect(library.state.path.isEmpty)
+    }
+
+    @Test("a page whose folder or deck is deleted is popped, with everything above it")
+    func pruning() async {
+        let (library, _) = await makeLibrary()
+        library.send(.selected(.folder(Fixtures.hsk.id)))
+        library.send(.opened(.folder(Fixtures.level1.id)))
+        library.send(.opened(.deck(Fixtures.part1.id)))
+
+        await repository.replace(Vocabulary(
+            words: Fixtures.words,
+            decks: [Fixtures.fullDeck, Fixtures.part2],
+            folders: [Fixtures.starter, Fixtures.hsk, Fixtures.level1]
+        ))
+        #expect(await waitUntil { library.state.path == [.folder(Fixtures.level1.id)] })
     }
 
     @Test("dragging a folder moves it at once and saves where it landed")
@@ -101,15 +119,15 @@ struct LibraryViewModelTests {
     @Test("deleting a folder with anything inside asks first, and closes what was open inside it")
     func deleting() async {
         let (library, _) = await makeLibrary()
-        library.send(.selected(.folder(Fixtures.level1.id)))
-        library.send(.deckOpened(Fixtures.part1.id))
+        library.send(.selected(.folder(Fixtures.hsk.id)))
+        library.send(.opened(.deck(Fixtures.part1.id)))
 
         library.send(.deleteFolderTapped(Fixtures.hsk.id))
         #expect(library.state.deletionWarning == "HSK and the 1 folder and 2 decks inside it will be deleted. Their words stay in the library.")
         library.send(.deleteFolderConfirmed)
 
         #expect(library.state.selection == nil)
-        #expect(library.state.openDeck == nil)
+        #expect(library.state.path.isEmpty)
         #expect(await waitUntil { await repository.snapshot.folders.map(\.name) == ["Starter", "Empty"] })
     }
 

@@ -55,11 +55,14 @@ public final class LibraryViewModel {
             observation = nil
 
         case .selected(let selection):
-            if selection != state.selection { state.openDeck = nil }
             state.selection = selection
+            state.path = []
 
-        case .deckOpened(let id):
-            state.openDeck = id
+        case .opened(let page):
+            state.path.append(page)
+
+        case .pathChanged(let path):
+            state.path = path
 
         case .editTapped:
             state.isEditing.toggle()
@@ -124,14 +127,20 @@ public final class LibraryViewModel {
         }
     }
 
-    /// Anything open that no longer exists is closed.
+    /// Anything open that no longer exists is closed, with everything pushed over it.
     private func receive(_ vocabulary: Vocabulary) {
         state.vocabulary = vocabulary
         if case .folder(let id) = state.selection, vocabulary.folder(id: id) == nil {
             state.selection = nil
+            state.path = []
         }
-        if let deck = state.openDeck, vocabulary.deck(id: deck) == nil {
-            state.openDeck = nil
+        if let gone = state.path.firstIndex(where: { page in
+            switch page {
+            case .folder(let id): vocabulary.folder(id: id) == nil
+            case .deck(let id): vocabulary.deck(id: id) == nil
+            }
+        }) {
+            state.path.removeSubrange(gone...)
         }
     }
 

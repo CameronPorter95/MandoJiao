@@ -7,7 +7,13 @@ public enum LibrarySelection: Hashable, Sendable {
     case folder(UUID)
 }
 
-/// How a column the library shows asks it to open something else.
+/// A screen pushed over the selection: a folder opened from inside another, or a deck.
+public enum LibraryPage: Hashable, Sendable {
+    case folder(UUID)
+    case deck(UUID)
+}
+
+/// How a screen the library shows asks it to push another.
 @MainActor
 public struct LibraryColumnNavigation {
     public let openDeck: (UUID) -> Void
@@ -23,8 +29,8 @@ enum FolderNaming: Equatable {
 struct LibraryState: Equatable {
     var vocabulary: Vocabulary = .empty
     var selection: LibrarySelection?
-    /// The deck shown in the last column, or pushed on iPhone.
-    var openDeck: UUID?
+    /// Pushed over the selection, in order.
+    var path: [LibraryPage] = []
     var isEditing = false
     var naming: FolderNaming?
     var name = ""
@@ -54,8 +60,9 @@ enum LibraryAction: Equatable {
     case disappeared
     /// Nil when going back to the sidebar on iPhone.
     case selected(LibrarySelection?)
-    /// Nil when going back from the deck on iPhone.
-    case deckOpened(UUID?)
+    case opened(LibraryPage)
+    /// The stack after going back.
+    case pathChanged([LibraryPage])
     case editTapped
     case folderMoved(id: UUID, parentID: UUID?, index: Int)
     case newFolderTapped(parentID: UUID?)

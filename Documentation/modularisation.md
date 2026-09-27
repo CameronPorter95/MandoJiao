@@ -244,9 +244,14 @@ are all of this shape.
 **One bundle per package.** `{X}Navigation` holds one member per screen, so a factory
 signature stays at a single navigation parameter however many screens the package
 gains. `VocabularyNavigation` holds `home`, `deckDetail` and `library`, and `HomeFactory`
-and `LibraryFactory` take the whole bundle because each roots a tab. The library's middle
-column gets its `FolderDetailNavigation` from `LibraryFactory`, since "a deck was opened"
-goes to the library's own selection rather than out of the package. A package with one screen that has a way
+and `LibraryFactory` take the whole bundle because each roots a tab. A folder in the
+library gets its `FolderDetailNavigation` from `LibraryFactory`, since "a deck or folder
+was opened" pushes onto the library's own stack rather than leaving the package.
+
+The library is two columns, the tree beside a `NavigationStack`, not three. With a middle
+column, re-entering it on iPhone sent its screen a disappear while it was still showing,
+which ended the route's effects loop and live data; a lesson request then waited until
+the screen next appeared. A package with one screen that has a way
 out, like `Speaking` or `Matching`, uses that screen's navigation as its bundle.
 
 **Flow constructors live in `{X}DI`,** named for the flow (`.app(...)`): the bundle's

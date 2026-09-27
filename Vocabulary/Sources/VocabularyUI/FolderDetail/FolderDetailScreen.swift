@@ -4,13 +4,9 @@ import VocabularyDomain
 
 struct FolderDetailScreen: View {
     let state: FolderDetailState
-    /// The deck open in the next column, highlighted at regular width.
-    let openDeck: UUID?
     let onAction: (FolderDetailAction) -> Void
     let onOpenDeck: (UUID) -> Void
     let onOpenFolder: (UUID) -> Void
-
-    @Environment(\.horizontalSizeClass) private var sizeClass
 
     // Not List(selection:), which turns a tap on Start lesson into a row selection.
     var body: some View {
@@ -59,7 +55,6 @@ struct FolderDetailScreen: View {
                         DeckRow(deck: deck, vocabulary: state.vocabulary, minimumMatchingWords: state.minimumMatchingWords)
                     }
                     .tint(.primary)
-                    .listRowBackground(isOpen(deck) ? Theme.accent.opacity(0.18) : nil)
                     .swipeActions(edge: .leading) {
                         Button {
                             onAction(.practiseDeckTapped(deck.id))
@@ -115,18 +110,14 @@ struct FolderDetailScreen: View {
             onCancel: { onAction(.createCancelled) }
         )
     }
-
-    private func isOpen(_ deck: DeckSummary) -> Bool {
-        sizeClass == .regular && deck.id == openDeck
-    }
 }
 
-/// A folder beneath the one shown, starting expanded as Notes does. Whether it is folded is
-/// this row's own concern, so it lives here rather than in the view model.
+/// A folder beneath the one shown. Whether it is folded is this row's own concern, so it
+/// lives here rather than in the view model.
 private struct SubfolderRow: View {
     let subfolder: FolderDetailState.Subfolder
     let onOpen: (UUID) -> Void
-    @State private var isExpanded = true
+    @State private var isExpanded = false
 
     var body: some View {
         if let children = subfolder.children {

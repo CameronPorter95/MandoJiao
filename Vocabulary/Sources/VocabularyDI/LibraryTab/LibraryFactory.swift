@@ -3,8 +3,8 @@ import SwiftUI
 import VocabularyDomain
 import VocabularyUI
 
-/// The composition root for the library tab and its columns, which is why it takes the
-/// package's whole navigation bundle.
+/// The composition root for the library tab and the stack beside its tree, which is why it
+/// takes the package's whole navigation bundle.
 public enum LibraryFactory: NavigationInputRouteFactory {
     public static func makeRoute(
         dependencies: Dependencies,
@@ -20,35 +20,37 @@ public enum LibraryFactory: NavigationInputRouteFactory {
             moveFolder: MoveFolderUseCase(repository: repository),
             deleteFolder: DeleteFolderUseCase(repository: repository)
         )
+        let folder = { (folderID: UUID, column: LibraryColumnNavigation) in
+            AnyView(FolderDetailFactory.makeRoute(
+                dependencies: dependencies,
+                navigation: .library(
+                    presentMatching: navigation.library.didRequestMatching,
+                    openDeck: column.openDeck,
+                    openFolder: column.openFolder
+                ),
+                input: FolderDetailInput(folderID: folderID, minimumMatchingWords: input.minimumMatchingWords)
+            ))
+        }
         return LibraryRoute(
             viewModel: viewModel,
             navigation: navigation.library,
-            content: { selection, openDeck, column in
+            root: { selection, column in
                 switch selection {
-                case .allWords:
-                    return AnyView(WordLibraryFactory.makeRoute(dependencies: dependencies))
-                case .folder(let folderID):
-                    return AnyView(FolderDetailFactory.makeRoute(
-                        dependencies: dependencies,
-                        navigation: .library(
-                            presentMatching: navigation.library.didRequestMatching,
-                            openDeck: column.openDeck,
-                            openFolder: column.openFolder
-                        ),
-                        input: FolderDetailInput(
-                            folderID: folderID,
-                            minimumMatchingWords: input.minimumMatchingWords,
-                            openDeck: openDeck
-                        )
-                    ))
+                case .allWords: AnyView(WordLibraryFactory.makeRoute(dependencies: dependencies))
+                case .folder(let id): folder(id, column)
                 }
             },
-            detail: { deckID in
-                AnyView(DeckDetailFactory.makeRoute(
-                    dependencies: dependencies,
-                    navigation: navigation.deckDetail,
-                    input: DeckDetailInput(deckID: deckID, minimumMatchingWords: input.minimumMatchingWords)
-                ))
+            page: { page, column in
+                switch page {
+                case .folder(let id):
+                    folder(id, column)
+                case .deck(let id):
+                    AnyView(DeckDetailFactory.makeRoute(
+                        dependencies: dependencies,
+                        navigation: navigation.deckDetail,
+                        input: DeckDetailInput(deckID: id, minimumMatchingWords: input.minimumMatchingWords)
+                    ))
+                }
             }
         )
     }

@@ -1,45 +1,46 @@
 import CoreUI
 import SwiftUI
 
-/// The sidebar, then what it has open, then the open deck. On iPhone the columns become a
-/// push stack, driven by the same selection.
+/// The sidebar beside a stack: what it has open, then folders and decks pushed over that.
+/// On iPhone the two collapse into one push stack.
+///
+/// Two columns, not three. With a third, the middle column's screen was sent a disappear on
+/// iPhone while still showing, which ended its effects loop and live data.
 public struct LibraryRoute: View {
     @State private var viewModel: LibraryViewModel
     private let navigation: LibraryNavigation
-    private let content: (LibrarySelection, UUID?, LibraryColumnNavigation) -> AnyView
-    private let detail: (UUID) -> AnyView
+    private let root: (LibrarySelection, LibraryColumnNavigation) -> AnyView
+    private let page: (LibraryPage, LibraryColumnNavigation) -> AnyView
 
     @State private var error: VocabularyError?
 
-    /// `content` is given what is selected, the open deck, and how to open something else.
+    /// `root` builds what the sidebar selects, and `page` what is pushed over it.
     public init(
         viewModel: LibraryViewModel,
         navigation: LibraryNavigation,
-        content: @escaping (LibrarySelection, UUID?, LibraryColumnNavigation) -> AnyView,
-        detail: @escaping (UUID) -> AnyView
+        root: @escaping (LibrarySelection, LibraryColumnNavigation) -> AnyView,
+        page: @escaping (LibraryPage, LibraryColumnNavigation) -> AnyView
     ) {
         _viewModel = State(initialValue: viewModel)
         self.navigation = navigation
-        self.content = content
-        self.detail = detail
+        self.root = root
+        self.page = page
     }
 
     public var body: some View {
         let state = viewModel.state
         NavigationSplitView(preferredCompactColumn: compactColumn) {
             LibrarySidebar(state: state, onAction: { viewModel.send($0) })
-        } content: {
-            if let selection = state.selection {
-                content(selection, state.openDeck, columnNavigation)
-                    .id(selection)
-            } else {
-                ContentUnavailableView("Choose a folder", systemImage: "folder")
-            }
         } detail: {
-            if let deck = state.openDeck {
-                detail(deck).id(deck)
-            } else {
-                ContentUnavailableView("Choose a deck", systemImage: "rectangle.stack")
+            NavigationStack(path: Binding(get: { viewModel.state.path }, set: { viewModel.send(.pathChanged($0)) })) {
+                Group {
+                    if let selection = state.selection {
+                        root(selection, columnNavigation).id(selection)
+                    } else {
+                        ContentUnavailableView("Choose a folder", systemImage: "folder")
+                    }
+                }
+                .navigationDestination(for: LibraryPage.self) { page($0, columnNavigation) }
             }
         }
         .onAppear { viewModel.send(.appeared) }
@@ -57,25 +58,15 @@ public struct LibraryRoute: View {
 
     private var columnNavigation: LibraryColumnNavigation {
         LibraryColumnNavigation(
-            openDeck: { viewModel.send(.deckOpened($0)) },
-            openFolder: { viewModel.send(.selected(.folder($0))) }
+            openDeck: { viewModel.send(.opened(.deck($0))) },
+            openFolder: { viewModel.send(.opened(.folder($0))) }
         )
     }
 
     private var compactColumn: Binding<NavigationSplitViewColumn> {
         Binding(
-            get: {
-                let state = viewModel.state
-                if state.openDeck != nil { return .detail }
-                return state.selection == nil ? .sidebar : .content
-            },
-            set: { column in
-                switch column {
-                case .sidebar: viewModel.send(.selected(nil))
-                case .content: viewModel.send(.deckOpened(nil))
-                default: break
-                }
-            }
+            get: { viewModel.state.selection == nil ? .sidebar : .detail },
+            set: { if $0 == .sidebar { viewModel.send(.selected(nil)) } }
         )
     }
 }
