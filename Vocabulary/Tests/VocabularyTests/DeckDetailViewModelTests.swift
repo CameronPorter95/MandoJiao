@@ -12,13 +12,20 @@ import VocabularyTestSupport
 struct DeckDetailViewModelTests {
     private let repository = FakeVocabularyRepository(Fixtures.vocabulary)
 
-    private func makeDetail(_ deck: DeckSummary = Fixtures.fullDeck) async -> (DeckDetailViewModel, EffectLog<DeckDetailEffect>) {
+    private let nestedRepository = FakeVocabularyRepository(Fixtures.nested)
+
+    private func makeDetail(
+        _ deck: DeckSummary = Fixtures.fullDeck,
+        nested: Bool = false
+    ) async -> (DeckDetailViewModel, EffectLog<DeckDetailEffect>) {
+        let repository = nested ? nestedRepository : repository
         let viewModel = DeckDetailViewModel(
             deckID: deck.id,
             minimumMatchingWords: 5,
             observeVocabulary: ObserveVocabularyUseCase(repository: repository),
             renameDeck: RenameDeckUseCase(repository: repository),
             setMembership: SetDeckMembershipUseCase(repository: repository),
+            moveDeck: MoveDeckUseCase(repository: repository),
             renameDelay: .milliseconds(30)
         )
         let log = EffectLog(viewModel.effects())
@@ -107,5 +114,40 @@ struct DeckDetailViewModelTests {
 
         await settle()
         #expect(log.effects.isEmpty)
+    }
+
+    @Test("a deck moves into any other folder, never to the top level")
+    func moving() async {
+        let (detail, _) = await makeDetail(Fixtures.part1, nested: true)
+        #expect(detail.state.destinations.map(\.title) == ["Empty", "HSK", "Starter"])
+
+        detail.send(.moveTapped)
+        #expect(detail.state.isChoosingDestination)
+        detail.send(.destinationChosen(Fixtures.hsk.id))
+
+        #expect(!detail.state.isChoosingDestination)
+        #expect(detail.state.deck?.folderID == Fixtures.hsk.id)
+        #expect(await waitUntil { await nestedRepository.writes == ["moveDeck Part 1 to HSK"] })
+    }
+
+    @Test("a failed move puts the deck back and says why")
+    func failedMove() async {
+        let (detail, log) = await makeDetail(Fixtures.part1, nested: true)
+        await nestedRepository.failWrites()
+        detail.send(.destinationChosen(Fixtures.hsk.id))
+        #expect(detail.state.deck?.folderID == Fixtures.hsk.id)
+
+        #expect(await log.contains(.showError(.moveDeckFailed(FakeVocabularyRepository.failure))))
+        #expect(detail.state.deck?.folderID == Fixtures.level1.id)
+    }
+
+    @Test("with no folder to move into, the deck says so")
+    func nowhereToMove() async {
+        let (detail, _) = await makeDetail()
+        #expect(detail.state.destinations.isEmpty)
+        #expect(detail.state.moveUnavailableReason == "Make a folder first to move this deck into.")
+
+        let (nested, _) = await makeDetail(Fixtures.fullDeck, nested: true)
+        #expect(nested.state.moveUnavailableReason == nil)
     }
 }

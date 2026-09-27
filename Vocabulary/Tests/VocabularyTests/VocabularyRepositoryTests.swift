@@ -114,7 +114,7 @@ struct VocabularyRepositoryTests {
     @Test("a deck holds words by identity and can be renamed")
     func decks() async throws {
         let ids = try await addWaterTeaBook()
-        try await repository.createDeck(name: "Drinks")
+        try await repository.createDeck(name: "Drinks", folderID: try await makeFolder())
         let deckID = try #require(await current().decks.first?.id)
 
         try await repository.setMembership(deckID: deckID, wordID: ids.water, isIncluded: true)
@@ -127,10 +127,28 @@ struct VocabularyRepositoryTests {
         #expect(deck.wordIDs == [ids.tea])
     }
 
+    @Test("renaming a deck or changing its words marks it edited, not created")
+    func editedDate() async throws {
+        let ids = try await addWaterTeaBook()
+        try await repository.createDeck(name: "Drinks", folderID: try await makeFolder())
+        let created = try #require(await current().decks.first)
+
+        try await Task.sleep(for: .milliseconds(20))
+        try await repository.setMembership(deckID: created.id, wordID: ids.water, isIncluded: true)
+        let added = try #require(await current().deck(id: created.id))
+        #expect(added.editedAt > created.editedAt)
+
+        try await Task.sleep(for: .milliseconds(20))
+        try await repository.renameDeck(id: created.id, name: "Hot drinks")
+        let renamed = try #require(await current().deck(id: created.id))
+        #expect(renamed.editedAt > added.editedAt)
+        #expect(renamed.createdAt == created.createdAt)
+    }
+
     @Test("deleting a deck leaves its words in the library")
     func deletingADeck() async throws {
         let ids = try await addWaterTeaBook()
-        try await repository.createDeck(name: "Drinks")
+        try await repository.createDeck(name: "Drinks", folderID: try await makeFolder())
         let deckID = try #require(await current().decks.first?.id)
         try await repository.setMembership(deckID: deckID, wordID: ids.water, isIncluded: true)
 
@@ -144,7 +162,7 @@ struct VocabularyRepositoryTests {
     @Test("deleting a word takes it out of its decks")
     func deletingAWord() async throws {
         let ids = try await addWaterTeaBook()
-        try await repository.createDeck(name: "Drinks")
+        try await repository.createDeck(name: "Drinks", folderID: try await makeFolder())
         let deckID = try #require(await current().decks.first?.id)
         try await repository.setMembership(deckID: deckID, wordID: ids.water, isIncluded: true)
 
@@ -153,6 +171,84 @@ struct VocabularyRepositoryTests {
         let vocabulary = await current()
         #expect(vocabulary.words.count == 2)
         #expect(vocabulary.deck(id: deckID)?.wordIDs.isEmpty == true)
+    }
+
+    @Test("folders hold decks and folders, move, and delete everything beneath them, keeping the words")
+    func folders() async throws {
+        let ids = try await addWaterTeaBook()
+        try await repository.createFolder(name: "HSK", parentID: nil)
+        let hsk = try #require(await current().folders.first { $0.name == "HSK" }?.id)
+        try await repository.createFolder(name: "Level 1", parentID: hsk)
+        let level1 = try #require(await current().folders.first { $0.name == "Level 1" }?.id)
+        try await repository.createDeck(name: "Part 1", folderID: level1)
+        let part1 = try #require(await current().decks.first { $0.name == "Part 1" }?.id)
+        try await repository.setMembership(deckID: part1, wordID: ids.water, isIncluded: true)
+        try await repository.renameFolder(id: level1, name: "HSK 1")
+
+        var vocabulary = await current()
+        #expect(vocabulary.path(to: level1).map(\.name) == ["HSK", "HSK 1"])
+        #expect(vocabulary.words(in: try #require(vocabulary.folder(id: hsk))).map(\.english) == ["water"])
+
+        try await repository.moveDeck(id: part1, toFolder: hsk, at: nil)
+        #expect(await current().deck(id: part1)?.folderID == hsk)
+        try await repository.moveDeck(id: part1, toFolder: nil, at: nil)
+        #expect(await current().deck(id: part1)?.folderID == hsk)
+        try await repository.moveDeck(id: part1, toFolder: level1, at: nil)
+        try await repository.moveFolder(id: level1, toParent: nil, at: nil)
+        #expect(await current().folder(id: level1)?.parentID == nil)
+        try await repository.moveFolder(id: level1, toParent: hsk, at: nil)
+
+        try await repository.deleteFolder(id: hsk)
+        vocabulary = await current()
+        #expect(vocabulary.folders.isEmpty)
+        #expect(vocabulary.decks.isEmpty)
+        #expect(vocabulary.words.count == 3)
+    }
+
+    @Test("folders and decks keep the order they are moved into, after the store is read again")
+    func order() async throws {
+        for name in ["A", "B", "C"] { try await repository.createFolder(name: name, parentID: nil) }
+        let ids = Dictionary(uniqueKeysWithValues: await current().folders.map { ($0.name, $0.id) })
+        #expect(await current().folders(in: nil).map(\.name) == ["A", "B", "C"])
+
+        try await repository.moveFolder(id: ids["C"]!, toParent: nil, at: 0)
+        try await repository.moveFolder(id: ids["A"]!, toParent: nil, at: 1)
+        #expect(await current().folders(in: nil).map(\.name) == ["C", "A", "B"])
+
+        for name in ["x", "y"] { try await repository.createDeck(name: name, folderID: ids["B"]!) }
+        let y = try #require(await current().decks.first { $0.name == "y" }?.id)
+        try await repository.moveDeck(id: y, toFolder: ids["B"], at: 0)
+
+        let reread = try await VocabularyLocalSourceImpl(modelContainer: container).snapshot()
+        #expect(reread.folders(in: nil).map(\.name) == ["C", "A", "B"])
+        #expect(reread.decks(in: ids["B"]).map(\.name) == ["y", "x"])
+    }
+
+    @Test("a fresh store has the starter decks inside a built-in Starter folder")
+    func seeding() async throws {
+        VocabularyStore.seedIfNeeded(container)
+        let vocabulary = await current()
+
+        let starter = try #require(vocabulary.folders.first)
+        #expect(vocabulary.folders.count == 1)
+        #expect(starter.name == "Starter")
+        #expect(starter.builtInKey == SampleVocabulary.builtInKey)
+        #expect(vocabulary.decks(in: starter.id).map(\.name) == SampleVocabulary.deckPlan.map(\.name))
+        #expect(vocabulary.decks(in: nil).isEmpty)
+    }
+
+    @Test("the store refuses to move a folder into itself or beneath itself")
+    func folderCycles() async throws {
+        try await repository.createFolder(name: "Parent", parentID: nil)
+        let parent = try #require(await current().folders.first { $0.name == "Parent" }?.id)
+        try await repository.createFolder(name: "Child", parentID: parent)
+        let child = try #require(await current().folders.first { $0.name == "Child" }?.id)
+
+        try await repository.moveFolder(id: parent, toParent: child, at: nil)
+        try await repository.moveFolder(id: parent, toParent: parent, at: nil)
+
+        #expect(await current().folder(id: parent)?.parentID == nil)
+        #expect(await current().folder(id: child)?.parentID == parent)
     }
 
     @Test("an id that no longer exists is ignored rather than failing")
@@ -248,16 +344,29 @@ private final class SnapshotLog {
     deinit { task?.cancel() }
 }
 
+private extension VocabularyRepositoryTests {
+    /// Somewhere to put a deck, since every deck lives in a folder.
+    func makeFolder(_ name: String = "Box") async throws -> UUID {
+        try await repository.createFolder(name: name, parentID: nil)
+        return try #require(await current().folders.first { $0.name == name }?.id)
+    }
+}
+
 private struct FailingLocalSource: VocabularyLocalSource {
     let error: any Error & Sendable
 
     func snapshot() async throws -> Vocabulary { throw error }
     func saveWord(id: UUID?, draft: WordDraft) async throws { throw error }
     func deleteWords(ids: [UUID]) async throws { throw error }
-    func createDeck(name: String) async throws { throw error }
+    func createDeck(name: String, folderID: UUID) async throws { throw error }
     func renameDeck(id: UUID, name: String) async throws { throw error }
     func setMembership(deckID: UUID, wordID: UUID, isIncluded: Bool) async throws { throw error }
+    func moveDeck(id: UUID, toFolder folderID: UUID?, at index: Int?) async throws { throw error }
     func deleteDeck(id: UUID) async throws { throw error }
+    func createFolder(name: String, parentID: UUID?) async throws { throw error }
+    func renameFolder(id: UUID, name: String) async throws { throw error }
+    func moveFolder(id: UUID, toParent parentID: UUID?, at index: Int?) async throws { throw error }
+    func deleteFolder(id: UUID) async throws { throw error }
     func recordResults(_ results: LessonResults) async throws { throw error }
     func clearMistakes() async throws { throw error }
 }

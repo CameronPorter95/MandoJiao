@@ -18,8 +18,6 @@ struct HomeViewModelTests {
             minimumMatchingWords: 5,
             quickPracticeRounds: { rounds.value },
             observeVocabulary: ObserveVocabularyUseCase(repository: repository),
-            createDeck: CreateDeckUseCase(repository: repository),
-            deleteDeck: DeleteDeckUseCase(repository: repository),
             clearMistakes: ClearMistakesUseCase(repository: repository)
         )
         let log = EffectLog(viewModel.effects())
@@ -63,36 +61,6 @@ struct HomeViewModelTests {
         #expect(request.pool.map(\.english) == ["mobile phone", "book", "tea"])
     }
 
-    @Test("a deck below the matching floor does not start")
-    func smallDeck() async {
-        let (home, log) = await makeHome()
-        #expect(!home.state.canStartLesson(with: Fixtures.smallDeck))
-        #expect(home.state.subtitle(for: Fixtures.smallDeck) == "1 words, needs 5")
-
-        home.send(.practiseDeckTapped(Fixtures.smallDeck.id))
-        home.send(.practiseDeckTapped(Fixtures.fullDeck.id))
-
-        #expect(await waitUntil { log.effects.count == 1 })
-        guard case .requestMatching(let request) = log.effects.first else {
-            Issue.record("expected a matching request")
-            return
-        }
-        #expect(request.title == "Full")
-    }
-
-    @Test("a new deck is created with the typed name")
-    func creatingADeck() async {
-        let (home, _) = await makeHome()
-        home.send(.newDeckTapped)
-        #expect(home.state.isNamingDeck)
-        home.send(.newDeckNameChanged("  Colours "))
-        home.send(.createDeckConfirmed)
-
-        #expect(!home.state.isNamingDeck)
-        #expect(await waitUntil { await repository.writes == ["createDeck Colours"] })
-        #expect(await waitUntil { home.state.vocabulary.decks.count == 3 })
-    }
-
     @Test("clearing mistakes asks first")
     func clearingMistakes() async {
         let (home, _) = await makeHome()
@@ -105,18 +73,6 @@ struct HomeViewModelTests {
         home.send(.clearMistakesTapped)
         home.send(.clearMistakesConfirmed)
         #expect(await waitUntil { home.state.mistakeWords.isEmpty })
-    }
-
-    @Test("a failed deck delete puts the deck back and says why")
-    func failedDelete() async {
-        let (home, log) = await makeHome()
-        await repository.failWrites()
-
-        home.send(.deleteDeckTapped(Fixtures.fullDeck.id))
-        #expect(home.state.vocabulary.decks.count == 1)
-
-        #expect(await log.contains(.showError(.deleteDeckFailed(FakeVocabularyRepository.failure))))
-        #expect(home.state.vocabulary.decks.count == 2)
     }
 
     @Test("the quick practice round count is asked again on every return")
@@ -142,6 +98,7 @@ struct HomeViewModelTests {
         home.send(.appeared)
         #expect(await waitUntil { home.state.vocabulary == .empty })
     }
+
 }
 
 @MainActor

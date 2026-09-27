@@ -51,17 +51,17 @@ public actor FakeVocabularyRepository: VocabularyRepository {
         try write("deleteWords \(ids.count)") { snapshot.words.removeAll { ids.contains($0.id) } }
     }
 
-    public func createDeck(name: String) throws {
-        try write("createDeck \(name)") {
-            snapshot.decks.append(DeckSummary(id: UUID(), name: name, createdAt: .now, wordIDs: []))
+    public func createDeck(name: String, folderID: UUID) throws {
+        try write("createDeck \(name)\(inside(folderID))") {
+            guard snapshot.folder(id: folderID) != nil else { return }
+            snapshot.decks.append(DeckSummary(id: UUID(), name: name, createdAt: .now, wordIDs: [], folderID: folderID))
         }
     }
 
     public func renameDeck(id: UUID, name: String) throws {
         try write("renameDeck \(name)") {
             guard let index = snapshot.decks.firstIndex(where: { $0.id == id }) else { return }
-            let deck = snapshot.decks[index]
-            snapshot.decks[index] = DeckSummary(id: id, name: name, createdAt: deck.createdAt, wordIDs: deck.wordIDs)
+            snapshot.decks[index] = snapshot.decks[index].with(name: name, editedAt: .now)
         }
     }
 
@@ -72,8 +72,42 @@ public actor FakeVocabularyRepository: VocabularyRepository {
         }
     }
 
+    public func moveDeck(id: UUID, toFolder folderID: UUID?, at index: Int?) throws {
+        try write("moveDeck \(snapshot.deck(id: id)?.name ?? "?") to \(destination(folderID))\(at(index))") {
+            snapshot = snapshot.movingDeck(id, into: folderID, at: index)
+        }
+    }
+
     public func deleteDeck(id: UUID) throws {
         try write("deleteDeck") { snapshot.decks.removeAll { $0.id == id } }
+    }
+
+    public func createFolder(name: String, parentID: UUID?) throws {
+        try write("createFolder \(name)\(inside(parentID))") {
+            if let parentID, snapshot.folder(id: parentID) == nil { return }
+            snapshot.folders.append(FolderSummary(id: UUID(), name: name, createdAt: .now, parentID: parentID))
+        }
+    }
+
+    public func renameFolder(id: UUID, name: String) throws {
+        try write("renameFolder \(name)") {
+            guard let index = snapshot.folders.firstIndex(where: { $0.id == id }) else { return }
+            snapshot.folders[index] = snapshot.folders[index].with(name: name)
+        }
+    }
+
+    public func moveFolder(id: UUID, toParent parentID: UUID?, at index: Int?) throws {
+        try write("moveFolder \(snapshot.folder(id: id)?.name ?? "?") to \(destination(parentID))\(at(index))") {
+            snapshot = snapshot.movingFolder(id, into: parentID, at: index)
+        }
+    }
+
+    public func deleteFolder(id: UUID) throws {
+        try write("deleteFolder") {
+            let folders = Set([id] + snapshot.folders(beneath: id).map(\.id))
+            snapshot.folders.removeAll { folders.contains($0.id) }
+            snapshot.decks.removeAll { $0.folderID.map(folders.contains) ?? false }
+        }
     }
 
     public func recordResults(_ results: LessonResults) throws {
@@ -86,6 +120,18 @@ public actor FakeVocabularyRepository: VocabularyRepository {
                 Word(id: $0.id, english: $0.english, hanzi: $0.hanzi, pinyin: $0.pinyin, createdAt: $0.createdAt)
             }
         }
+    }
+
+    private func inside(_ folderID: UUID?) -> String {
+        folderID.flatMap(snapshot.folder(id:)).map { " inside \($0.name)" } ?? ""
+    }
+
+    private func at(_ index: Int?) -> String {
+        index.map { " at \($0)" } ?? ""
+    }
+
+    private func destination(_ folderID: UUID?) -> String {
+        folderID.flatMap(snapshot.folder(id:))?.name ?? "top level"
     }
 
     private func write(_ description: String, _ change: () -> Void) throws {
@@ -119,12 +165,33 @@ public nonisolated enum Fixtures {
 
     public static let words = [water, tea, book, phone, green, blank]
 
+    public static let starter = FolderSummary(id: UUID(), name: "Starter", createdAt: .now, builtInKey: "starter")
+
     /// Five usable words: exactly enough for a matching lesson.
     public static let fullDeck = DeckSummary(
         id: UUID(), name: "Full", createdAt: .now,
-        wordIDs: [water.id, tea.id, book.id, phone.id, green.id]
+        wordIDs: [water.id, tea.id, book.id, phone.id, green.id], folderID: starter.id
     )
-    public static let smallDeck = DeckSummary(id: UUID(), name: "Small", createdAt: .now, wordIDs: [water.id, blank.id])
+    public static let smallDeck = DeckSummary(
+        id: UUID(), name: "Small", createdAt: .now, wordIDs: [water.id, blank.id], folderID: starter.id
+    )
 
-    public static let vocabulary = Vocabulary(words: words, decks: [fullDeck, smallDeck])
+    public static let vocabulary = Vocabulary(words: words, decks: [fullDeck, smallDeck], folders: [starter])
+
+    /// Starter holds Full. HSK holds Level 1, which holds two decks sharing tea. Empty holds nothing.
+    public static let hsk = FolderSummary(id: UUID(), name: "HSK", createdAt: .now)
+    public static let level1 = FolderSummary(id: UUID(), name: "Level 1", createdAt: .now, parentID: hsk.id)
+    public static let part1 = DeckSummary(
+        id: UUID(), name: "Part 1", createdAt: .now, wordIDs: [water.id, tea.id], folderID: level1.id
+    )
+    public static let part2 = DeckSummary(
+        id: UUID(), name: "Part 2", createdAt: .now, wordIDs: [tea.id, book.id, phone.id, green.id], folderID: level1.id
+    )
+    public static let emptyFolder = FolderSummary(id: UUID(), name: "Empty", createdAt: .now)
+
+    public static let nested = Vocabulary(
+        words: words,
+        decks: [fullDeck, part1, part2],
+        folders: [starter, hsk, level1, emptyFolder]
+    )
 }

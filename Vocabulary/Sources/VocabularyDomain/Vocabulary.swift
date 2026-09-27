@@ -1,13 +1,15 @@
 import Foundation
 
-/// Every word and deck, as one snapshot.
+/// Every word, deck and folder, as one snapshot.
 public nonisolated struct Vocabulary: Equatable, Sendable {
     public var words: [Word]
     public var decks: [DeckSummary]
+    public var folders: [FolderSummary]
 
-    public init(words: [Word], decks: [DeckSummary]) {
+    public init(words: [Word], decks: [DeckSummary], folders: [FolderSummary] = []) {
         self.words = words
         self.decks = decks
+        self.folders = folders
     }
 
     public static let empty = Vocabulary(words: [], decks: [])

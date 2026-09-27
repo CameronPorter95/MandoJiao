@@ -1,5 +1,6 @@
 import CoreDesignSystem
 import SwiftUI
+import VocabularyDomain
 
 struct DeckDetailScreen: View {
     let state: DeckDetailState
@@ -60,5 +61,33 @@ struct DeckDetailScreen: View {
         )
         .navigationTitle(state.title)
         .inlineNavigationTitle()
+        .toolbar {
+            ToolbarItem(placement: .primaryAction) {
+                Menu {
+                    Button {
+                        onAction(.moveTapped)
+                    } label: {
+                        Label("Move to…", systemImage: "folder")
+                        if let reason = state.moveUnavailableReason { Text(reason) }
+                    }
+                    .disabled(state.moveUnavailableReason != nil)
+                } label: {
+                    Label("More", systemImage: "ellipsis.circle")
+                }
+            }
+        }
+        .sheet(
+            isPresented: Binding(
+                get: { state.isChoosingDestination },
+                set: { if !$0 { onAction(.moveCancelled) } }
+            )
+        ) {
+            MoveDestinationPicker(
+                title: "Move \(state.title)",
+                destinations: state.destinations,
+                onChoose: { onAction(.destinationChosen($0)) },
+                onCancel: { onAction(.moveCancelled) }
+            )
+        }
     }
 }

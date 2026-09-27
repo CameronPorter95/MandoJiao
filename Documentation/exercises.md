@@ -15,7 +15,7 @@ the interesting parts be tested without a simulator, a store or a microphone.
 
 ```
 Core/           Shared plumbing: errors, effects, the design system, DI, ToneEngine.
-Vocabulary/     Words, decks, the mistakes list, home and library screens.
+Vocabulary/     Words, decks, folders, the mistakes list, home and library tabs.
 Speaking/       The speaking lesson.
 Matching/       The matching lesson.
 Settings/       The settings screen, editing what the two lessons own.
@@ -28,7 +28,14 @@ Each package splits into Domain, Data, UI and DI targets. See
 ## Storage and the detachment boundary
 
 `VocabWord` and `Deck` are the SwiftData entities. A word carries `english`,
-`hanzi`, `pinyin`, and its outstanding `missCount`.
+`hanzi`, `pinyin`, and its outstanding `missCount`. A deck holds words and a `Folder`
+holds decks and other folders, so a deck of decks cannot exist. Every deck is in a
+folder: the starter decks are seeded into one with the `starter` built-in key. Deleting a folder
+cascades to everything beneath it; words always stay. The one nesting rule the
+types cannot express, that a folder never moves beneath itself, lives in
+`FolderTree.swift` in the domain, and the store checks the same function before it
+writes. Siblings are listed in array order; the store keeps it as each one's
+`position`, rewritten from `movingFolder` and `movingDeck` after every move.
 
 `WordPair` is the same word as a plain struct. **Every lesson is built from
 `WordPair`, never from `VocabWord`.** A lesson is therefore stable if the library

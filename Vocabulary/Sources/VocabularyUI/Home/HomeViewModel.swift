@@ -10,8 +10,6 @@ public final class HomeViewModel {
 
     private let effectChannel = EffectChannel<HomeEffect>()
     private let observeVocabulary: ObserveVocabularyUseCase
-    private let createDeck: CreateDeckUseCase
-    private let deleteDeck: DeleteDeckUseCase
     private let clearMistakes: ClearMistakesUseCase
     private let quickPracticeRounds: () -> Int
     private var observation: Task<Void, Never>?
@@ -20,15 +18,11 @@ public final class HomeViewModel {
         minimumMatchingWords: Int,
         quickPracticeRounds: @escaping () -> Int,
         observeVocabulary: ObserveVocabularyUseCase,
-        createDeck: CreateDeckUseCase,
-        deleteDeck: DeleteDeckUseCase,
         clearMistakes: ClearMistakesUseCase
     ) {
         state = HomeState(minimumMatchingWords: minimumMatchingWords, quickPracticeRounds: quickPracticeRounds())
         self.quickPracticeRounds = quickPracticeRounds
         self.observeVocabulary = observeVocabulary
-        self.createDeck = createDeck
-        self.deleteDeck = deleteDeck
         self.clearMistakes = clearMistakes
     }
 
@@ -57,34 +51,6 @@ public final class HomeViewModel {
             // A speaking lesson is one card per word, so any number of mistakes works. No
             // five-word floor, and nothing is padded in to fill a round.
             effectChannel.send(.requestSpeaking(LessonRequest(title: "Mistakes", pool: state.mistakeWords.pairs)))
-
-        case .practiseDeckTapped(let id):
-            guard let deck = state.vocabulary.deck(id: id) else { return }
-            requestMatching(title: deck.name, pool: state.vocabulary.words(in: deck).pairs)
-
-        case .deleteDeckTapped(let id):
-            let previous = state.vocabulary
-            state.vocabulary.decks.removeAll { $0.id == id }
-            write(revertingTo: previous, failure: VocabularyError.deleteDeckFailed) { [deleteDeck] in
-                try await deleteDeck(id: id)
-            }
-
-        case .newDeckTapped:
-            state.newDeckName = ""
-            state.isNamingDeck = true
-
-        case .newDeckNameChanged(let name):
-            state.newDeckName = name
-
-        case .createDeckConfirmed:
-            state.isNamingDeck = false
-            let name = state.newDeckName
-            write(failure: VocabularyError.createDeckFailed) { [createDeck] in
-                try await createDeck(name: name)
-            }
-
-        case .createDeckCancelled:
-            state.isNamingDeck = false
 
         case .clearMistakesTapped:
             state.isConfirmingClear = true

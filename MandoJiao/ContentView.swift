@@ -6,7 +6,7 @@ import SpeakingDI
 import SwiftUI
 import VocabularyDI
 
-/// The app's root: the home stack, and the lessons presented over it.
+/// The app's root: the home and library tabs, and the lessons presented over both.
 struct ContentView: View {
     let dependencies: Dependencies
 
@@ -15,18 +15,29 @@ struct ContentView: View {
     var body: some View {
         let navigation = AppNavigation.main(coordinator: coordinator)
 
-        NavigationStack {
-            HomeFactory.makeRoute(
-                dependencies: dependencies,
-                navigation: navigation.vocabulary,
-                input: HomeInput(
-                    minimumMatchingWords: MatchingPlanBuilder.pairsPerExercise,
-                    quickPracticeRounds: { [dependencies] in
-                        MatchingSettingsFactory.makeGetSettingsUseCase(dependencies: dependencies)().rounds
-                    },
-                    settings: { [dependencies] in AnyView(settings(dependencies: dependencies)) }
+        TabView {
+            Tab("Home", systemImage: "house") {
+                NavigationStack {
+                    HomeFactory.makeRoute(
+                        dependencies: dependencies,
+                        navigation: navigation.vocabulary,
+                        input: HomeInput(
+                            minimumMatchingWords: MatchingPlanBuilder.pairsPerExercise,
+                            quickPracticeRounds: { [dependencies] in
+                                MatchingSettingsFactory.makeGetSettingsUseCase(dependencies: dependencies)().rounds
+                            },
+                            settings: { [dependencies] in AnyView(settings(dependencies: dependencies)) }
+                        )
+                    )
+                }
+            }
+            Tab("Library", systemImage: "books.vertical") {
+                LibraryFactory.makeRoute(
+                    dependencies: dependencies,
+                    navigation: navigation.vocabulary,
+                    input: LibraryInput(minimumMatchingWords: MatchingPlanBuilder.pairsPerExercise)
                 )
-            )
+            }
         }
         .fullScreenCover(item: $coordinator.presentedLesson) { lesson in
             switch lesson {

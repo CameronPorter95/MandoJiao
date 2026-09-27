@@ -12,9 +12,11 @@ public enum DeckDetailFactory: NavigationInputRouteFactory {
         let viewModel = DeckDetailViewModel(
             deckID: input.deckID,
             minimumMatchingWords: input.minimumMatchingWords,
+            vocabulary: input.vocabulary,
             observeVocabulary: ObserveVocabularyUseCase(repository: repository),
             renameDeck: RenameDeckUseCase(repository: repository),
-            setMembership: SetDeckMembershipUseCase(repository: repository)
+            setMembership: SetDeckMembershipUseCase(repository: repository),
+            moveDeck: MoveDeckUseCase(repository: repository)
         )
         return DeckDetailRoute(viewModel: viewModel, navigation: navigation)
     }

@@ -11,5 +11,6 @@ public nonisolated enum Preferences {
         public static let showsPinyin = "showsPinyinInLessons"
         public static let matchingRounds = "matchingRoundsPerLesson"
         public static let speakingCardLimit = "drillCardLimit"
+        public static let libraryLayout = "libraryLayout"
     }
 }

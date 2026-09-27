@@ -103,16 +103,23 @@ public nonisolated enum SampleVocabulary {
 
     public static var allEntries: [Entry] { deckPlan.flatMap(\.entries) }
 
+    /// The folder the starter decks are seeded into, and the key that finds it again.
+    public static let folderName = "Starter"
+    public static let builtInKey = "starter"
+
     /// Every sample word and deck as a snapshot, for previews.
     public static var previewVocabulary: Vocabulary {
+        let folder = FolderSummary(id: UUID(), name: folderName, createdAt: .now, builtInKey: builtInKey)
         var words: [Word] = []
         var decks: [DeckSummary] = []
         for plan in deckPlan {
             let deckWords = plan.entries.map { Word(english: $0.english, hanzi: $0.hanzi, pinyin: $0.pinyin) }
             words += deckWords
-            decks.append(DeckSummary(id: UUID(), name: plan.name, createdAt: .now, wordIDs: deckWords.map(\.id)))
+            decks.append(DeckSummary(
+                id: UUID(), name: plan.name, createdAt: .now, wordIDs: deckWords.map(\.id), folderID: folder.id
+            ))
         }
-        return Vocabulary(words: words, decks: decks)
+        return Vocabulary(words: words, decks: decks, folders: [folder])
     }
 
     /// In-memory pairs for previews.

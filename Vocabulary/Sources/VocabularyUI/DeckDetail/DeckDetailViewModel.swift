@@ -12,6 +12,7 @@ public final class DeckDetailViewModel {
     private let observeVocabulary: ObserveVocabularyUseCase
     private let renameDeck: RenameDeckUseCase
     private let setMembership: SetDeckMembershipUseCase
+    private let moveDeck: MoveDeckUseCase
     private let renameDelay: Duration
 
     private var observation: Task<Void, Never>?
@@ -20,18 +21,27 @@ public final class DeckDetailViewModel {
     /// Writes run one after another, so rapid toggles land in the order they were made.
     private var lastWrite: Task<Void, Never>?
 
+    /// `vocabulary` is shown until the store's own snapshot arrives.
     public init(
         deckID: UUID,
         minimumMatchingWords: Int,
+        vocabulary: Vocabulary = .empty,
         observeVocabulary: ObserveVocabularyUseCase,
         renameDeck: RenameDeckUseCase,
         setMembership: SetDeckMembershipUseCase,
+        moveDeck: MoveDeckUseCase,
         renameDelay: Duration = .milliseconds(300)
     ) {
-        state = DeckDetailState(deckID: deckID, minimumMatchingWords: minimumMatchingWords)
+        state = DeckDetailState(
+            deckID: deckID,
+            minimumMatchingWords: minimumMatchingWords,
+            vocabulary: vocabulary,
+            name: vocabulary.deck(id: deckID)?.name
+        )
         self.observeVocabulary = observeVocabulary
         self.renameDeck = renameDeck
         self.setMembership = setMembership
+        self.moveDeck = moveDeck
         self.renameDelay = renameDelay
     }
 
@@ -85,6 +95,24 @@ public final class DeckDetailViewModel {
                 pool: state.vocabulary.words(in: deck).pairs
             )
             effectChannel.send(.startLesson(request))
+
+        case .moveTapped:
+            state.isChoosingDestination = true
+
+        case .destinationChosen(let folderID):
+            state.isChoosingDestination = false
+            guard let folderID, state.vocabulary.canMoveDeck(state.deckID, into: folderID) else { return }
+            let previous = state.vocabulary
+            state.vocabulary = previous.movingDeck(state.deckID, into: folderID, at: nil)
+            let deckID = state.deckID
+            enqueue(failure: VocabularyError.moveDeckFailed, revert: { [weak self] in
+                self?.state.vocabulary = previous
+            }) { [moveDeck] in
+                try await moveDeck(id: deckID, toFolder: folderID)
+            }
+
+        case .moveCancelled:
+            state.isChoosingDestination = false
         }
     }
 
