@@ -19,11 +19,16 @@ struct WordLibraryScreen: View {
                             .font(.caption.weight(.semibold))
                             .foregroundStyle(.tertiary)
                     }
+                    .contentShape(Rectangle())
                 }
-                .buttonStyle(.plain)
-            }
-            .onDelete { offsets in
-                onAction(.deleteTapped(offsets.map { filteredWords[$0].id }))
+                .tint(.primary)
+                .swipeActions(edge: .trailing) {
+                    Button(role: .destructive) {
+                        onAction(.deleteTapped([word.id]))
+                    } label: {
+                        Label("Delete", systemImage: "trash")
+                    }
+                }
             }
         }
         .overlay {
