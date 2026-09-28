@@ -1,6 +1,6 @@
 import Foundation
 
-/// How the library's lists of words are ordered, all of them or a folder's.
+/// How the library's lists of words are ordered: all of them, a folder's, or a deck's.
 public nonisolated struct WordSort: Hashable, Sendable, Codable {
     public enum Field: String, CaseIterable, Sendable, Codable {
         case english
@@ -30,6 +30,10 @@ public nonisolated extension Vocabulary {
     /// Every word in every deck beneath the folder, as a lesson from it draws them.
     func words(in folder: FolderSummary, sortedBy sort: WordSort) -> [Word] {
         Self.sorted(words(in: folder), by: sort)
+    }
+
+    func words(in deck: DeckSummary, sortedBy sort: WordSort) -> [Word] {
+        Self.sorted(words(in: deck), by: sort)
     }
 
     /// Ties fall back to the English, so the order never shuffles between reads.

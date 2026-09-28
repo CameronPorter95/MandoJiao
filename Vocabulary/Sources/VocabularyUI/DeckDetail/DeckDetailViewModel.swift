@@ -76,16 +76,22 @@ public final class DeckDetailViewModel {
         case .searchChanged(let text):
             state.searchText = text
 
+        case .removeTapped(let wordID):
+            guard state.isIncluded(wordID) else { return }
+            include(wordID, false)
+
+        case .addWordsTapped:
+            state.pickerSearchText = ""
+            state.isAddingWords = true
+
+        case .addWordsDismissed:
+            state.isAddingWords = false
+
+        case .pickerSearchChanged(let text):
+            state.pickerSearchText = text
+
         case .wordToggled(let wordID):
-            guard state.deck != nil else { return }
-            let isIncluded = !state.isIncluded(wordID)
-            applyMembership(of: wordID, isIncluded: isIncluded)
-            let deckID = state.deckID
-            enqueue(failure: VocabularyError.updateDeckFailed, revert: { [weak self] in
-                self?.applyMembership(of: wordID, isIncluded: !isIncluded)
-            }) { [setMembership] in
-                try await setMembership(deckID: deckID, wordID: wordID, isIncluded: isIncluded)
-            }
+            include(wordID, !state.isIncluded(wordID))
 
         case .startLessonTapped:
             guard let deck = state.deck, state.canStartLesson else { return }
@@ -119,6 +125,17 @@ public final class DeckDetailViewModel {
     private func receive(_ vocabulary: Vocabulary) {
         state.vocabulary = vocabulary
         if state.name == nil { state.name = state.deck?.name }
+    }
+
+    private func include(_ wordID: UUID, _ isIncluded: Bool) {
+        guard state.deck != nil else { return }
+        applyMembership(of: wordID, isIncluded: isIncluded)
+        let deckID = state.deckID
+        enqueue(failure: VocabularyError.updateDeckFailed, revert: { [weak self] in
+            self?.applyMembership(of: wordID, isIncluded: !isIncluded)
+        }) { [setMembership] in
+            try await setMembership(deckID: deckID, wordID: wordID, isIncluded: isIncluded)
+        }
     }
 
     private func applyMembership(of wordID: UUID, isIncluded: Bool) {
