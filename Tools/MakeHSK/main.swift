@@ -102,9 +102,12 @@ func withHeadline(_ hanzi: String, _ pinyin: String, _ senses: [String]) -> (pin
        let line = dictionary[hanzi]?.first(where: { comparable($0.pinyin) == comparable(pinyin) && $0.senses.contains(chosen.headline) }) {
         senses = line.senses
     }
-    // Nor a sense the headline already says: 种's "kind, type" makes a later "kind" redundant.
-    let parts = Set(chosen.headline.components(separatedBy: ", "))
-    return (pinyin, [chosen.headline] + senses.filter { $0 != chosen.headline && !parts.contains($0) })
+    // Nor a sense the headline already says in full: 种's "kind, type" makes a later "kind"
+    // redundant, and 才's "only then, just; ability, talent" its "ability, talent". Compared
+    // part by part, so 给's "to" is not lost inside "to give".
+    let parts = { (text: String) in Set(text.split(whereSeparator: { ",;".contains($0) }).map { $0.trimmingCharacters(in: .whitespaces) }) }
+    let said = parts(chosen.headline)
+    return (pinyin, [chosen.headline] + senses.filter { $0 != chosen.headline && !parts($0).isSubset(of: said) })
 }
 
 /// Of the dictionary's readings with senses that the source also gives, its preferred one,

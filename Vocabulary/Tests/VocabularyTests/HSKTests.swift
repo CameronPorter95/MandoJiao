@@ -52,6 +52,8 @@ nonisolated struct HSKTests {
         ("在", "zài", "at, in"), ("穿", "chuān", "to wear, to put on (clothes, shoes etc.)"), ("钱", "qián", "money"),
         ("告诉", "gàosu", "to tell, to inform, to let know"), ("长", "cháng", "long"), ("妻子", "qīzi", "wife"),
         ("周", "zhōu", "week"), ("故事", "gùshi", "narrative, story, tale"),
+        // From the native speaker's review, both meanings being common in the last.
+        ("牛", "niú", "cattle"), ("才", "cái", "only then, just; ability, talent"),
     ])
     func headlines(hanzi: String, pinyin: String, headline: String) {
         let word = words.first { $0.hanzi == hanzi }
