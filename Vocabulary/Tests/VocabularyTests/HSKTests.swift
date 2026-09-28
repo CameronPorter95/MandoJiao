@@ -14,8 +14,8 @@ nonisolated struct HSKTests {
     func counts() {
         let counts = Dictionary(grouping: words, by: \.level).mapValues(\.count)
         // 294 and 487 in the syllabus. 哪儿, 这儿 and 那儿 are 哪里, 这里 and 那里, already in
-        // HSK 1, and 一块儿 is 一起, already in HSK 2. readings.tsv adds 7, 6, 8 and 11.
-        #expect(counts == [1: 298, 2: 203, 3: 494, 4: 983, 5: 1547, 6: 1684, 7: 4876])
+        // HSK 1, and 一块儿 is 一起, already in HSK 2. readings.tsv adds 7, 5, 8 and 11.
+        #expect(counts == [1: 298, 2: 202, 3: 494, 4: 983, 5: 1547, 6: 1684, 7: 4876])
         #expect(words.allSatisfy { !$0.pinyin.isEmpty && !$0.meanings.isEmpty && $0.meanings.count <= 4 })
         #expect(Set(words.map { "\($0.hanzi) \($0.pinyin)" }).count == words.count)
     }
@@ -93,7 +93,7 @@ nonisolated struct HSKTests {
         #expect(hsk1.decks.map(\.key).last == "hsk/1/6")
         #expect(hsk1.folders.map(\.key) == ["hsk", "hsk/1"])
 
-        #expect(HSK.plan(level: 2, words: words, topLevelFolders: 1).decks.map(\.words.count) == [41, 41, 41, 40, 40])
+        #expect(HSK.plan(level: 2, words: words, topLevelFolders: 1).decks.map(\.words.count) == [41, 41, 40, 40, 40])
         // A second reading follows its main one into the same deck.
         let deck = try #require(HSK.plan(level: 4, words: words, topLevelFolders: 1).decks.first { $0.words.contains { $0.hanzi == "弹" } })
         #expect(deck.words.filter { $0.hanzi == "弹" }.map(\.pinyin) == ["tán", "dàn"])

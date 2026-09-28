@@ -7,7 +7,9 @@
 # first as in headlines.tsv. Only readings a learner meets as everyday words are listed:
 # not archaic ones, surnames, or a neutral-tone form of the same word.
 #
-# Drafted 2026-09-28 for HSK 1 to 4, awaiting review by a native speaker.
+# Drafted 2026-09-28 for HSK 1 to 4 and reviewed by a native speaker the same day. She
+# dropped 过 guo, the neutral tone guò takes in a sentence rather than a word of its own,
+# and left 着 zhuó out as formal.
 #
 # HSK 1
 好	hào	to be fond of, to have a tendency to, to be prone to
@@ -21,14 +23,13 @@
 得	de	(structural particle after a verb, showing degree or result)
 得	děi	to have to, must
 地	dì	earth, ground
-过	guo	(experienced action marker)
 长	zhǎng	to grow
-着	zháo	to catch (fire, a cold); (after a verb) to succeed
+着	zháo	to touch, to feel; (after a verb) to succeed in
 # HSK 3
 差	chāi	to send (on an errand)
 发	fà	hair
 干	gān	dry
-角	jué	role (theater)
+角	jué	role (theater), compete
 为	wéi	as (in the capacity of)
 行	háng	row, line; trade, business
 中	zhòng	to hit (a target)
