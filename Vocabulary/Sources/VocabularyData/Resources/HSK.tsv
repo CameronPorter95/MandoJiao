@@ -2,6 +2,7 @@
 1	1	的	de	of, ~'s (possessive particle)(used after an attribute when it modifies a noun)(used at the end of a declarative sentence for emphasis)
 1	3	了	le	(completed action marker)(modal particle indicating change of state, situation now)(modal particle intensifying preceding clause)
 1	3	我	wǒ	I, me, my
+1	3	了	liǎo	to finish(literary) completely (not), entirely (not), (not) in the least
 1	4	是	shì	to be (followed by substantives only)correct, right, true(respectful acknowledgement of a command) very well(adverb for emphatic assertion)
 1	5	你	nǐ	you
 1	5	在	zài	at, into exist, to be alive(of sb or sth) to be (located) at(used before a verb to indicate an action in progress)
@@ -15,17 +16,21 @@
 1	19	说	shuō	to speak, to talk, to sayto explain, to commentto scold, to tell off(bound form) theory, doctrine
 1	19	我们	wǒmen	we, us, ourselves, our
 1	19	要	yào	to want, to need, to ask forwill, shall, about toneed to, shouldif
+1	19	要	yāo	(bound form) to demand, to coerce
 1	20	好	hǎo	goodappropriate, properall right!(before a verb) easy to
+1	20	好	hào	to be fond of, to have a tendency to, to be prone to
 1	21	一	yī	onesinglea (article)as soon as
 1	23	会	huì	can, to have the skill, to know how toto be likely to, to be sure toto meet, to get togethermeeting, gathering
 1	23	也	yě	also, too, as well, (not ...) either(used after a verbal or nominal expression X to indicate that X is an extreme or unexpected case) even (X)(literary) particle having functions similar to
 1	25	都	dōu	all, both, entirely(used for emphasis) evenalready(not) at all
+1	25	都	dū	capital citymetropolis
 1	28	对	duì	right, correcttowards, at, forconcerning, regardingto treat (sb a certain way)
 1	29	到	dào	to reach, to arriveto leave for, to go toto (a place), until (a time), up to (a point)(verb complement indicating arriving at a place or reaching a point)
 1	29	上	shàng	(bound form) up, upper, above, previousfirst (of multiple parts)to climb, to get onto, to go upto attend (class or university)
 1	31	来	lái	to come(used as a substitute for a more specific verb)hitherever since
 1	35	很	hěn	very, quite(also, often used before an adjective without intensifying its meaning, i.e. as a meaningless syntactic element)
 1	37	还	hái	stillstill in progressstill moreyet
+1	37	还	huán	to return (sth), to give backto pay backto return
 1	38	去	qù	to goto go to (a place)(of a time etc) lastjust passed
 1	38	她	tā	she
 1	44	想	xiǎng	to think (about)to think of, to deviseto think (that), to believe (that)to desire, to want (to)
@@ -54,6 +59,7 @@
 1	91	再	zài	again, once more, re-further, beyond this point of time(before an adjective) morethen (after sth, and not until then)
 1	96	呢	ne	(sentence-final particle) indicating that a state or situation still holds(discourse particle) used to mark a slight pause or emphasis in speech
 1	98	只	zhǐ	only, merely, just
+1	98	只	zhī	classifier for birds and certain animals, one of a pair, some utensils, vessels etc
 1	100	小	xiǎo	smalltinyfewyoung
 1	105	知道	zhīdào	to know, to become aware of
 1	107	时候	shíhou	timelength of timemomentperiod
@@ -134,6 +140,7 @@
 1	526	多少	duōshao	how much?, how many?(phone number, student ID etc) what number?
 1	527	妈妈	māma	mamamommymother
 1	538	少	shǎo	fewlessto lackto be missing
+1	538	少	shào	young
 1	546	电影	diànyǐng	movie, film
 1	547	哪	nǎ	whichhow
 1	557	昨天	zuótiān	yesterday
@@ -292,12 +299,16 @@
 1	1000000	面条	miàntiáo	noodles
 2	15	就	jiù	(after a suppositional clause) in that case, then(after a clause of action) as soon as, immediately aftermerely, nothing else but, simply, just, precisely, exactlyonly, as little as
 2	38	着	zhe	aspect particle indicating action in progress or ongoing state
+2	38	着	zháo	to catch (fire, a cold); (after a verb) to succeedto touchto come in contact withto feel
 2	47	啊	a	modal particle ending sentence, showing affirmation, approval, or consent
 2	54	让	ràng	to let sb do sthto yieldto permitto have sb do sth
 2	55	但	dàn	but, yet, however, stillmerely, only, just
 2	56	自己	zìjǐ	oneself, (attributive) one's own
 2	58	得	dé	to obtainto getto gainto catch (a disease)
+2	58	得	de	(structural particle after a verb, showing degree or result)structural particle: used after a verb (or adjective as main verb), linking it to following phrase indicating effect, degree, possibility etc
+2	58	得	děi	to have to, mustought toto need to
 2	60	过	guò	to crossto go overto pass (time)to celebrate (a holiday)
+2	60	过	guo	(experienced action marker)
 2	70	从	cóng	from, through, via(bound form) to follow(bound form) to obey(bound form) to engage in (an activity)
 2	83	等	děng	to wait for, to awaitby the time, when, tilland so on, etc., et al(bound form) class, rank, grade
 2	85	出	chū	to go out, to come outto arise, to occurto produce, to yieldto go beyond, to exceed
@@ -312,6 +323,7 @@
 2	127	可能	kěnéng	might (happen)possibleprobablepossibility
 2	132	地	de	-lystructural particle: used before a verb or adjective, linking it to preceding modifying adverbial adjunct
 2	132	开始	kāishǐ	to begin, to startbeginning, start
+2	132	地	dì	earth, groundfieldplaceland
 2	135	跟	gēn	withheelto follow closelyto go with
 2	153	打	dǎ	to hit, to striketo fight(in many expressions) a semantically light transitive verb used with various objects to form expressions with a wide range of meanings, e.g. "to hold an umbrella", "to make a phone call", "to get an injection"(coll.) from, since
 2	153	快	kuài	rapidquickspeedrate
@@ -328,6 +340,7 @@
 2	214	别	bié	don't ...!to leave, to part (from)(literary) to differentiate, to distinguish(dialect) to turn away, to turn aside, to avert (one's face, gaze etc)
 2	234	名	míng	namenoun (part of speech)place (e.g. among winners)famous
 2	246	长	cháng	long(bound form) length(bound form) strong point, forte(bound form) to be good at
+2	246	长	zhǎng	to growchiefheadelder
 2	252	告诉	gàosu	to tell, to inform, to let know
 2	254	出来	chūlái	to come outto appearto arise
 2	271	事情	shìqing	affair, matter, thing, business
@@ -383,7 +396,7 @@
 2	940	经常	jīngcháng	frequently, constantly, regularly, oftenday-to-day, everyday, daily
 2	956	票	piào	ticketballotbanknoteperson held for ransom
 2	961	床	chuáng	bed, couch (furniture that one can lie down on)bed, bottom (of rivers, oceans, gardens etc)frame, chassisclassifier for blankets, quilts etc
-2	988	教	jiào	(bound form) to teach, to instructa religionto cause (sb to do sth), to tell (sb to do sth)
+2	988	教	jiāo	to teach, to instruct
 2	988	意思	yìsi	meaningideaopinionwish
 2	1015	忘	wàng	to forgetto overlookto neglect
 2	1119	画	huà	to draw, to paintpicture, paintingto draw (a line)stroke of a Chinese character
@@ -490,7 +503,9 @@
 3	50	把	bǎ	to hold, to graspto hold a baby in position to help it urinate or defecatehandlebarclassifier: handful, bundle, bunch
 3	54	被	bèi	(passive marker) byquiltto cover (with)(literary) to suffer (a misfortune)
 3	58	为	wèi	because offorto
+3	58	为	wéi	as (in the capacity of)to take sth asto act asto serve as
 3	71	中	zhōng	within, among, inmiddle, centerwhile (doing sth), during(dialect) OK, all right
+3	71	中	zhòng	to hit (a target)to be struck by (a bullet, illness etc)to win (a prize or lottery)
 3	79	用	yòng	to use, to make use of, to employ(coverb) with, usingto need, to have to (usu. used in the negative or in questions)usefulness, utility
 3	89	如果	rúguǒ	if, in case, in the event that
 3	91	又	yòu	(once) againalsoboth... andand yet
@@ -506,6 +521,7 @@
 3	174	应该	yīnggāi	ought to, should, must
 3	177	带	dài	to bring, to take alongbandbeltgirdle
 3	179	种	zhǒng	kind, typeseedspeciesclassifier for types, kinds, sorts
+3	179	种	zhòng	to plantto growto cultivate
 3	189	发现	fāxiàn	to notice, to become aware ofto discover, to find, to detecta discovery
 3	198	一定	yīdìng	surely, certainly, definitelyfixed, settleda certain ..., a given
 3	203	生活	shēnghuó	to livelifelivelihood
@@ -523,6 +539,7 @@
 3	266	老	lǎo	old (of people)prefix used before the surname of a person or a numeral indicating the order of birth of the children in a family or to indicate affection or familiarityvenerable (person)experienced
 3	267	其他	qítā	other(sth or sb) elsethe rest
 3	272	行	xíng	OK, all right(bound form) to walk, to go, to travel(literary) trip, journey, visit(bound form) temporary, makeshift
+3	272	行	háng	row, line; trade, business(bound form) row, line(bound form) line of business, trade, profession(bound form) commercial firm
 3	275	比赛	bǐsài	competition (sports etc)matchto compete
 3	275	然后	ránhòu	then, after that, afterwards
 3	277	担心	dānxīn	to worryanxiousworrieduneasy
@@ -546,6 +563,7 @@
 3	393	受	shòu	to receiveto acceptto suffersubjected to
 3	397	别人	biéren	other people, others, other person
 3	400	发	fā	to send outto show (one's feeling)to issueto develop
+3	400	发	fà	hair
 3	404	可是	kěshì	but, however(used for emphasis) indeed
 3	405	其实	qíshí	actually, in fact, really
 3	407	以后	yǐhòu	afterlaterafterwardsfollowing
@@ -560,6 +578,7 @@
 3	458	不同	bùtóng	differentdistinctnot the samenot alike
 3	458	解决	jiějué	to solve, to resolve, to settle (a problem)to eliminate, to wipe out (an enemy, bandits etc)
 3	463	干	gàn	to dotree trunkmain part of sthto manage
+3	463	干	gān	drydried foodempty, hollowtaken in to nominal kinship, adoptive, foster
 3	478	关于	guānyú	pertaining toconcerningwith regard toabout
 3	486	完成	wánchéng	to complete, to accomplish
 3	498	结束	jiéshù	to end, to finish, to conclude
@@ -646,6 +665,7 @@
 3	952	健康	jiànkāng	healthhealthy
 3	958	西	xī	west
 3	968	差	chà	not up to standard, inferiordifferentwrong, mistakento fall short, to lack
+3	968	差	chāi	to send (on an errand)(archaic) person sent on such an errandjob, official post
 3	982	结婚	jiéhūn	to marry, to get married
 3	982	身边	shēnbiān	at one's sideon hand
 3	983	短	duǎn	shortbriefto lackweak point
@@ -777,6 +797,7 @@
 3	2354	体育	tǐyù	sportsphysical education
 3	2368	大人	dàren	adultgrownuptitle of respect toward superiors
 3	2370	角	jiǎo	anglecornerhornhorn-shaped
+3	2370	角	jué	role (theater)to competeancient three legged wine vesselthird note of pentatonic scale
 3	2395	老人	lǎorén	old man or womanthe elderlyone's aged parents or grandparents
 3	2396	胖	pàng	fatplump
 3	2404	页	yè	pageleaf
@@ -1030,6 +1051,7 @@
 4	499	者	zhě	(after a verb or adjective) one who (is)(after a noun) person involved in-er-ist
 4	505	当时	dāngshí	then, at that time
 4	508	转	zhuǎn	to turnto change directionto transferto forward (mail)
+4	508	转	zhuàn	to revolveto turnto circle aboutto walk about
 4	512	调查	diàochá	investigationinquiryto investigateto survey
 4	513	部分	bùfen	part, portion, piece
 4	513	方式	fāngshì	way, method, manner, mode, pattern (of behavior etc)
@@ -1063,6 +1085,7 @@
 4	607	考虑	kǎolǜ	to think overto considerconsideration
 4	608	份	fèn	classifier for gifts, newspaper, magazine, papers, reports, contracts etc
 4	608	重	zhòng	heavyseriousto attach importance to
+4	608	重	chóng	againto repeatrepetitionre-
 4	612	信息	xìnxī	information, news, message
 4	621	提供	tígōng	to offerto supplyto provideto furnish
 4	638	区	qū	arearegiondistrictsmall
@@ -1099,6 +1122,7 @@
 4	772	气	qì	gas, airsmellweatherto make angry, to annoy, to get angry
 4	775	性	xìng	naturecharacterpropertyquality
 4	780	倒	dào	to invert, to place upside down or frontside backto pour outto tip out, to dumpinverted, upside down, reversed
+4	780	倒	dǎo	to fall, to collapse, to lie horizontallyto fail, to go bankruptto overthrowto change (trains or buses)
 4	782	建议	jiànyì	to propose, to suggest, to recommendproposal, suggestion, recommendation
 4	785	严重	yánzhòng	grave, serious, severe, critical
 4	786	各位	gèwèi	everybodyall (guests, colleagues etc)all of you
@@ -1115,6 +1139,7 @@
 4	849	底	dǐ	bottom, basebackground, foundationcopy (of a manuscript or receipt etc) kept as a record(suffix) end of a year or month
 4	850	确实	quèshí	indeedreallyreliablereal
 4	852	数	shù	number, figureseveral, a few
+4	852	数	shǔ	to countto count as, to regard asto enumerate, to list
 4	854	表示	biǎoshì	(of sb) to express, to state, to show(of sth) to indicate, to signify, to showexpression, manifestation
 4	854	不管	bùguǎn	no matternot to be concernedregardless of
 4	862	谈	tán	to speakto talkto converseto chat
@@ -1167,6 +1192,7 @@
 4	1048	超过	chāoguò	to surpassto exceedto outstrip
 4	1050	仍	réng	still, yetto remain(literary) frequently, often
 4	1053	假	jiǎ	fakefalseartificialto borrow
+4	1053	假	jià	vacation
 4	1056	加入	jiārù	to become a memberto jointo mix intoto participate in
 4	1060	兄弟	xiōngdì	brothersyounger brotherI, me (humble term used by men in public speech)brotherly
 4	1067	地址	dìzhǐ	address
@@ -1214,6 +1240,7 @@
 4	1202	管理	guǎnlǐ	to superviseto manageto administermanagement
 4	1206	乱	luàn	in confusion or disorderin a confused state of minddisorderupheaval
 4	1207	待	dài	to waitto treatto deal withto need
+4	1207	待	dāi	to stay, to remain
 4	1211	适合	shìhé	to fit, to suit
 4	1215	正式	zhèngshì	formal, official
 4	1216	引起	yǐnqǐ	to give rise to, to lead to, to cause, to arouse
@@ -1255,6 +1282,7 @@
 4	1342	文件	wénjiàn	documentfile
 4	1344	表	biǎo	form, table; watch (timepiece)exterior surfacefamily relationship via femalesto show (one's opinion)
 4	1345	空	kōng	emptyairskyin vain
+4	1345	空	kòng	free timeto emptyvacantunoccupied
 4	1351	左右	zuǒyòu	approximatelyleft and rightnearbyattendant
 4	1352	效果	xiàoguǒ	resulteffectefficacy(theater) sound or visual effects
 4	1373	普通	pǔtōng	commonordinarygeneralaverage
@@ -1283,6 +1311,7 @@
 4	1431	举行	jǔxíng	to hold (a meeting, ceremony etc)
 4	1433	想法	xiǎngfǎ	way of thinking, opinion, notionto think of a way (to do sth)
 4	1435	落	luò	to fall or drop(of the sun) to set(of a tide) to go outto lower
+4	1435	落	là	to leave behind or forget to bringto leave outto be missingto lag or fall behind
 4	1436	著名	zhùmíng	famousnotedwell-knowncelebrated
 4	1443	拒绝	jùjué	to refuse, to decline, to reject
 4	1446	梦想	mèngxiǎng	(fig.) to dream ofdream
@@ -1314,6 +1343,7 @@
 4	1618	之中	zhīzhōng	insideamongin the midst of (doing sth)during
 4	1623	背	bèi	the back of a body or objectto turn one's backto hide something fromto learn by heart
 4	1623	共同	gòngtóng	commonjointjointlytogether
+4	1623	背	bēi	to carry on one's back(fig.) to bear, to shoulder (a burden, blame etc)
 4	1626	一生	yīshēng	all one's life, throughout one's life
 4	1627	杂志	zázhì	magazine
 4	1629	既然	jìrán	since, as, this being the case
@@ -1409,6 +1439,7 @@
 4	2135	基础	jīchǔ	base, foundation, basisbasic, fundamental
 4	2147	量	liàng	capacityquantityamountto estimate
 4	2147	适应	shìyìng	to adaptto fitto suit
+4	2147	量	liáng	to measure
 4	2163	赚	zhuàn	to earnto make a profit
 4	2168	猜	cāi	to guess
 4	2176	食品	shípǐn	foodstuff, food, provisions
@@ -1469,6 +1500,7 @@
 4	2480	判断	pànduàn	to judge, to determine, judgment
 4	2492	相互	xiānghù	each othermutual
 4	2520	弹	tán	to play (a string instrument)to pluck (a string)to spring or leapto shoot (e.g. with a catapult)
+4	2520	弹	dàn	bulletcrossballshotshell
 4	2524	有趣	yǒuqù	interesting, fascinating, amusing
 4	2531	公里	gōnglǐ	kilometer
 4	2532	工资	gōngzī	wages, pay

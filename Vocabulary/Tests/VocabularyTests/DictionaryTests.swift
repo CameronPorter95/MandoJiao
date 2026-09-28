@@ -69,6 +69,11 @@ nonisolated struct DictionaryTests {
         #expect(cai?.senses.contains("ability, talent") == false)
         // "to" is a part of none of "to give"'s parts, so it stays.
         #expect(try await dictionary.entries(forHanzi: "给").first?.senses.prefix(2) == ["to give", "to"])
+        // Each of a character's HSK readings heads its own line.
+        let chang = try await dictionary.entries(forHanzi: "长")
+        #expect(chang.first { $0.pinyin == "cháng" }?.senses.first == "long")
+        #expect(chang.first { $0.pinyin == "zhǎng" }?.senses.first == "to grow")
+        #expect(try await dictionary.search("bullet", limit: 1).first?.pinyin == "dàn")
         // Only the reading HSK means: 告诉's gàosù is still "to press charges".
         #expect(try await dictionary.entries(forHanzi: "告诉").first { $0.pinyin == "gàosù" }?.senses.first
             == "to press charges, to file a complaint")

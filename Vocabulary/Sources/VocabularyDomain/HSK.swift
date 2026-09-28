@@ -40,7 +40,10 @@ public nonisolated enum HSK {
 
     /// `words` are the level's words, in any order. The HSK folder goes last at the top level.
     public static func plan(level: Int, words: [HSKWord], topLevelFolders: Int) -> BuiltInPlan {
-        let ordered = words.filter { $0.level == level }.sorted { ($0.rank, $0.hanzi) < ($1.rank, $1.hanzi) }
+        // Stable, so a character's second reading stays after its main one, as the list has it.
+        let ordered = words.enumerated().filter { $0.element.level == level }
+            .sorted { ($0.element.rank, $0.element.hanzi, $0.offset) < ($1.element.rank, $1.element.hanzi, $1.offset) }
+            .map(\.element)
         let count = deckCount(forWords: ordered.count)
         var decks: [BuiltInPlan.Deck] = []
         var start = 0

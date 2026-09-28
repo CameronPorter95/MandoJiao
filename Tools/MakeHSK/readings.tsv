@@ -1,0 +1,47 @@
+# Second readings of HSK words, each its own word with its own card. HSK 3.0 lists a
+# polyphone once per reading; the source merges them under one character, so without this
+# 长 would only ever be cháng, never zhǎng, "to grow".
+#
+# Hanzi, the reading, then its headline, tab separated. The word takes the level and rank of
+# the character's main reading, and that reading's senses from the dictionary, the headline
+# first as in headlines.tsv. Only readings a learner meets as everyday words are listed:
+# not archaic ones, surnames, or a neutral-tone form of the same word.
+#
+# Drafted 2026-09-28 for HSK 1 to 4, awaiting review by a native speaker.
+#
+# HSK 1
+好	hào	to be fond of, to have a tendency to, to be prone to
+还	huán	to return (sth), to give back
+都	dū	capital city
+了	liǎo	to finish
+少	shào	young
+要	yāo	(bound form) to demand, to coerce
+只	zhī	classifier for birds and certain animals, one of a pair, some utensils, vessels etc
+# HSK 2
+得	de	(structural particle after a verb, showing degree or result)
+得	děi	to have to, must
+地	dì	earth, ground
+过	guo	(experienced action marker)
+长	zhǎng	to grow
+着	zháo	to catch (fire, a cold); (after a verb) to succeed
+# HSK 3
+差	chāi	to send (on an errand)
+发	fà	hair
+干	gān	dry
+角	jué	role (theater)
+为	wéi	as (in the capacity of)
+行	háng	row, line; trade, business
+中	zhòng	to hit (a target)
+种	zhòng	to plant
+# HSK 4
+背	bēi	to carry on one's back
+待	dāi	to stay, to remain
+倒	dǎo	to fall, to collapse, to lie horizontally
+假	jià	vacation
+空	kòng	free time
+量	liáng	to measure
+数	shǔ	to count
+重	chóng	again
+转	zhuàn	to revolve
+弹	dàn	bullet
+落	là	to leave behind or forget to bring

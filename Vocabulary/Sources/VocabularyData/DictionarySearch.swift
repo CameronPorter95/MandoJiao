@@ -34,8 +34,8 @@ nonisolated struct DictionarySearch: Sendable {
         let entries = index.lines.values.flatMap { lines -> [(Substring, DictionaryEntry, HSKHeadlines.Word?)] in
             let parsed = lines.compactMap { line in BundledDictionary.Index.entry(line).map { (line, $0) } }
             let applied = headlines.applied(to: parsed.map(\.1))
-            let carrier = headlines.carrier(among: parsed.map(\.1))
-            return parsed.indices.map { (parsed[$0].0, applied[$0], carrier?.index == $0 ? carrier?.word : nil) }
+            let carriers = headlines.carriers(among: parsed.map(\.1))
+            return parsed.indices.map { (parsed[$0].0, applied[$0], carriers[$0]) }
         }
         records = entries.map { line, entry, hsk in
             Record(

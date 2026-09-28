@@ -10,14 +10,14 @@ import CoreDomain
 nonisolated struct HSKTests {
     private let words = try! BundledHSK.words()
 
-    @Test("each level has the 2025 revision's words, less the erhua ones it already has in standard form")
+    @Test("each level has the 2025 revision's words, less the erhua ones it already has in standard form, plus second readings")
     func counts() {
         let counts = Dictionary(grouping: words, by: \.level).mapValues(\.count)
         // 294 and 487 in the syllabus. 哪儿, 这儿 and 那儿 are 哪里, 这里 and 那里, already in
-        // HSK 1, and 一块儿 is 一起, already in HSK 2.
-        #expect(counts == [1: 291, 2: 197, 3: 486, 4: 972, 5: 1547, 6: 1684, 7: 4876])
+        // HSK 1, and 一块儿 is 一起, already in HSK 2. readings.tsv adds 7, 6, 8 and 11.
+        #expect(counts == [1: 298, 2: 203, 3: 494, 4: 983, 5: 1547, 6: 1684, 7: 4876])
         #expect(words.allSatisfy { !$0.pinyin.isEmpty && !$0.meanings.isEmpty && $0.meanings.count <= 4 })
-        #expect(Set(words.map(\.hanzi)).count == words.count)
+        #expect(Set(words.map { "\($0.hanzi) \($0.pinyin)" }).count == words.count)
     }
 
     @Test("words are standard Mandarin, not Beijing erhua, and a real 儿 is kept")
@@ -70,24 +70,33 @@ nonisolated struct HSKTests {
         #expect(words.first { $0.hanzi == hanzi }?.pinyin == pinyin)
     }
 
-    @Test("cost: a character's reading is the dictionary's preferred one, which misses the everyday one for some", arguments: [
-        // 长's was zhǎng until headlines.tsv made it cháng.
-        ("得", "dé"), ("教", "jiào"),
+    @Test("a character's other everyday readings are words of their own, beside its main one", arguments: [
+        ("长", "cháng", "zhǎng", "to grow"), ("弹", "tán", "dàn", "bullet"), ("得", "dé", "děi", "to have to, must"),
+        ("行", "xíng", "háng", "row, line; trade, business"), ("只", "zhǐ", "zhī", "classifier for birds and certain animals, one of a pair, some utensils, vessels etc"),
     ])
-    func readings(hanzi: String, pinyin: String) {
-        #expect(words.first { $0.hanzi == hanzi }?.pinyin == pinyin)
+    func secondReadings(hanzi: String, main: String, second: String, headline: String) throws {
+        let readings = words.filter { $0.hanzi == hanzi }
+        #expect(readings.first?.pinyin == main)
+        let other = try #require(readings.first { $0.pinyin == second })
+        #expect(other.meanings.first == headline)
+        #expect(other.level == readings.first?.level && other.rank == readings.first?.rank)
+        // 教 was jiào until headlines.tsv made it the jiāo HSK 2 means.
+        #expect(words.first { $0.hanzi == "教" }?.pinyin == "jiāo")
     }
 
     @Test("a level splits evenly into decks of at most 50, most common words first")
-    func plan() {
+    func plan() throws {
         let hsk1 = HSK.plan(level: 1, words: words, topLevelFolders: 1)
-        #expect(hsk1.decks.map(\.words.count) == [49, 49, 49, 48, 48, 48])
+        #expect(hsk1.decks.map(\.words.count) == [50, 50, 50, 50, 49, 49])
         #expect(hsk1.decks.map(\.name).prefix(2) == ["HSK 1 · 1", "HSK 1 · 2"])
         #expect(hsk1.decks.first?.words.first?.hanzi == "的")
         #expect(hsk1.decks.map(\.key).last == "hsk/1/6")
         #expect(hsk1.folders.map(\.key) == ["hsk", "hsk/1"])
 
-        #expect(HSK.plan(level: 2, words: words, topLevelFolders: 1).decks.map(\.words.count) == [50, 49, 49, 49])
+        #expect(HSK.plan(level: 2, words: words, topLevelFolders: 1).decks.map(\.words.count) == [41, 41, 41, 40, 40])
+        // A second reading follows its main one into the same deck.
+        let deck = try #require(HSK.plan(level: 4, words: words, topLevelFolders: 1).decks.first { $0.words.contains { $0.hanzi == "弹" } })
+        #expect(deck.words.filter { $0.hanzi == "弹" }.map(\.pinyin) == ["tán", "dàn"])
         #expect(HSK.plan(level: 7, words: words, topLevelFolders: 1).folders.last?.name == "HSK 7-9")
     }
 }
@@ -151,6 +160,27 @@ struct BuiltInInstallTests {
         #expect(vocabulary.words.first { $0.hanzi == "你好" }?.meanings == starter.map { [$0.english] })
     }
 
+    @Test("a character's readings install as separate words, and one already in the library keeps its own meanings")
+    func readingsInstall() async throws {
+        // Saved by the user as dàn, and a 长 with no pinyin at all.
+        container.mainContext.insert(VocabWord(meanings: ["a bomb"], hanzi: "弹", pinyin: "dàn"))
+        container.mainContext.insert(VocabWord(meanings: ["long, my own"], hanzi: "长"))
+        try container.mainContext.save()
+        try await install(4)
+        try await install(2)
+        let vocabulary = await current()
+
+        let tan = vocabulary.words.filter { $0.hanzi == "弹" }
+        #expect(tan.count == 2)
+        #expect(tan.first { $0.pinyin == "dàn" }?.meanings == ["a bomb"])
+        #expect(tan.first { $0.pinyin == "tán" }?.english == "to play (a string instrument)")
+        // The pinyin-less 长 is taken for the main reading, cháng; zhǎng is added beside it.
+        let chang = vocabulary.words.filter { $0.hanzi == "长" }
+        #expect(chang.count == 2)
+        #expect(chang.contains { $0.meanings == ["long, my own"] })
+        #expect(chang.contains { $0.pinyin == "zhǎng" })
+    }
+
     @Test("installing again changes nothing")
     func idempotent() async throws {
         try await install(1)
@@ -194,6 +224,6 @@ struct BuiltInInstallTests {
 
         #expect(vocabulary.folders.filter { $0.builtInKey == HSK.rootKey }.count == 1)
         #expect(vocabulary.folders(in: hsk.id).map(\.name) == ["HSK 1", "HSK 2"])
-        #expect(vocabulary.decks.count == 10)
+        #expect(vocabulary.decks.count == 11)
     }
 }
