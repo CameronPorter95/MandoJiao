@@ -11,6 +11,7 @@ public struct LibraryRoute: View {
     private let navigation: LibraryNavigation
     private let root: (LibrarySelection, LibraryPageContext) -> AnyView
     private let page: (LibraryPage, LibraryPageContext) -> AnyView
+    private let hskLevels: () -> AnyView
 
     @State private var error: VocabularyError?
     /// Not derived from the selection: popping the stack to its first screen reports `.sidebar`.
@@ -21,12 +22,14 @@ public struct LibraryRoute: View {
         viewModel: LibraryViewModel,
         navigation: LibraryNavigation,
         root: @escaping (LibrarySelection, LibraryPageContext) -> AnyView,
-        page: @escaping (LibraryPage, LibraryPageContext) -> AnyView
+        page: @escaping (LibraryPage, LibraryPageContext) -> AnyView,
+        hskLevels: @escaping () -> AnyView
     ) {
         _viewModel = State(initialValue: viewModel)
         self.navigation = navigation
         self.root = root
         self.page = page
+        self.hskLevels = hskLevels
     }
 
     public var body: some View {
@@ -47,6 +50,12 @@ public struct LibraryRoute: View {
                 }
                 .navigationDestination(for: LibraryPage.self) { page($0, pageContext) }
             }
+        }
+        .sheet(isPresented: Binding(
+            get: { viewModel.state.isShowingHSKLevels },
+            set: { if !$0 { viewModel.send(.hskLevelsDismissed) } }
+        )) {
+            hskLevels()
         }
         .onAppear { viewModel.send(.appeared) }
         .onDisappear { viewModel.send(.disappeared) }
@@ -76,7 +85,11 @@ public struct LibraryRoute: View {
                     toggle: { viewModel.send(.folderSectionToggled(folderID, $0)) },
                     setDeckSort: { viewModel.send(.deckSortChanged(folderID, $0)) }
                 )
-            }
+            },
+            wordList: WordListLayout(
+                sort: viewModel.state.layout.wordSort,
+                setSort: { viewModel.send(.wordSortChanged($0)) }
+            )
         )
     }
 }

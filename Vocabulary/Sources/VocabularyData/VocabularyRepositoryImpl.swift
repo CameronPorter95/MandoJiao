@@ -67,6 +67,10 @@ actor VocabularyRepositoryImpl: VocabularyRepository {
         try await write { try await $0.deleteFolder(id: id) }
     }
 
+    func install(_ plan: BuiltInPlan) async throws {
+        try await write { try await $0.install(plan) }
+    }
+
     func recordResults(_ results: LessonResults) async throws {
         try await write { try await $0.recordResults(results) }
     }

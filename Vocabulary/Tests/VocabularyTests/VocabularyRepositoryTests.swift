@@ -245,8 +245,8 @@ struct VocabularyRepositoryTests {
         VocabularyStore.seedIfNeeded(container)
         let vocabulary = await current()
 
-        let starter = try #require(vocabulary.folders.first)
-        #expect(vocabulary.folders.count == 1)
+        let starter = try #require(vocabulary.folders.first { $0.builtInKey == SampleVocabulary.builtInKey })
+        #expect(vocabulary.folders(in: nil).first == starter)
         #expect(starter.name == "Starter")
         #expect(starter.builtInKey == SampleVocabulary.builtInKey)
         #expect(vocabulary.decks(in: starter.id).map(\.name) == SampleVocabulary.deckPlan.map(\.name))
@@ -383,6 +383,7 @@ private struct FailingLocalSource: VocabularyLocalSource {
     func renameFolder(id: UUID, name: String) async throws { throw error }
     func moveFolder(id: UUID, toParent parentID: UUID?, at index: Int?) async throws { throw error }
     func deleteFolder(id: UUID) async throws { throw error }
+    func install(_ plan: BuiltInPlan) async throws { throw error }
     func recordResults(_ results: LessonResults) async throws { throw error }
     func clearMistakes() async throws { throw error }
 }

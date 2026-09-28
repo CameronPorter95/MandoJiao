@@ -9,9 +9,14 @@ import Testing
 nonisolated struct DictionaryTests {
     private let dictionary = DictionaryRepositoryImpl()
 
+    /// CC-CEDICT as bundled, before HSK's headlines are put first.
+    private func raw(_ hanzi: String) async throws -> [DictionaryEntry] {
+        try await BundledDictionary.shared.index().entries(forHanzi: hanzi)
+    }
+
     @Test("a character keeps every reading, the preferred one first, each with all its senses")
     func readings() async throws {
-        let xing = try await dictionary.entries(forHanzi: "行")
+        let xing = try await raw("行")
         #expect(xing.map(\.pinyin) == ["xíng", "háng", "héng"])
         #expect(xing.first?.isPreferred == true)
         #expect(xing.first?.senses.contains("behavior, conduct") == true)
@@ -30,6 +35,43 @@ nonisolated struct DictionaryTests {
         #expect(try await dictionary.entries(forHanzi: "西安").first?.senses == ["Xi'an, sub-provincial city and capital of Shaanxi Province"])
         #expect(try await dictionary.entries(forHanzi: "不在").isEmpty == false)
         #expect(try await dictionary.entries(forHanzi: "not a word").isEmpty)
+    }
+
+    @Test("a measure word, a sense beginning \"surname\" that is not a name, and an abbreviation keep their meaning")
+    func sensesThatLookLikeReferences() async throws {
+        #expect(try await dictionary.entries(forHanzi: "辆").first?.senses == ["classifier for vehicles"])
+        #expect(try await dictionary.entries(forHanzi: "姓名").first?.senses == ["surname and given name, full name"])
+        #expect(try await dictionary.entries(forHanzi: "湘").first?.senses.first == "Hunan province in south central China")
+        #expect(try await dictionary.entries(forHanzi: "欧盟").first?.senses == ["European Union", "EU"])
+        // A bare surname still points nowhere worth keeping.
+        #expect(try await dictionary.entries(forHanzi: "于").first { $0.pinyin == "Yú" }?.senses == [])
+    }
+
+    @Test("of two lines in one reading, a rare traditional form loses", arguments: [
+        ("年", "year"), ("冬", "winter"), ("云", "cloud"),
+        // 裡 and 里 are both common, so "inside" stays ahead of the unit of length.
+        ("里", "lining"),
+    ])
+    func rareForms(hanzi: String, headline: String) async throws {
+        #expect(try await raw(hanzi).first?.senses.first == headline)
+    }
+
+    @Test("an HSK word's headline is the first meaning of its reading, and nothing repeats it")
+    func headlinesInTheDictionary() async throws {
+        let zai = try await dictionary.entries(forHanzi: "在")
+        #expect(zai.first?.senses.prefix(2) == ["at, in", "to exist, to be alive"])
+        // 裡, the line HSK means, not 里's unit of length.
+        #expect(try await dictionary.entries(forHanzi: "里").first { $0.traditional == "裡" }?.senses.first == "inside")
+        #expect(try await dictionary.entries(forHanzi: "里").first { $0.traditional == "里" && $0.pinyin == "lǐ" }?.senses.first
+            == "li, ancient measure of length, approx. 500 m")
+        let cai = try await dictionary.entries(forHanzi: "才").first { $0.isPreferred }
+        #expect(cai?.senses.first == "only then, just; ability, talent")
+        #expect(cai?.senses.contains("ability, talent") == false)
+        // "to" is a part of none of "to give"'s parts, so it stays.
+        #expect(try await dictionary.entries(forHanzi: "给").first?.senses.prefix(2) == ["to give", "to"])
+        // Only the reading HSK means: 告诉's gàosù is still "to press charges".
+        #expect(try await dictionary.entries(forHanzi: "告诉").first { $0.pinyin == "gàosù" }?.senses.first
+            == "to press charges, to file a complaint")
     }
 
     @Test("no sense in the whole dictionary keeps a Hanzi or a bracketed pinyin reference")
@@ -59,13 +101,34 @@ nonisolated struct DictionaryTests {
         #expect(try await dictionary.search("drink", limit: 5).contains { $0.simplified == "喝" })
     }
 
-    /// CC-CEDICT has no frequency, so the commoner of two exact matches can lose. Pinned so a
-    /// better ranking, say from HSK's frequency order, shows up here.
-    @Test("search ranks by a stand-in for frequency, and it puts 合 before 和 and 于 before 去")
-    func searchRankingCost() async throws {
-        let he = try await dictionary.search("he", limit: 5).map(\.simplified)
-        #expect(he.firstIndex(of: "合")! < he.firstIndex(of: "和")!)
-        #expect(try await dictionary.search("go", limit: 2).map(\.simplified) == ["于", "去"])
+    /// CC-CEDICT has no frequency, so HSK's ranks it: an exact match on one of a word's first
+    /// senses, then HSK words by frequency.
+    @Test("search puts the everyday word first", arguments: [
+        ("bank", "银行"), ("go", "去"), ("drink", "喝"), ("eat", "吃"), ("you", "你"),
+        ("thank you", "谢谢"), ("year", "年"), ("money", "钱"), ("tell", "告诉"), ("he", "他"),
+    ])
+    func searchRanking(query: String, first: String) async throws {
+        #expect(try await dictionary.search(query, limit: 1).first?.simplified == first)
+    }
+
+    /// No CC-CEDICT sense of 在 is "at" or "in" on its own; its HSK headline, chosen by hand,
+    /// is, and search matches that as its first sense.
+    @Test("search finds a word by its HSK headline where CC-CEDICT lacks the sense", arguments: [
+        ("at", "在"), ("in", "在"), ("to wear", "穿"),
+    ])
+    func searchByHeadline(query: String, first: String) async throws {
+        #expect(try await dictionary.search(query, limit: 1).first?.simplified == first)
+    }
+
+    @Test("a result shows its HSK headline, and a word HSK lacks its first sense, made short")
+    func resultSummary() async throws {
+        let zai = try await dictionary.search("在", limit: 1).first
+        #expect(zai?.headline == "at, in")
+        #expect(zai?.summary == "at, in")
+        #expect(zai?.entry.senses.first == "to exist, to be alive")
+        let yinhang = try await dictionary.search("banker", limit: 5).first { $0.simplified == "银行家" }
+        #expect(yinhang?.headline == nil)
+        #expect(yinhang?.summary == "banker")
     }
 
     @Test("search lists a headword once per reading, and nothing for a blank query")

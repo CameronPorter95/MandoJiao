@@ -19,9 +19,28 @@ public nonisolated struct DictionaryEntry: Hashable, Sendable {
     }
 }
 
+/// A headword search found, with the headline an HSK word's library copy would have.
+public nonisolated struct DictionarySearchResult: Hashable, Sendable {
+    public let entry: DictionaryEntry
+    /// Chosen for common HSK words where the dictionary's first sense is not the everyday
+    /// one, and what a result row shows: 在 is "at, in", not "to exist, to be alive".
+    public let headline: String?
+
+    public init(entry: DictionaryEntry, headline: String? = nil) {
+        self.entry = entry
+        self.headline = headline
+    }
+
+    public var simplified: String { entry.simplified }
+    public var pinyin: String { entry.pinyin }
+
+    /// The headline, else the dictionary's first sense, made short for a row.
+    public var summary: String? { (headline ?? entry.senses.first).map { Gloss.plain($0) } }
+}
+
 public nonisolated protocol DictionaryRepository: Sendable {
     /// Every reading of the headword, the preferred one first. Empty when it is not a headword.
     func entries(forHanzi hanzi: String) async throws -> [DictionaryEntry]
     /// Headwords matching Hanzi, pinyin with or without tones, or English, best first.
-    func search(_ query: String, limit: Int) async throws -> [DictionaryEntry]
+    func search(_ query: String, limit: Int) async throws -> [DictionarySearchResult]
 }

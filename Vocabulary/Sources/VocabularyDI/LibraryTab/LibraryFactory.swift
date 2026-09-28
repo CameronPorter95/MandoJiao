@@ -44,7 +44,7 @@ public enum LibraryFactory: NavigationInputRouteFactory {
             navigation: navigation.library,
             root: { selection, context in
                 switch selection {
-                case .allWords: AnyView(WordLibraryFactory.makeRoute(dependencies: dependencies))
+                case .allWords: AnyView(WordLibraryFactory.makeRoute(dependencies: dependencies, input: context.wordList))
                 case .folder(let id): folder(id, context)
                 }
             },
@@ -63,7 +63,8 @@ public enum LibraryFactory: NavigationInputRouteFactory {
                         )
                     ))
                 }
-            }
+            },
+            hskLevels: { AnyView(HSKLevelsFactory.makeRoute(dependencies: dependencies)) }
         )
     }
 }

@@ -25,6 +25,9 @@ public nonisolated protocol VocabularyRepository: Sendable {
     /// Deletes every folder and deck beneath it too. Words stay in the library.
     func deleteFolder(id: UUID) async throws
 
+    /// Creates what the plan has and the library lacks, by key. Never changes anything present.
+    func install(_ plan: BuiltInPlan) async throws
+
     func recordResults(_ results: LessonResults) async throws
     func clearMistakes() async throws
 }

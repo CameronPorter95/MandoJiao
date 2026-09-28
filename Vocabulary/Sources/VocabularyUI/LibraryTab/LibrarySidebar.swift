@@ -27,7 +27,7 @@ struct LibrarySidebar: View {
             onPractise: { onAction(.practiseFolderTapped($0)) },
             onDelete: { onAction(.deleteFolderTapped($0)) }
         )
-        .navigationTitle("Library")
+        .navigationTitle("My Vocabulary")
         .toolbar {
             ToolbarItemGroup(placement: .primaryAction) {
                 Button(state.isEditing ? "Done" : "Edit") { onAction(.editTapped) }
@@ -35,6 +35,13 @@ struct LibrarySidebar: View {
                     onAction(.newFolderTapped(parentID: nil))
                 } label: {
                     Label("New folder", systemImage: "folder.badge.plus")
+                }
+                Menu {
+                    Button { onAction(.hskLevelsTapped) } label: {
+                        Label("HSK levels…", systemImage: "graduationcap")
+                    }
+                } label: {
+                    Label("More", systemImage: "ellipsis")
                 }
             }
         }

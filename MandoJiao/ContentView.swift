@@ -6,7 +6,7 @@ import SpeakingDI
 import SwiftUI
 import VocabularyDI
 
-/// The app's root: the home, library and dictionary tabs, and the lessons presented over all three.
+/// The app's root: the home, vocabulary and dictionary tabs, and the lessons presented over all three.
 struct ContentView: View {
     let dependencies: Dependencies
 
@@ -31,7 +31,7 @@ struct ContentView: View {
                     )
                 }
             }
-            Tab("Library", systemImage: "books.vertical") {
+            Tab("Vocabulary", systemImage: "books.vertical") {
                 LibraryFactory.makeRoute(
                     dependencies: dependencies,
                     navigation: navigation.vocabulary,

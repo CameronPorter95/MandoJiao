@@ -46,6 +46,25 @@ nonisolated struct LibraryLayoutTests {
         #expect(layout.settingDeckSort(.default, in: a) == LibraryLayout())
     }
 
+    @Test("the word list keeps its sort, and a layout saved before it could be sorted still loads")
+    func wordSort() throws {
+        let byMistakes = WordSort(field: .mistakes, ascending: false)
+        let layout = LibraryLayout().settingDeckSort(DeckSort(field: .size, ascending: true), in: a).settingWordSort(byMistakes)
+        #expect(layout.wordSort == byMistakes)
+        #expect(layout.settingWordSort(.default).wordSort == .default)
+
+        let repository = LibraryLayoutRepositoryImpl(defaults: defaults)
+        repository.save(layout)
+        #expect(LibraryLayoutRepositoryImpl(defaults: defaults).layout() == layout)
+
+        // As saved before words had a sort: the deck sort survives, the word sort is the default.
+        var old = try JSONSerialization.jsonObject(with: JSONEncoder().encode(layout)) as! [String: Any]
+        old.removeValue(forKey: "savedWordSort")
+        let decoded = try JSONDecoder().decode(LibraryLayout.self, from: JSONSerialization.data(withJSONObject: old))
+        #expect(decoded.wordSort == .default)
+        #expect(decoded.deckSort(in: a) == DeckSort(field: .size, ascending: true))
+    }
+
     @Test("the layout survives a relaunch, and a store with none starts folded")
     func persistence() {
         let repository = LibraryLayoutRepositoryImpl(defaults: defaults)

@@ -75,7 +75,7 @@ times; once it reported `TEST SUCCEEDED` while eight new tests were skipped. A
 green result on its own is not evidence that anything ran.
 
 `xcodebuild test` prints one `Test run with` line per test bundle, five in all.
-Add them up. Current suite: 291 tests in 35 suites: 13 in `Core`, 143 in `Vocabulary`,
+Add them up. Current suite: 320 tests in 39 suites: 13 in `Core`, 172 in `Vocabulary`,
 92 in `Speaking`, 39 in `Matching`, 4 in `Settings`. The app target has no tests of
 its own. If a bundle's line is missing, it did not run.
 
@@ -150,6 +150,10 @@ not enough; if the behaviour reverses, a test should say so.
 - **Never name a target after an Apple framework.** `CoreAudio`, `Speech`,
   `SwiftData` and `CoreData` all collide. The sound target is `CoreSound` because
   `CoreAudio` failed with a module cycle through AVFoundation.
+- **Adding a resource to a package's manifest needs a clean app build.** The incremental
+  Xcode build kept the old manifest and shipped `VocabularyData`'s bundle without the new
+  `HSK.tsv`, so the app reported the list unreadable while `swift test` passed. Check the
+  built app's `Vocabulary_VocabularyData.bundle` when a resource is new.
 - **A local package's test target needs a file reference in the project.** Without
   one the scheme lists it and xcodebuild skips it silently, reporting a pass for the
   app's tests alone.

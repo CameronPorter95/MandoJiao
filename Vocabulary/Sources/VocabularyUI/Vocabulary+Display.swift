@@ -42,7 +42,7 @@ extension Vocabulary {
             Self.counted(decks(beneath: folderID).count, "deck"),
         ].compactMap { $0 }
         guard !contents.isEmpty else { return nil }
-        return "\(folder.displayName) and the \(contents.joined(separator: " and ")) inside it will be deleted. Their words stay in the library."
+        return "\(folder.displayName) and the \(contents.joined(separator: " and ")) inside it will be deleted. Their words stay in your vocabulary."
     }
 
     /// The folder and everything beneath it gone, for an optimistic delete.

@@ -59,7 +59,9 @@ actor BundledDictionary {
 
     func search() async throws -> DictionarySearch {
         if searching == nil {
-            searching = Task.detached { [self] in DictionarySearch(try await index()) }
+            searching = Task.detached { [self] in
+                DictionarySearch(try await index(), headlines: .bundled)
+            }
         }
         do {
             return try await searching!.value

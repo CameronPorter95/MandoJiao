@@ -126,7 +126,7 @@ struct LibraryViewModelTests {
         library.send(.opened(.deck(Fixtures.part1.id)))
 
         library.send(.deleteFolderTapped(Fixtures.hsk.id))
-        #expect(library.state.deletionWarning == "HSK and the 1 folder and 2 decks inside it will be deleted. Their words stay in the library.")
+        #expect(library.state.deletionWarning == "HSK and the 1 folder and 2 decks inside it will be deleted. Their words stay in your vocabulary.")
         library.send(.deleteFolderConfirmed)
 
         #expect(library.state.selection == nil)
@@ -177,6 +177,15 @@ struct LibraryViewModelTests {
         #expect(layout.layout() == library.state.layout)
     }
 
+    @Test("the word list's sort is the library's to save, alongside the rest of the layout")
+    func wordSort() async {
+        let (library, _) = await makeLibrary()
+        library.send(.deckSortChanged(Fixtures.level1.id, DeckSort(field: .title, ascending: true)))
+        library.send(.wordSortChanged(WordSort(field: .pinyin, ascending: true)))
+        #expect(layout.layout().wordSort == WordSort(field: .pinyin, ascending: true))
+        #expect(layout.layout().deckSort(in: Fixtures.level1.id).field == .title)
+    }
+
     @Test("the library opens as it was left")
     func restoring() async {
         layout.save(LibraryLayout().settingExpanded(Fixtures.hsk.id, true, in: .tree))
@@ -190,5 +199,14 @@ struct LibraryViewModelTests {
         #expect(library.state.canPractise(Fixtures.hsk.id))
         #expect(!library.state.canPractise(Fixtures.emptyFolder.id))
         #expect(!library.state.canPractise(UUID()))
+    }
+
+    @Test("HSK levels opens as a sheet and closes")
+    func hskLevels() async {
+        let (library, _) = await makeLibrary()
+        library.send(.hskLevelsTapped)
+        #expect(library.state.isShowingHSKLevels)
+        library.send(.hskLevelsDismissed)
+        #expect(!library.state.isShowingHSKLevels)
     }
 }
