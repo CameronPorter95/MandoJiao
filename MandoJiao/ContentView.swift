@@ -31,7 +31,7 @@ struct ContentView: View {
                     )
                 }
             }
-            Tab("My Vocabulary", systemImage: "books.vertical") {
+            Tab("Vocabulary", systemImage: "books.vertical") {
                 LibraryFactory.makeRoute(
                     dependencies: dependencies,
                     navigation: navigation.vocabulary,

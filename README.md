@@ -58,7 +58,7 @@ to 3 by an everyday meaning chosen by hand in `Tools/MakeHSK/headlines.tsv` wher
 dictionary's first is not; rebuild the list with `Tools/MakeHSK` after `Tools/MakeDictionary`. Add, edit and
 delete your own in My Vocabulary, and group them into decks to practise a subset.
 Every deck lives in a folder, and folders hold decks and other folders to any depth,
-arranged by dragging in the My Vocabulary tab's tree as in Notes. On iPad the tree sits beside the folder or deck that is open. A lesson
+arranged by dragging in the Vocabulary tab's tree as in Notes. On iPad the tree sits beside the folder or deck that is open. A lesson
 draws from all your words, one deck, or every deck beneath a folder.
 
 ## Dictionary
