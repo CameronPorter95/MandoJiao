@@ -56,6 +56,7 @@ public final class WordEditorViewModel {
                 if let index = meanings.firstIndex(of: sense) {
                     meanings.remove(at: index)
                 } else {
+                    meanings.removeAll(where: Self.isBlank)
                     meanings.append(sense)
                 }
             }
@@ -64,19 +65,26 @@ public final class WordEditorViewModel {
             let meaning = text.trimmingCharacters(in: .whitespacesAndNewlines)
             guard !meaning.isEmpty, !state.meanings.contains(where: { $0.caseInsensitiveCompare(meaning) == .orderedSame })
             else { return }
-            state.editMeanings { $0.append(meaning) }
+            state.editMeanings { meanings in
+                meanings.removeAll(where: Self.isBlank)
+                meanings.append(meaning)
+            }
+
+        case .meaningEdited(let index, let text):
+            // Kept as typed, even blank, so the field is not taken away mid-edit. Saving trims.
+            state.editMeanings { meanings in
+                if meanings.indices.contains(index) {
+                    meanings[index] = text
+                } else if index == meanings.count {
+                    meanings.append(text)
+                }
+            }
 
         case .meaningsMoved(let from, let to):
             state.editMeanings { $0.move(fromOffsets: from, toOffset: to) }
 
         case .meaningsRemoved(let offsets):
             state.editMeanings { $0.remove(atOffsets: offsets) }
-
-        case .meaningMadeHeadline(let meaning):
-            state.editMeanings { meanings in
-                meanings.removeAll { $0 == meaning }
-                meanings.insert(meaning, at: 0)
-            }
 
         case .sensesTapped:
             state.isChoosingSenses = !state.tickableEntries.isEmpty
@@ -107,6 +115,10 @@ public final class WordEditorViewModel {
         case .cancelTapped:
             effectChannel.send(.dismiss)
         }
+    }
+
+    private static func isBlank(_ meaning: String) -> Bool {
+        meaning.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
     /// The lexicon and the dictionary are asked separately, so either failing still leaves

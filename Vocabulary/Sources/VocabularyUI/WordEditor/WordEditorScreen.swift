@@ -7,6 +7,12 @@ struct WordEditorScreen: View {
     let onAction: (WordEditorAction) -> Void
 
     @State private var newMeaning = ""
+    @FocusState private var focus: Field?
+
+    private enum Field: Hashable {
+        case meaning(Int)
+        case newMeaning
+    }
 
     var body: some View {
         NavigationStack {
@@ -47,6 +53,7 @@ struct WordEditorScreen: View {
                     }
                 }
             }
+            .alwaysEditing()
             .navigationTitle(state.title)
             .inlineNavigationTitle()
             .sheet(isPresented: Binding(
@@ -60,50 +67,58 @@ struct WordEditorScreen: View {
                     Button("Cancel") { onAction(.cancelTapped) }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") { onAction(.saveTapped) }.disabled(!state.canSave)
+                    // A meaning typed but not yet added is kept, not lost.
+                    Button("Save") {
+                        addMeaning()
+                        onAction(.saveTapped)
+                    }
+                    .disabled(!state.canSave)
                 }
             }
         }
     }
 
+    /// Each meaning is its own field, the first being the headline, with its reorder handle
+    /// showing from the start. A new word starts with just the headline's field, and a
+    /// field to add another appears once there is one.
     private var meaningsSection: some View {
         Section {
-            if state.meanings.isEmpty {
-                Text(state.tickableEntries.isEmpty ? "Add one below." : "Add one below, or choose from the dictionary.")
-                    .foregroundStyle(.secondary)
-            }
-            ForEach(Array(state.meanings.enumerated()), id: \.element) { index, meaning in
+            ForEach(Array(state.meaningRows.enumerated()), id: \.offset) { index, meaning in
                 HStack(alignment: .firstTextBaseline) {
-                    Text(meaning)
-                        .foregroundStyle(state.meaningsAreSuggested ? Theme.accent : .primary)
-                    Spacer()
-                    if index == 0 {
+                    TextField(
+                        index == 0 ? "Headline meaning" : "Meaning",
+                        text: Binding(get: { meaning }, set: { editMeaning(at: index, $0) }),
+                        prompt: Text(index == 0 ? "Headline meaning, like to drink" : "Meaning"),
+                        axis: .vertical
+                    )
+                    .neverAutocapitalize()
+                    .foregroundStyle(state.meaningsAreSuggested ? Theme.accent : .primary)
+                    .focused($focus, equals: .meaning(index))
+                    if index == 0, state.canAddMeaning {
                         Text("Headline")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
                 }
-                .contextMenu {
-                    if index > 0 {
-                        Button { onAction(.meaningMadeHeadline(meaning)) } label: {
-                            Label("Make headline", systemImage: "arrow.up.to.line")
-                        }
-                    }
-                    Button(role: .destructive) { onAction(.meaningsRemoved([index])) } label: {
-                        Label("Remove", systemImage: "trash")
-                    }
-                }
+                // A text field does not count as the row's text, so the separator would start
+                // at the Headline label.
+                .alignmentGuide(.listRowSeparatorLeading) { $0[.leading] }
+                .deleteDisabled(state.meanings.isEmpty)
+                .moveDisabled(state.meanings.count < 2)
             }
             .onMove { onAction(.meaningsMoved(from: $0, to: $1)) }
             .onDelete { onAction(.meaningsRemoved($0)) }
 
-            TextField("Add a meaning", text: $newMeaning)
-                .neverAutocapitalize()
-                .submitLabel(.done)
-                .onSubmit {
-                    onAction(.meaningAdded(newMeaning))
-                    newMeaning = ""
-                }
+            if state.canAddMeaning {
+                TextField("Add a meaning", text: $newMeaning)
+                    .neverAutocapitalize()
+                    .submitLabel(.done)
+                    .focused($focus, equals: .newMeaning)
+                    .onSubmit {
+                        addMeaning()
+                        focus = .newMeaning
+                    }
+            }
         } header: {
             Text("Meanings")
         } footer: {
@@ -111,9 +126,26 @@ struct WordEditorScreen: View {
                 if state.meaningsAreSuggested {
                     Text("Suggested from the dictionary, and saved unless you change it.")
                 }
-                Text("The headline is shown on tiles and prompts, the rest once the answer is out. Drag to reorder, swipe to remove.")
+                Text("The headline is shown on tiles and prompts, the rest once the answer is out."
+                    + (state.meanings.count > 1 ? " Drag to reorder." : ""))
             }
         }
+    }
+
+    /// Return in a meaning's field moves on to adding another rather than breaking the line.
+    private func editMeaning(at index: Int, _ text: String) {
+        guard text.contains("\n") else {
+            onAction(.meaningEdited(at: index, text: text))
+            return
+        }
+        onAction(.meaningEdited(at: index, text: text.replacingOccurrences(of: "\n", with: "")))
+        focus = .newMeaning
+    }
+
+    private func addMeaning() {
+        guard !newMeaning.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
+        onAction(.meaningAdded(newMeaning))
+        newMeaning = ""
     }
 
     /// Apart from the word's own fields, and only ever a way into the dictionary: its senses

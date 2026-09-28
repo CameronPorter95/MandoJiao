@@ -137,7 +137,7 @@ struct WordEditorViewModelTests {
         #expect(editor.state.pinyinSuggestion == "háng")
 
         editor.send(.meaningAdded("a custom one"))
-        editor.send(.meaningMadeHeadline("a custom one"))
+        editor.send(.meaningsMoved(from: [1], to: 0))
         #expect(editor.state.isCustom("a custom one"))
         // Not a sense of either reading, so back to the lexicon's.
         #expect(editor.state.pinyinSuggestion == "xíng")
@@ -158,8 +158,42 @@ struct WordEditorViewModelTests {
         editor.send(.meaningAdded("to sip"))
         editor.send(.meaningsMoved(from: [2], to: 0))
         #expect(editor.state.meanings == ["to sip", "to drink", "to shout"])
-        editor.send(.meaningMadeHeadline("to shout"))
-        #expect(editor.state.meanings == ["to shout", "to sip", "to drink"])
+    }
+
+    @Test("a new word starts with one field, the headline's, and another appears once it has one")
+    func headlineFirst() async {
+        let (editor, log) = makeEditor(nil, lexicon: FakeLexiconRepository([]), dictionary: FakeDictionaryRepository([]))
+        #expect(editor.state.meaningRows == [""])
+        #expect(!editor.state.canAddMeaning)
+
+        editor.send(.meaningEdited(at: 0, text: "t"))
+        editor.send(.meaningEdited(at: 0, text: "tea "))
+        #expect(editor.state.meaningRows == ["tea "])
+        #expect(editor.state.canAddMeaning)
+
+        editor.send(.meaningAdded("a drink"))
+        editor.send(.meaningEdited(at: 1, text: ""))
+        #expect(editor.state.meaningRows == ["tea ", ""])
+        editor.send(.hanziChanged("茶"))
+        editor.send(.saveTapped)
+        #expect(await log.contains(.dismiss))
+        #expect(await repository.writes == ["saveWord new tea|茶|"])
+    }
+
+    @Test("editing the suggested headline makes it the user's, and a blank one is replaced by what is added")
+    func editingSuggestion() async {
+        let (editor, _) = makeEditor(nil)
+        editor.send(.hanziChanged("喝"))
+        #expect(await waitUntil { editor.state.meanings == ["to drink"] })
+
+        editor.send(.meaningEdited(at: 0, text: "to drink tea"))
+        #expect(!editor.state.meaningsAreSuggested)
+        #expect(editor.state.isCustom("to drink tea"))
+
+        editor.send(.meaningEdited(at: 0, text: ""))
+        #expect(!editor.state.canAddMeaning)
+        editor.send(.senseToggled("to shout (of approval)"))
+        #expect(editor.state.meanings == ["to shout (of approval)"])
     }
 
     @Test("untouched meanings follow the Hanzi, and touched ones stay put")

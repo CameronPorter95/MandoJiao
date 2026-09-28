@@ -52,6 +52,14 @@ struct WordEditorState: Equatable {
     /// In order, the headline first, as saved.
     var meanings: [String] { meaningsEdited ? draft.meanings : suggestedMeanings }
 
+    /// One row even with no meanings, the field the headline is typed into.
+    var meaningRows: [String] { meanings.isEmpty ? [""] : meanings }
+
+    /// Only once there is a headline, so a new word starts with one field.
+    var canAddMeaning: Bool {
+        !(meanings.first ?? "").trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
     /// Shown tinted, since they are saved unless changed.
     var meaningsAreSuggested: Bool { !meaningsEdited && !suggestedMeanings.isEmpty }
 
@@ -100,9 +108,9 @@ enum WordEditorAction: Equatable {
     case pinyinChanged(String)
     case senseToggled(String)
     case meaningAdded(String)
+    case meaningEdited(at: Int, text: String)
     case meaningsMoved(from: IndexSet, to: Int)
     case meaningsRemoved(IndexSet)
-    case meaningMadeHeadline(String)
     case sensesTapped
     case sensesDismissed
     case dictionaryTapped
