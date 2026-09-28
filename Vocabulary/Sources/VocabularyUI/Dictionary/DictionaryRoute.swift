@@ -27,7 +27,8 @@ public struct DictionaryRoute: View {
     }
 }
 
-private struct DictionaryPage: View {
+/// A page with the view model it was made with, for either route's stack.
+struct DictionaryPage: View {
     @State private var viewModel: DictionaryPageViewModel
 
     init(viewModel: DictionaryPageViewModel) {

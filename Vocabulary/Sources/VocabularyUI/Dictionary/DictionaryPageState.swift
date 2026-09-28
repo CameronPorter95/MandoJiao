@@ -5,8 +5,6 @@ struct DictionaryPageState: Equatable {
     struct Reading: Equatable, Identifiable {
         let id: Int
         let entry: DictionaryEntry
-        /// The reading the library word that opened the page has.
-        let isLibraryReading: Bool
     }
 
     /// One character of a longer headword, with its preferred reading.
@@ -36,12 +34,12 @@ struct DictionaryPageState: Equatable {
         return traditional
     }
 
-    /// The library word's reading first, then as the dictionary orders them.
-    static func readings(_ entries: [DictionaryEntry], libraryPinyin: String?) -> [Reading] {
-        let key = libraryPinyin.map(Self.comparable)
-        let isLibrary = { (entry: DictionaryEntry) in key != nil && Self.comparable(entry.pinyin) == key }
-        let ordered = entries.filter(isLibrary) + entries.filter { !isLibrary($0) }
-        return ordered.enumerated().map { Reading(id: $0.offset, entry: $0.element, isLibraryReading: isLibrary($0.element)) }
+    /// The reading asked for first, then as the dictionary orders them.
+    static func readings(_ entries: [DictionaryEntry], first pinyin: String?) -> [Reading] {
+        let key = pinyin.map(Self.comparable)
+        let isFirst = { (entry: DictionaryEntry) in key != nil && Self.comparable(entry.pinyin) == key }
+        let ordered = entries.filter(isFirst) + entries.filter { !isFirst($0) }
+        return ordered.enumerated().map { Reading(id: $0.offset, entry: $0.element) }
     }
 
     /// Walks a headword's pinyin a character at a time, so 行 in 银行 yínháng reads háng

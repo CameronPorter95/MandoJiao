@@ -78,6 +78,12 @@ public final class WordEditorViewModel {
                 meanings.insert(meaning, at: 0)
             }
 
+        case .sensesTapped:
+            state.isChoosingSenses = !state.tickableEntries.isEmpty
+
+        case .sensesDismissed:
+            state.isChoosingSenses = false
+
         case .dictionaryTapped:
             state.dictionary = state.dictionaryHeadword
 

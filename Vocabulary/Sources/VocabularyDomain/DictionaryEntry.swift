@@ -1,7 +1,7 @@
 import Foundation
 
 /// One reading of a headword in the dictionary, with every sense it has. Never edited.
-public nonisolated struct DictionaryEntry: Equatable, Sendable {
+public nonisolated struct DictionaryEntry: Hashable, Sendable {
     public let simplified: String
     public let traditional: String
     public let pinyin: String
@@ -22,4 +22,6 @@ public nonisolated struct DictionaryEntry: Equatable, Sendable {
 public nonisolated protocol DictionaryRepository: Sendable {
     /// Every reading of the headword, the preferred one first. Empty when it is not a headword.
     func entries(forHanzi hanzi: String) async throws -> [DictionaryEntry]
+    /// Headwords matching Hanzi, pinyin with or without tones, or English, best first.
+    func search(_ query: String, limit: Int) async throws -> [DictionaryEntry]
 }

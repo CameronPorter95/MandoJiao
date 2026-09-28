@@ -12,6 +12,18 @@ nonisolated struct DictionaryRepositoryImpl: DictionaryRepository {
             throw VocabularyDomainError.unexpected(model: DomainErrorModel(error))
         }
     }
+
+    func search(_ query: String, limit: Int) async throws -> [DictionaryEntry] {
+        do {
+            let search = try await BundledDictionary.shared.search()
+            try Task.checkCancellation()
+            return search.results(for: query, limit: limit)
+        } catch is CancellationError {
+            throw CancellationError()
+        } catch {
+            throw VocabularyDomainError.unexpected(model: DomainErrorModel(error))
+        }
+    }
 }
 
 /// The bundled CC-CEDICT, read from disk once and shared with the lexicon.

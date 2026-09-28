@@ -35,7 +35,7 @@ public final class DictionaryPageViewModel {
         loading = Task { [lookUpDictionary] in
             do {
                 let entries = try await lookUpDictionary(hanzi: headword.hanzi)
-                let readings = DictionaryPageState.readings(entries, libraryPinyin: headword.pinyin)
+                let readings = DictionaryPageState.readings(entries, first: headword.pinyin)
                 var characters: [DictionaryPageState.Character] = []
                 let hanzi = headword.hanzi.trimmingCharacters(in: .whitespacesAndNewlines)
                 if hanzi.count > 1 {

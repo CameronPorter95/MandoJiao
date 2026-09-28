@@ -6,7 +6,7 @@ import SpeakingDI
 import SwiftUI
 import VocabularyDI
 
-/// The app's root: the home and library tabs, and the lessons presented over both.
+/// The app's root: the home, library and dictionary tabs, and the lessons presented over all three.
 struct ContentView: View {
     let dependencies: Dependencies
 
@@ -37,6 +37,9 @@ struct ContentView: View {
                     navigation: navigation.vocabulary,
                     input: LibraryInput(minimumMatchingWords: MatchingPlanBuilder.pairsPerExercise)
                 )
+            }
+            Tab("Dictionary", systemImage: "character.book.closed") {
+                DictionaryTabFactory.makeRoute(dependencies: dependencies)
             }
         }
         .fullScreenCover(item: $coordinator.presentedLesson) { lesson in

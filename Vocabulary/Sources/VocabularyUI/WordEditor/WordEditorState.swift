@@ -19,6 +19,7 @@ struct WordEditorState: Equatable {
     /// whatever Hanzi is typed. After that they are the user's, whatever the Hanzi.
     var meaningsEdited: Bool
     var dictionary: DictionaryHeadword?
+    var isChoosingSenses = false
 
     init(wordID: UUID?, draft: WordDraft, lookup: Lookup? = nil) {
         self.wordID = wordID
@@ -102,6 +103,8 @@ enum WordEditorAction: Equatable {
     case meaningsMoved(from: IndexSet, to: Int)
     case meaningsRemoved(IndexSet)
     case meaningMadeHeadline(String)
+    case sensesTapped
+    case sensesDismissed
     case dictionaryTapped
     case dictionaryDismissed
     case saveTapped

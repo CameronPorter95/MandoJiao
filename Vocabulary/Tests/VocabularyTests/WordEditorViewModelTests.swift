@@ -272,4 +272,23 @@ struct WordEditorViewModelTests {
         #expect(editor.state.tickableEntries.map(\.pinyin) == ["le"])
         #expect(editor.state.pinyinSuggestion == "le")
     }
+
+    @Test("the dictionary's senses open apart from the word, and only when there are some")
+    func choosingSenses() async {
+        let (editor, _) = makeEditor(nil)
+        editor.send(.hanziChanged("茶"))
+        #expect(await waitUntil { await dictionary.lookups == ["茶"] })
+        await settle()
+        editor.send(.sensesTapped)
+        #expect(!editor.state.isChoosingSenses)
+
+        editor.send(.hanziChanged("喝"))
+        #expect(await waitUntil { !editor.state.tickableEntries.isEmpty })
+        editor.send(.sensesTapped)
+        #expect(editor.state.isChoosingSenses)
+        editor.send(.senseToggled("to shout (of approval)"))
+        editor.send(.sensesDismissed)
+        #expect(!editor.state.isChoosingSenses)
+        #expect(editor.state.meanings == ["to drink", "to shout (of approval)"])
+    }
 }

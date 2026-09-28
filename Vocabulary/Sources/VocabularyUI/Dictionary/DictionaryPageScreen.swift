@@ -47,7 +47,7 @@ struct DictionaryPageScreen: View {
                 if !characters.isEmpty {
                     Section("Characters") {
                         ForEach(characters) { character in
-                            NavigationLink(value: DictionaryHeadword(hanzi: character.hanzi)) {
+                            NavigationLink(value: DictionaryHeadword(hanzi: character.hanzi, pinyin: character.pinyin)) {
                                 CharacterRow(character: character)
                             }
                         }
@@ -80,17 +80,10 @@ private struct ReadingSection: View {
                 }
             }
         } header: {
-            HStack {
-                Text(reading.entry.pinyin)
-                    .font(.title3.weight(.semibold))
-                    .foregroundStyle(Color.primary)
-                if reading.isLibraryReading {
-                    Text("In your library")
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(Theme.accent)
-                }
-            }
-            .textCase(nil)
+            Text(reading.entry.pinyin)
+                .font(.title3.weight(.semibold))
+                .foregroundStyle(Color.primary)
+                .textCase(nil)
         }
     }
 }
@@ -123,7 +116,7 @@ private struct CharacterRow: View {
                 content: .loaded(
                     readings: DictionaryPageState.readings(
                         [DictionaryEntry(simplified: "银行", traditional: "銀行", pinyin: "yínháng", isPreferred: true, senses: ["bank"])],
-                        libraryPinyin: "yín háng"
+                        first: "yín háng"
                     ),
                     characters: [
                         .init(hanzi: "银", pinyin: "yín", gloss: "silver"),

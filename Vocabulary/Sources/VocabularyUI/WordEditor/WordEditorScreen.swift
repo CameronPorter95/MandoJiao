@@ -17,7 +17,7 @@ struct WordEditorScreen: View {
                 } header: {
                     Text("Hanzi")
                 } footer: {
-                    Text("Meanings and pinyin are suggested from CC-CEDICT once the Hanzi is entered.")
+                    Text("Pinyin and a meaning are suggested from CC-CEDICT once the Hanzi is entered.")
                 }
                 Section {
                     TextField(
@@ -37,21 +37,8 @@ struct WordEditorScreen: View {
                 }
                 meaningsSection
 
-                ForEach(state.tickableEntries, id: \.pinyin) { entry in
-                    DictionarySensesSection(
-                        entry: entry,
-                        isOnlyReading: state.tickableEntries.count == 1,
-                        isChosen: state.isChosen,
-                        onToggle: { onAction(.senseToggled($0)) }
-                    )
-                }
-
                 if state.dictionaryHeadword != nil {
-                    Section {
-                        Button { onAction(.dictionaryTapped) } label: {
-                            Label("View in dictionary", systemImage: "character.book.closed")
-                        }
-                    }
+                    dictionarySection
                 }
 
                 if state.canDelete {
@@ -62,6 +49,12 @@ struct WordEditorScreen: View {
             }
             .navigationTitle(state.title)
             .inlineNavigationTitle()
+            .sheet(isPresented: Binding(
+                get: { state.isChoosingSenses },
+                set: { if !$0 { onAction(.sensesDismissed) } }
+            )) {
+                SensePicker(state: state, onAction: onAction)
+            }
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { onAction(.cancelTapped) }
@@ -76,7 +69,7 @@ struct WordEditorScreen: View {
     private var meaningsSection: some View {
         Section {
             if state.meanings.isEmpty {
-                Text(state.entries.isEmpty ? "Add one below." : "Tick one below, or add your own.")
+                Text(state.tickableEntries.isEmpty ? "Add one below." : "Add one below, or choose from the dictionary.")
                     .foregroundStyle(.secondary)
             }
             ForEach(Array(state.meanings.enumerated()), id: \.element) { index, meaning in
@@ -116,9 +109,30 @@ struct WordEditorScreen: View {
         } footer: {
             VStack(alignment: .leading, spacing: 4) {
                 if state.meaningsAreSuggested {
-                    Text("Suggested, and saved unless you change it.")
+                    Text("Suggested from the dictionary, and saved unless you change it.")
                 }
                 Text("The headline is shown on tiles and prompts, the rest once the answer is out. Drag to reorder, swipe to remove.")
+            }
+        }
+    }
+
+    /// Apart from the word's own fields, and only ever a way into the dictionary: its senses
+    /// are never listed here, so what is the word's and what is the dictionary's stay apart.
+    private var dictionarySection: some View {
+        Section {
+            if !state.tickableEntries.isEmpty {
+                Button { onAction(.sensesTapped) } label: {
+                    Label("Choose meanings from the dictionary", systemImage: "checklist")
+                }
+            }
+            Button { onAction(.dictionaryTapped) } label: {
+                Label("View in dictionary", systemImage: "character.book.closed")
+            }
+        } header: {
+            Text("CC-CEDICT")
+        } footer: {
+            if !state.tickableEntries.isEmpty {
+                Text("A meaning chosen there is copied into this word, where it is yours to edit.")
             }
         }
     }
@@ -164,11 +178,38 @@ struct WordEditorScreen: View {
     )
 }
 
+/// The dictionary's senses for the Hanzi, as a sheet of its own. Ticking one copies it into
+/// the word's meanings, and unticking takes the copy out.
+private struct SensePicker: View {
+    let state: WordEditorState
+    let onAction: (WordEditorAction) -> Void
+
+    var body: some View {
+        NavigationStack {
+            List {
+                ForEach(state.tickableEntries, id: \.pinyin) { entry in
+                    DictionarySensesSection(
+                        entry: entry,
+                        isChosen: state.isChosen,
+                        onToggle: { onAction(.senseToggled($0)) }
+                    )
+                }
+            }
+            .navigationTitle(state.draft.trimmed.hanzi)
+            .inlineNavigationTitle()
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") { onAction(.sensesDismissed) }
+                }
+            }
+        }
+    }
+}
+
 /// One reading's senses, ticked when they are among the word's meanings. A character can
 /// have dozens, so the list starts short.
 private struct DictionarySensesSection: View {
     let entry: DictionaryEntry
-    let isOnlyReading: Bool
     let isChosen: (String) -> Bool
     let onToggle: (String) -> Void
 
@@ -198,11 +239,10 @@ private struct DictionarySensesSection: View {
                 }
             }
         } header: {
-            Text(isOnlyReading ? "From the dictionary" : "From the dictionary, \(entry.pinyin)")
-        } footer: {
-            if isOnlyReading || entry.isPreferred {
-                Text("Tick a sense to add it as a meaning.")
-            }
+            Text(entry.pinyin)
+                .font(.title3.weight(.semibold))
+                .foregroundStyle(Color.primary)
+                .textCase(nil)
         }
     }
 }

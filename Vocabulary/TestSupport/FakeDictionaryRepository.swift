@@ -34,6 +34,15 @@ public actor FakeDictionaryRepository: DictionaryRepository {
         failure = error
     }
 
+    public private(set) var searches: [String] = []
+
+    /// Headwords holding the query, or with a sense holding it, in the order given.
+    public func search(_ query: String, limit: Int) throws -> [DictionaryEntry] {
+        searches.append(query)
+        if let failure { throw failure }
+        return Array(entries.filter { $0.simplified.contains(query) || $0.senses.contains { $0.contains(query) } }.prefix(limit))
+    }
+
     public func entries(forHanzi hanzi: String) throws -> [DictionaryEntry] {
         lookups.append(hanzi)
         if let failure { throw failure }

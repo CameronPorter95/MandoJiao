@@ -30,15 +30,13 @@ struct DictionaryPageViewModelTests {
     func readings() async throws {
         let page = try #require(await loaded(makePage("行")))
         #expect(page.readings.map(\.entry.pinyin) == ["xíng", "háng"])
-        #expect(page.readings.allSatisfy { !$0.isLibraryReading })
         #expect(page.characters.isEmpty)
     }
 
-    @Test("the library word's reading comes first however its pinyin is spaced")
-    func libraryReadingFirst() async throws {
+    @Test("the reading asked for comes first however its pinyin is spaced")
+    func readingFirst() async throws {
         let page = try #require(await loaded(makePage("行", pinyin: "Háng ")))
         #expect(page.readings.map(\.entry.pinyin) == ["háng", "xíng"])
-        #expect(page.readings.map(\.isLibraryReading) == [true, false])
     }
 
     @Test("a longer headword lists each character once with its preferred reading, skipping unknown ones")
