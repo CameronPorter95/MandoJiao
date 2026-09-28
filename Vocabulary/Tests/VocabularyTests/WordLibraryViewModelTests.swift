@@ -33,6 +33,16 @@ struct WordLibraryViewModelTests {
         #expect(library.state.words(sortedBy: .default).map(\.english) == ["book", "water", "mobile phone"].sorted())
     }
 
+    @Test("the list is searched by pinyin ignoring tones, by English, and by Hanzi, as the dictionary is", arguments: [
+        ("shui", ["water"]), ("shuǐ", ["water"]), ("shui3", ["water"]), ("shou ji", ["mobile phone"]),
+        ("cha", ["tea"]), ("WATER", ["water"]), ("手机", ["mobile phone"]),
+    ])
+    func searchingLikeTheDictionary(query: String, found: [String]) async {
+        let (library, _) = await makeLibrary()
+        library.send(.searchChanged(query))
+        #expect(library.state.words(sortedBy: .default).map(\.english) == found)
+    }
+
     @Test("the editor opens on the chosen word, or blank for a new one")
     func editor() async {
         let (library, _) = await makeLibrary()
