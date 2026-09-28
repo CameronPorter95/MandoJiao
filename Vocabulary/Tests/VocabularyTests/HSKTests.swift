@@ -16,7 +16,7 @@ nonisolated struct HSKTests {
         // 294 and 487 in the syllabus. 哪儿, 这儿 and 那儿 are 哪里, 这里 and 那里, already in
         // HSK 1, and 一块儿 is 一起, already in HSK 2.
         #expect(counts == [1: 291, 2: 197, 3: 486, 4: 972, 5: 1547, 6: 1684, 7: 4876])
-        #expect(words.allSatisfy { !$0.pinyin.isEmpty && !$0.english.isEmpty })
+        #expect(words.allSatisfy { !$0.pinyin.isEmpty && !$0.meanings.isEmpty && $0.meanings.count <= 4 })
         #expect(Set(words.map(\.hanzi)).count == words.count)
     }
 
@@ -34,7 +34,26 @@ nonisolated struct HSKTests {
         #expect(words.first { $0.hanzi == "一点" }?.pinyin == "yīdiǎn")
     }
 
-    @Test("cost: a character's reading is the lexicon's, which misses the everyday one for some", arguments: [
+    @Test("a word takes the dictionary's senses for its reading, as written, at most four")
+    func meanings() {
+        let word = { (hanzi: String) in words.first { $0.hanzi == hanzi } }
+        #expect(word("的")?.meanings.first == "of, ~'s (possessive particle)")
+        #expect(word("打")?.meanings.count == 4)
+        // Its only sense, which the dictionary once dropped as a reference.
+        #expect(word("辆")?.meanings == ["classifier for vehicles"])
+        #expect(!words.contains { $0.meanings.contains { $0.contains("[") || $0.unicodeScalars.contains { (0x3400...0x9FFF).contains($0.value) } } })
+    }
+
+    @Test("the source's spellings of a reading are matched to the dictionary's", arguments: [
+        ("略", "lüè"), ("闺女", "guīnü"), ("欧洲", "Ōuzhōu"), ("泄露", "xièlòu"),
+        // The dictionary's ya has no senses, so the source's stands rather than yā, "ah".
+        ("呀", "ya"),
+    ])
+    func sourceSpellings(hanzi: String, pinyin: String) {
+        #expect(words.first { $0.hanzi == hanzi }?.pinyin == pinyin)
+    }
+
+    @Test("cost: a character's reading is the dictionary's preferred one, which misses the everyday one for some", arguments: [
         ("得", "dé"), ("长", "zhǎng"), ("教", "jiào"),
     ])
     func readings(hanzi: String, pinyin: String) {
@@ -101,6 +120,17 @@ struct BuiltInInstallTests {
         #expect(vocabulary.decks(in: level1.id, sortedBy: .default).map(\.name) == (1...6).map { HSK.deckName(1, $0) })
         #expect(vocabulary.decks(in: starter.id, sortedBy: .default).map(\.name)
             == SampleVocabulary.deckPlan.map(\.name).sorted { $0.localizedStandardCompare($1) == .orderedAscending })
+    }
+
+    @Test("an installed word keeps every meaning, and a word already in the library keeps its own")
+    func installedMeanings() async throws {
+        VocabularyStore.seedIfNeeded(container)
+        let vocabulary = await current()
+        let de = vocabulary.words.first { $0.hanzi == "的" }
+        #expect(de?.meanings == words.first { $0.hanzi == "的" }?.meanings)
+        #expect((de?.meanings.count ?? 0) > 1)
+        let starter = SampleVocabulary.deckPlan.flatMap(\.entries).first { $0.hanzi == "你好" }
+        #expect(vocabulary.words.first { $0.hanzi == "你好" }?.meanings == starter.map { [$0.english] })
     }
 
     @Test("installing again changes nothing")

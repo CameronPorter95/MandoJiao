@@ -52,8 +52,9 @@ level; `是` and `社` merge from Standard up; `想` and `兄` merge from Relaxe
 
 Ships with 65 starter words across six decks, in a Starter folder, and HSK 1 from the
 2025 revision of HSK 3.0, split into decks of 50 or fewer words, most common first. The
-other levels, up to 7-9, are added or restored from the library's HSK levels list; rebuild
-the list with `Tools/MakeHSK` after `Tools/MakeLexicon`. Add, edit and
+other levels, up to 7-9, are added or restored from the library's HSK levels list. Each
+HSK word takes up to four meanings from the dictionary for its reading; rebuild the list
+with `Tools/MakeHSK` after `Tools/MakeDictionary`. Add, edit and
 delete your own from the library, and group them into decks to practise a subset.
 Every deck lives in a folder, and folders hold decks and other folders to any depth,
 arranged by dragging in the Library tab's tree as in Notes. On iPad the tree sits beside the folder or deck that is open. A lesson

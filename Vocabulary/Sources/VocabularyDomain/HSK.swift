@@ -8,14 +8,16 @@ public nonisolated struct HSKWord: Equatable, Sendable {
     public let rank: Int
     public let hanzi: String
     public let pinyin: String
-    public let english: String
+    /// The dictionary's senses for this reading, as a word's meanings are: the first is the
+    /// headline.
+    public let meanings: [String]
 
-    public init(level: Int, rank: Int, hanzi: String, pinyin: String, english: String) {
+    public init(level: Int, rank: Int, hanzi: String, pinyin: String, meanings: [String]) {
         self.level = level
         self.rank = rank
         self.hanzi = hanzi
         self.pinyin = pinyin
-        self.english = english
+        self.meanings = meanings
     }
 }
 
@@ -51,7 +53,7 @@ public nonisolated enum HSK {
                 name: deckName(level, index + 1),
                 folderKey: levelKey(level),
                 position: index,
-                words: chunk.map { WordDraft(english: $0.english, hanzi: $0.hanzi, pinyin: $0.pinyin) }
+                words: chunk.map { WordDraft(meanings: $0.meanings, hanzi: $0.hanzi, pinyin: $0.pinyin) }
             ))
         }
         return BuiltInPlan(

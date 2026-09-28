@@ -31,7 +31,7 @@ nonisolated enum BuiltInInstaller {
             guard let folder = folders[planned.folderKey] else { continue }
             let deckWords = planned.words.map { draft in
                 if let existing = words[draft.hanzi] { return existing }
-                let word = VocabWord(english: draft.english, hanzi: draft.hanzi, pinyin: draft.pinyin)
+                let word = VocabWord(meanings: draft.meanings, hanzi: draft.hanzi, pinyin: draft.pinyin)
                 context.insert(word)
                 words[draft.hanzi] = word
                 return word

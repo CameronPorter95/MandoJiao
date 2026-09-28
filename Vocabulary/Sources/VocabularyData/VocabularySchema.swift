@@ -186,12 +186,17 @@ nonisolated enum VocabularySchemaV4: VersionedSchema {
         var missCount: Int = 0
         var lastMissedAt: Date?
 
-        init(english: String, hanzi: String, pinyin: String = "") {
+        init(meanings: [String], hanzi: String, pinyin: String = "") {
             self.uuid = UUID()
-            self.english = english
+            self.english = meanings.first ?? ""
+            self.meanings = meanings
             self.hanzi = hanzi
             self.pinyin = pinyin
             self.createdAt = .now
+        }
+
+        convenience init(english: String, hanzi: String, pinyin: String = "") {
+            self.init(meanings: english.isEmpty ? [] : [english], hanzi: hanzi, pinyin: pinyin)
         }
     }
 
