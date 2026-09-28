@@ -38,6 +38,8 @@ nonisolated struct HSKTests {
     func meanings() {
         let word = { (hanzi: String) in words.first { $0.hanzi == hanzi } }
         #expect(word("的")?.meanings.first == "of, ~'s (possessive particle)")
+        // Not the archaic 秊's "grain", which the dictionary once preferred.
+        #expect(word("年")?.meanings == ["year"])
         #expect(word("打")?.meanings.count == 4)
         // Its only sense, which the dictionary once dropped as a reference.
         #expect(word("辆")?.meanings == ["classifier for vehicles"])
