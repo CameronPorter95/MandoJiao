@@ -80,10 +80,10 @@ struct FolderDetailScreen: View {
                 Button { onAction(.namingTapped(.newDeck)) } label: {
                     Label("New deck", systemImage: "plus")
                 }
+                Button { onAction(.namingTapped(.newFolder)) } label: {
+                    Label("New folder", systemImage: "folder.badge.plus")
+                }
                 Menu {
-                    Button { onAction(.namingTapped(.newFolder)) } label: {
-                        Label("New folder", systemImage: "folder.badge.plus")
-                    }
                     Button { onAction(.namingTapped(.rename)) } label: {
                         Label("Rename", systemImage: "pencil")
                     }
