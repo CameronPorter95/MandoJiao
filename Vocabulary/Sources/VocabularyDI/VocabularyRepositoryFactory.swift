@@ -26,6 +26,10 @@ public enum VocabularyRepositoryFactory {
         Lexicon.repository
     }
 
+    public static func makeDictionaryRepository() -> any DictionaryRepository {
+        CEDICT.dictionary
+    }
+
     public static func makeLibraryLayoutRepository() -> any LibraryLayoutRepository {
         LibraryLayoutRepositoryImpl()
     }

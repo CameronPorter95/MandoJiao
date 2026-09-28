@@ -23,6 +23,7 @@ struct WordLibraryState: Equatable {
     var vocabulary: Vocabulary = .empty
     var searchText = ""
     var editor: WordEditorTarget?
+    var dictionary: DictionaryHeadword?
 
     var words: [Word] { vocabulary.words.sorted { $0.english < $1.english } }
     var filteredWords: [Word] { words.filter { $0.matches(searchText) } }
@@ -35,6 +36,8 @@ enum WordLibraryAction: Equatable {
     case addTapped
     case editTapped(UUID)
     case editorDismissed
+    case dictionaryTapped(UUID)
+    case dictionaryDismissed
     case deleteTapped([UUID])
 }
 

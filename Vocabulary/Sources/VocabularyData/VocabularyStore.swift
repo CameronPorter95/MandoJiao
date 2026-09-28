@@ -7,7 +7,7 @@ public enum VocabularyStore {
     /// Opens the store, migrating an older schema if there is one.
     public static func makeContainer(inMemory: Bool = false) throws -> ModelContainer {
         try ModelContainer(
-            for: Schema(versionedSchema: VocabularySchemaV3.self),
+            for: Schema(versionedSchema: VocabularySchemaV4.self),
             migrationPlan: VocabularyMigrationPlan.self,
             configurations: ModelConfiguration(isStoredInMemoryOnly: inMemory)
         )

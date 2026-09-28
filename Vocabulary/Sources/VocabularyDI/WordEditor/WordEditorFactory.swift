@@ -11,8 +11,10 @@ public enum WordEditorFactory: InputRouteFactory {
                 word: word,
                 saveWord: SaveWordUseCase(repository: repository),
                 deleteWords: DeleteWordsUseCase(repository: repository),
-                suggestWord: SuggestWordUseCase(repository: VocabularyRepositoryFactory.makeLexiconRepository())
-            )
+                suggestWord: SuggestWordUseCase(repository: VocabularyRepositoryFactory.makeLexiconRepository()),
+                lookUpDictionary: LookUpDictionaryUseCase(repository: VocabularyRepositoryFactory.makeDictionaryRepository())
+            ),
+            makeDictionary: { DictionaryFactory.makeRoute(dependencies: dependencies, input: $0) }
         )
     }
 }

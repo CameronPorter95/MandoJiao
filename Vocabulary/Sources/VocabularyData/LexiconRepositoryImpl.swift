@@ -3,13 +3,8 @@ import Foundation
 import VocabularyDomain
 
 actor LexiconRepositoryImpl: LexiconRepository {
-    private struct Table {
-        let entries: [String: WordSuggestion]
-        let longestHeadword: Int
-    }
-
     private let source: any LexiconSource
-    private var loading: Task<Table, any Error>?
+    private var loading: Task<LexiconTable, any Error>?
 
     init(source: any LexiconSource) {
         self.source = source
@@ -19,7 +14,7 @@ actor LexiconRepositoryImpl: LexiconRepository {
     func suggestion(forHanzi hanzi: String) async throws -> WordSuggestion? {
         do {
             let table = try await table()
-            if let entry = table.entries[hanzi] { return entry }
+            if let entry = table.suggestion(hanzi) { return entry }
 
             let characters = Array(hanzi)
             var pieces: [String] = []
@@ -28,7 +23,7 @@ actor LexiconRepositoryImpl: LexiconRepository {
                 let longest = min(table.longestHeadword, characters.count - start)
                 guard longest > 0 else { return nil }
                 let match = (1...longest).reversed().lazy.compactMap { length in
-                    table.entries[String(characters[start..<start + length])].map { (length, $0) }
+                    table.suggestion(String(characters[start..<start + length])).map { (length, $0) }
                 }.first
                 guard let (length, entry) = match else { return nil }
                 pieces.append(entry.pinyin)
@@ -43,12 +38,9 @@ actor LexiconRepositoryImpl: LexiconRepository {
     }
 
     /// Loads once however many lookups arrive while it runs, and retries after a failure.
-    private func table() async throws -> Table {
+    private func table() async throws -> LexiconTable {
         if loading == nil {
-            loading = Task { [source] in
-                let entries = try await source.entries()
-                return Table(entries: entries, longestHeadword: entries.keys.map(\.count).max() ?? 0)
-            }
+            loading = Task { [source] in try await source.entries() }
         }
         do {
             return try await loading!.value
@@ -61,5 +53,5 @@ actor LexiconRepositoryImpl: LexiconRepository {
 
 /// The one lexicon for the app's lifetime, so it is read from disk once.
 public nonisolated enum Lexicon {
-    public static let repository: any LexiconRepository = LexiconRepositoryImpl(source: BundledLexiconSource())
+    public static let repository: any LexiconRepository = LexiconRepositoryImpl(source: DictionaryLexiconSource())
 }

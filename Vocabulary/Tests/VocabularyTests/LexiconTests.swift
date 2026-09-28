@@ -4,10 +4,10 @@ import CoreDomain
 @testable import VocabularyDomain
 @testable import VocabularyData
 
-/// Against the bundled lexicon, so a regenerated `Lexicon.tsv` that changes a reading fails here.
+/// Against the bundled dictionary, so a regenerated `Dictionary.tsv` that changes a suggestion fails here.
 @Suite("Lexicon")
 nonisolated struct LexiconTests {
-    private static let lexicon = LexiconRepositoryImpl(source: BundledLexiconSource())
+    private static let lexicon = LexiconRepositoryImpl(source: DictionaryLexiconSource())
 
     private func suggest(_ hanzi: String) async throws -> WordSuggestion? {
         try await Self.lexicon.suggestion(forHanzi: hanzi)
@@ -80,9 +80,9 @@ nonisolated struct LexiconRepositoryTests {
             self.results = results
         }
 
-        func entries() throws -> [String: WordSuggestion] {
+        func entries() throws -> LexiconTable {
             loads += 1
-            return try results.removeFirst().get()
+            return LexiconTable(try results.removeFirst().get())
         }
     }
 
@@ -90,7 +90,7 @@ nonisolated struct LexiconRepositoryTests {
 
     @Test("a source failure is unexpected, and the next lookup loads again")
     func failure() async throws {
-        let source = StubSource([.failure(LexiconSourceError.missingResource), .success(Self.water)])
+        let source = StubSource([.failure(DictionarySourceError.missingResource), .success(Self.water)])
         let lexicon = LexiconRepositoryImpl(source: source)
 
         await #expect {

@@ -66,4 +66,24 @@ struct VocabularyDomainTests {
 
         #expect(await repository.writes == ["saveWord new water|水|shuǐ"])
     }
+
+    @Test("the first meaning is the headline; a lesson gets it short, with the rest to reveal")
+    func meanings() {
+        let word = Word(meanings: ["(bound form) row, line", "line of business, trade"], hanzi: "行", pinyin: "háng")
+        #expect(word.english == "(bound form) row, line")
+        #expect(word.pair.english == "row, line")
+        #expect(word.pair.otherMeanings == ["line of business, trade"])
+        #expect(word.pair.meanings == ["row, line", "line of business, trade"])
+        #expect(word.matches("TRADE"))
+        #expect(Word(english: "water", hanzi: "水").meanings == ["water"])
+        #expect(Word(english: "", hanzi: "空").meanings.isEmpty)
+    }
+
+    @Test("a draft drops blank and repeated meanings, keeping the first of each, and needs one")
+    func draftMeanings() {
+        let draft = WordDraft(meanings: [" to drink ", "", "To Drink", "to shout"], hanzi: "喝")
+        #expect(draft.trimmed.meanings == ["to drink", "to shout"])
+        #expect(draft.isComplete)
+        #expect(!WordDraft(meanings: ["  "], hanzi: "喝").isComplete)
+    }
 }

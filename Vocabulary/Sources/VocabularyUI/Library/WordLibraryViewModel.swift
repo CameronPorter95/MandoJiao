@@ -48,6 +48,13 @@ public final class WordLibraryViewModel {
         case .editorDismissed:
             state.editor = nil
 
+        case .dictionaryTapped(let id):
+            guard let word = state.vocabulary.words.first(where: { $0.id == id }), !word.hanzi.isEmpty else { return }
+            state.dictionary = DictionaryHeadword(hanzi: word.hanzi, pinyin: word.pinyin.isEmpty ? nil : word.pinyin)
+
+        case .dictionaryDismissed:
+            state.dictionary = nil
+
         case .deleteTapped(let ids):
             let previous = state.vocabulary
             state.vocabulary.words.removeAll { ids.contains($0.id) }

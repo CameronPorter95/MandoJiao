@@ -1,3 +1,5 @@
+import CoreDesignSystem
+import CoreUI
 import SwiftUI
 import VocabularyDomain
 
@@ -22,6 +24,30 @@ struct WordLibraryScreen: View {
                     .contentShape(Rectangle())
                 }
                 .tint(.primary)
+                .swipeActions(edge: .leading) {
+                    if !word.hanzi.isEmpty {
+                        Button {
+                            onAction(.dictionaryTapped(word.id))
+                        } label: {
+                            Label("Dictionary", systemImage: "character.book.closed")
+                        }
+                        .tint(Theme.accent)
+                    }
+                }
+                .contextMenu {
+                    Button {
+                        onAction(.editTapped(word.id))
+                    } label: {
+                        Label("Edit", systemImage: "pencil")
+                    }
+                    if !word.hanzi.isEmpty {
+                        Button {
+                            onAction(.dictionaryTapped(word.id))
+                        } label: {
+                            Label("View in dictionary", systemImage: "character.book.closed")
+                        }
+                    }
+                }
                 .swipeActions(edge: .trailing) {
                     Button(role: .destructive) {
                         onAction(.deleteTapped([word.id]))
@@ -42,10 +68,7 @@ struct WordLibraryScreen: View {
                 ContentUnavailableView.search(text: state.searchText)
             }
         }
-        .searchable(
-            text: Binding(get: { state.searchText }, set: { onAction(.searchChanged($0)) }),
-            prompt: "Search words"
-        )
+        .searchField(initial: state.searchText, prompt: "Search words") { onAction(.searchChanged($0)) }
         .navigationTitle("Library")
         .toolbar {
             ToolbarItem(placement: .primaryAction) {

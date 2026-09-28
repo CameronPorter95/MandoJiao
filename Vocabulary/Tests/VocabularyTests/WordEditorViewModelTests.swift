@@ -12,10 +12,12 @@ import VocabularyTestSupport
 struct WordEditorViewModelTests {
     private let repository = FakeVocabularyRepository(Fixtures.vocabulary)
     private let lexicon = FakeLexiconRepository()
+    private let dictionary = FakeDictionaryRepository()
 
     private func makeEditor(
         _ word: Word?,
         lexicon: FakeLexiconRepository? = nil,
+        dictionary: FakeDictionaryRepository? = nil,
         suggestionDelay: Duration = .zero
     ) -> (WordEditorViewModel, EffectLog<WordEditorEffect>) {
         let viewModel = WordEditorViewModel(
@@ -23,18 +25,19 @@ struct WordEditorViewModelTests {
             saveWord: SaveWordUseCase(repository: repository),
             deleteWords: DeleteWordsUseCase(repository: repository),
             suggestWord: SuggestWordUseCase(repository: lexicon ?? self.lexicon),
+            lookUpDictionary: LookUpDictionaryUseCase(repository: dictionary ?? self.dictionary),
             suggestionDelay: suggestionDelay
         )
         return (viewModel, EffectLog(viewModel.effects()))
     }
 
-    @Test("a new word needs English and Hanzi, is saved trimmed, then closes")
+    @Test("a new word needs a meaning and Hanzi, is saved trimmed, then closes")
     func newWord() async {
-        let (editor, log) = makeEditor(nil, lexicon: FakeLexiconRepository([]))
+        let (editor, log) = makeEditor(nil, lexicon: FakeLexiconRepository([]), dictionary: FakeDictionaryRepository([]))
         #expect(editor.state.title == "New word")
         #expect(!editor.state.canDelete)
 
-        editor.send(.englishChanged(" to drink "))
+        editor.send(.meaningAdded(" to drink "))
         #expect(!editor.state.canSave)
         editor.send(.hanziChanged("喝"))
         editor.send(.saveTapped)
@@ -47,6 +50,7 @@ struct WordEditorViewModelTests {
     func existingWord() async {
         let (editor, log) = makeEditor(Fixtures.water)
         #expect(editor.state.draft == WordDraft(english: "water", hanzi: "水", pinyin: "shuǐ"))
+        #expect(editor.state.meanings == ["water"])
         #expect(editor.state.title == "Edit word")
 
         editor.send(.pinyinChanged("shui"))
@@ -69,21 +73,23 @@ struct WordEditorViewModelTests {
     func failedSave() async {
         let (editor, log) = makeEditor(nil)
         await repository.failWrites()
-        editor.send(.englishChanged("tea"))
+        editor.send(.meaningAdded("tea"))
         editor.send(.hanziChanged("茶"))
         editor.send(.saveTapped)
 
         #expect(await log.contains(.showError(.saveWordFailed(FakeVocabularyRepository.failure))))
         #expect(!log.effects.contains(.dismiss))
-        #expect(editor.state.draft.english == "tea")
+        #expect(editor.state.meanings == ["tea"])
     }
 
-    @Test("typing Hanzi suggests pinyin and English, and saves them as shown")
+    @Test("typing Hanzi suggests its first sense and that reading's pinyin, saved as shown")
     func suggested() async {
         let (editor, log) = makeEditor(nil)
         editor.send(.hanziChanged("喝"))
 
-        #expect(await waitUntil { editor.state.englishSuggestion == "to drink" })
+        #expect(await waitUntil { editor.state.meanings == ["to drink"] })
+        #expect(editor.state.meaningsAreSuggested)
+        #expect(editor.state.entries.map(\.pinyin) == ["hē", "hè"])
         #expect(editor.state.pinyinSuggestion == "hē")
         #expect(editor.state.canSave)
         editor.send(.saveTapped)
@@ -92,32 +98,137 @@ struct WordEditorViewModelTests {
         #expect(await repository.writes == ["saveWord new to drink|喝|hē"])
     }
 
-    @Test("a typed field replaces its suggestion")
-    func typedOver() async {
+    @Test("senses are saved as the dictionary writes them, asides and all")
+    func sensesAsWritten() async {
         let (editor, log) = makeEditor(nil)
         editor.send(.hanziChanged("银行"))
-        #expect(await waitUntil { editor.state.englishSuggestion == "bank" })
-
-        editor.send(.englishChanged("a bank"))
-        #expect(editor.state.englishSuggestion == nil)
+        #expect(await waitUntil { editor.state.meanings == ["bank (CL:家[jia1],個|个[ge4])"] })
         editor.send(.saveTapped)
 
         #expect(await log.contains(.dismiss))
-        #expect(await repository.writes == ["saveWord new a bank|银行|yínháng"])
+        #expect(await repository.writes == ["saveWord new bank (CL:家[jia1],個|个[ge4])|银行|yínháng"])
     }
 
-    @Test("a suggestion for Hanzi since changed is neither shown nor saved")
-    func staleSuggestion() async {
+    @Test("ticking senses adds them in order, and unticking the last leaves none")
+    func ticking() async {
+        let (editor, _) = makeEditor(nil)
+        editor.send(.hanziChanged("喝"))
+        #expect(await waitUntil { editor.state.meanings == ["to drink"] })
+
+        editor.send(.senseToggled("to shout (of approval)"))
+        #expect(editor.state.meanings == ["to drink", "to shout (of approval)"])
+        #expect(!editor.state.meaningsAreSuggested)
+        #expect(editor.state.isChosen("to shout (of approval)"))
+
+        editor.send(.senseToggled("to drink"))
+        editor.send(.senseToggled("to shout (of approval)"))
+        #expect(editor.state.meanings.isEmpty)
+        #expect(!editor.state.canSave)
+    }
+
+    @Test("pinyin follows the reading the headline comes from")
+    func pinyinFollowsHeadline() async {
+        let (editor, log) = makeEditor(nil, lexicon: FakeLexiconRepository([WordSuggestion(hanzi: "行", pinyin: "xíng", english: "to walk")]))
+        editor.send(.hanziChanged("行"))
+        #expect(await waitUntil { editor.state.pinyinSuggestion == "xíng" })
+
+        editor.send(.senseToggled("to walk"))
+        editor.send(.senseToggled("profession"))
+        #expect(editor.state.pinyinSuggestion == "háng")
+
+        editor.send(.meaningAdded("a custom one"))
+        editor.send(.meaningsMoved(from: [1], to: 0))
+        #expect(editor.state.isCustom("a custom one"))
+        // Not a sense of either reading, so back to the lexicon's.
+        #expect(editor.state.pinyinSuggestion == "xíng")
+
+        editor.send(.meaningsRemoved([0]))
+        editor.send(.saveTapped)
+        #expect(await log.contains(.dismiss))
+        #expect(await repository.writes == ["saveWord new profession|行|háng"])
+    }
+
+    @Test("meanings reorder, and a repeated custom meaning is not added twice")
+    func editingMeanings() async {
+        let (editor, _) = makeEditor(Word(meanings: ["to drink", "to shout"], hanzi: "喝"))
+        editor.send(.meaningAdded("TO DRINK"))
+        editor.send(.meaningAdded("  "))
+        #expect(editor.state.meanings == ["to drink", "to shout"])
+
+        editor.send(.meaningAdded("to sip"))
+        editor.send(.meaningsMoved(from: [2], to: 0))
+        #expect(editor.state.meanings == ["to sip", "to drink", "to shout"])
+    }
+
+    @Test("a new word starts with one field, the headline's, and another appears once it has one")
+    func headlineFirst() async {
+        let (editor, log) = makeEditor(nil, lexicon: FakeLexiconRepository([]), dictionary: FakeDictionaryRepository([]))
+        #expect(editor.state.meaningRows == [""])
+        #expect(!editor.state.canAddMeaning)
+
+        editor.send(.meaningEdited(at: 0, text: "t"))
+        editor.send(.meaningEdited(at: 0, text: "tea "))
+        #expect(editor.state.meaningRows == ["tea "])
+        #expect(editor.state.canAddMeaning)
+
+        editor.send(.meaningAdded("a drink"))
+        editor.send(.meaningEdited(at: 1, text: ""))
+        #expect(editor.state.meaningRows == ["tea ", ""])
+        editor.send(.hanziChanged("茶"))
+        editor.send(.saveTapped)
+        #expect(await log.contains(.dismiss))
+        #expect(await repository.writes == ["saveWord new tea|茶|"])
+    }
+
+    @Test("editing the suggested headline makes it the user's, and a blank one is replaced by what is added")
+    func editingSuggestion() async {
+        let (editor, _) = makeEditor(nil)
+        editor.send(.hanziChanged("喝"))
+        #expect(await waitUntil { editor.state.meanings == ["to drink"] })
+
+        editor.send(.meaningEdited(at: 0, text: "to drink tea"))
+        #expect(!editor.state.meaningsAreSuggested)
+        #expect(editor.state.isCustom("to drink tea"))
+
+        editor.send(.meaningEdited(at: 0, text: ""))
+        #expect(!editor.state.canAddMeaning)
+        editor.send(.senseToggled("to shout (of approval)"))
+        #expect(editor.state.meanings == ["to shout (of approval)"])
+    }
+
+    @Test("untouched meanings follow the Hanzi, and touched ones stay put")
+    func followsHanziUntilTouched() async {
         let (editor, _) = makeEditor(nil)
         editor.send(.hanziChanged("银"))
-        #expect(await waitUntil { editor.state.englishSuggestion == "silver" })
+        #expect(await waitUntil { editor.state.meanings == ["silver"] })
 
         editor.send(.hanziChanged("银行"))
-        #expect(editor.state.englishSuggestion == nil)
+        #expect(editor.state.meanings.isEmpty)
         #expect(editor.state.pinyinSuggestion == nil)
         #expect(!editor.state.canSave)
+        #expect(await waitUntil { editor.state.meanings == ["bank (CL:家[jia1],個|个[ge4])"] })
 
-        #expect(await waitUntil { editor.state.englishSuggestion == "bank" })
+        editor.send(.senseToggled("bank (financial institution)"))
+        editor.send(.hanziChanged("银"))
+        #expect(await waitUntil { await dictionary.lookups.last == "银" })
+        await settle()
+        #expect(editor.state.meanings == ["bank (CL:家[jia1],個|个[ge4])", "bank (financial institution)"])
+    }
+
+    @Test("an existing word keeps its own meanings over the dictionary's")
+    func existingWordSuggestion() async {
+        let word = Word(english: "a drink", hanzi: "喝")
+        let (editor, log) = makeEditor(word)
+        editor.send(.appeared)
+
+        #expect(await waitUntil { editor.state.pinyinSuggestion == "hē" })
+        #expect(editor.state.meanings == ["a drink"])
+        #expect(!editor.state.meaningsAreSuggested)
+        #expect(editor.state.isCustom("a drink"))
+        editor.send(.saveTapped)
+
+        #expect(await log.contains(.dismiss))
+        #expect(await repository.writes == ["saveWord existing a drink|喝|hē"])
     }
 
     @Test("only the Hanzi typing pauses on is looked up")
@@ -126,36 +237,34 @@ struct WordEditorViewModelTests {
         editor.send(.hanziChanged("银"))
         editor.send(.hanziChanged("银行"))
 
-        #expect(await waitUntil { editor.state.englishSuggestion == "bank" })
+        #expect(await waitUntil { editor.state.pinyinSuggestion == "yínháng" })
         await settle()
         #expect(await lexicon.lookups == ["银行"])
+        #expect(await dictionary.lookups == ["银行"])
     }
 
-    @Test("an existing word keeps its own fields, and an empty one takes the suggestion")
-    func existingWordSuggestion() async {
-        let word = Word(english: "water", hanzi: "水")
-        let (editor, log) = makeEditor(word)
-        editor.send(.appeared)
+    @Test("a failed dictionary lookup still suggests the lexicon's pinyin, and shows no error")
+    func failedDictionary() async {
+        let (editor, log) = makeEditor(nil)
+        await dictionary.failLookups()
+        editor.send(.hanziChanged("喝"))
 
-        #expect(await waitUntil { editor.state.pinyinSuggestion == "shuǐ" })
-        #expect(editor.state.englishSuggestion == nil)
-        editor.send(.saveTapped)
-
-        #expect(await log.contains(.dismiss))
-        #expect(await repository.writes == ["saveWord existing water|水|shuǐ"])
+        #expect(await waitUntil { editor.state.pinyinSuggestion == "hē" })
+        #expect(editor.state.entries.isEmpty)
+        #expect(editor.state.meanings.isEmpty)
+        #expect(log.effects.isEmpty)
     }
 
-    @Test("a failed lookup is not shown as an error and leaves the fields to be typed")
+    @Test("a failed lexicon lookup still offers the dictionary, and shows no error")
     func failedLookup() async {
         let (editor, log) = makeEditor(nil)
         await lexicon.failLookups()
         editor.send(.hanziChanged("喝"))
 
-        #expect(await waitUntil { await lexicon.lookups == ["喝"] })
+        #expect(await waitUntil { editor.state.meanings == ["to drink"] })
+        #expect(editor.state.pinyinSuggestion == "hē")
         await settle()
         #expect(log.effects.isEmpty)
-        #expect(editor.state.suggestion == nil)
-        #expect(!editor.state.canSave)
     }
 
     @Test("blank Hanzi looks nothing up")
@@ -166,5 +275,54 @@ struct WordEditorViewModelTests {
 
         await settle()
         #expect(await lexicon.lookups.isEmpty)
+        #expect(await dictionary.lookups.isEmpty)
+    }
+
+    @Test("the dictionary opens on the Hanzi with the reading that would be saved")
+    func dictionary() async {
+        let (editor, _) = makeEditor(nil)
+        editor.send(.dictionaryTapped)
+        #expect(editor.state.dictionary == nil)
+
+        editor.send(.hanziChanged(" 行 "))
+        #expect(await waitUntil { editor.state.pinyinSuggestion == "xíng" })
+        editor.send(.senseToggled("to walk"))
+        editor.send(.senseToggled("profession"))
+        editor.send(.dictionaryTapped)
+        #expect(editor.state.dictionary == DictionaryHeadword(hanzi: "行", pinyin: "háng"))
+
+        editor.send(.dictionaryDismissed)
+        #expect(editor.state.dictionary == nil)
+    }
+
+    @Test("a reading with no senses offers nothing to tick, nor the suggested meaning")
+    func sensesless() async {
+        let empty = FakeDictionaryRepository.entry("了", "liǎo", preferred: true)
+        let le = FakeDictionaryRepository.entry("了", "le", preferred: false, "(completed action marker)")
+        let (editor, _) = makeEditor(nil, dictionary: FakeDictionaryRepository([empty, le]))
+        editor.send(.hanziChanged("了"))
+
+        #expect(await waitUntil { editor.state.meanings == ["(completed action marker)"] })
+        #expect(editor.state.tickableEntries.map(\.pinyin) == ["le"])
+        #expect(editor.state.pinyinSuggestion == "le")
+    }
+
+    @Test("the dictionary's senses open apart from the word, and only when there are some")
+    func choosingSenses() async {
+        let (editor, _) = makeEditor(nil)
+        editor.send(.hanziChanged("茶"))
+        #expect(await waitUntil { await dictionary.lookups == ["茶"] })
+        await settle()
+        editor.send(.sensesTapped)
+        #expect(!editor.state.isChoosingSenses)
+
+        editor.send(.hanziChanged("喝"))
+        #expect(await waitUntil { !editor.state.tickableEntries.isEmpty })
+        editor.send(.sensesTapped)
+        #expect(editor.state.isChoosingSenses)
+        editor.send(.senseToggled("to shout (of approval)"))
+        editor.send(.sensesDismissed)
+        #expect(!editor.state.isChoosingSenses)
+        #expect(editor.state.meanings == ["to drink", "to shout (of approval)"])
     }
 }

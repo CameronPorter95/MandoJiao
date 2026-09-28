@@ -29,7 +29,7 @@ let package = Package(
                 .product(name: "CoreDomain", package: "Core"),
                 .product(name: "CorePersistence", package: "Core"),
             ],
-            resources: [.copy("Resources/Lexicon.tsv")]
+            resources: [.copy("Resources/Dictionary.tsv")]
         ),
         .target(
             name: "VocabularyUI",
@@ -63,7 +63,7 @@ let package = Package(
                 .product(name: "CoreUI", package: "Core"),
                 .product(name: "CoreTestSupport", package: "Core"),
             ],
-            resources: [.copy("Fixtures/VocabularyV1.store")],
+            resources: [.copy("Fixtures/VocabularyV1.store"), .copy("Fixtures/VocabularyV3.store")],
             swiftSettings: mainActorByDefault
         ),
     ],

@@ -56,6 +56,14 @@ Every deck lives in a folder, and folders hold decks and other folders to any de
 arranged by dragging in the Library tab's tree as in Notes. On iPad the tree sits beside the folder or deck that is open. A lesson
 draws from the whole library, one deck, or every deck beneath a folder.
 
+## Dictionary
+
+The whole of CC-CEDICT is bundled, and the Dictionary tab searches it by Hanzi, by pinyin
+with or without tones, or by English. A headword's page lists every reading with all its
+senses, and each of its characters. The dictionary is read-only and apart from the
+library: editing a word, its meanings can be chosen from the dictionary's senses, which
+copies them into the word.
+
 ## Building
 
 Requires Xcode 26 and an iOS 26 simulator or device. The project is iPhone and
