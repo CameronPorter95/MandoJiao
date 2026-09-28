@@ -46,6 +46,19 @@ nonisolated struct HSKTests {
         #expect(!words.contains { $0.meanings.contains { $0.contains("[") || $0.unicodeScalars.contains { (0x3400...0x9FFF).contains($0.value) } } })
     }
 
+    /// CC-CEDICT orders senses roughly by history, so for common words headlines.tsv picks the
+    /// one a learner means, and sometimes the reading too.
+    @Test("a common word heads with its everyday meaning, in its everyday reading", arguments: [
+        ("在", "zài", "at, in"), ("穿", "chuān", "to wear, to put on (clothes, shoes etc.)"), ("钱", "qián", "money"),
+        ("告诉", "gàosu", "to tell, to inform, to let know"), ("长", "cháng", "long"), ("妻子", "qīzi", "wife"),
+        ("周", "zhōu", "week"), ("故事", "gùshi", "narrative, story, tale"),
+    ])
+    func headlines(hanzi: String, pinyin: String, headline: String) {
+        let word = words.first { $0.hanzi == hanzi }
+        #expect(word?.pinyin == pinyin)
+        #expect(word?.meanings.first == headline)
+    }
+
     @Test("the source's spellings of a reading are matched to the dictionary's", arguments: [
         ("略", "lüè"), ("闺女", "guīnü"), ("欧洲", "Ōuzhōu"), ("泄露", "xièlòu"),
         // The dictionary's ya has no senses, so the source's stands rather than yā, "ah".
@@ -56,7 +69,8 @@ nonisolated struct HSKTests {
     }
 
     @Test("cost: a character's reading is the dictionary's preferred one, which misses the everyday one for some", arguments: [
-        ("得", "dé"), ("长", "zhǎng"), ("教", "jiào"),
+        // 长's was zhǎng until headlines.tsv made it cháng.
+        ("得", "dé"), ("教", "jiào"),
     ])
     func readings(hanzi: String, pinyin: String) {
         #expect(words.first { $0.hanzi == hanzi }?.pinyin == pinyin)

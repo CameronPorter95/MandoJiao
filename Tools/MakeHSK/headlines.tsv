@@ -1,0 +1,123 @@
+# Headlines chosen by hand for HSK 1 to 3, where the dictionary's first sense is not what
+# a learner means by the word. CC-CEDICT orders senses roughly by history, not use, so 在
+# heads with "to exist" and 穿 with "to bore through"; Wiktionary was checked and orders
+# single characters the same way.
+#
+# Hanzi, then a reading when HSK's is not the everyday one (blank to keep it), then the
+# headline, tab separated. A headline that is one of the reading's senses is moved to the
+# front; one that is not is put first, with the dictionary's senses after it. Written in
+# the dictionary's style, asides and all, since a tile shows it through Gloss.plain.
+#
+# HSK 1
+在		at, in
+给		to give
+点		o'clock
+里		inside
+太		too (much)
+后		after
+找		to look for
+月		month
+叫		to be called
+请		please (do sth)
+钱		money
+本		(classifier for books, magazines etc)
+号		number
+日		day
+穿		to wear, to put on (clothes, shoes etc.)
+哪		which
+先生		gentleman, sir, mister (Mr.)
+多少	duōshao	how much?, how many?
+没有		to not have
+岁		years old
+个		(general classifier)
+# HSK 2
+让		to let sb do sth
+次		(classifier for occurrences) time
+时		time
+跟		with
+一起		together, in company (with)
+位		classifier for people (honorific)
+别		don't ...!
+长	cháng	long
+告诉	gàosu	to tell, to inform, to let know
+条		classifier for long thin things (ribbon, river, road, trousers etc)
+准备		to prepare
+周		week
+不错		not bad
+包		bag
+往		towards
+楼		building, floor
+离		(in giving distances) from
+意思		meaning
+运动		sports
+妻子	qīzi	wife
+笔		pen
+酒店		hotel
+考		to take an exam
+游		to swim
+旅游		to travel
+题		exam question
+不好意思		to be sorry (for inconveniencing sb)
+比		than, compared with
+进		to enter
+# HSK 3
+被		(passive marker) by
+才		only then, just
+带		to bring, to take along
+种		kind, type
+一直		continuously, always, all the way through
+而且		moreover, in addition, furthermore
+地方	dìfang	place, location, area, space, territory
+老		old (of people)
+或		or
+张		classifier for flat objects, sheet
+总		in every case, always, invariably
+当然		of course
+刚		just, only a short while ago
+干		to do
+帮助		to help, to assist
+越		the more... the more
+双		pair
+卡		(loanword) card
+明白		to understand, to realize
+挺		quite, very
+愿意		willing (to do sth)
+故事	gùshi	narrative, story, tale
+酒		alcoholic beverage
+一般		ordinary
+差		not up to standard, inferior
+市		city
+常		often
+记		to remember
+表演		performance
+关		to close, to shut, to turn off
+牛		cow
+节		seasonal festival
+层		floor (of a building), story
+心里		heart, mind
+鸡		chicken
+遍		classifier for actions: one time
+封		classifier for sealed objects, esp. letters
+大概		probably
+成绩		grades
+热情		enthusiastic
+骑		to ride (a horse, bike etc)
+校长		headmaster
+锻炼		to engage in physical exercise
+名人		celebrity
+屋子		room
+阿姨		auntie
+脏	zāng	dirty
+季节		season
+饱		full (after eating)
+宾馆		hotel
+笔记		notes
+斤		(PRC) weight equal to 500 g
+晚点		(of trains etc) late
+盘子		plate
+外卖		takeout (meal)
+电		electricity
+比较		relatively
+担心		to worry
+行		OK, all right
+错		wrong

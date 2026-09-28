@@ -4,7 +4,7 @@ import Foundation
 //
 // Download complete.json from https://github.com/drkameleon/complete-hsk-vocabulary, then
 // run from the repository root, after MakeDictionary:
-//   swift Tools/MakeHSK/main.swift complete.json Vocabulary/Sources/VocabularyData/Resources/Dictionary.tsv Vocabulary/Sources/VocabularyData/Resources/HSK.tsv
+//   swift Tools/MakeHSK/main.swift complete.json Vocabulary/Sources/VocabularyData/Resources/Dictionary.tsv Tools/MakeHSK/headlines.tsv Vocabulary/Sources/VocabularyData/Resources/HSK.tsv
 //
 // Output is one line per word of the 2025 revision of HSK 3.0 ("newest" in the source):
 // level, frequency rank, Hanzi, pinyin, then meanings joined by U+001F, tab separated,
@@ -17,6 +17,9 @@ import Foundation
 // dictionary's preferred one is taken, and failing that the one with the most senses. At
 // most `meaningLimit` senses are kept: 打 has more than twenty, which no reveal could show.
 // A word with no such reading keeps the source's pinyin and meanings.
+//
+// headlines.tsv overrides that for HSK 1 to 3, where the dictionary's first sense is not
+// what a learner means by the word: 在 heads with "at, in", not "to exist". See its header.
 //
 // Words are in standard Mandarin, not Beijing erhua: 一点儿 becomes 一点. Where dropping the
 // 儿 changes the meaning, the standard word is used instead (哪儿 is 哪里, not 哪), and an
@@ -39,8 +42,8 @@ struct Source: Decodable {
 }
 
 let arguments = CommandLine.arguments
-guard arguments.count == 4 else {
-    FileHandle.standardError.write(Data("usage: main.swift <complete.json> <Dictionary.tsv> <HSK.tsv>\n".utf8))
+guard arguments.count == 5 else {
+    FileHandle.standardError.write(Data("usage: main.swift <complete.json> <Dictionary.tsv> <headlines.tsv> <HSK.tsv>\n".utf8))
     exit(1)
 }
 
@@ -66,6 +69,42 @@ for line in try String(contentsOfFile: arguments[2], encoding: .utf8).split(sepa
         isPreferred: fields[3] == "1",
         senses: fields[4].isEmpty ? [] : fields[4].components(separatedBy: separator)
     ))
+}
+
+/// Hanzi to a reading, blank to keep HSK's, and the headline to put first.
+var headlines: [String: (pinyin: String, headline: String)] = [:]
+for line in try String(contentsOfFile: arguments[3], encoding: .utf8).split(separator: "\n") where !line.hasPrefix("#") {
+    let fields = line.split(separator: "\t", omittingEmptySubsequences: false).map(String.init)
+    guard fields.count == 3, !fields[2].isEmpty else {
+        FileHandle.standardError.write(Data("headlines.tsv: bad line \(line)\n".utf8))
+        exit(1)
+    }
+    headlines[fields[0]] = (fields[1], fields[2])
+}
+var unusedHeadlines = Set(headlines.keys)
+
+/// The chosen headline first, then the reading's other senses. A reading given in
+/// headlines.tsv takes that reading's senses instead.
+func withHeadline(_ hanzi: String, _ pinyin: String, _ senses: [String]) -> (pinyin: String, meanings: [String]) {
+    guard let chosen = headlines[hanzi] else { return (pinyin, senses) }
+    unusedHeadlines.remove(hanzi)
+    var (pinyin, senses) = (pinyin, senses)
+    if !chosen.pinyin.isEmpty {
+        guard let reading = dictionary[hanzi]?.first(where: { comparable($0.pinyin) == comparable(chosen.pinyin) && !$0.senses.isEmpty }) else {
+            FileHandle.standardError.write(Data("headlines.tsv: \(hanzi) has no reading \(chosen.pinyin)\n".utf8))
+            exit(1)
+        }
+        (pinyin, senses) = (reading.pinyin, reading.senses)
+    }
+    // Another line of the same reading may have it: 周 zhōu is "to make a circuit" on one
+    // and "week" on another.
+    if !senses.contains(chosen.headline),
+       let line = dictionary[hanzi]?.first(where: { comparable($0.pinyin) == comparable(pinyin) && $0.senses.contains(chosen.headline) }) {
+        senses = line.senses
+    }
+    // Nor a sense the headline already says: 种's "kind, type" makes a later "kind" redundant.
+    let parts = Set(chosen.headline.components(separatedBy: ", "))
+    return (pinyin, [chosen.headline] + senses.filter { $0 != chosen.headline && !parts.contains($0) })
 }
 
 /// Of the dictionary's readings with senses that the source also gives, its preferred one,
@@ -161,7 +200,8 @@ for entry in entries {
     if Set(forms.map { comparable($0.transcriptions.pinyin) }).count > 1 { ambiguous += 1 }
 
     if let known = reading(entry.simplified, among: forms) {
-        lines.append((level, entry.frequency, line(level, entry.frequency, entry.simplified, known.pinyin, known.senses)))
+        let chosen = withHeadline(entry.simplified, known.pinyin, known.senses)
+        lines.append((level, entry.frequency, line(level, entry.frequency, entry.simplified, chosen.pinyin, chosen.meanings)))
     } else {
         unknown.append(entry.simplified)
         let pinyin = forms.first.map { $0.transcriptions.pinyin.replacingOccurrences(of: " ", with: "") } ?? ""
@@ -172,9 +212,14 @@ for entry in entries {
 lines.sort { ($0.level, $0.rank) < ($1.level, $1.rank) }
 let header = "# HSK 3.0, 2025 revision, from complete-hsk-vocabulary (MIT, Yanis Zafirópulos)"
 try ([header] + lines.map(\.line)).joined(separator: "\n").appending("\n")
-    .write(toFile: arguments[3], atomically: true, encoding: .utf8)
+    .write(toFile: arguments[4], atomically: true, encoding: .utf8)
 
 let counts = Dictionary(grouping: lines, by: \.level).mapValues(\.count).sorted { $0.key < $1.key }
 print("words by level:", counts.map { "\($0.key): \($0.value)" }.joined(separator: ", "))
 print("\(ambiguous) with several readings, \(unknown.count) not in the dictionary or read differently there:", unknown.prefix(30).joined(separator: " "))
 print("erhua made standard:", standardised.joined(separator: ", "))
+print("\(headlines.count - unusedHeadlines.count) headlines chosen by hand")
+if !unusedHeadlines.isEmpty {
+    FileHandle.standardError.write(Data("headlines.tsv: not HSK words: \(unusedHeadlines.sorted().joined(separator: " "))\n".utf8))
+    exit(1)
+}

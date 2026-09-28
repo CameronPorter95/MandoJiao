@@ -22,24 +22,37 @@ nonisolated struct DictionarySearch: Sendable {
 
     private let records: [Record]
 
-    /// `frequencies` are each HSK word's reading and rank, by Hanzi.
-    init(_ index: BundledDictionary.Index, frequencies: [String: (pinyin: String, rank: Int)] = [:]) {
+    /// `frequencies` are each HSK word's reading, rank and headline, by Hanzi. The headline is
+    /// matched as if it were the entry's first sense, since for common words it was chosen by
+    /// hand where CC-CEDICT's first sense is not the everyday one: "at" finds 在 by it.
+    init(_ index: BundledDictionary.Index, frequencies: [String: (pinyin: String, rank: Int, headline: String)] = [:]) {
         var containing: [Character: Int] = [:]
         for hanzi in index.lines.keys {
             for character in Set(hanzi) { containing[character, default: 0] += 1 }
         }
-        records = index.lines.values.flatMap { $0 }.compactMap { line in
-            guard let entry = BundledDictionary.Index.entry(line) else { return nil }
+        let entries = index.lines.values.flatMap { $0 }.compactMap { line in BundledDictionary.Index.entry(line).map { (line, $0) } }
+        // An HSK word's reading is spelt as the dictionary spells it, so it must match exactly:
+        // without tones and case, 钱's surname Qián and 告诉's gàosù, "to press charges", took
+        // the everyday word's rank. Of lines in that reading, the headline goes to the one
+        // holding it, like 周's "week" rather than its "to make a circuit", else the preferred.
+        let holding = Set(entries.compactMap { _, entry in
+            frequencies[entry.simplified].flatMap { $0.pinyin == entry.pinyin && entry.senses.contains($0.headline) ? entry.simplified : nil }
+        })
+        records = entries.map { line, entry in
+            let hsk = frequencies[entry.simplified].flatMap { hsk in
+                hsk.pinyin == entry.pinyin
+                    && (entry.senses.contains(hsk.headline) || (!holding.contains(entry.simplified) && entry.isPreferred)) ? hsk : nil
+            }
+            // First, even where it is a later sense, since a first sense outranks the rest.
+            let senses = hsk.map { hsk in [hsk.headline] + entry.senses.filter { $0 != hsk.headline } } ?? entry.senses
             return Record(
                 line: line,
                 simplified: entry.simplified,
                 traditional: entry.traditional,
                 toneless: Self.toneless(entry.pinyin),
-                glosses: entry.senses.map(Self.glosses),
+                glosses: senses.map(Self.glosses),
                 isPreferred: entry.isPreferred,
-                frequency: frequencies[entry.simplified].flatMap {
-                    Self.toneless($0.pinyin) == Self.toneless(entry.pinyin) ? $0.rank : nil
-                },
+                frequency: hsk?.rank,
                 // Characters outside the main block, like 㣟, are all rare.
                 commonness: entry.simplified.unicodeScalars.allSatisfy { !(0x3400...0x4DBF).contains($0.value) && $0.value < 0x20000 }
                     ? entry.simplified.map { containing[$0] ?? 0 }.min() ?? 0

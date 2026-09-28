@@ -88,12 +88,13 @@ nonisolated struct DictionaryTests {
         #expect(try await dictionary.search(query, limit: 1).first?.simplified == first)
     }
 
-    /// No CC-CEDICT sense of 在 is "at" or "in" on its own, so searching either misses it. Pinned
-    /// so that meanings from a better source show up here.
-    @Test("cost: search finds 在 for neither \"at\" nor \"in\"")
-    func searchMissesZai() async throws {
-        #expect(try await !dictionary.search("at", limit: 5).contains { $0.simplified == "在" })
-        #expect(try await !dictionary.search("in", limit: 5).contains { $0.simplified == "在" })
+    /// No CC-CEDICT sense of 在 is "at" or "in" on its own; its HSK headline, chosen by hand,
+    /// is, and search matches that as its first sense.
+    @Test("search finds a word by its HSK headline where CC-CEDICT lacks the sense", arguments: [
+        ("at", "在"), ("in", "在"), ("to wear", "穿"),
+    ])
+    func searchByHeadline(query: String, first: String) async throws {
+        #expect(try await dictionary.search(query, limit: 1).first?.simplified == first)
     }
 
     @Test("search lists a headword once per reading, and nothing for a blank query")

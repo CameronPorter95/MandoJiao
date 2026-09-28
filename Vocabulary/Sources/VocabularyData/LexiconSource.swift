@@ -62,7 +62,10 @@ actor BundledDictionary {
             searching = Task.detached { [self] in
                 // Without the HSK list search still works, only ranked less well.
                 let hsk = (try? BundledHSK.words()) ?? []
-                let frequencies = Dictionary(hsk.map { ($0.hanzi, (pinyin: $0.pinyin, rank: $0.rank)) }, uniquingKeysWith: { first, _ in first })
+                let frequencies = Dictionary(
+                    hsk.map { ($0.hanzi, (pinyin: $0.pinyin, rank: $0.rank, headline: $0.meanings.first ?? "")) },
+                    uniquingKeysWith: { first, _ in first }
+                )
                 return DictionarySearch(try await index(), frequencies: frequencies)
             }
         }
