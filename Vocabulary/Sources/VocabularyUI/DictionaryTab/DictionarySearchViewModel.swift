@@ -22,6 +22,8 @@ public final class DictionarySearchViewModel {
     func send(_ action: DictionarySearchAction) {
         switch action {
         case .queryChanged(let query):
+            // The field sets the same text again, such as on return.
+            guard query != state.query else { return }
             state.query = query
             searching?.cancel()
             guard !state.isBlank else {

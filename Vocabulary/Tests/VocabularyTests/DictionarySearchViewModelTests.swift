@@ -27,6 +27,19 @@ struct DictionarySearchViewModelTests {
         #expect(await dictionary.searches == ["银行"])
     }
 
+    @Test("the same text set again, as the field does on return, does not search again")
+    func unchanged() async {
+        let search = makeSearch()
+        search.send(.queryChanged("喝"))
+        #expect(await waitUntil { search.state.results != .searching })
+        let found = search.state.results
+
+        search.send(.queryChanged("喝"))
+        #expect(search.state.results == found)
+        await settle()
+        #expect(await dictionary.searches == ["喝"])
+    }
+
     @Test("clearing the query clears the results without searching")
     func blank() async {
         let search = makeSearch()

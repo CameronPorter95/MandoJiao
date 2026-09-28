@@ -42,6 +42,9 @@ struct DictionarySearchScreen: View {
             prompt: "银行, yinhang or bank"
         )
         .neverAutocapitalize()
+        // Autocorrect would turn pinyin into English words, and on return or clear it
+        // writes its pending correction back into the field, so a cleared query came back.
+        .autocorrectionDisabled()
         .navigationTitle("Dictionary")
     }
 }
