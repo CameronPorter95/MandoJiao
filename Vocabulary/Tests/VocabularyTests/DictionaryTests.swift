@@ -42,6 +42,15 @@ nonisolated struct DictionaryTests {
         #expect(try await dictionary.entries(forHanzi: "于").first { $0.pinyin == "Yú" }?.senses == [])
     }
 
+    @Test("of two lines in one reading, a rare traditional form loses", arguments: [
+        ("年", "year"), ("冬", "winter"), ("云", "cloud"),
+        // 裡 and 里 are both common, so "inside" stays ahead of the unit of length.
+        ("里", "lining"),
+    ])
+    func rareForms(hanzi: String, headline: String) async throws {
+        #expect(try await dictionary.entries(forHanzi: hanzi).first?.senses.first == headline)
+    }
+
     @Test("no sense in the whole dictionary keeps a Hanzi or a bracketed pinyin reference")
     func noReferences() async throws {
         let index = try await BundledDictionary.shared.index()

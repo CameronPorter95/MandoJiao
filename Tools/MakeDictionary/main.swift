@@ -227,6 +227,29 @@ func compoundScore(_ entry: Entry) -> Int {
     return compoundReadings["\(entry.simplified) \(toneless)", default: 0]
 }
 
+/// How many entries' traditional forms hold each character. 年 has a second line under the
+/// archaic 秊, "grain, harvest (old)", with more senses than 年's own "year". Between lines of
+/// one reading, a traditional form at least `rareFactor` times rarer loses. Only then: 里's
+/// 裡, "inside", and 里, the unit of length, are both in common use, and 裡 is the one meant.
+let traditionalUse: [Character: Int] = {
+    var counts: [Character: Int] = [:]
+    for entry in entries {
+        for character in Set(entry.traditional) { counts[character, default: 0] += 1 }
+    }
+    return counts
+}()
+
+let rareFactor = 20
+
+func traditionalScore(_ entry: Entry) -> Int {
+    entry.traditional.map { traditionalUse[$0] ?? 0 }.min() ?? 0
+}
+
+/// True when `a` is the common form and `b` a rare one of the same reading.
+func isCommonerForm(_ a: Entry, than b: Entry) -> Bool {
+    a.pinyin.lowercased() == b.pinyin.lowercased() && traditionalScore(a) >= rareFactor * max(1, traditionalScore(b))
+}
+
 func rank(_ candidates: [Entry]) -> Entry {
     let system = candidates[0].simplified.count == 1 ? systemReading(candidates[0].simplified) : nil
     return candidates.min { a, b in
@@ -240,6 +263,8 @@ func rank(_ candidates: [Entry]) -> Entry {
         }
         let (aScore, bScore) = (compoundScore(a), compoundScore(b))
         if aScore != bScore { return aScore > bScore }
+        if isCommonerForm(a, than: b) { return true }
+        if isCommonerForm(b, than: a) { return false }
         if aGlosses != bGlosses { return aGlosses > bGlosses }
         return a.order < b.order
     }!
