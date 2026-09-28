@@ -20,7 +20,8 @@ public struct FolderDetailRoute: View {
             layout: layout,
             onAction: { viewModel.send($0) },
             onOpenDeck: { navigation.didOpenDeck($0) },
-            onOpenFolder: { navigation.didOpenFolder($0) }
+            onOpenFolder: { navigation.didOpenFolder($0) },
+            onOpenWords: { navigation.didOpenWords(viewModel.state.folderID) }
         )
         .onAppear { viewModel.send(.appeared) }
         .onDisappear { viewModel.send(.disappeared) }

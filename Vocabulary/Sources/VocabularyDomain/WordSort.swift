@@ -1,6 +1,6 @@
 import Foundation
 
-/// How the library's list of all words is ordered.
+/// How the library's lists of words are ordered, all of them or a folder's.
 public nonisolated struct WordSort: Hashable, Sendable, Codable {
     public enum Field: String, CaseIterable, Sendable, Codable {
         case english
@@ -23,14 +23,23 @@ public nonisolated struct WordSort: Hashable, Sendable, Codable {
 }
 
 public nonisolated extension Vocabulary {
-    /// Ties fall back to the English, so the order never shuffles between reads.
     func words(sortedBy sort: WordSort) -> [Word] {
+        Self.sorted(words, by: sort)
+    }
+
+    /// Every word in every deck beneath the folder, as a lesson from it draws them.
+    func words(in folder: FolderSummary, sortedBy sort: WordSort) -> [Word] {
+        Self.sorted(words(in: folder), by: sort)
+    }
+
+    /// Ties fall back to the English, so the order never shuffles between reads.
+    private static func sorted(_ words: [Word], by sort: WordSort) -> [Word] {
         words.sorted { a, b in
             let order: ComparisonResult = switch sort.field {
             case .english: Self.english(a, b)
             case .pinyin: Self.pinyin(a, b)
-            case .dateAdded: compare(a.createdAt, b.createdAt)
-            case .mistakes: compare(a.missCount, b.missCount)
+            case .dateAdded: Self.compare(a.createdAt, b.createdAt)
+            case .mistakes: Self.compare(a.missCount, b.missCount)
             }
             if order == .orderedSame { return Self.english(a, b) == .orderedAscending }
             return (order == .orderedAscending) == sort.ascending
@@ -50,7 +59,7 @@ public nonisolated extension Vocabulary {
         return loose == .orderedSame ? a.pinyin.localizedStandardCompare(b.pinyin) : loose
     }
 
-    private func compare<T: Comparable>(_ a: T, _ b: T) -> ComparisonResult {
+    private static func compare<T: Comparable>(_ a: T, _ b: T) -> ComparisonResult {
         a < b ? .orderedAscending : a > b ? .orderedDescending : .orderedSame
     }
 }

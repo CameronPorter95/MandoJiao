@@ -61,6 +61,8 @@ struct FolderDetailState: Equatable {
     }
 
     var wordCount: Int { folder.map(vocabulary.usableWordCount(in:)) ?? 0 }
+    /// Usable or not, as the folder's list of words shows them.
+    var listedWordCount: Int { folder.map { vocabulary.words(in: $0).count } ?? 0 }
     var canStartLesson: Bool { wordCount >= minimumMatchingWords }
 
     private func subfolders(in parentID: UUID) -> [Subfolder] {

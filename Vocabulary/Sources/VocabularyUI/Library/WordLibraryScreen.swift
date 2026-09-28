@@ -59,7 +59,13 @@ struct WordLibraryScreen: View {
             }
         }
         .overlay {
-            if state.vocabulary.words.isEmpty {
+            if !state.hasWords, state.folderID != nil {
+                ContentUnavailableView(
+                    "No words here yet",
+                    systemImage: "character.book.closed",
+                    description: Text("Words in this folder's decks, and in the decks of its folders, show here.")
+                )
+            } else if !state.hasWords {
                 ContentUnavailableView(
                     "No words yet",
                     systemImage: "character.book.closed",
@@ -73,10 +79,13 @@ struct WordLibraryScreen: View {
         .navigationTitle("All words")
         .toolbar {
             ToolbarItemGroup(placement: .primaryAction) {
-                Button {
-                    onAction(.addTapped)
-                } label: {
-                    Label("Add word", systemImage: "plus")
+                // A word added here would be in no deck, so not in the folder's list.
+                if state.folderID == nil {
+                    Button {
+                        onAction(.addTapped)
+                    } label: {
+                        Label("Add word", systemImage: "plus")
+                    }
                 }
                 Menu {
                     WordSortMenu(sort: layout.sort, onChange: layout.setSort)

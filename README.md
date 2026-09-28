@@ -59,7 +59,8 @@ dictionary's first is not; rebuild the list with `Tools/MakeHSK` after `Tools/Ma
 delete your own in My Vocabulary, and group them into decks to practise a subset.
 Every deck lives in a folder, and folders hold decks and other folders to any depth,
 arranged by dragging in the Vocabulary tab's tree as in Notes. On iPad the tree sits beside the folder or deck that is open. A lesson
-draws from all your words, one deck, or every deck beneath a folder.
+draws from all your words, one deck, or every deck beneath a folder. Each folder lists
+the words in every deck beneath it, searched and sorted as All words is.
 
 ## Dictionary
 

@@ -29,7 +29,8 @@ public enum LibraryFactory: NavigationInputRouteFactory {
                 navigation: .library(
                     presentMatching: navigation.library.didRequestMatching,
                     openDeck: context.openDeck,
-                    openFolder: context.openFolder
+                    openFolder: context.openFolder,
+                    openWords: context.openWords
                 ),
                 input: FolderDetailInput(
                     folderID: folderID,
@@ -39,12 +40,18 @@ public enum LibraryFactory: NavigationInputRouteFactory {
                 )
             ))
         }
+        let words = { (folderID: UUID?, context: LibraryPageContext) in
+            AnyView(WordLibraryFactory.makeRoute(
+                dependencies: dependencies,
+                input: WordLibraryInput(folderID: folderID, layout: context.wordList, vocabulary: context.vocabulary)
+            ))
+        }
         return LibraryRoute(
             viewModel: viewModel,
             navigation: navigation.library,
             root: { selection, context in
                 switch selection {
-                case .allWords: AnyView(WordLibraryFactory.makeRoute(dependencies: dependencies, input: context.wordList))
+                case .allWords: words(nil, context)
                 case .folder(let id): folder(id, context)
                 }
             },
@@ -52,6 +59,8 @@ public enum LibraryFactory: NavigationInputRouteFactory {
                 switch page {
                 case .folder(let id):
                     folder(id, context)
+                case .words(let folderID):
+                    words(folderID, context)
                 case .deck(let id):
                     AnyView(DeckDetailFactory.makeRoute(
                         dependencies: dependencies,

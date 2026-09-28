@@ -75,6 +75,7 @@ public struct LibraryRoute: View {
             vocabulary: viewModel.state.vocabulary,
             openDeck: { viewModel.send(.opened(.deck($0))) },
             openFolder: { viewModel.send(.opened(.folder($0))) },
+            openWords: { viewModel.send(.opened(.words(folderID: $0))) },
             layout: { folderID in
                 let layout = viewModel.state.layout
                 return FolderLayout(
