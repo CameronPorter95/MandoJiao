@@ -26,11 +26,11 @@ struct WordLibraryViewModelTests {
     @Test("words are listed alphabetically and filtered by the search")
     func searching() async {
         let (library, _) = await makeLibrary()
-        #expect(library.state.words.first?.english == "")
-        #expect(library.state.words.dropFirst().first?.english == "book")
+        #expect(library.state.words(sortedBy: .default).first?.english == "")
+        #expect(library.state.words(sortedBy: .default).dropFirst().first?.english == "book")
 
         library.send(.searchChanged("sh"))
-        #expect(library.state.filteredWords.map(\.english) == ["book", "water", "mobile phone"].sorted())
+        #expect(library.state.words(sortedBy: .default).map(\.english) == ["book", "water", "mobile phone"].sorted())
     }
 
     @Test("the editor opens on the chosen word, or blank for a new one")
@@ -59,7 +59,7 @@ struct WordLibraryViewModelTests {
         let (library, _) = await makeLibrary()
         library.send(.deleteTapped([Fixtures.tea.id]))
 
-        #expect(!library.state.words.contains(Fixtures.tea))
+        #expect(!library.state.words(sortedBy: .default).contains(Fixtures.tea))
         #expect(await waitUntil { await repository.writes == ["deleteWords 1"] })
     }
 
@@ -71,6 +71,6 @@ struct WordLibraryViewModelTests {
         library.send(.deleteTapped([Fixtures.tea.id]))
 
         #expect(await log.contains(.showError(.deleteWordsFailed(FakeVocabularyRepository.failure))))
-        #expect(library.state.words.contains(Fixtures.tea))
+        #expect(library.state.words(sortedBy: .default).contains(Fixtures.tea))
     }
 }

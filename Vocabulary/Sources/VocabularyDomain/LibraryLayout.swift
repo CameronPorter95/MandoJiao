@@ -1,7 +1,8 @@
 import Foundation
 
 /// How the library was last left: which folders are unfolded and where, which sections of
-/// each folder's screen are folded, and how each folder sorts its decks.
+/// each folder's screen are folded, how each folder sorts its decks, and how the list of all
+/// words is sorted.
 ///
 /// The tree and each folder's screen keep their own record, so unfolding a folder in one
 /// never unfolds it in another.
@@ -22,17 +23,21 @@ public nonisolated struct LibraryLayout: Equatable, Sendable, Codable {
     public private(set) var expandedInFolder: [UUID: Set<UUID>]
     public private(set) var foldedSections: [UUID: Set<Section>]
     public private(set) var deckSorts: [UUID: DeckSort]
+    /// Optional, so a layout saved before words could be sorted still decodes.
+    private var savedWordSort: WordSort?
 
     public init(
         expandedInTree: Set<UUID> = [],
         expandedInFolder: [UUID: Set<UUID>] = [:],
         foldedSections: [UUID: Set<Section>] = [:],
-        deckSorts: [UUID: DeckSort] = [:]
+        deckSorts: [UUID: DeckSort] = [:],
+        wordSort: WordSort = .default
     ) {
         self.expandedInTree = expandedInTree
         self.expandedInFolder = expandedInFolder
         self.foldedSections = foldedSections
         self.deckSorts = deckSorts
+        self.savedWordSort = wordSort == .default ? nil : wordSort
     }
 
     /// Folded unless listed.
@@ -72,6 +77,14 @@ public nonisolated struct LibraryLayout: Equatable, Sendable, Codable {
 
     public func deckSort(in folderID: UUID) -> DeckSort {
         deckSorts[folderID] ?? .default
+    }
+
+    public var wordSort: WordSort { savedWordSort ?? .default }
+
+    public func settingWordSort(_ sort: WordSort) -> LibraryLayout {
+        var copy = self
+        copy.savedWordSort = sort == .default ? nil : sort
+        return copy
     }
 
     public func settingDeckSort(_ sort: DeckSort, in folderID: UUID) -> LibraryLayout {

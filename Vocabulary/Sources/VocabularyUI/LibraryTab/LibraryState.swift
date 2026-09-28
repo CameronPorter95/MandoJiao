@@ -23,6 +23,21 @@ public struct LibraryPageContext {
     public let openFolder: (UUID) -> Void
     /// One folder's screen's share of the layout, which is its own.
     public let layout: (UUID) -> FolderLayout
+    /// The list of all words' share of it.
+    public let wordList: WordListLayout
+}
+
+/// How the list of all words is sorted. The library owns the saved layout, so the list asks
+/// it to change rather than saving its own copy, which the library's next save would undo.
+@MainActor
+public struct WordListLayout {
+    public let sort: WordSort
+    public let setSort: (WordSort) -> Void
+
+    public init(sort: WordSort, setSort: @escaping (WordSort) -> Void) {
+        self.sort = sort
+        self.setSort = setSort
+    }
 }
 
 /// How one folder's screen was last left: its unfolded subfolders, its folded sections, and
@@ -94,6 +109,7 @@ enum LibraryAction: Equatable {
     case folderExpanded(UUID, Bool, in: LibraryLayout.Scope)
     case folderSectionToggled(UUID, LibraryLayout.Section)
     case deckSortChanged(UUID, DeckSort)
+    case wordSortChanged(WordSort)
     case hskLevelsTapped
     case hskLevelsDismissed
     case editTapped

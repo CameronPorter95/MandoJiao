@@ -177,6 +177,15 @@ struct LibraryViewModelTests {
         #expect(layout.layout() == library.state.layout)
     }
 
+    @Test("the word list's sort is the library's to save, alongside the rest of the layout")
+    func wordSort() async {
+        let (library, _) = await makeLibrary()
+        library.send(.deckSortChanged(Fixtures.level1.id, DeckSort(field: .title, ascending: true)))
+        library.send(.wordSortChanged(WordSort(field: .pinyin, ascending: true)))
+        #expect(layout.layout().wordSort == WordSort(field: .pinyin, ascending: true))
+        #expect(layout.layout().deckSort(in: Fixtures.level1.id).field == .title)
+    }
+
     @Test("the library opens as it was left")
     func restoring() async {
         layout.save(LibraryLayout().settingExpanded(Fixtures.hsk.id, true, in: .tree))

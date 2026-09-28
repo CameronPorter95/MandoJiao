@@ -78,6 +78,10 @@ public final class LibraryViewModel {
             state.layout = state.layout.settingDeckSort(sort, in: id)
             saveLayout(state.layout)
 
+        case .wordSortChanged(let sort):
+            state.layout = state.layout.settingWordSort(sort)
+            saveLayout(state.layout)
+
         case .hskLevelsTapped:
             state.isShowingHSKLevels = true
 

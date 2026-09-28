@@ -85,7 +85,11 @@ public struct LibraryRoute: View {
                     toggle: { viewModel.send(.folderSectionToggled(folderID, $0)) },
                     setDeckSort: { viewModel.send(.deckSortChanged(folderID, $0)) }
                 )
-            }
+            },
+            wordList: WordListLayout(
+                sort: viewModel.state.layout.wordSort,
+                setSort: { viewModel.send(.wordSortChanged($0)) }
+            )
         )
     }
 }

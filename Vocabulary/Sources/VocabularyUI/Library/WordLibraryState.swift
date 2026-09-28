@@ -25,8 +25,9 @@ struct WordLibraryState: Equatable {
     var editor: WordEditorTarget?
     var dictionary: DictionaryHeadword?
 
-    var words: [Word] { vocabulary.words.sorted { $0.english < $1.english } }
-    var filteredWords: [Word] { words.filter { $0.matches(searchText) } }
+    func words(sortedBy sort: WordSort) -> [Word] {
+        vocabulary.words(sortedBy: sort).filter { $0.matches(searchText) }
+    }
 }
 
 enum WordLibraryAction: Equatable {

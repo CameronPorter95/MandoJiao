@@ -6,21 +6,24 @@ public struct WordLibraryRoute: View {
     @State private var viewModel: WordLibraryViewModel
     private let makeEditor: (Word?) -> WordEditorRoute
     private let makeDictionary: (DictionaryHeadword) -> DictionaryRoute
+    private let layout: WordListLayout
 
     @State private var error: VocabularyError?
 
     public init(
         viewModel: WordLibraryViewModel,
+        layout: WordListLayout,
         makeEditor: @escaping (Word?) -> WordEditorRoute,
         makeDictionary: @escaping (DictionaryHeadword) -> DictionaryRoute
     ) {
         _viewModel = State(initialValue: viewModel)
+        self.layout = layout
         self.makeEditor = makeEditor
         self.makeDictionary = makeDictionary
     }
 
     public var body: some View {
-        WordLibraryScreen(state: viewModel.state, onAction: { viewModel.send($0) })
+        WordLibraryScreen(state: viewModel.state, layout: layout, onAction: { viewModel.send($0) })
             .sheet(
                 item: Binding(
                     get: { viewModel.state.editor },
