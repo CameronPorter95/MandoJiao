@@ -1,4 +1,5 @@
 import CoreDesignSystem
+import CoreUI
 import SwiftUI
 import VocabularyDomain
 
@@ -37,10 +38,7 @@ struct DictionarySearchScreen: View {
                 )
             }
         }
-        .searchable(
-            text: Binding(get: { state.query }, set: { onAction(.queryChanged($0)) }),
-            prompt: "银行, yinhang or bank"
-        )
+        .searchField(initial: state.query, prompt: "银行, yinhang or bank") { onAction(.queryChanged($0)) }
         .neverAutocapitalize()
         // Autocorrect would turn pinyin into English words, and on return or clear it
         // writes its pending correction back into the field, so a cleared query came back.

@@ -1,4 +1,5 @@
 import CoreDesignSystem
+import CoreUI
 import SwiftUI
 import VocabularyDomain
 
@@ -67,10 +68,7 @@ struct WordLibraryScreen: View {
                 ContentUnavailableView.search(text: state.searchText)
             }
         }
-        .searchable(
-            text: Binding(get: { state.searchText }, set: { onAction(.searchChanged($0)) }),
-            prompt: "Search words"
-        )
+        .searchField(initial: state.searchText, prompt: "Search words") { onAction(.searchChanged($0)) }
         .navigationTitle("Library")
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
