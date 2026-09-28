@@ -5,7 +5,8 @@ import VocabularyDomain
 nonisolated struct DictionaryRepositoryImpl: DictionaryRepository {
     func entries(forHanzi hanzi: String) async throws -> [DictionaryEntry] {
         do {
-            return try await BundledDictionary.shared.index().entries(forHanzi: hanzi)
+            // CC-CEDICT with HSK's headlines put first, so a headword reads as its library word.
+            return HSKHeadlines.bundled.applied(to: try await BundledDictionary.shared.index().entries(forHanzi: hanzi))
         } catch is CancellationError {
             throw CancellationError()
         } catch {

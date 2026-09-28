@@ -9,9 +9,14 @@ import Testing
 nonisolated struct DictionaryTests {
     private let dictionary = DictionaryRepositoryImpl()
 
+    /// CC-CEDICT as bundled, before HSK's headlines are put first.
+    private func raw(_ hanzi: String) async throws -> [DictionaryEntry] {
+        try await BundledDictionary.shared.index().entries(forHanzi: hanzi)
+    }
+
     @Test("a character keeps every reading, the preferred one first, each with all its senses")
     func readings() async throws {
-        let xing = try await dictionary.entries(forHanzi: "行")
+        let xing = try await raw("行")
         #expect(xing.map(\.pinyin) == ["xíng", "háng", "héng"])
         #expect(xing.first?.isPreferred == true)
         #expect(xing.first?.senses.contains("behavior, conduct") == true)
@@ -48,7 +53,25 @@ nonisolated struct DictionaryTests {
         ("里", "lining"),
     ])
     func rareForms(hanzi: String, headline: String) async throws {
-        #expect(try await dictionary.entries(forHanzi: hanzi).first?.senses.first == headline)
+        #expect(try await raw(hanzi).first?.senses.first == headline)
+    }
+
+    @Test("an HSK word's headline is the first meaning of its reading, and nothing repeats it")
+    func headlinesInTheDictionary() async throws {
+        let zai = try await dictionary.entries(forHanzi: "在")
+        #expect(zai.first?.senses.prefix(2) == ["at, in", "to exist, to be alive"])
+        // 裡, the line HSK means, not 里's unit of length.
+        #expect(try await dictionary.entries(forHanzi: "里").first { $0.traditional == "裡" }?.senses.first == "inside")
+        #expect(try await dictionary.entries(forHanzi: "里").first { $0.traditional == "里" && $0.pinyin == "lǐ" }?.senses.first
+            == "li, ancient measure of length, approx. 500 m")
+        let cai = try await dictionary.entries(forHanzi: "才").first { $0.isPreferred }
+        #expect(cai?.senses.first == "only then, just; ability, talent")
+        #expect(cai?.senses.contains("ability, talent") == false)
+        // "to" is a part of none of "to give"'s parts, so it stays.
+        #expect(try await dictionary.entries(forHanzi: "给").first?.senses.prefix(2) == ["to give", "to"])
+        // Only the reading HSK means: 告诉's gàosù is still "to press charges".
+        #expect(try await dictionary.entries(forHanzi: "告诉").first { $0.pinyin == "gàosù" }?.senses.first
+            == "to press charges, to file a complaint")
     }
 
     @Test("no sense in the whole dictionary keeps a Hanzi or a bracketed pinyin reference")

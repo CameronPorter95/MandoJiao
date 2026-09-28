@@ -24,35 +24,26 @@ nonisolated struct DictionarySearch: Sendable {
 
     private let records: [Record]
 
-    /// `frequencies` are each HSK word's reading, rank and headline, by Hanzi. The headline is
-    /// matched as if it were the entry's first sense, since for common words it was chosen by
-    /// hand where CC-CEDICT's first sense is not the everyday one: "at" finds 在 by it.
-    init(_ index: BundledDictionary.Index, frequencies: [String: (pinyin: String, rank: Int, headline: String)] = [:]) {
+    /// An HSK word's headline is matched as its first sense, as the dictionary shows it,
+    /// so "at" finds 在, and its HSK rank orders it among the other matches.
+    init(_ index: BundledDictionary.Index, headlines: HSKHeadlines = HSKHeadlines([])) {
         var containing: [Character: Int] = [:]
         for hanzi in index.lines.keys {
             for character in Set(hanzi) { containing[character, default: 0] += 1 }
         }
-        let entries = index.lines.values.flatMap { $0 }.compactMap { line in BundledDictionary.Index.entry(line).map { (line, $0) } }
-        // An HSK word's reading is spelt as the dictionary spells it, so it must match exactly:
-        // without tones and case, 钱's surname Qián and 告诉's gàosù, "to press charges", took
-        // the everyday word's rank. Of lines in that reading, the headline goes to the one
-        // holding it, like 周's "week" rather than its "to make a circuit", else the preferred.
-        let holding = Set(entries.compactMap { _, entry in
-            frequencies[entry.simplified].flatMap { $0.pinyin == entry.pinyin && entry.senses.contains($0.headline) ? entry.simplified : nil }
-        })
-        records = entries.map { line, entry in
-            let hsk = frequencies[entry.simplified].flatMap { hsk in
-                hsk.pinyin == entry.pinyin
-                    && (entry.senses.contains(hsk.headline) || (!holding.contains(entry.simplified) && entry.isPreferred)) ? hsk : nil
-            }
-            // First, even where it is a later sense, since a first sense outranks the rest.
-            let senses = hsk.map { hsk in [hsk.headline] + entry.senses.filter { $0 != hsk.headline } } ?? entry.senses
-            return Record(
+        let entries = index.lines.values.flatMap { lines -> [(Substring, DictionaryEntry, HSKHeadlines.Word?)] in
+            let parsed = lines.compactMap { line in BundledDictionary.Index.entry(line).map { (line, $0) } }
+            let applied = headlines.applied(to: parsed.map(\.1))
+            let carrier = headlines.carrier(among: parsed.map(\.1))
+            return parsed.indices.map { (parsed[$0].0, applied[$0], carrier?.index == $0 ? carrier?.word : nil) }
+        }
+        records = entries.map { line, entry, hsk in
+            Record(
                 line: line,
                 simplified: entry.simplified,
                 traditional: entry.traditional,
                 toneless: Self.toneless(entry.pinyin),
-                glosses: senses.map(Self.glosses),
+                glosses: entry.senses.map(Self.glosses),
                 isPreferred: entry.isPreferred,
                 headline: hsk?.headline,
                 frequency: hsk?.rank,
