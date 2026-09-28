@@ -164,6 +164,9 @@ not enough; if the behaviour reverses, a test should say so.
   incremental builds miss changes.
 - **The shared scheme's `TestAction` must not contain an empty `<TestPlans>`**, or
   xcodebuild reports the scheme as not configured for testing.
+- **Never give `.searchable` a `Binding(get:set:)` into a view model.** SwiftUI's copy
+  goes stale, and clearing a field not being edited put the old query back. Use
+  `searchField(initial:prompt:onChange:)` from `CoreUI`. Found on a device, not by a test.
 - **`Logger` redacts interpolated strings** unless marked `privacy: .public`, and
   `.debug` level is unreliable in Xcode's console. `SpeechLog` uses `.notice`.
 - **The light app icon must have no alpha channel.** App Store validation rejects
