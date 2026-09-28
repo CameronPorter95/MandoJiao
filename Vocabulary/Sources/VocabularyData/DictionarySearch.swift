@@ -12,14 +12,18 @@ nonisolated struct DictionarySearch: Sendable {
         /// Each sense's glosses, asides dropped and lowercased: "to walk, to go" is two.
         let glosses: [[String]]
         let isPreferred: Bool
-        /// How many headwords hold its rarest character, as a stand-in for how common it
-        /// is, which CC-CEDICT does not say.
+        /// Its HSK frequency rank, lower being commoner, when it is an HSK word in the reading
+        /// HSK gives it. CC-CEDICT says nothing of frequency.
+        let frequency: Int?
+        /// How many headwords hold its rarest character, a weaker stand-in for words HSK
+        /// does not have.
         let commonness: Int
     }
 
     private let records: [Record]
 
-    init(_ index: BundledDictionary.Index) {
+    /// `frequencies` are each HSK word's reading and rank, by Hanzi.
+    init(_ index: BundledDictionary.Index, frequencies: [String: (pinyin: String, rank: Int)] = [:]) {
         var containing: [Character: Int] = [:]
         for hanzi in index.lines.keys {
             for character in Set(hanzi) { containing[character, default: 0] += 1 }
@@ -33,6 +37,9 @@ nonisolated struct DictionarySearch: Sendable {
                 toneless: Self.toneless(entry.pinyin),
                 glosses: entry.senses.map(Self.glosses),
                 isPreferred: entry.isPreferred,
+                frequency: frequencies[entry.simplified].flatMap {
+                    Self.toneless($0.pinyin) == Self.toneless(entry.pinyin) ? $0.rank : nil
+                },
                 // Characters outside the main block, like 㣟, are all rare.
                 commonness: entry.simplified.unicodeScalars.allSatisfy { !(0x3400...0x4DBF).contains($0.value) && $0.value < 0x20000 }
                     ? entry.simplified.map { containing[$0] ?? 0 }.min() ?? 0
@@ -41,8 +48,10 @@ nonisolated struct DictionarySearch: Sendable {
         }
     }
 
-    /// Best first: an exact match before a partial one, then shorter headwords, then
-    /// commoner ones.
+    /// Best first: an exact match before a partial one, a match on a first sense before a
+    /// later one, then HSK words by frequency before the rest, then shorter headwords, then
+    /// commoner ones. An exact pinyin and an exact English match rank alike, so "you" is 你
+    /// before 有 yǒu, frequency deciding.
     func results(for query: String, limit: Int) -> [DictionaryEntry] {
         let query = query.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !query.isEmpty else { return [] }
@@ -76,6 +85,8 @@ nonisolated struct DictionarySearch: Sendable {
 
     private struct Rank: Comparable {
         let match: Int
+        /// `Int.max` for a word HSK does not have.
+        let frequency: Int
         let sense: Int
         let gloss: Int
         let length: Int
@@ -86,15 +97,17 @@ nonisolated struct DictionarySearch: Sendable {
         static func < (a: Rank, b: Rank) -> Bool {
             let ties = (a.length, a.rarity, a.notPreferred, a.headword)
             let others = (b.length, b.rarity, b.notPreferred, b.headword)
-            return (a.match, a.sense, a.gloss) != (b.match, b.sense, b.gloss)
-                ? (a.match, a.sense, a.gloss) < (b.match, b.sense, b.gloss)
-                : ties < others
+            // A first sense before a later one, so 喝's "to drink" is not beaten by the far
+            // commoner 用's "(honorific) to eat or drink".
+            let first = (a.match, a.sense < 3 ? 0 : 1, a.frequency, a.sense, a.gloss)
+            let second = (b.match, b.sense < 3 ? 0 : 1, b.frequency, b.sense, b.gloss)
+            return first != second ? first < second : ties < others
         }
     }
 
     private static func rank(_ record: Record, match: Int, sense: Int = 0, gloss: Int = 0) -> Rank {
         Rank(
-            match: match, sense: sense, gloss: gloss,
+            match: match, frequency: record.frequency ?? .max, sense: sense, gloss: gloss,
             length: record.simplified.count, rarity: -record.commonness,
             notPreferred: record.isPreferred ? 0 : 1, headword: record.simplified
         )
@@ -123,7 +136,7 @@ nonisolated struct DictionarySearch: Sendable {
             for (index, gloss) in glosses.enumerated() {
                 let match: Int
                 if gloss == query || gloss == "to \(query)" {
-                    match = 1
+                    match = 0
                 } else if " \(gloss) ".contains(padded) {
                     match = 4
                 } else {

@@ -78,13 +78,22 @@ nonisolated struct DictionaryTests {
         #expect(try await dictionary.search("drink", limit: 5).contains { $0.simplified == "喝" })
     }
 
-    /// CC-CEDICT has no frequency, so the commoner of two exact matches can lose. Pinned so a
-    /// better ranking, say from HSK's frequency order, shows up here.
-    @Test("search ranks by a stand-in for frequency, and it puts 合 before 和 and 于 before 去")
-    func searchRankingCost() async throws {
-        let he = try await dictionary.search("he", limit: 5).map(\.simplified)
-        #expect(he.firstIndex(of: "合")! < he.firstIndex(of: "和")!)
-        #expect(try await dictionary.search("go", limit: 2).map(\.simplified) == ["于", "去"])
+    /// CC-CEDICT has no frequency, so HSK's ranks it: an exact match on one of a word's first
+    /// senses, then HSK words by frequency.
+    @Test("search puts the everyday word first", arguments: [
+        ("bank", "银行"), ("go", "去"), ("drink", "喝"), ("eat", "吃"), ("you", "你"),
+        ("thank you", "谢谢"), ("year", "年"), ("money", "钱"), ("tell", "告诉"), ("he", "他"),
+    ])
+    func searchRanking(query: String, first: String) async throws {
+        #expect(try await dictionary.search(query, limit: 1).first?.simplified == first)
+    }
+
+    /// No CC-CEDICT sense of 在 is "at" or "in" on its own, so searching either misses it. Pinned
+    /// so that meanings from a better source show up here.
+    @Test("cost: search finds 在 for neither \"at\" nor \"in\"")
+    func searchMissesZai() async throws {
+        #expect(try await !dictionary.search("at", limit: 5).contains { $0.simplified == "在" })
+        #expect(try await !dictionary.search("in", limit: 5).contains { $0.simplified == "在" })
     }
 
     @Test("search lists a headword once per reading, and nothing for a blank query")
