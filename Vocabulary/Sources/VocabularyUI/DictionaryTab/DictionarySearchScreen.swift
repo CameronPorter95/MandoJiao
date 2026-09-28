@@ -10,9 +10,9 @@ struct DictionarySearchScreen: View {
     var body: some View {
         List {
             if case .found(let entries) = state.results {
-                ForEach(entries, id: \.self) { entry in
-                    NavigationLink(value: DictionaryHeadword(hanzi: entry.simplified, pinyin: entry.pinyin)) {
-                        DictionaryResultRow(entry: entry)
+                ForEach(entries, id: \.self) { result in
+                    NavigationLink(value: DictionaryHeadword(hanzi: result.simplified, pinyin: result.pinyin)) {
+                        DictionaryResultRow(result: result)
                     }
                 }
             }
@@ -48,20 +48,20 @@ struct DictionarySearchScreen: View {
 }
 
 private struct DictionaryResultRow: View {
-    let entry: DictionaryEntry
+    let result: DictionarySearchResult
 
     var body: some View {
         HStack(spacing: 12) {
-            Text(entry.simplified)
+            Text(result.simplified)
                 .font(.system(size: 22, weight: .medium))
                 .frame(minWidth: 44, alignment: .leading)
             VStack(alignment: .leading, spacing: 1) {
-                Text(entry.pinyin)
+                Text(result.pinyin)
                     .font(.caption)
                     .foregroundStyle(.secondary)
-                Text(entry.senses.first.map { Gloss.plain($0) } ?? "No meanings given")
+                Text(result.summary ?? "No meanings given")
                     .lineLimit(1)
-                    .foregroundStyle(entry.senses.isEmpty ? .secondary : .primary)
+                    .foregroundStyle(result.summary == nil ? .secondary : .primary)
             }
         }
     }
@@ -71,8 +71,8 @@ private struct DictionaryResultRow: View {
     NavigationStack {
         DictionarySearchScreen(
             state: DictionarySearchState(query: "bank", results: .found([
-                DictionaryEntry(simplified: "银行", traditional: "銀行", pinyin: "yínháng", isPreferred: true, senses: ["bank"]),
-                DictionaryEntry(simplified: "岸", traditional: "岸", pinyin: "àn", isPreferred: true, senses: ["bank, shore, beach, coast"]),
+                DictionarySearchResult(entry: DictionaryEntry(simplified: "银行", traditional: "銀行", pinyin: "yínháng", isPreferred: true, senses: ["bank"])),
+                DictionarySearchResult(entry: DictionaryEntry(simplified: "岸", traditional: "岸", pinyin: "àn", isPreferred: true, senses: ["bank, shore, beach, coast"])),
             ])),
             onAction: { _ in }
         )

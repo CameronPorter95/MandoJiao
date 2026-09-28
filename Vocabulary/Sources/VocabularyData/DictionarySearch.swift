@@ -12,6 +12,8 @@ nonisolated struct DictionarySearch: Sendable {
         /// Each sense's glosses, asides dropped and lowercased: "to walk, to go" is two.
         let glosses: [[String]]
         let isPreferred: Bool
+        /// The HSK headline this line carries, if any.
+        let headline: String?
         /// Its HSK frequency rank, lower being commoner, when it is an HSK word in the reading
         /// HSK gives it. CC-CEDICT says nothing of frequency.
         let frequency: Int?
@@ -52,6 +54,7 @@ nonisolated struct DictionarySearch: Sendable {
                 toneless: Self.toneless(entry.pinyin),
                 glosses: senses.map(Self.glosses),
                 isPreferred: entry.isPreferred,
+                headline: hsk?.headline,
                 frequency: hsk?.rank,
                 // Characters outside the main block, like 㣟, are all rare.
                 commonness: entry.simplified.unicodeScalars.allSatisfy { !(0x3400...0x4DBF).contains($0.value) && $0.value < 0x20000 }
@@ -65,7 +68,7 @@ nonisolated struct DictionarySearch: Sendable {
     /// later one, then HSK words by frequency before the rest, then shorter headwords, then
     /// commoner ones. An exact pinyin and an exact English match rank alike, so "you" is 你
     /// before 有 yǒu, frequency deciding.
-    func results(for query: String, limit: Int) -> [DictionaryEntry] {
+    func results(for query: String, limit: Int) -> [DictionarySearchResult] {
         let query = query.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !query.isEmpty else { return [] }
         let rank: (Record) -> Rank?
@@ -85,13 +88,13 @@ nonisolated struct DictionarySearch: Sendable {
             .compactMap { record in rank(record).map { (record, $0) } }
             .sorted { $0.1 < $1.1 }
         var seen = Set<String>()
-        var results: [DictionaryEntry] = []
+        var results: [DictionarySearchResult] = []
         for (record, _) in ranked {
             guard results.count < limit else { break }
             guard let entry = BundledDictionary.Index.entry(record.line),
                   seen.insert("\(entry.simplified)\t\(entry.pinyin)").inserted
             else { continue }
-            results.append(entry)
+            results.append(DictionarySearchResult(entry: entry, headline: record.headline))
         }
         return results
     }

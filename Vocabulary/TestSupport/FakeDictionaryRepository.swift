@@ -37,10 +37,12 @@ public actor FakeDictionaryRepository: DictionaryRepository {
     public private(set) var searches: [String] = []
 
     /// Headwords holding the query, or with a sense holding it, in the order given.
-    public func search(_ query: String, limit: Int) throws -> [DictionaryEntry] {
+    public func search(_ query: String, limit: Int) throws -> [DictionarySearchResult] {
         searches.append(query)
         if let failure { throw failure }
-        return Array(entries.filter { $0.simplified.contains(query) || $0.senses.contains { $0.contains(query) } }.prefix(limit))
+        return entries.filter { $0.simplified.contains(query) || $0.senses.contains { $0.contains(query) } }
+            .prefix(limit)
+            .map { DictionarySearchResult(entry: $0) }
     }
 
     public func entries(forHanzi hanzi: String) throws -> [DictionaryEntry] {

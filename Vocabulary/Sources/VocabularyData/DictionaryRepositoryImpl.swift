@@ -13,7 +13,7 @@ nonisolated struct DictionaryRepositoryImpl: DictionaryRepository {
         }
     }
 
-    func search(_ query: String, limit: Int) async throws -> [DictionaryEntry] {
+    func search(_ query: String, limit: Int) async throws -> [DictionarySearchResult] {
         do {
             let search = try await BundledDictionary.shared.search()
             try Task.checkCancellation()

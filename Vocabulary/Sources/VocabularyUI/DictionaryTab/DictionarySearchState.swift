@@ -5,7 +5,7 @@ struct DictionarySearchState: Equatable {
     enum Results: Equatable {
         case none
         case searching
-        case found([DictionaryEntry])
+        case found([DictionarySearchResult])
         case failed
     }
 

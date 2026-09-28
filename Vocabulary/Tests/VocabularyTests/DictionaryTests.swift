@@ -97,6 +97,17 @@ nonisolated struct DictionaryTests {
         #expect(try await dictionary.search(query, limit: 1).first?.simplified == first)
     }
 
+    @Test("a result shows its HSK headline, and a word HSK lacks its first sense, made short")
+    func resultSummary() async throws {
+        let zai = try await dictionary.search("在", limit: 1).first
+        #expect(zai?.headline == "at, in")
+        #expect(zai?.summary == "at, in")
+        #expect(zai?.entry.senses.first == "to exist, to be alive")
+        let yinhang = try await dictionary.search("banker", limit: 5).first { $0.simplified == "银行家" }
+        #expect(yinhang?.headline == nil)
+        #expect(yinhang?.summary == "banker")
+    }
+
     @Test("search lists a headword once per reading, and nothing for a blank query")
     func searchDuplicates() async throws {
         let results = try await dictionary.search("go", limit: 100)

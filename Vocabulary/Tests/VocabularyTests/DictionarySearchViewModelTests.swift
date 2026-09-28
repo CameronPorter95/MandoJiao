@@ -23,7 +23,7 @@ struct DictionarySearchViewModelTests {
         #expect(search.state.results == .searching)
 
         #expect(await waitUntil { search.state.results != .searching })
-        #expect(search.state.results == .found([FakeDictionaryRepository.words[2]]))
+        #expect(search.state.results == .found([DictionarySearchResult(entry: FakeDictionaryRepository.words[2])]))
         #expect(await dictionary.searches == ["银行"])
     }
 
