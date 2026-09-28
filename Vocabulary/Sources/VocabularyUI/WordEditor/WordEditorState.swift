@@ -38,7 +38,8 @@ struct WordEditorState: Equatable {
         return lookup.entries
     }
 
-    /// Readings with senses to tick. Some entries have none, being only another's variant.
+    /// Readings with senses to tick. Some have none, like a bare surname or a character only
+    /// used in one word.
     var tickableEntries: [DictionaryEntry] { entries.filter { !$0.senses.isEmpty } }
 
     /// The Hanzi, with the reading that would be saved.

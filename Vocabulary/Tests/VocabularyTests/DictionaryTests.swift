@@ -32,6 +32,16 @@ nonisolated struct DictionaryTests {
         #expect(try await dictionary.entries(forHanzi: "not a word").isEmpty)
     }
 
+    @Test("a measure word, a sense beginning \"surname\" that is not a name, and an abbreviation keep their meaning")
+    func sensesThatLookLikeReferences() async throws {
+        #expect(try await dictionary.entries(forHanzi: "辆").first?.senses == ["classifier for vehicles"])
+        #expect(try await dictionary.entries(forHanzi: "姓名").first?.senses == ["surname and given name, full name"])
+        #expect(try await dictionary.entries(forHanzi: "湘").first?.senses.first == "Hunan province in south central China")
+        #expect(try await dictionary.entries(forHanzi: "欧盟").first?.senses == ["European Union", "EU"])
+        // A bare surname still points nowhere worth keeping.
+        #expect(try await dictionary.entries(forHanzi: "于").first { $0.pinyin == "Yú" }?.senses == [])
+    }
+
     @Test("no sense in the whole dictionary keeps a Hanzi or a bracketed pinyin reference")
     func noReferences() async throws {
         let index = try await BundledDictionary.shared.index()

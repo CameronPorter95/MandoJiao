@@ -84,11 +84,31 @@ func strippingAsides(_ text: String, containing matching: (String) -> Bool) -> S
     return kept + aside
 }
 
+/// Senses that only point elsewhere. Not "classifier for", which is what a measure word
+/// like 辆 means, nor "surname" before anything but a name, as in 姓名's "surname and
+/// given name".
 let referencePrefixes = [
-    "surname ", "variant of", "old variant of", "archaic variant of", "unofficial variant of",
+    "variant of", "old variant of", "archaic variant of", "unofficial variant of",
     "Japanese variant of", "erhua variant of", "used in ", "see ", "CL:", "abbr. for", "abbr. of",
-    "also written", "also pr.", "Taiwan pr.", "classifier for",
+    "also written", "also pr.", "Taiwan pr.",
 ]
+
+func pointsElsewhere(_ text: String) -> Bool {
+    referencePrefixes.contains(where: text.hasPrefix)
+        || text.range(of: "^surname [A-Z]", options: .regularExpression) != nil
+}
+
+/// What an abbreviation stands for, when the sense says it in English around the
+/// reference: 欧盟's "abbr. for 歐洲聯盟|欧洲联盟[Ou1 zhou1 Lian2 meng2], European Union", or
+/// 湘's "abbr. for Hunan 湖南 province in south central China". Nil for one that only points.
+func abbreviated(_ raw: String) -> String? {
+    guard let prefix = ["abbr. for ", "abbr. of "].first(where: raw.hasPrefix) else { return nil }
+    let rest = strippingReferences(String(raw.dropFirst(prefix.count)))
+        .split(separator: " ", omittingEmptySubsequences: true)
+        .joined(separator: " ")
+        .trimmingCharacters(in: CharacterSet(charactersIn: " ,;."))
+    return rest.isEmpty ? nil : rest
+}
 
 /// Removes inline references like `陝西省|陕西省[Shan3 xi1 Sheng3]`.
 func strippingReferences(_ text: String) -> String {
@@ -101,7 +121,7 @@ func strippingReferences(_ text: String) -> String {
 
 /// The headword a cross reference like `see 西安市[Xi1 an1 Shi4]` points at.
 func referencedHeadword(_ gloss: String) -> String? {
-    let prefixes = ["see ", "variant of ", "erhua variant of ", "old variant of ", "also written "]
+    let prefixes = ["see ", "variant of ", "erhua variant of ", "old variant of ", "also written ", "abbr. for ", "abbr. of "]
     guard prefixes.contains(where: gloss.hasPrefix),
           let match = gloss.range(of: "[\\p{Han}|]+(?=\\[)", options: .regularExpression)
     else { return nil }
@@ -111,7 +131,8 @@ func referencedHeadword(_ gloss: String) -> String? {
 /// A sense worth keeping, or nil for a cross reference, a surname or a measure word list.
 /// Asides are kept, since they say how a sense is used, unless they only point elsewhere.
 func sense(_ raw: String) -> String? {
-    if referencePrefixes.contains(where: raw.hasPrefix) { return nil }
+    if let expansion = abbreviated(raw) { return sense(expansion) }
+    if pointsElsewhere(raw) { return nil }
     let text = strippingReferences(strippingAsides(raw, containing: isReference))
         .replacingOccurrences(of: "\\s+([,;])", with: "$1", options: .regularExpression)
         .replacingOccurrences(of: "; ", with: ", ")
@@ -119,11 +140,11 @@ func sense(_ raw: String) -> String? {
         .joined(separator: " ")
         .trimmingCharacters(in: CharacterSet(charactersIn: " ,;."))
     if text.isEmpty || text.contains("[") || text.unicodeScalars.contains(where: isHan) { return nil }
-    if text == "()" || referencePrefixes.contains(where: text.hasPrefix) { return nil }
+    if text == "()" || pointsElsewhere(text) { return nil }
     // A sense that is only an aside, like "(used in place names)", reads as its inside.
     var plain = strippingAsides(text, containing: { _ in true }).trimmingCharacters(in: .whitespaces)
     if plain.isEmpty { plain = String(text.dropFirst().dropLast()) }
-    if referencePrefixes.contains(where: plain.hasPrefix) { return nil }
+    if pointsElsewhere(plain) { return nil }
     return text
 }
 
