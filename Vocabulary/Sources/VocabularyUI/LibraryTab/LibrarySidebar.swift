@@ -27,7 +27,7 @@ struct LibrarySidebar: View {
             onPractise: { onAction(.practiseFolderTapped($0)) },
             onDelete: { onAction(.deleteFolderTapped($0)) }
         )
-        .navigationTitle("Library")
+        .navigationTitle("My Vocabulary")
         .toolbar {
             ToolbarItemGroup(placement: .primaryAction) {
                 Button(state.isEditing ? "Done" : "Edit") { onAction(.editTapped) }

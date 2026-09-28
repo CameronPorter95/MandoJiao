@@ -129,7 +129,7 @@ struct FolderDetailViewModelTests {
     func deletingASubfolder() async {
         let (hsk, _) = await makeDetail(Fixtures.hsk.id)
         hsk.send(.deleteFolderTapped(Fixtures.level1.id))
-        #expect(hsk.state.deletionWarning == "Level 1 and the 2 decks inside it will be deleted. Their words stay in the library.")
+        #expect(hsk.state.deletionWarning == "Level 1 and the 2 decks inside it will be deleted. Their words stay in your vocabulary.")
         hsk.send(.deleteFolderCancelled)
         await settle()
         #expect(await repository.writes.isEmpty)

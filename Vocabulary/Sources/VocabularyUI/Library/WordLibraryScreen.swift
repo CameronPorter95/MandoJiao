@@ -70,7 +70,7 @@ struct WordLibraryScreen: View {
             }
         }
         .searchField(initial: state.searchText, prompt: "Search words") { onAction(.searchChanged($0)) }
-        .navigationTitle("Library")
+        .navigationTitle("All words")
         .toolbar {
             ToolbarItemGroup(placement: .primaryAction) {
                 Button {

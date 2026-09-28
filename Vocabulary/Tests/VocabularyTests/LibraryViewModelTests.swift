@@ -126,7 +126,7 @@ struct LibraryViewModelTests {
         library.send(.opened(.deck(Fixtures.part1.id)))
 
         library.send(.deleteFolderTapped(Fixtures.hsk.id))
-        #expect(library.state.deletionWarning == "HSK and the 1 folder and 2 decks inside it will be deleted. Their words stay in the library.")
+        #expect(library.state.deletionWarning == "HSK and the 1 folder and 2 decks inside it will be deleted. Their words stay in your vocabulary.")
         library.send(.deleteFolderConfirmed)
 
         #expect(library.state.selection == nil)
