@@ -53,7 +53,7 @@ struct WordEditorScreen: View {
                     }
                 }
             }
-            .alwaysEditing()
+            .scrollDismissesKeyboard(.interactively)
             .navigationTitle(state.title)
             .inlineNavigationTitle()
             .sheet(isPresented: Binding(
@@ -99,6 +99,13 @@ struct WordEditorScreen: View {
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
+                    // Drawn rather than edit mode's, whose delete buttons the owner did not
+                    // want. Holding it starts the list's own drag; holding the text selects it.
+                    if state.meanings.count > 1 {
+                        Image(systemName: "line.3.horizontal")
+                            .foregroundStyle(.tertiary)
+                            .accessibilityHidden(true)
+                    }
                 }
                 // A text field does not count as the row's text, so the separator would start
                 // at the Headline label.
@@ -115,8 +122,10 @@ struct WordEditorScreen: View {
                     .submitLabel(.done)
                     .focused($focus, equals: .newMeaning)
                     .onSubmit {
+                        // Return on an empty field puts the keyboard away, else it stays for the next.
+                        let isBlank = newMeaning.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
                         addMeaning()
-                        focus = .newMeaning
+                        focus = isBlank ? nil : .newMeaning
                     }
             }
         } header: {
@@ -127,7 +136,7 @@ struct WordEditorScreen: View {
                     Text("Suggested from the dictionary, and saved unless you change it.")
                 }
                 Text("The headline is shown on tiles and prompts, the rest once the answer is out."
-                    + (state.meanings.count > 1 ? " Drag to reorder." : ""))
+                    + (state.meanings.count > 1 ? " Hold and drag to reorder, swipe to remove." : ""))
             }
         }
     }

@@ -19,16 +19,6 @@ extension View {
         #endif
     }
 
-    /// Reorder handles shown from the start, without an Edit button. macOS lists have no
-    /// edit mode.
-    public func alwaysEditing() -> some View {
-        #if os(iOS)
-        environment(\.editMode, .constant(.active))
-        #else
-        self
-        #endif
-    }
-
     public func inlineNavigationTitle() -> some View {
         #if os(iOS)
         navigationBarTitleDisplayMode(.inline)
