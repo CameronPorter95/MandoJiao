@@ -201,7 +201,8 @@ for entry in entries {
             continue
         }
         standardised.append("\(entry.simplified) → \(standard)")
-        lines.append((level, entry.frequency, line(level, entry.frequency, standard, known.pinyin, known.senses)))
+        let chosen = withHeadline(standard, known.pinyin, known.senses)
+        lines.append((level, entry.frequency, line(level, entry.frequency, standard, chosen.pinyin, chosen.meanings)))
         continue
     }
 
@@ -215,7 +216,8 @@ for entry in entries {
     } else {
         unknown.append(entry.simplified)
         let pinyin = forms.first.map { $0.transcriptions.pinyin.replacingOccurrences(of: " ", with: "") } ?? ""
-        lines.append((level, entry.frequency, line(level, entry.frequency, entry.simplified, pinyin, cleaned(forms.first?.meanings ?? []))))
+        let chosen = withHeadline(entry.simplified, pinyin, cleaned(forms.first?.meanings ?? []))
+        lines.append((level, entry.frequency, line(level, entry.frequency, entry.simplified, chosen.pinyin, chosen.meanings)))
     }
 }
 
