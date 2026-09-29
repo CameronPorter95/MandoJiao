@@ -12,47 +12,56 @@ nonisolated struct HSKHeadlines: Sendable {
         let headline: String
     }
 
-    let words: [String: Word]
+    /// Each character's readings, the main one first: 长 is cháng and zhǎng.
+    let words: [String: [Word]]
 
     init(_ hsk: [HSKWord]) {
-        words = Dictionary(
-            hsk.compactMap { word in word.meanings.first.map { (word.hanzi, Word(pinyin: word.pinyin, rank: word.rank, headline: $0)) } },
-            uniquingKeysWith: { first, _ in first }
-        )
+        var words: [String: [Word]] = [:]
+        for word in hsk {
+            guard let headline = word.meanings.first else { continue }
+            words[word.hanzi, default: []].append(Word(pinyin: word.pinyin, rank: word.rank, headline: headline))
+        }
+        self.words = words
     }
 
     /// Read once. Without the HSK list the dictionary reads as CC-CEDICT alone.
     static let bundled = HSKHeadlines((try? BundledHSK.words()) ?? [])
 
-    /// Which of one headword's entries carries its HSK headline, if any. The reading must
-    /// match exactly: without tones and case, 钱's surname Qián and 告诉's gàosù, "to press
-    /// charges", took the everyday word's. Of lines in that reading, the one holding the
-    /// headline, like 周's "week" rather than its "to make a circuit", else the preferred.
-    func carrier(among entries: [DictionaryEntry]) -> (index: Int, word: Word)? {
-        guard let hanzi = entries.first?.simplified, let word = words[hanzi] else { return nil }
-        let reading = entries.indices.filter { entries[$0].pinyin == word.pinyin }
-        guard let index = reading.first(where: { entries[$0].senses.contains(word.headline) })
-            ?? reading.first(where: { entries[$0].isPreferred })
-            ?? reading.first
-        else { return nil }
-        return (index, word)
+    /// Which of one headword's entries carries each of its HSK readings' headlines. The
+    /// reading must match exactly: without tones and case, 钱's surname Qián and 告诉's gàosù,
+    /// "to press charges", took the everyday word's. Of lines in that reading, the one
+    /// holding the headline, like 周's "week" rather than its "to make a circuit", else the
+    /// preferred.
+    func carriers(among entries: [DictionaryEntry]) -> [Int: Word] {
+        guard let hanzi = entries.first?.simplified, let readings = words[hanzi] else { return [:] }
+        var carriers: [Int: Word] = [:]
+        for word in readings {
+            let reading = entries.indices.filter { entries[$0].pinyin == word.pinyin && carriers[$0] == nil }
+            guard let index = reading.first(where: { entries[$0].senses.contains(word.headline) })
+                ?? reading.first(where: { entries[$0].isPreferred })
+                ?? reading.first
+            else { continue }
+            carriers[index] = word
+        }
+        return carriers
     }
 
-    /// The headline first in the entry that carries it, and any sense it already says in full
-    /// dropped: 才's "only then, just; ability, talent" makes its later "ability, talent"
-    /// redundant. Compared part by part, so 给's "to" is not lost inside "to give".
+    /// Each carrier's headline first, and any sense it already says in full dropped: 才's
+    /// "only then, just; ability, talent" makes its later "ability, talent" redundant.
+    /// Compared part by part, so 给's "to" is not lost inside "to give".
     func applied(to entries: [DictionaryEntry]) -> [DictionaryEntry] {
-        guard let (index, word) = carrier(among: entries) else { return entries }
-        let entry = entries[index]
-        let said = Self.parts(word.headline)
         var result = entries
-        result[index] = DictionaryEntry(
-            simplified: entry.simplified,
-            traditional: entry.traditional,
-            pinyin: entry.pinyin,
-            isPreferred: entry.isPreferred,
-            senses: [word.headline] + entry.senses.filter { $0 != word.headline && !Self.parts($0).isSubset(of: said) }
-        )
+        for (index, word) in carriers(among: entries) {
+            let entry = entries[index]
+            let said = Self.parts(word.headline)
+            result[index] = DictionaryEntry(
+                simplified: entry.simplified,
+                traditional: entry.traditional,
+                pinyin: entry.pinyin,
+                isPreferred: entry.isPreferred,
+                senses: [word.headline] + entry.senses.filter { $0 != word.headline && !Self.parts($0).isSubset(of: said) }
+            )
+        }
         return result
     }
 

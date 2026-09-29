@@ -4,7 +4,7 @@ import Foundation
 //
 // Download complete.json from https://github.com/drkameleon/complete-hsk-vocabulary, then
 // run from the repository root, after MakeDictionary:
-//   swift Tools/MakeHSK/main.swift complete.json Vocabulary/Sources/VocabularyData/Resources/Dictionary.tsv Tools/MakeHSK/headlines.tsv Vocabulary/Sources/VocabularyData/Resources/HSK.tsv
+//   swift Tools/MakeHSK/main.swift complete.json Vocabulary/Sources/VocabularyData/Resources/Dictionary.tsv Tools/MakeHSK/headlines.tsv Tools/MakeHSK/readings.tsv Vocabulary/Sources/VocabularyData/Resources/HSK.tsv
 //
 // Output is one line per word of the 2025 revision of HSK 3.0 ("newest" in the source):
 // level, frequency rank, Hanzi, pinyin, then meanings joined by U+001F, tab separated,
@@ -20,6 +20,9 @@ import Foundation
 //
 // headlines.tsv overrides that for HSK 1 to 3, where the dictionary's first sense is not
 // what a learner means by the word: 在 heads with "at, in", not "to exist". See its header.
+//
+// readings.tsv adds a character's other everyday readings as words of their own, 长 zhǎng
+// beside 长 cháng, on the same level. See its header.
 //
 // Words are in standard Mandarin, not Beijing erhua: 一点儿 becomes 一点. Where dropping the
 // 儿 changes the meaning, the standard word is used instead (哪儿 is 哪里, not 哪), and an
@@ -42,8 +45,8 @@ struct Source: Decodable {
 }
 
 let arguments = CommandLine.arguments
-guard arguments.count == 5 else {
-    FileHandle.standardError.write(Data("usage: main.swift <complete.json> <Dictionary.tsv> <headlines.tsv> <HSK.tsv>\n".utf8))
+guard arguments.count == 6 else {
+    FileHandle.standardError.write(Data("usage: main.swift <complete.json> <Dictionary.tsv> <headlines.tsv> <readings.tsv> <HSK.tsv>\n".utf8))
     exit(1)
 }
 
@@ -102,12 +105,16 @@ func withHeadline(_ hanzi: String, _ pinyin: String, _ senses: [String]) -> (pin
        let line = dictionary[hanzi]?.first(where: { comparable($0.pinyin) == comparable(pinyin) && $0.senses.contains(chosen.headline) }) {
         senses = line.senses
     }
-    // Nor a sense the headline already says in full: 种's "kind, type" makes a later "kind"
-    // redundant, and 才's "only then, just; ability, talent" its "ability, talent". Compared
-    // part by part, so 给's "to" is not lost inside "to give".
+    return (pinyin, headed(chosen.headline, senses))
+}
+
+/// The headline first, then the senses it does not already say in full: 种's "kind, type"
+/// makes a later "kind" redundant, and 才's "only then, just; ability, talent" its "ability,
+/// talent". Compared part by part, so 给's "to" is not lost inside "to give".
+func headed(_ headline: String, _ senses: [String]) -> [String] {
     let parts = { (text: String) in Set(text.split(whereSeparator: { ",;".contains($0) }).map { $0.trimmingCharacters(in: .whitespaces) }) }
-    let said = parts(chosen.headline)
-    return (pinyin, [chosen.headline] + senses.filter { $0 != chosen.headline && !parts($0).isSubset(of: said) })
+    let said = parts(headline)
+    return [headline] + senses.filter { $0 != headline && !parts($0).isSubset(of: said) }
 }
 
 /// Of the dictionary's readings with senses that the source also gives, its preferred one,
@@ -212,16 +219,47 @@ for entry in entries {
     }
 }
 
+// Each second reading beside its character's main one, on the same level and rank.
+var added: [String] = []
+for entry in try String(contentsOfFile: arguments[4], encoding: .utf8).split(separator: "\n") where !entry.hasPrefix("#") {
+    let fields = entry.split(separator: "\t", omittingEmptySubsequences: false).map(String.init)
+    guard fields.count == 3, !fields[1].isEmpty, !fields[2].isEmpty else {
+        FileHandle.standardError.write(Data("readings.tsv: bad line \(entry)\n".utf8))
+        exit(1)
+    }
+    let (hanzi, pinyin, headline) = (fields[0], fields[1], fields[2])
+    let main = lines.filter { $0.line.split(separator: "\t")[2] == hanzi }
+    guard let base = main.first else {
+        FileHandle.standardError.write(Data("readings.tsv: \(hanzi) is not an HSK word\n".utf8))
+        exit(1)
+    }
+    guard !main.contains(where: { comparable(String($0.line.split(separator: "\t")[3])) == comparable(pinyin) }) else {
+        FileHandle.standardError.write(Data("readings.tsv: \(hanzi) already reads \(pinyin)\n".utf8))
+        exit(1)
+    }
+    let inReading = (dictionary[hanzi] ?? []).filter { comparable($0.pinyin) == comparable(pinyin) && !$0.senses.isEmpty }
+    guard let reading = inReading.first(where: { $0.senses.contains(headline) })
+        ?? inReading.first(where: \.isPreferred)
+        ?? inReading.max(by: { $0.senses.count < $1.senses.count })
+    else {
+        FileHandle.standardError.write(Data("readings.tsv: \(hanzi) has no reading \(pinyin)\n".utf8))
+        exit(1)
+    }
+    lines.append((base.level, base.rank, line(base.level, base.rank, hanzi, reading.pinyin, headed(headline, reading.senses))))
+    added.append("\(hanzi) \(reading.pinyin)")
+}
+
+// A second reading sorts after its character's main one, which the stable sort keeps.
 lines.sort { ($0.level, $0.rank) < ($1.level, $1.rank) }
 let header = "# HSK 3.0, 2025 revision, from complete-hsk-vocabulary (MIT, Yanis Zafirópulos)"
 try ([header] + lines.map(\.line)).joined(separator: "\n").appending("\n")
-    .write(toFile: arguments[4], atomically: true, encoding: .utf8)
+    .write(toFile: arguments[5], atomically: true, encoding: .utf8)
 
 let counts = Dictionary(grouping: lines, by: \.level).mapValues(\.count).sorted { $0.key < $1.key }
 print("words by level:", counts.map { "\($0.key): \($0.value)" }.joined(separator: ", "))
 print("\(ambiguous) with several readings, \(unknown.count) not in the dictionary or read differently there:", unknown.prefix(30).joined(separator: " "))
 print("erhua made standard:", standardised.joined(separator: ", "))
-print("\(headlines.count - unusedHeadlines.count) headlines chosen by hand")
+print("\(headlines.count - unusedHeadlines.count) headlines chosen by hand, \(added.count) second readings")
 if !unusedHeadlines.isEmpty {
     FileHandle.standardError.write(Data("headlines.tsv: not HSK words: \(unusedHeadlines.sorted().joined(separator: " "))\n".utf8))
     exit(1)

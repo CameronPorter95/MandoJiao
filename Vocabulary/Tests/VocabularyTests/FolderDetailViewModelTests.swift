@@ -86,7 +86,8 @@ struct FolderDetailViewModelTests {
             await repository.writes == ["createDeck Colours inside Empty", "createFolder More inside Empty"]
         })
         #expect(await waitUntil { empty.state.decks.map(\.name) == ["Colours"] })
-        #expect(empty.state.subfolders.map(\.folder.name) == ["More"])
+        // The two writes can reach the screen in separate snapshots, so wait for each.
+        #expect(await waitUntil { empty.state.subfolders.map(\.folder.name) == ["More"] })
     }
 
     @Test("the folder's name and decks show at once from the snapshot it was opened with")
