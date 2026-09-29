@@ -39,26 +39,51 @@ struct VocabularyDomainTests {
         #expect(!Fixtures.water.matches("tea"))
     }
 
-    @Test("search reads pinyin as the dictionary does, ignoring tones, tone numbers and spaces", arguments: [
-        "shui", "SHUI", "shui3", "shuí", "  shui ",
+    @Test("search reads pinyin as the dictionary does, ignoring case and spaces, and tones unless written", arguments: [
+        "shui", "SHUI", "shui3", "shu3i", "shuǐ", "shǔi", "SHUǏ", "shuĭ", "  shui ",
     ])
-    func searchIgnoresTones(query: String) {
+    func searchReadsPinyin(query: String) {
         #expect(Fixtures.water.matches(query))
     }
 
+    @Test("a tone written, by mark or number, finds only that tone", arguments: [
+        "shuí", "shui2", "shuī", "shui4", "shu4i",
+    ])
+    func searchWrittenTone(query: String) {
+        #expect(!Fixtures.water.matches(query))
+    }
+
     @Test("search finds a longer word by its pinyin however the syllables are written", arguments: [
-        "yínháng", "yin2hang2", "Yin hang", "yinhang", "hang",
+        "yínháng", "yin2hang2", "Yin hang", "yinhang", "hang", "yín", "háng", "yinháng", "hang2",
     ])
     func searchJoinsSyllables(query: String) {
         #expect(Word(english: "bank", hanzi: "银行", pinyin: "yín háng").matches(query))
     }
 
-    /// The cost of ignoring tones, as in the dictionary: a toneless query cannot tell 妈
-    /// from 马, so both stay in the list.
-    @Test("search cannot tell words apart by tone alone")
-    func searchTonesIndistinguishable() {
-        #expect(Word(english: "mother", hanzi: "妈", pinyin: "mā").matches("mǎ"))
-        #expect(Word(english: "horse", hanzi: "马", pinyin: "mǎ").matches("mā"))
+    @Test("a longer word is not found by a syllable written in another tone", arguments: [
+        "yìnháng", "yinhàng", "yin2hang4", "hang4",
+    ])
+    func searchJoinsSyllablesByTone(query: String) {
+        #expect(!Word(english: "bank", hanzi: "银行", pinyin: "yín háng").matches(query))
+    }
+
+    @Test("a toneless query finds every tone, and a toned one only its own")
+    func searchTellsTonesApart() {
+        let mother = Word(english: "mother", hanzi: "妈", pinyin: "mā")
+        let horse = Word(english: "horse", hanzi: "马", pinyin: "mǎ")
+        let particle = Word(english: "question particle", hanzi: "吗", pinyin: "ma")
+        #expect([mother, horse, particle].allSatisfy { $0.matches("ma") })
+        #expect([mother, horse, particle].filter { $0.matches("mǎ") } == [horse])
+        #expect([mother, horse, particle].filter { $0.matches("ma1") } == [mother])
+    }
+
+    /// The cost of a tone belonging to a run of vowels rather than a syllable: 西安 Xī'ān
+    /// is one run of "ia" to a query that does not split it, so "xiān", meaning 先, finds it.
+    @Test("a toned query cannot tell apart two syllables it reads as one")
+    func searchToneAcrossSyllables() {
+        let xian = Word(english: "Xi'an", hanzi: "西安", pinyin: "Xī'ān")
+        #expect(xian.matches("xiān"))
+        #expect(!xian.matches("xiàn"))
     }
 
     @Test("a Hanzi query matches only Hanzi, and one with no letters matches no pinyin")
@@ -67,7 +92,7 @@ struct VocabularyDomainTests {
         #expect(!Word(english: "three", hanzi: "三", pinyin: "sān").matches("3"))
         #expect(SearchQuery("银行").pinyin == nil)
         #expect(SearchQuery("to drink!").pinyin == nil)
-        #expect(SearchQuery("Yín háng").pinyin == "yinhang")
+        #expect(SearchQuery("Yín háng").pinyin?.letters == "yinhang")
     }
 
     @Test("a draft needs English and Hanzi, and is saved trimmed")
