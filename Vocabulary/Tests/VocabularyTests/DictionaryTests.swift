@@ -56,14 +56,31 @@ nonisolated struct DictionaryTests {
         #expect(try await raw(hanzi).first?.senses.first == headline)
     }
 
+    @Test("a reading CC-CEDICT gives several lines is one entry, its senses once each, its traditional forms together")
+    func readingsMerged() async throws {
+        let jiu = try await raw("韭")
+        #expect(jiu.map(\.pinyin) == ["jiǔ"])
+        #expect(jiu.first?.senses == ["leek"])
+        #expect(jiu.first?.traditional == "韭, 韮")
+        let zhou = try #require(try await raw("周").first { $0.pinyin == "zhōu" })
+        #expect(zhou.senses.contains("to make a circuit") && zhou.senses.contains("week"))
+        let wei = try await raw("为")
+        #expect(Set(wei.map(\.pinyin)) == ["wéi", "wèi"] && wei.count == 2)
+        // 爲 wéi, "variant of 為|为[wei2]", takes wéi's senses, not the preferred wèi's.
+        #expect(wei.first { $0.pinyin == "wéi" }?.senses.contains("because of") == false)
+        #expect(wei.first { $0.pinyin == "wéi" }?.traditional == "為, 爲")
+        // A reference names a reading's case too: 㥁, "variant of 德[de2]", is "virtue", not Germany.
+        #expect(try await raw("㥁").first?.senses.first == "virtue")
+    }
+
     @Test("an HSK word's headline is the first meaning of its reading, and nothing repeats it")
     func headlinesInTheDictionary() async throws {
         let zai = try await dictionary.entries(forHanzi: "在")
         #expect(zai.first?.senses.prefix(2) == ["at, in", "to exist, to be alive"])
-        // 裡, the line HSK means, not 里's unit of length.
-        #expect(try await dictionary.entries(forHanzi: "里").first { $0.traditional == "裡" }?.senses.first == "inside")
-        #expect(try await dictionary.entries(forHanzi: "里").first { $0.traditional == "里" && $0.pinyin == "lǐ" }?.senses.first
-            == "li, ancient measure of length, approx. 500 m")
+        // 里's lǐ is one reading of 裡, 裏 and 里, headed by "inside", with the unit of length after.
+        let li = try #require(try await dictionary.entries(forHanzi: "里").first { $0.pinyin == "lǐ" })
+        #expect(li.senses.first == "inside")
+        #expect(li.senses.contains("li, ancient measure of length, approx. 500 m"))
         let cai = try await dictionary.entries(forHanzi: "才").first { $0.isPreferred }
         #expect(cai?.senses.first == "only then, just; ability, talent")
         #expect(cai?.senses.contains("ability, talent") == false)

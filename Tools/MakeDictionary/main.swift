@@ -120,12 +120,16 @@ func strippingReferences(_ text: String) -> String {
 }
 
 /// The headword a cross reference like `see 西安市[Xi1 an1 Shi4]` points at.
-func referencedHeadword(_ gloss: String) -> String? {
+func referencedHeadword(_ gloss: String) -> (hanzi: String, pinyin: String?)? {
     let prefixes = ["see ", "variant of ", "erhua variant of ", "old variant of ", "also written ", "abbr. for ", "abbr. of "]
     guard prefixes.contains(where: gloss.hasPrefix),
-          let match = gloss.range(of: "[\\p{Han}|]+(?=\\[)", options: .regularExpression)
+          let match = gloss.range(of: "[\\p{Han}|]+(?=\\[)", options: .regularExpression),
+          let hanzi = gloss[match].split(separator: "|").last.map(String.init)
     else { return nil }
-    return gloss[match].split(separator: "|").last.map(String.init)
+    // The reading the reference names, as in "variant of 為|为[wei2]".
+    let rest = gloss[match.upperBound...]
+    let pinyin = rest.hasPrefix("[") ? rest.dropFirst().prefix(while: { $0 != "]" }) : nil
+    return (hanzi, pinyin.map(String.init))
 }
 
 /// A sense worth keeping, or nil for a cross reference, a surname or a measure word list.
@@ -274,6 +278,19 @@ let grouped = Dictionary(grouping: entries, by: \.simplified)
 let preferred = Set(grouped.values.map { rank($0).order })
 let sensesByOrder = Dictionary(uniqueKeysWithValues: entries.map { ($0.order, $0.glosses.compactMap(sense)) })
 let preferredSenses = Dictionary(uniqueKeysWithValues: grouped.map { ($0.key, sensesByOrder[rank($0.value).order] ?? []) })
+/// A headword's senses in the reading a reference names: the preferred line if it reads so,
+/// else the fullest. Case must match, since "variant of 德[de2]" means 德 de2, "virtue",
+/// not 德 De2, "Germany"; only a reference matching no line exactly is read case-free.
+func referencedSenses(of hanzi: String, reading pinyin: String) -> [String]? {
+    let lines = grouped[hanzi] ?? []
+    let exact = lines.filter { $0.pinyin == pinyin }
+    let reading = exact.isEmpty ? lines.filter { $0.pinyin.lowercased() == pinyin.lowercased() } : exact
+    let withSenses = reading.filter { !(sensesByOrder[$0.order] ?? []).isEmpty }
+    guard let line = withSenses.first(where: { preferred.contains($0.order) })
+        ?? withSenses.max(by: { (sensesByOrder[$0.order]?.count ?? 0) < (sensesByOrder[$1.order]?.count ?? 0) })
+    else { return nil }
+    return sensesByOrder[line.order]
+}
 
 var lines = ["# CC-CEDICT \(date), CC BY-SA 4.0, https://cc-cedict.org"]
 var empty = 0
@@ -281,7 +298,11 @@ for entry in entries.sorted(by: { ($0.simplified, $0.order) < ($1.simplified, $1
     var senses = sensesByOrder[entry.order] ?? []
     if senses.isEmpty {
         // A pure cross reference, like 西安's "see 西安市", takes the senses it points at.
-        senses = entry.glosses.lazy.compactMap(referencedHeadword).compactMap { preferredSenses[$0] }.first { !$0.isEmpty } ?? []
+        // In the reading it names, else the headword's preferred one: 爲 wéi, "variant of
+        // 為|为[wei2]", took 为's preferred wèi, "because of, for, to".
+        senses = entry.glosses.lazy.compactMap(referencedHeadword).compactMap { reference in
+            reference.pinyin.flatMap { referencedSenses(of: reference.hanzi, reading: $0) } ?? preferredSenses[reference.hanzi]
+        }.first { !$0.isEmpty } ?? []
     }
     if senses.isEmpty { empty += 1 }
     let isPreferred = preferred.contains(entry.order) ? "1" : "0"
