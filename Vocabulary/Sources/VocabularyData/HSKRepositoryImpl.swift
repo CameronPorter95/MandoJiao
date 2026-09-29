@@ -35,10 +35,12 @@ nonisolated enum BundledHSK {
         text.split(separator: "\n").compactMap { line in
             guard !line.hasPrefix("#") else { return nil }
             let fields = line.split(separator: "\t", omittingEmptySubsequences: false).map(String.init)
-            guard fields.count == 5, let level = Int(fields[0]), let rank = Int(fields[1]) else { return nil }
+            // A sixth field, "=", marks meanings chosen by hand in full.
+            guard fields.count == 5 || fields.count == 6, let level = Int(fields[0]), let rank = Int(fields[1]) else { return nil }
             return HSKWord(
                 level: level, rank: rank, hanzi: fields[2], pinyin: fields[3],
-                meanings: fields[4].split(separator: "\u{1F}").map(String.init)
+                meanings: fields[4].split(separator: "\u{1F}").map(String.init),
+                replacesSenses: fields.count == 6 && fields[5] == "="
             )
         }
     }

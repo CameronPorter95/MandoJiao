@@ -219,7 +219,7 @@
 1	1655	哥哥	gēge	older brother
 1	1675	天气	tiānqì	weather
 1	1728	千	qiān	thousand
-1	1828	同学	tóngxué	to study at the same schoolfellow studentclassmate
+1	1828	同学	tóngxué	classmateto study at the same schoolfellow student
 1	1877	好看	hǎokàn	good-looking, nice-looking(of a movie, book, TV show etc) goodin an embarrassing situation
 1	1910	茶	chá	teatea plant
 1	1929	雨	yǔ	rain
@@ -313,7 +313,7 @@
 2	85	出	chū	to go out, to come outto arise, to occurto produce, to yieldto go beyond, to exceed
 2	85	已经	yǐjīng	already
 2	85	这样	zhèyàng	this way, like this, so(before a noun) this kind of, such
-2	89	最	zuì	(before an adjective or verb) to the highest degree, (the) most ..., -estbest or most extreme example
+2	89	最	zuì	(the) most ...best or most extreme example	=
 2	91	因为	yīnwèi	because, owing to, on account of
 2	99	次	cì	(classifier for occurrences) timenext in sequencesecondthe second (day, time etc)
 2	109	走	zǒu	to walkto goto runto move (of vehicle)
@@ -391,7 +391,7 @@
 2	814	眼睛	yǎnjing	eye
 2	822	近	jìn	nearclose toapproximately
 2	838	下去	xiàqù	to go downto descendto go onto continue
-2	912	离	lí	(in giving distances) from, to leaveto part fromto be away fromwithout (sth)
+2	912	离	lí	to leave; (in giving distances) fromto part fromto be away fromwithout (sth)
 2	940	经常	jīngcháng	frequently, constantly, regularly, oftenday-to-day, everyday, daily
 2	956	票	piào	ticketballotbanknoteperson held for ransom
 2	961	床	chuáng	bed, couch (furniture that one can lie down on)bed, bottom (of rivers, oceans, gardens etc)frame, chassisclassifier for blankets, quilts etc
@@ -450,7 +450,7 @@
 2	2643	白色	báisè	whitefig. reactionaryanti-communist
 2	2690	题	tí	exam questiontopicproblem for discussionsubject
 2	2762	门口	ménkǒu	doorwaygate
-2	2805	不好意思	bùhǎoyìsi	to be sorry (for inconveniencing sb), to feel embarrassedto find it embarrassing
+2	2805	不好意思	bùhǎoyìsi	to be sorry (for inconveniencing sb)to feel embarrassedto find it embarrassing
 2	2809	奶奶	nǎinai	(informal) grandma (paternal grandmother)(respectful) mistress of the house(coll.) boobiesbreasts
 2	2906	右边	yòubian	right sideright, to the right
 2	2983	有意思	yǒuyìsi	interestingmeaningfulenjoyablefun
@@ -512,7 +512,7 @@
 3	116	该	gāi	shouldought toprobablymust be
 3	127	更	gèng	moreeven morefurtherstill
 3	131	需要	xūyào	to need, to want, to demand, to requireneeds
-3	133	才	cái	only then, just; ability, talentsb of a certain typea capable individualthen and only then
+3	133	才	cái	only then, justability, talentsb of a certain typea capable individual
 3	151	像	xiàng	to resembleto be liketo look as ifsuch as
 3	165	向	xiàng	towardsto faceto turn towardsdirection
 3	168	认为	rènwéi	to believe, to think, to consider, to feel
@@ -690,7 +690,7 @@
 3	1100	回答	huídá	to reply, to answerreply, answer
 3	1100	年轻	niánqīng	young
 3	1103	久	jiǔ	(of a period of time) long
-3	1123	记	jì	to remember, to recordto noteto memorizemark
+3	1123	记	jì	to rememberto recordto noteto memorize
 3	1125	关注	guānzhù	to pay attention to, to follow sth closely, to follow (on social media)concern, interest, attention
 3	1127	表演	biǎoyǎn	performanceplayshowexhibition
 3	1129	关	guān	to close, to shut, to turn offmountain passto confine, to lock (sb) up, to shut (sb in a room, a bird in a cage etc)to concern, to involve
@@ -1737,7 +1737,7 @@
 4	5067	东部	dōngbù	the easteastern part
 4	5076	亲戚	qīnqi	a relative (i.e. family relation)
 4	5093	客气	kèqi	politecourteousformalmodest
-4	5101	琴	qín	musical instrument (especially stringed instruments like a zither, lyre, or lute)guqin (a type of zither)musical instrument in general
+4	5101	琴	qín	stringed instrumentguqin (a type of zither)musical instrument in general
 4	5145	日常	rìcháng	day-to-day, daily, everyday
 4	5156	力气	lìqi	physical strength
 4	5178	缺点	quēdiǎn	weak pointfaultshortcomingdisadvantage
@@ -1976,20 +1976,21 @@
 4	40061	京剧	Jīngjù	Beijing opera
 4	41800	干活	gànhuó	to work, to be employed
 4	1000000	短信	duǎnxìn	text messageSMS
-5	159	所	suǒ	actuallyplaceclassifier for houses, small buildings, institutions etcthat which
-5	166	以	yǐ	to useby means ofaccording toin order to
+5	159	所	suǒ	classifier for houses, small buildings, institutions etcactuallyplacethat which
+5	166	以	yǐ	by means ofto useaccording toin order to
 5	186	哦	ó	oh (interjection indicating doubt or surprise)
 5	387	搞	gǎo	to doto maketo go in forto set up
 5	391	如何	rúhé	howwhat waywhat
 5	399	如	rú	asas ifsuch as
 5	426	唯一	wéiyī	only, sole
 5	432	呀	ya	(particle equivalent to after a vowel, expressing surprise or doubt)
-5	442	同	tóng	likesamesimilartogether
+5	442	同	tóng	samelikesimilartogether
 5	493	如此	rúcǐ	like this, so, such
 5	505	处	chù	(bound form) place, locality(bound form) part, aspect(bound form) office, department, bureauclassifier for locations: spot, point
+5	505	处	chǔ	to get along with; to deal withto resideto liveto dwell
 5	525	处理	chǔlǐ	to handle, to deal withto punishto treat sth by a special process, to processto sell at reduced prices
 5	527	政府	zhèngfǔ	government
-5	539	其	qí	hisheritstheir
+5	539	其	qí	his, her, its, theirthatsuchit (refers to sth preceding it)
 5	545	曾	céng	oncealreadyever (in the past)former
 5	552	系统	xìtǒng	system
 5	558	以及	yǐjí	and, as well as
@@ -2015,12 +2016,12 @@
 5	692	拥有	yōngyǒu	to have, to possess, to own
 5	710	明显	míngxiǎn	cleardistinctobvious
 5	715	伤	shāng	to injureinjurywound
-5	715	套	tào	to coverto encasecoversheath
+5	715	套	tào	(classifier for sets, suites, series)to coverto encasecover
 5	723	曾经	céngjīng	oncealreadyformerpreviously
 5	724	黑	hēi	blackdarksinistersecret
 5	734	行为	xíngwéi	action, conduct, behavior, activity
 5	744	绝对	juéduì	absolute, unconditional
-5	751	派	pài	(literary) tributary, branch of a riverclique, school, group, faction(bound form) style, mannerto send (a person or resource), to dispatch, to allocate (a resource or task), to appoint (sb)
+5	751	派	pài	to send (a person or resource), to dispatch, to allocate (a resource or task), to appoint (sb)(literary) tributary, branch of a riverclique, school, group, faction(bound form) style, manner
 5	762	眼	yǎn	eyea look, a glancesmall hole(bound form) salient point
 5	765	设计	shèjì	to design, to plandesign, plan
 5	765	未来	wèilái	futuretomorrowapproachingcoming
@@ -2029,8 +2030,8 @@
 5	788	包括	bāokuò	to compriseto includeto involveto incorporate
 5	794	红	hóng	redpopularrevolutionarybonus
 5	797	抓	zhuā	to grabto catchto arrestto snatch
-5	807	意义	yìyì	sensemeaningsignificanceimportance
-5	811	便	biàn	plaininformalsuitableconvenient
+5	807	意义	yìyì	meaning, significancesenseimportance
+5	811	便	biàn	then; convenientplaininformalsuitable
 5	851	力	lì	powerforcestrengthability
 5	880	交易	jiāoyì	to deal, to trade, to transacttransaction, deal
 5	886	报道	bàodào	to report (news)report
@@ -2039,11 +2040,11 @@
 5	910	造成	zàochéng	to bring about, to create, to cause
 5	913	某	mǒu	somea certainsb or sth indefinitesuch-and-such
 5	915	随	suí	to followto comply withvarying according toto allow
-5	915	支	zhī	to supportto sustainto erectto raise
-5	925	度	dù	to passto spend (time)measurelimit
+5	915	支	zhī	(classifier for long thin objects, songs, teams)to supportto sustainto erect
+5	925	度	dù	degree (angles, temperature etc)to passto spend (time)measure
 5	930	白	bái	whitein vainfree of charge(bound form) (of facts, the truth, a situation) clear, evident
-5	931	单	dān	billlistformsingle
-5	941	至	zhì	to arrivemosttountil
+5	931	单	dān	singlebilllistform
+5	941	至	zhì	to, untilto arrivemost
 5	970	人民	rénmín	the people
 5	973	事件	shìjiàn	incident, event
 5	985	训练	xùnliàn	to trainto drilltraining
@@ -2052,14 +2053,14 @@
 5	1000	据	jù	according toto act in accordance withto depend onto seize
 5	1003	宝贝	bǎobèi	treasured objecttreasuredarlingbaby
 5	1003	位置	wèizhi	positionplaceseat
-5	1012	方	fāng	squarepower or involution (math.)uprighthonest
+5	1012	方	fāng	square, direction, sidepower or involution (math.)uprighthonest
 5	1025	选手	xuǎnshǒu	athletecontestant
 5	1027	参与	cānyù	to participate (in sth)
 5	1030	显示	xiǎnshì	to showto illustrateto displayto demonstrate
 5	1036	属于	shǔyú	to belong to, to fall under (a category)
 5	1038	人类	rénlèi	humanityhuman racemankind
 5	1041	手术	shǒushù	(surgical) operationsurgery
-5	1044	亲	qīn	parentone's own (flesh and blood)relativerelated
+5	1044	亲	qīn	relative; close; to kissparentone's own (flesh and blood)related
 5	1067	自由	zìyóu	freedom, libertyfree, unrestricted
 5	1081	投	tóu	to throw (sth in a specific direction: ball, javelin, grenade etc)to cast (a ballot)to cast (a glance, a shadow etc)to put in (money for investment, a coin to operate a slot machine)
 5	1092	事实	shìshí	fact
@@ -2067,7 +2068,7 @@
 5	1095	客户	kèhù	client, customer
 5	1096	类	lèi	kind, type, class, category(classifier) kind, type(bound form) to resemble, to be similar to
 5	1096	专家	zhuānjiā	expert, specialist
-5	1100	称	chēng	to weighto stateto namename
+5	1100	称	chēng	to call, to be known asto weighto stateto name
 5	1101	分析	fēnxī	to analyzeanalysis
 5	1102	享受	xiǎngshòu	to enjoyto live it uppleasure
 5	1117	以来	yǐlái	since (used after a specified time or event)
@@ -2075,7 +2076,7 @@
 5	1123	地区	dìqū	region, area (informal or geographical term)prefecture (in China's administrative system)
 5	1133	冠军	guànjūn	champion
 5	1136	价值	jiàzhí	value, worth(ethical, cultural etc) values
-5	1139	相当	xiāngdāng	equivalent toappropriateconsiderablyto a certain extent
+5	1139	相当	xiāngdāng	quiteequivalent toappropriateconsiderably
 5	1144	实现	shíxiàn	to achieve, to implement, to realize, to bring about
 5	1158	状态	zhuàngtài	condition, state, state of affairs
 5	1160	心理	xīnlǐ	psychology, mentality
@@ -2104,17 +2105,20 @@
 5	1290	反	fǎn	contraryin reverseinside out or upside downto reverse
 5	1292	完美	wánměi	perfect
 5	1294	传	chuán	to pass onto spreadto transmitto infect
+5	1294	传	zhuàn	biographyhistorical narrativecommentariesrelay station
 5	1296	伤害	shānghài	to injure, to harm
 5	1299	真实	zhēnshí	true, real
 5	1305	记录	jìlù	to recordrecord (written account)note-takerrecord (in sports etc)
 5	1306	空间	kōngjiān	space, room(fig.) scope, leeway(astronomy) outer space(physics, math.) space
 5	1312	冲	chōng	(of water) to dash againstto mix with waterto infuseto rinse
 5	1312	期待	qīdài	to look forward toto awaitexpectation
+5	1312	冲	chòng	towards, pungentpowerfulvigorousin view of
 5	1320	政治	zhèngzhì	politicspolitical
-5	1321	朝	cháo	imperial or royal courtgovernmentdynastyreign of a sovereign or emperor
+5	1321	朝	cháo	facing, towardsimperial or royal courtgovernmentdynasty
+5	1321	朝	zhāo	morning
 5	1323	一旦	yīdàn	in case (sth happens)ifonce (sth happens, then...)when
 5	1325	范围	fànwéi	rangescopelimitextent
-5	1325	副	fù	secondaryauxiliarydeputyassistant
+5	1325	副	fù	classifier for pairs, sets of things & facial expressionssecondaryauxiliarydeputy
 5	1326	事业	shìyè	undertakingprojectactivity(charitable, political or revolutionary) cause
 5	1327	承认	chéngrèn	to admitto concedeto recognizerecognition (diplomatic, artistic etc)
 5	1328	执行	zhíxíng	to implementto carry outto executeto run
@@ -2124,7 +2128,7 @@
 5	1363	传统	chuántǒng	tradition, traditional
 5	1372	状况	zhuàngkuàng	condition, state, situation
 5	1375	分享	fēnxiǎng	to share (esp. sth enjoyable, useful or beneficial)
-5	1375	架	jià	to supportframerackframework
+5	1375	架	jià	classifier for planes, large vehicles, radios etcto supportframerack
 5	1378	翻	fān	to turn overto flip overto overturnto rummage through
 5	1384	时代	shídài	ageeraepochperiod (in one's life)
 5	1387	伟大	wěidà	huge, great, grand, worthy of the greatest admiration, important (contribution etc)
@@ -2133,26 +2137,28 @@
 5	1401	身份	shēnfèn	identity, aspect of one's identity (e.g. mayor, father, permanent resident), role, capacity, status (social, legal etc), position, rank
 5	1405	充满	chōngmǎn	full ofbrimming withvery fullpermeated
 5	1410	人物	rénwù	person, personage, figure (esp. sb of importance)character (in a play, novel etc)(genre of traditional Chinese painting) figure painting
-5	1415	系	xì	to connectto relate toto tie upto bind
+5	1415	系	xì	departmentsystemfaculty
+5	1415	系	jì	to tie, to fastento button up
 5	1420	直	zhí	straightto straightenfair and reasonablefrank
 5	1421	产品	chǎnpǐn	goodsmerchandiseproduct
 5	1425	成员	chéngyuán	member
 5	1430	保险	bǎoxiǎn	insuranceto insuresafesecure
 5	1430	测试	cèshì	to test (machinery etc)to test (a person's skill in a particular area)a test(computing) beta (version of software)
 5	1430	年代	niándài	a decade of a century (e.g. the Sixties)ageeraperiod
-5	1433	领导	lǐngdǎo	leadleadingto leadleadership
+5	1433	领导	lǐngdǎo	leaderleadleadingto lead
 5	1444	寻找	xúnzhǎo	to seek, to look for
 5	1445	胜利	shènglì	victory
 5	1452	明星	míngxīng	star, celebrity
 5	1454	级	jí	levelgraderankstep (of stairs)
 5	1455	程度	chéngdù	degree, level, extent
-5	1458	代	dài	to be a substitute for, to act on behalf of, to replace, to substitutegeneration, dynasty, age, period, (historical) era, (geological) eon
+5	1458	代	dài	generation, dynasty, age, period, (historical) era, (geological) eonto be a substitute for, to act on behalf of, to replace, to substitute
 5	1462	理论	lǐlùn	theoryto argueto take notice of
 5	1462	网络	wǎngluò	networkInternet
 5	1463	式	shì	typeformpatternstyle
 5	1467	宣布	xuānbù	to declareto announceto proclaim
 5	1476	创造	chuàngzào	to createto bring aboutto produceto set (a record)
 5	1481	调	diào	to transferto move (troops or cadres)to investigateto enquire into
+5	1481	调	tiáo	to adjust; to mixto harmonizeto reconcileto blend
 5	1484	队伍	duìwǔ	troops, armyranks, contingent, force, staff, teamline, procession(in video games or fantasy settings etc) party
 5	1484	命	mìng	lifefateorder or commandto assign a name, title etc
 5	1488	烧	shāo	to burn, to set on fireto heat (over a fire), to boil (water, tea etc)to braiseto cook, to prepare food
@@ -2165,10 +2171,11 @@
 5	1539	稳定	wěndìng	steadystablestabilityto stabilize
 5	1540	巨大	jùdà	huge, immense, enormous, gigantic
 5	1544	藏	cáng	to concealto hide awayto harborto store
+5	1544	藏	zàng	TibetstorehousedepositoryBuddhist or Taoist scripture
 5	1547	龙	lóng	Chinese dragon, loong(fig.) emperordragon(bound form) dinosaur
 5	1554	协议	xiéyì	agreementpactprotocol
 5	1555	满足	mǎnzú	to satisfyto meet (the needs of)satisfiedcontent
-5	1557	配	pèi	to jointo fitto mateto mix
+5	1557	配	pèi	to matchto jointo fitto mate
 5	1563	土地	tǔdì	landsoilterritory
 5	1564	威胁	wēixié	to threaten, to menace
 5	1565	老婆	lǎopó	(coll.) wife
@@ -2182,7 +2189,7 @@
 5	1590	设备	shèbèi	equipment, facilities, installations
 5	1594	意味着	yìwèizhe	to signifyto meanto imply
 5	1597	保	bǎo	to defend, to protect, to keepto guarantee, to ensure(old) civil administration unit in the baojia system
-5	1597	团	tuán	roundlumpballto roll into a ball
+5	1597	团	tuán	grouproundlumpball
 5	1600	制造	zhìzào	to manufacture, to make
 5	1601	紧	jǐn	tightstrictclose at handnear
 5	1603	抽	chōu	to draw out, to pull out from in betweento remove part of the wholeto inhale (esp. smoke)(of fabric etc) to shrink
@@ -2192,7 +2199,7 @@
 5	1631	需	xū	to requireto needto wantnecessity
 5	1632	特殊	tèshū	specialparticularunusualextraordinary
 5	1638	具体	jùtǐ	concrete, specific, detailed
-5	1643	合	hé	to closeto jointo fitto be equal to
+5	1643	合	hé	to combine, to join; to suitto closeto fitto be equal to
 5	1644	风格	fēnggé	style
 5	1649	建筑	jiànzhù	to constructbuilding
 5	1656	角色	juésè	role, part (in a play or movie etc)
@@ -2227,8 +2234,8 @@
 5	1749	持续	chíxù	to continue, to last, to persist
 5	1749	具有	jùyǒu	to have, to possess
 5	1749	医疗	yīliáo	medical treatment
-5	1757	切	qiè	definitely, absolutely (not)(scoffing or dismissive interjection) Yeah, right., Tut!to grind(bound form) close to
-5	1763	戏	xì	trickdramaplayshow
+5	1757	切	qiē	to cut, to slice, to carve(math.) tangential
+5	1763	戏	xì	dramatrickplayshow
 5	1766	合同	hétong	contract, agreement
 5	1771	发表	fābiǎo	to issueto publish
 5	1772	处于	chǔyú	to be in (some state, position, or condition)
@@ -2295,9 +2302,10 @@
 5	2027	化	huà	to make intoto change into-izationto ... -ize
 5	2028	出色	chūsè	remarkable, outstanding
 5	2032	调整	tiáozhěng	to adjust, to revise, to reorganize
-5	2044	领	lǐng	neckcollarto leadto receive
-5	2046	滚	gǔn	to boilto rollto take a hikeGet lost!
+5	2044	领	lǐng	to leadneckcollarto receive
+5	2046	滚	gǔn	to rollto boilto take a hikeGet lost!
 5	2051	结	jié	knotsturdybondto tie
+5	2051	结	jiē	to bear (fruit)(of a plant) to produce (fruit or seeds)
 5	2064	讲话	jiǎnghuà	a speechto speakto talkto address
 5	2072	紧急	jǐnjí	urgentemergency
 5	2072	宣传	xuānchuán	to disseminateto give publicity topropaganda
@@ -2308,13 +2316,13 @@
 5	2090	时期	shíqī	periodphase
 5	2092	哎	āi	hey!(interjection used to attract attention or to express surprise or disapprobation)
 5	2099	好运	hǎoyùn	good luck
-5	2101	治	zhì	to ruleto governto manageto control
+5	2101	治	zhì	to treat (a disease)to ruleto governto manage
 5	2102	措施	cuòshī	measurestep
 5	2109	导演	dǎoyǎn	to directdirector (film etc)
 5	2117	利益	lìyì	benefit(in sb's) interest
 5	2117	生物	shēngwù	organism, living creature, life form(attributive) biological, bio-
 5	2119	评价	píngjià	to evaluateto assess
-5	2123	迷	mí	to bewildercrazy aboutfanenthusiast
+5	2123	迷	mí	fan, enthusiastto bewildercrazy aboutlost
 5	2124	形象	xíngxiàng	imageformfigurevisualization
 5	2126	方案	fāng'àn	planprogram (for action etc)proposalproposed bill
 5	2126	欠	qiàn	to oweto lack(literary) to be deficient in(bound form) yawn
@@ -2332,11 +2340,11 @@
 5	2168	推荐	tuījiàn	to recommend
 5	2171	指导	zhǐdǎo	to guide, to direct, to instructcoach, trainer
 5	2178	品牌	pǐnpái	brand, brand name
-5	2188	盖	gài	lidtopcovercanopy
+5	2188	盖	gài	to cover; to buildlidtopcover
 5	2188	原则	yuánzé	principledoctrine
 5	2190	联合	liánhé	to combineto joinunitealliance
 5	2197	炒	chǎo	to sauté, to stir-fryto speculate (in real estate etc), to scalpto hype upto sack, to fire (sb)
-5	2200	录	lù	diaryrecordto hitto copy
+5	2200	录	lù	to recorddiaryrecordto hit
 5	2208	微笑	wēixiào	smileto smile
 5	2208	组合	zǔhé	to assemble, to combine, to composecombination, association, set, compilation(math.) combinatorial
 5	2211	观点	guāndiǎn	point of viewviewpointstandpoint
@@ -2355,7 +2363,7 @@
 5	2270	疾病	jíbìng	disease, sickness, ailment
 5	2271	女子	nǚzǐ	womanfemale
 5	2276	类似	lèisì	similar, analogous
-5	2277	凭	píng	to lean againstto rely onon the basis ofno matter (how, what etc)
+5	2277	凭	píng	on the basis ofto lean againstto rely onno matter (how, what etc)
 5	2279	尽量	jǐnliàng	as much as possibleto the greatest extent
 5	2283	娱乐	yúlè	to entertainto amuseentertainmentrecreation
 5	2285	不然	bùrán	not sonoor elseotherwise
@@ -2365,7 +2373,7 @@
 5	2302	追求	zhuīqiú	to pursue (a goal etc) stubbornlyto seek afterto woo
 5	2305	欣赏	xīnshǎng	to appreciate, to enjoy, to admire
 5	2308	高度	gāodù	heightaltitudeelevationhigh degree
-5	2310	挑	tiāo	to carry on a shoulder poleto chooseto pickto nitpick
+5	2310	挑	tiāo	to chooseto carry on a shoulder poleto pickto nitpick
 5	2313	碎	suì	(transitive or intransitive) to break into pieces, to shatter, to crumblebroken, fragmentary, scatteredgarrulous
 5	2315	连续	liánxù	continuousin a rowserialconsecutive
 5	2318	阻止	zǔzhǐ	to preventto block
@@ -2376,7 +2384,7 @@
 5	2335	形成	xíngchéng	to form, to take shape
 5	2346	行业	hángyè	trade, profession, industry, business
 5	2349	背后	bèihòu	behindat the backin the rearbehind sb's back
-5	2349	配合	pèihé	matchingfitting in withcompatible withto correspond
+5	2349	配合	pèihé	to cooperate, to coordinatematchingfitting in withcompatible with
 5	2352	显得	xiǎnde	to seemto lookto appear
 5	2353	亲自	qīnzì	personallyin persononeself
 5	2353	物质	wùzhì	mattersubstancematerialmaterialistic
@@ -2393,7 +2401,7 @@
 5	2383	来源	láiyuán	source (of information etc)origin
 5	2389	生存	shēngcún	to existto survive
 5	2392	充分	chōngfèn	amplesufficientadequatefull
-5	2398	批	pī	to ascertainto act onto criticizeto pass on
+5	2398	批	pī	classifier for batches; to criticizeto ascertainto act onto pass on
 5	2399	主人	zhǔrén	ownerhostmaster
 5	2400	经典	jīngdiǎn	the classicsscripturesclassicalclassic (example, case etc)
 5	2401	法院	fǎyuàn	court of lawcourt
@@ -2413,7 +2421,7 @@
 5	2468	湖	hú	lake
 5	2470	主动	zhǔdòng	to take the initiativeto do sth of one's own accordspontaneousactive
 5	2475	服装	fúzhuāng	dressclothingcostumeclothes
-5	2476	形式	xíngshì	outer appearanceformshapeformality
+5	2476	形式	xíngshì	formouter appearanceshapeformality
 5	2476	硬	yìng	hard, stiff, solid(fig.) strong, firmresolutely, uncompromisinglylaboriously, with great difficulty
 5	2477	毕竟	bìjìng	after allall in allwhen all is said and donein the final analysis
 5	2479	居民	jūmín	resident, inhabitant
@@ -2495,8 +2503,8 @@
 5	2771	表面	biǎomiàn	surfacefaceoutsideappearance
 5	2771	地位	dìwèi	positionstatusplace
 5	2780	青	qīng	greenblueblackyouth
-5	2780	顺	shùn	to obeyto followto arrangeto make reasonable
-5	2782	登	dēng	to scale (a height)to ascendto mountto publish or record
+5	2780	顺	shùn	along, to obeyto followto arrangeto make reasonable
+5	2782	登	dēng	to climb; to publishto scale (a height)to ascendto mount
 5	2784	不幸	bùxìng	misfortuneadversityunfortunatesad
 5	2786	结构	jiégòu	structurecompositionmakeuparchitecture
 5	2790	妇女	fùnǚ	woman
@@ -2510,7 +2518,7 @@
 5	2829	煮	zhǔ	to cookto boil
 5	2833	在乎	zàihu	to rest with, to lie in, to be due to (a certain attribute)(often used in the negative) to care about
 5	2835	飞行	fēixíng	(of planes etc) to flyflyingflightaviation
-5	2836	较	jiào	(bound form) to compare(literary) to disputecompared to(before an adjective) relatively, comparatively, rather
+5	2836	较	jiào	(before an adjective) relatively, comparatively, rather(bound form) to compare(literary) to disputecompared to
 5	2837	请求	qǐngqiú	to request, to askrequest
 5	2842	纪念	jìniàn	to commemorate, to honor the memory ofmemento, keepsake, souvenir
 5	2845	福	fú	good fortunehappinessluck
@@ -2519,13 +2527,13 @@
 5	2875	插	chā	to insertstick inpierceto take part in
 5	2885	分别	fēnbié	to part, to leave each otherto distinguish, to tell apartdifference, distinctionin different ways, differently
 5	2889	愿望	yuànwàng	desirewish
-5	2899	圆	yuán	circleroundcircularspherical
+5	2899	圆	yuán	roundcirclecircularspherical
 5	2900	广场	guǎngchǎng	public square, plaza
 5	2908	地下	dìxià	undergroundsubterraneancovert
 5	2909	臭	chòu	stenchsmellyto smell (bad)repulsive
 5	2910	违法	wéifǎ	illegalto break the law
 5	2911	长期	chángqī	long-term, for a protracted period
-5	2914	灰	huī	ashdustlimegray
+5	2914	灰	huī	gray, dustashlimediscouraged, dejected
 5	2915	堆	duī	to pile upto heap upa masspile
 5	2921	保留	bǎoliú	to keepto retainto have reservations (about sth)to hold back (from saying sth)
 5	2922	品	pǐn	(bound form) article, commodity, product, goods(bound form) grade, rankkind, type, varietycharacter, disposition, nature, temperament
@@ -2535,29 +2543,30 @@
 5	2946	称为	chēngwéi	to be called, to be known as, to call it "..."
 5	2947	车辆	chēliàng	vehicle
 5	2959	当年	dāngnián	in those days, back then, in those yearsto be in the prime of life
-5	2959	使得	shǐde	usable, serviceablefeasible, workable, doableto make, to cause, to bring about
+5	2959	使得	shǐde	to make, to cause, to bring aboutusable, serviceablefeasible, workable, doable
 5	2963	公寓	gōngyù	apartment building, block of flats (may be a public housing block or a condominium etc)
 5	2966	人群	rénqún	crowd
 5	2967	依靠	yīkào	to rely on, to depend on
 5	2968	弱	ruò	weak, feebleyounginferior, not as good as(following a decimal or fraction) slightly less than
-5	2970	产	chǎn	to give birthto reproduceto produceproduct
+5	2970	产	chǎn	to produceto give birthto reproduceproduct
 5	2971	不足	bùzú	insufficientlackingdeficiencynot enough
 5	2972	报警	bàojǐng	to sound an alarmto report sth to the police
 5	2972	业务	yèwù	businessprofessional workservice
 5	2978	驾驶	jiàshǐ	to drive (vehicle), to pilot (ship, airplane etc)driver, pilot, captain
 5	2980	计算	jìsuàn	to calculate, to computeto consider, to think overto plot, to scheme
 5	2981	开发	kāifā	to exploit (a resource), to open up (for development), to develop
-5	2984	甲	jiǎ	first of the ten Heavenly Stems(used for an unspecified person or thing)first (in a list, as a party to a contract etc)letter "A" or roman "I" in list "A, B, C", or "I, II, III" etc
+5	2984	甲	jiǎ	first (in a list, as a party to a contract etc)first of the ten Heavenly Stems(used for an unspecified person or thing)letter "A" or roman "I" in list "A, B, C", or "I, II, III" etc
 5	2984	始终	shǐzhōng	from beginning to endall along
 5	2989	争	zhēng	to strive forto vie forto argue or debatedeficient or lacking (dialect)
 5	2991	贡献	gòngxiàn	to contributeto dedicateto devotecontribution
 5	2993	划	huà	to delimitto transferto assignto plan
+5	2993	划	huá	to row; to scratchto paddleprofitableworth (the effort)
 5	2994	出版	chūbǎn	to publish
 5	3002	移	yí	to moveto shiftto changeto alter
 5	3003	测	cè	to surveyto measureto conjecture
 5	3008	诊断	zhěnduàn	to diagnose
-5	3012	剪	jiǎn	(bound form) scissors or similar toolto cut as with scissors(bound form) to wipe out, to exterminateto edit (video, audio etc)
-5	3015	临时	línshí	as the time draws nearat the last momenttemporaryinterim
+5	3012	剪	jiǎn	to cut as with scissors(bound form) scissors or similar tool(bound form) to wipe out, to exterminateto edit (video, audio etc)
+5	3015	临时	línshí	temporaryas the time draws nearat the last momentinterim
 5	3016	富	fù	richabundantwealthy
 5	3016	物品	wùpǐn	articles, goods
 5	3019	单独	dāndú	aloneby oneselfon one's own
@@ -2565,7 +2574,7 @@
 5	3028	保安	bǎo'ān	to ensure public securityto ensure safety (for workers engaged in production)public securitysecurity guard
 5	3028	实验室	shíyànshì	laboratory
 5	3034	平衡	pínghéng	balanceequilibrium
-5	3036	开放	kāifàng	to bloomto opento be open (to the public)to open up (to the outside)
+5	3036	开放	kāifàng	to be open (to the public)to bloomto opento open up (to the outside)
 5	3036	全体	quántǐ	allentire
 5	3042	挤	jǐ	to crowd into cram into force others asideto press
 5	3044	医学	yīxué	medicinemedical sciencestudy of medicine
@@ -2573,6 +2582,7 @@
 5	3060	作出	zuòchū	to put outto come up withto make (a choice, decision, proposal, response, comment etc)to issue (a permit, statement, explanation, apology, reassurance to the public etc)
 5	3062	搜索	sōusuǒ	to search (a place, a database, online etc), to search for (sth)
 5	3064	炸	zhà	to burst, to explodeto blow up, to bomb(coll.) to fly into a rage(coll.) to scamper off, to scatter
+5	3064	炸	zhá	to deep fry(coll.) to blanch (a vegetable)
 5	3065	展开	zhǎnkāi	to unfold, to spread out, to open upto launch, to carry out
 5	3068	把握	bǎwò	to grasp (also fig.)to seizeto holdassurance
 5	3070	酒吧	jiǔbā	bar (place to buy drinks)
@@ -2615,7 +2625,7 @@
 5	3196	描述	miáoshù	to describedescription
 5	3198	今日	jīnrì	today
 5	3211	挡	dǎng	to resistto obstructto hinderto keep off
-5	3211	届	jiè	to arrive at (place or time)periodto become dueclassifier for events, meetings, elections, sporting fixtures, years (of graduation)
+5	3211	届	jiè	classifier for events, meetings, elections, sporting fixtures, years (of graduation)to arrive at (place or time)periodto become due
 5	3212	认	rèn	to recognizeto knowto admit
 5	3215	亿	yì	100 million
 5	3230	在场	zàichǎng	to be present, to be on the scene
@@ -2647,7 +2657,7 @@
 5	3321	设施	shèshī	facilitiesinstallation
 5	3323	腰	yāo	the waist and lower back(bound form) kidney of an animal (as food)the waist of trousers or a skirt(metonym) money pouch, pocket
 5	3331	抱怨	bàoyuàn	to complainto grumbleto harbor a complaintto feel dissatisfied
-5	3339	从事	cóngshì	to go forto engage into undertaketo deal with
+5	3339	从事	cóngshì	to engage into go forto undertaketo deal with
 5	3342	无关	wúguān	unrelatedhaving nothing to do (with sth else)
 5	3344	义务	yìwù	duty, obligationvolunteer (work etc)
 5	3345	奇迹	qíjì	miracle, wonder, marvel
@@ -2656,7 +2666,7 @@
 5	3357	动手	dòngshǒu	to set about (a task)to raise a hand to hit sbto touch, to handle (typically used in cautioning sb *not* to touch sth)
 5	3359	靠近	kàojìn	to be close toto approach, to draw near
 5	3364	制定	zhìdìng	to draw up, to formulate
-5	3369	沉默	chénmò	taciturnuncommunicativesilent
+5	3369	沉默	chénmò	silenttaciturnuncommunicative
 5	3374	直播	zhíbō	(TV, radio) to broadcast livelive broadcast(Internet) to livestream(agriculture) direct seeding
 5	3375	独特	dútè	unique, distinctive
 5	3391	应当	yīngdāng	should, ought to
@@ -2699,7 +2709,7 @@
 5	3538	屏幕	píngmù	screen (TV, computer or movie)
 5	3539	软件	ruǎnjiàn	software
 5	3552	严肃	yánsù	(of an atmosphere etc) solemn, grave, serious(of a manner etc) earnest, severe, exactingto strictly enforce
-5	3554	负担	fùdān	to bear (an expense, a responsibility etc)burden
+5	3554	负担	fùdān	burdento bear (an expense, a responsibility etc)
 5	3559	否认	fǒurèn	to declare to be untrueto deny
 5	3562	肌肉	jīròu	muscleflesh
 5	3562	随后	suíhòu	afterward, later, subsequently, following that
@@ -2710,11 +2720,11 @@
 5	3594	人体	réntǐ	human body
 5	3595	反而	fǎn'ér	on the contrary, instead
 5	3605	体会	tǐhuì	to know from experienceto learn through experienceto realizeunderstanding
-5	3619	培训	péixùn	to cultivateto trainto groomtraining
+5	3619	培训	péixùn	to trainto cultivateto groomtraining
 5	3627	税	shuì	taxesduties
 5	3634	独自	dúzì	alone
 5	3635	扩大	kuòdà	to expandto enlargeto broaden one's scope
-5	3651	推进	tuījìn	to impelto carry forwardto push onto advance
+5	3651	推进	tuījìn	to push onto impelto carry forwardto advance
 5	3653	安装	ānzhuāng	to installto erectto fixto mount
 5	3653	搜	sōu	to search
 5	3665	大众	dàzhòng	the massesthe great bulk of the populationpopular (of music, science etc)
@@ -2735,11 +2745,12 @@
 5	3769	分离	fēnlí	to separate
 5	3770	运输	yùnshū	to transportto carrytransportation
 5	3773	扇	shàn	fansliding, hinged or detachable flat part of sthclassifier for doors, windows etc
+5	3773	扇	shān	to fan, to slapto slap sb on the face
 5	3776	利润	lìrùn	profits
 5	3782	堵	dǔ	to block up (a road, pipe etc)to stop up (a hole)(fig.) (of a person) choked up with anxiety or stresswall (literary)
 5	3787	珍惜	zhēnxī	to treasureto valueto cherish
 5	3790	传播	chuánbō	to disseminate, to propagate, to spread
-5	3794	匹	pǐ	(bound form) matching, comparable to(bound form) alone, single, one of a pairclassifier for horses, mules etcclassifier for cloth: bolt
+5	3794	匹	pǐ	classifier for horses, mules etc(bound form) matching, comparable to(bound form) alone, single, one of a pairclassifier for cloth: bolt
 5	3794	随意	suíyì	as one wishesaccording to one's wishesat willvoluntary
 5	3798	好奇	hàoqí	inquisitivecuriousinquisitivenesscuriosity
 5	3804	集体	jítǐ	collective (decision)joint (effort)a groupa team
@@ -2750,7 +2761,7 @@
 5	3823	太太	tàitai	married womanMrsMadamwife
 5	3836	轻易	qīngyì	easy, simplerashly, offhandedly
 5	3839	强调	qiángdiào	to emphasize (a statement)to stress
-5	3841	丑	chǒu	clown2nd earthly branch: 1-3 a.m., 12th solar month (6th January to 3rd February), year of the Oxancient Chinese compass point: 30°
+5	3841	丑	chǒu	uglyshamefuldisgraceful
 5	3851	分配	fēnpèi	to distributeto assignto allocateto partition (a hard drive)
 5	3852	账户	zhànghù	(bank, computer etc) account
 5	3853	当成	dàngchéng	to consider as, to take to be
@@ -2769,13 +2780,13 @@
 5	3914	思维	sīwéi	(line of) thought, thinking
 5	3916	保存	bǎocún	to conserve, to preserve, to keep, to store, (computing) to save (a file etc)
 5	3918	饼	bǐng	round flat cakecookiecakepastry
-5	3920	阵	zhèn	disposition of troopswavespateburst
+5	3920	阵	zhèn	classifier for events or states of short durationdisposition of troopswavespate
 5	3938	地震	dìzhèn	earthquake
 5	3940	电视台	diànshìtái	television station
 5	3943	发明	fāmíng	to inventan invention
 5	3944	疼痛	téngtòng	pain(of a body part) to be painful, to be sore, to hurt(of a person) to be in pain
 5	3952	返回	fǎnhuí	to return toto come (or go) back
-5	3964	玫瑰	méiguī	rugosa rose (shrub) (Rosa rugosa)rose flower
+5	3964	玫瑰	méiguī	rose flowerrugosa rose (shrub) (Rosa rugosa)
 5	3967	过度	guòdù	excessiveover-excessgoing too far
 5	3969	挥	huī	to waveto brandishto commandto conduct
 5	3980	突出	tūchū	prominentoutstandingto give prominence toto protrude
@@ -2799,7 +2810,7 @@
 5	4081	其余	qíyú	the restthe othersremainingremainder
 5	4088	规模	guīmó	scale, scope, extent
 5	4092	决心	juéxīn	determinationresolutiondeterminedfirm and resolute
-5	4094	乡村	xiāngcūn	rusticvillagecountryside
+5	4094	乡村	xiāngcūn	countrysiderusticvillage
 5	4100	捡	jiǎn	to pick up, to collect, to gather
 5	4103	蔬菜	shūcài	vegetables
 5	4106	哪怕	nǎpà	eveneven ifeven thoughno matter how
@@ -2852,10 +2863,10 @@
 5	4372	技能	jìnéng	technical abilityskill
 5	4382	消费	xiāofèi	to consume (goods and services, resources etc)
 5	4383	实行	shíxíng	to implementto carry outto put into practice
-5	4394	打扮	dǎban	to decorateto dressto make upto adorn
+5	4394	打扮	dǎban	to dress upto decorateto dressto make up
 5	4402	乐趣	lèqù	delight, pleasure, joy
 5	4410	知名	zhīmíng	well-known, famous
-5	4450	裁判	cáipàn	(law) to judge, to adjudicate, verdict, judgement(sports) to referee(sports) umpire, referee, judge
+5	4450	裁判	cáipàn	(sports) umpire, referee, judge(law) to judge, to adjudicate, verdict, judgement(sports) to referee
 5	4450	从不	cóngbù	never
 5	4452	渐渐	jiànjiàn	gradually
 5	4455	口味	kǒuwèi	a person's preferencestastes (in food)flavor
@@ -2881,16 +2892,16 @@
 5	4529	前来	qiánlái	to come (formal)beforepreviously
 5	4530	平台	píngtái	platformterraceflat-roofed building
 5	4533	依据	yījù	according tobasisfoundation
-5	4542	挣	zhèng	to struggle to get freeto strive to acquireto make (money)
+5	4542	挣	zhèng	to make (money)to struggle to get freeto strive to acquire
 5	4558	观念	guānniàn	notionthoughtconceptsense
 5	4565	催	cuī	to urgeto pressto promptto rush sb
-5	4565	大胆	dàdǎn	brazenaudaciousoutrageousbold
+5	4565	大胆	dàdǎn	boldbrazenaudaciousoutrageous
 5	4569	改革	gǎigé	reformto reform
 5	4576	嘴巴	zuǐba	mouthslap in the face
 5	4582	留言	liúyán	to leave a message, to leave one's commentsmessage
 5	4591	告别	gàobié	to leave, to part fromto bid farewell to, to say goodbye to
 5	4599	秘书	mìshū	secretary
-5	4602	捐	juān	to relinquish, to abandonto contribute, to donate(bound form) tax, levy
+5	4602	捐	juān	to contribute, to donateto relinquish, to abandon(bound form) tax, levy
 5	4607	卧室	wòshì	bedroom
 5	4607	众多	zhòngduō	numerous
 5	4614	失误	shīwù	lapsemistaketo make a mistakefault
@@ -2926,7 +2937,7 @@
 5	4772	哎呀	āiyā	interjection of wonder, shock or admiration
 5	4775	新人	xīnrén	newcomer, new recruit, fresh talentnewlywed, esp. new bridenewlywed couple, bride and groom(paleoanthropology) later-period Homo sapiens
 5	4782	刚好	gānghǎo	justexactlyto happen to be
-5	4786	规律	guīlǜ	rule (e.g. of science)law of behaviorregular patternrhythm
+5	4786	规律	guīlǜ	regular patternrule (e.g. of science)law of behaviorrhythm
 5	4791	待遇	dàiyù	treatmentpaysalarystatus
 5	4795	比分	bǐfēn	score (of a game or competition)
 5	4795	淡	dàn	insipiddilutedweakmild
@@ -2936,8 +2947,8 @@
 5	4857	前途	qiántú	prospectsfuture outlookjourney
 5	4865	营养	yíngyǎng	nutritionnourishment
 5	4892	说服	shuōfú	to persuadeto convinceto talk sb over
-5	4920	朵	duǒ	flowerearlobefig. item on both sidesclassifier for flowers, clouds etc
-5	4923	成人	chéngrén	to reach adulthoodan adult
+5	4920	朵	duǒ	classifier for flowers, clouds etcflowerearlobefig. item on both sides
+5	4923	成人	chéngrén	an adultto reach adulthood
 5	4925	距	jù	to be at a distance of ... from, to be apart from(bound form) distancespur (on the leg of certain birds: gamecock, pheasant etc)
 5	4939	汽油	qìyóu	gasoline
 5	4948	传递	chuándì	to transmit, to pass on to sb else(math.) transitive
@@ -2969,7 +2980,7 @@
 5	5125	难得	nándé	seldomrarehard to come by
 5	5134	讲述	jiǎngshù	to talk about, to narrate, to give an account
 5	5145	从前	cóngqián	previouslyformerlyonce upon a time
-5	5170	大厦	dàshà	(used in the names of grand buildings such as Broadway Mansions (in Shanghai) or Empire State Building etc)
+5	5170	大厦	dàshà	large building(used in the names of grand buildings such as Broadway Mansions (in Shanghai) or Empire State Building etc)
 5	5173	损害	sǔnhài	harmto damageto impair
 5	5177	品质	pǐnzhì	characterintrinsic quality (of a person)quality (of a product or service, or as in "quality of life", "air quality" etc)
 5	5179	设立	shèlì	to set up, to establish
@@ -2982,7 +2993,7 @@
 5	5217	摘	zhāi	to take, to pick (flowers, fruit etc), to pluck, to remove, to take off (glasses, hat etc)to select, to pick outto borrow money at a time of urgent need
 5	5219	写作	xiězuò	to writeto composewritingwritten works
 5	5221	商人	shāngrén	merchantbusinessman
-5	5229	糟	zāo	dregsdraffpickled in winerotten
+5	5229	糟	zāo	in a mess, baddregsdraffpickled in wine
 5	5236	业余	yèyú	in one's spare timeoutside working hoursamateur (historian etc)
 5	5241	学者	xuézhě	scholar
 5	5243	古老	gǔlǎo	ancientoldage-old
@@ -3013,9 +3024,9 @@
 5	5417	推动	tuīdòng	to push (e.g. for acceptance of a plan), to promote, to give impetus to
 5	5419	疑问	yíwèn	questioninterrogationdoubt
 5	5429	适用	shìyòng	to be applicable
-5	5432	包裹	bāoguǒ	to wrap upto bind upbundleparcel
+5	5432	包裹	bāoguǒ	parcelto wrap upto bind upbundle
 5	5438	键	jiàn	key (on a piano or computer keyboard)button (on a mouse or other device)chemical bondlinchpin
-5	5440	闲	xián	enclosureidleunoccupiedleisure
+5	5440	闲	xián	idleenclosureunoccupiedleisure
 5	5447	客观	kèguān	objectiveimpartial
 5	5447	善于	shànyú	to be good at, to be adept at
 5	5460	发起	fāqǐ	to originateto initiateto launch (an attack, an initiative etc)to start
@@ -3041,7 +3052,7 @@
 5	5660	完善	wánshàn	(of systems, facilities etc) comprehensivewell-developedexcellentto refine
 5	5675	猴子	hóuzi	monkey
 5	5677	陪伴	péibàn	to accompany
-5	5682	参考	cānkǎo	consultationreferenceto consultto refer
+5	5682	参考	cānkǎo	referenceconsultationto consultto refer
 5	5709	志愿者	zhìyuànzhě	volunteer
 5	5719	泪	lèi	(bound form) tears, teardrops
 5	5720	重量	zhòngliàng	weight
@@ -3089,7 +3100,7 @@
 5	6132	体力	tǐlì	physical strengthphysical power
 5	6155	农业	nóngyè	agriculturefarming
 5	6165	视为	shìwéi	to view asto see asto consider to beto deem
-5	6166	诗人	shīrén	bardpoet
+5	6166	诗人	shīrén	poetbard
 5	6207	打断	dǎduàn	to interruptto break offto break (a bone)
 5	6215	洒	sǎ	to sprinkleto sprayto spillto shed
 5	6221	语音	yǔyīn	speech soundspronunciationcolloquial (rather than literary) pronunciation of a Chinese characterphonetic
@@ -3117,12 +3128,12 @@
 5	6422	病房	bìngfáng	ward (of a hospital)sickroom
 5	6428	研发	yánfā	research and developmentto develop
 5	6433	西装	xīzhuāng	suitWestern-style clothes
-5	6443	优惠	yōuhuì	privilegefavorable (terms)preferential (treatment)discount (price)
+5	6443	优惠	yōuhuì	discount (price)privilegefavorable (terms)preferential (treatment)
 5	6456	字母	zìmǔ	letter (of the alphabet)
 5	6465	忙碌	mánglù	busy, bustling
 5	6466	灰色	huīsè	grayash graygrizzlypessimistic
 5	6468	高档	gāodàng	superior qualityhigh gradetop grade
-5	6473	束	shù	to bindbunchbundleclassifier for bunches, bundles, beams of light etc
+5	6473	束	shù	bunchto bindbundleclassifier for bunches, bundles, beams of light etc
 5	6477	个别	gèbié	individually, one by onejust one or two, exceptional, rare
 5	6484	蝴蝶	húdié	butterfly
 5	6489	否定	fǒudìng	to negateto denyto rejectnegative (answer)
@@ -3149,7 +3160,7 @@
 5	6681	翅膀	chìbǎng	wing
 5	6690	阳台	yángtái	balconyporch
 5	6747	名片	míngpiàn	(business) card
-5	6762	评	píng	to discussto commentto criticizeto judge
+5	6762	评	píng	to comment, to evaluateto discussto criticizeto judge
 5	6772	缓慢	huǎnmàn	slow, unhurried, sluggish
 5	6775	行走	xíngzǒu	to walk
 5	6845	出自	chūzì	to come from
@@ -3161,11 +3172,11 @@
 5	6940	智能	zhìnéng	intelligentablesmart (phone, system, bomb etc)
 5	6943	手工	shǒugōng	handworkmanual
 5	6962	心态	xīntài	attitude (of the heart)state of one's psycheway of thinkingmentality
-5	6976	总体	zǒngtǐ	completelytotallytotalentire
+5	6976	总体	zǒngtǐ	overallcompletelytotallytotal
 5	6988	登录	dēnglù	to registerto log in
 5	7020	题目	tímù	subject, title, topicexercise or exam question
 5	7020	应对	yìngduì	to answer, to replyto handle, to deal withresponse
-5	7027	节省	jiéshěng	savingto saveto use sparinglyto cut down on
+5	7027	节省	jiéshěng	to savesavingto use sparinglyto cut down on
 5	7051	围巾	wéijīn	scarfshawl
 5	7080	光线	guāngxiàn	light raylightilluminationlighting (for a photograph)
 5	7087	删除	shānchú	to deleteto cancel
@@ -3242,9 +3253,9 @@
 5	8080	亏	kuī	to lose (money), to have a deficitto be deficientto treat unfairlyluckily, fortunately, thanks to
 5	8140	救护车	jiùhùchē	ambulance
 5	8141	键盘	jiànpán	keyboard
-5	8149	实用	shíyòng	to apply in practicepractical, functional, pragmatic, applied (science)
+5	8149	实用	shíyòng	practical, functional, pragmatic, applied (science)to apply in practice
 5	8156	繁荣	fánróng	prosperous, booming
-5	8165	册	cè	bookbookletclassifier for books
+5	8165	册	cè	classifier for booksbookbooklet
 5	8167	长度	chángdù	length
 5	8179	被子	bèizi	blanket, quilt
 5	8202	车库	chēkù	garage
@@ -3252,8 +3263,8 @@
 5	8262	迎	yíng	to welcome, to meetto forge ahead (esp. in the face of difficulties), to meet face to face
 5	8269	鸭子	yāzi	duck(slang) male prostitute
 5	8285	车主	chēzhǔ	vehicle owner
-5	8287	赏	shǎng	to bestow (a reward)to give (to an inferior)to hand downa reward (bestowed by a superior)
-5	8315	引进	yǐnjìn	to recommendto introduce (from outside)
+5	8287	赏	shǎng	to appreciate (beauty)to bestow (a reward)to give (to an inferior)to hand down
+5	8315	引进	yǐnjìn	to introduce (from outside)to recommend
 5	8340	排列	páiliè	to arrange in order(math.) permutation
 5	8349	充电	chōngdiàn	to recharge (a battery)(fig.) to recharge one's batteries (through leisure)to update one's skills and knowledge
 5	8360	用途	yòngtú	use, application
@@ -3262,7 +3273,7 @@
 5	8495	称赞	chēngzàn	to praise, to commend, to compliment
 5	8507	电动	diàndòng	electric-powered(Tw) video game
 5	8534	赠送	zèngsòng	to present as a gift
-5	8549	不得了	bùdéliǎo	desperately seriousdisastrousextremelyexceedingly
+5	8549	不得了	bùdéliǎo	extremelydesperately seriousdisastrousexceedingly
 5	8578	标题	biāotí	titleheadingheadlinecaption
 5	8603	预报	yùbào	forecast
 5	8622	窄	zhǎi	narrownarrow-mindedbadly off
@@ -3293,7 +3304,7 @@
 5	8907	外形	wàixíng	figureshapeexternal formcontour
 5	8918	赠	zèng	to give as a presentto repelto bestow an honorary title after death (old)
 5	8924	舍不得	shěbude	to hate to do sthto hate to part withto begrudge
-5	8931	大爷	dàye	(coll.) father's older brotheruncleterm of respect for older man
+5	8931	大爷	dàye	term of respect for older man(coll.) father's older brotheruncle
 5	8931	熟人	shúrén	acquaintancefriend
 5	8953	报到	bàodào	to report for dutyto check into register
 5	8971	初期	chūqī	initial stagebeginning period
@@ -3349,7 +3360,7 @@
 5	9979	傍晚	bàngwǎn	in the eveningwhen night fallstowards eveningat night fall
 5	10035	失恋	shīliàn	to lose one's loveto break up (in a romantic relationship)to feel jilted
 5	10095	工艺	gōngyì	arts and craftsindustrial arts
-5	10100	不要紧	bùyàojǐn	unimportantnot seriousit doesn't matternever mind
+5	10100	不要紧	bùyàojǐn	it doesn't matterunimportantnot seriousnever mind
 5	10119	领取	lǐngqǔ	to receive, to draw, to get
 5	10141	行人	xíngrén	pedestriantraveler on footpasser-byofficial responsible for arranging audiences with the emperor
 5	10185	初级	chūjí	juniorprimary
@@ -3368,7 +3379,7 @@
 5	10522	爱护	àihù	to cherishto treasureto take care ofto love and protect
 5	10535	黄瓜	huángguā	cucumber
 5	10541	单一	dānyī	singleonlysole
-5	10587	二手	èrshǒu	indirectly acquiredsecond-hand (information, equipment etc)assistant
+5	10587	二手	èrshǒu	second-hand (information, equipment etc)indirectly acquiredassistant
 5	10626	现代化	xiàndàihuà	modernization
 5	10627	优良	yōuliáng	finegoodfirst-rate
 5	10636	儿女	érnǚ	children, sons and daughtersa young man and a young woman (in love)
@@ -3398,9 +3409,9 @@
 5	11872	概括	gàikuò	to summarize, to generalizebriefly, in broad outline
 5	11900	餐饮	cānyǐn	food and beveragecateringrepast
 5	11956	舍得	shěde	to be willing to part with sth
-5	12138	大妈	dàmā	father's elder brother's wifeaunt (affectionate term for an elderly woman)
+5	12138	大妈	dàmā	aunt (affectionate term for an elderly woman)father's elder brother's wife
 5	12138	随手	suíshǒu	convenientlywithout extra troublewhile doing itin passing
-5	12167	纪录片	jìlùpiàn	newsreeldocumentary (film or TV program)
+5	12167	纪录片	jìlùpiàn	documentary (film or TV program)newsreel
 5	12168	汗水	hànshuǐ	sweatperspiration
 5	12173	姥姥	lǎolao	(coll.) mother's mother, maternal grandmother
 5	12191	离职	lízhí	to leave one's job temporarily (e.g. for study)to leave one's job, to resign
@@ -3419,7 +3430,7 @@
 5	12765	试卷	shìjuàn	examination papertest paper
 5	12768	加深	jiāshēn	to deepen
 5	12805	调研	diàoyán	to investigate and researchresearchinvestigation
-5	12847	胆小	dǎnxiǎo	cowardicetimid
+5	12847	胆小	dǎnxiǎo	timidcowardice
 5	12925	影视	yǐngshì	movies and television
 5	13022	超速	chāosù	to exceed the speed limitto speedhigh-speed
 5	13074	除夕	Chúxī	lunar New Year's Eve
@@ -3434,7 +3445,7 @@
 5	13656	碰见	pèngjiàn	to run intoto meet (unexpectedly)to bump into
 5	13754	年夜饭	niányèfàn	reunion dinner on Lunar New Year's Eve (Chinese New Year tradition)
 5	13803	深厚	shēnhòu	deep, profound
-5	14037	涨价	zhǎngjià	to appreciate (in value)to increase in price
+5	14037	涨价	zhǎngjià	to increase in priceto appreciate (in value)
 5	14126	样式	yàngshì	typestyle
 5	14155	亲情	qīnqíng	affectionfamily lovelove, esp. within a married couple or between parents and children
 5	14235	住址	zhùzhǐ	address
@@ -3518,7 +3529,7 @@
 5	37393	毛笔	máobǐ	writing brush
 5	38012	占线	zhànxiàn	busy (telephone line)
 5	40040	跳远	tiàoyuǎn	long jump (athletics)
-5	41071	没法	méifǎ	at a lossunable to do anything about itto have no choice
+5	41071	没法	méifǎ	unable to do anything about itat a lossto have no choice
 5	48366	电子版	diànzǐbǎn	electronic editiondigital version
 5	50741	连忙	liánmáng	promptly, at once
 5	1000000	便利店	biànlìdiàn	convenience store

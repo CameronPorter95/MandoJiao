@@ -54,7 +54,7 @@ Ships with 65 starter words across six decks, in a Starter folder, and HSK 1 fro
 2025 revision of HSK 3.0, split into decks of 50 or fewer words, most common first. The
 other levels, up to 7-9, are added or restored from the HSK levels list in My Vocabulary. Each
 HSK word takes up to four meanings from the dictionary for its reading, headed for HSK 1
-to 4 by an everyday meaning chosen by hand in `Tools/MakeHSK/headlines.tsv` where the
+to 5 by an everyday meaning chosen by hand in `Tools/MakeHSK/headlines.tsv` where the
 dictionary's first is not. A character with two everyday readings, like 长 cháng and zhǎng,
 is two words, listed in `Tools/MakeHSK/readings.tsv`. Rebuild the list with `Tools/MakeHSK`
 after `Tools/MakeDictionary`. Add, edit and
