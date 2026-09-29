@@ -48,7 +48,7 @@ public final class WordLibraryViewModel {
             state.searchText = text
 
         case .addTapped:
-            state.editor = .new
+            state.editor = .new(WordDraft())
 
         case .editTapped(let id):
             guard let word = state.vocabulary.words.first(where: { $0.id == id }) else { return }

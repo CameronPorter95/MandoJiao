@@ -1,24 +1,6 @@
 import Foundation
 import VocabularyDomain
 
-/// Which word the editor sheet is open on.
-enum WordEditorTarget: Identifiable, Equatable {
-    case new
-    case edit(Word)
-
-    var id: String {
-        switch self {
-        case .new: "new"
-        case .edit(let word): word.id.uuidString
-        }
-    }
-
-    var word: Word? {
-        if case .edit(let word) = self { return word }
-        return nil
-    }
-}
-
 /// Every word in the library, or, given a folder, every word in the decks beneath it.
 struct WordLibraryState: Equatable {
     var folderID: UUID?

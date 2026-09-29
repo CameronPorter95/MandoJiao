@@ -15,7 +15,7 @@ public enum WordLibraryFactory: InputRouteFactory {
             viewModel: viewModel,
             layout: input.layout,
             makeEditor: { WordEditorFactory.makeRoute(dependencies: dependencies, input: $0) },
-            makeDictionary: { DictionaryFactory.makeRoute(dependencies: dependencies, input: $0) }
+            makeDictionary: { DictionaryFactory.makeRoute(dependencies: dependencies, input: DictionaryInput(headword: $0, addsToVocabulary: true)) }
         )
     }
 }

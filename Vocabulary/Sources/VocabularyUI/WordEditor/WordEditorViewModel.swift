@@ -19,17 +19,19 @@ public final class WordEditorViewModel {
 
     /// `suggestionDelay` waits for typing to pause before looking the Hanzi up.
     public init(
-        word: Word?,
+        target: WordEditorTarget,
         saveWord: SaveWordUseCase,
         deleteWords: DeleteWordsUseCase,
         suggestWord: SuggestWordUseCase,
         lookUpDictionary: LookUpDictionaryUseCase,
         suggestionDelay: Duration = .milliseconds(250)
     ) {
-        state = WordEditorState(
-            wordID: word?.id,
-            draft: WordDraft(meanings: word?.meanings ?? [], hanzi: word?.hanzi ?? "", pinyin: word?.pinyin ?? "")
-        )
+        state = switch target {
+        case .new(let draft):
+            WordEditorState(wordID: nil, draft: draft)
+        case .edit(let word):
+            WordEditorState(wordID: word.id, draft: WordDraft(meanings: word.meanings, hanzi: word.hanzi, pinyin: word.pinyin))
+        }
         self.saveWord = saveWord
         self.deleteWords = deleteWords
         self.suggestWord = suggestWord

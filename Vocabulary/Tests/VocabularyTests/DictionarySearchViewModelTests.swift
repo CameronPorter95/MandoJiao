@@ -11,8 +11,21 @@ import VocabularyTestSupport
 struct DictionarySearchViewModelTests {
     private let dictionary = FakeDictionaryRepository()
 
+    private let vocabulary = FakeVocabularyRepository(Fixtures.vocabulary)
+
     private func makeSearch(delay: Duration = .zero) -> DictionarySearchViewModel {
-        DictionarySearchViewModel(searchDictionary: SearchDictionaryUseCase(repository: dictionary), searchDelay: delay)
+        DictionarySearchViewModel(
+            searchDictionary: SearchDictionaryUseCase(repository: dictionary),
+            observeVocabulary: ObserveVocabularyUseCase(repository: vocabulary),
+            searchDelay: delay
+        )
+    }
+
+    private func found(_ search: DictionarySearchViewModel, _ query: String) async -> [DictionarySearchResult] {
+        search.send(.queryChanged(query))
+        guard await waitUntil({ search.state.results != .searching }), case .found(let results) = search.state.results
+        else { return [] }
+        return results
     }
 
     @Test("typing searches once typing pauses, for only the last query")
@@ -61,5 +74,62 @@ struct DictionarySearchViewModelTests {
         await dictionary.failLookups()
         search.send(.queryChanged("喝"))
         #expect(await waitUntil { search.state.results == .failed })
+    }
+
+    @Test("a result shows whether its reading is saved, however the word's pinyin was typed")
+    func savedResults() async throws {
+        let hang = Word(english: "row", hanzi: "行", pinyin: "hang2")
+        await vocabulary.replace(Vocabulary(words: [hang], decks: [], folders: []))
+        let search = makeSearch()
+        #expect(search.state.words == nil)
+        search.send(.appeared)
+        #expect(await waitUntil { search.state.words != nil })
+
+        let results = await found(search, "行").filter { $0.simplified == "行" }
+        #expect(results.map(\.pinyin) == ["xíng", "háng"])
+        #expect(results.map { search.state.vocabulary(for: $0) } == [.absent, .saved(hang)])
+    }
+
+    @Test("a result not saved opens a new word with its first sense, and a saved one opens its word")
+    func vocabularyFromResults() async throws {
+        let hang = Word(english: "row", hanzi: "行", pinyin: "háng")
+        await vocabulary.replace(Vocabulary(words: [hang], decks: [], folders: []))
+        let search = makeSearch()
+        search.send(.appeared)
+        #expect(await waitUntil { search.state.words != nil })
+        let results = await found(search, "行").filter { $0.simplified == "行" }
+
+        search.send(.vocabularyTapped(results[0]))
+        #expect(search.state.editor == .new(WordDraft(meanings: ["to walk"], hanzi: "行", pinyin: "xíng")))
+        search.send(.editorDismissed)
+        #expect(search.state.editor == nil)
+        search.send(.vocabularyTapped(results[1]))
+        #expect(search.state.editor == .edit(hang))
+    }
+
+    @Test("a result shows as saved as soon as it is saved, until the list is left")
+    func savedResultsLive() async throws {
+        let search = makeSearch()
+        search.send(.appeared)
+        #expect(await waitUntil { search.state.words != nil })
+        let he = try #require(await found(search, "喝").first)
+        #expect(search.state.vocabulary(for: he) == .absent)
+
+        try await vocabulary.saveWord(id: nil, draft: WordDraft(english: "to drink", hanzi: "喝", pinyin: "hē"))
+        #expect(await waitUntil { search.state.vocabulary(for: he)?.isSaved == true })
+
+        search.send(.disappeared)
+        await vocabulary.replace(Fixtures.vocabulary)
+        await settle()
+        #expect(search.state.vocabulary(for: he)?.isSaved == true)
+    }
+
+    @Test("nothing can be added before the saved words are known, so a saved reading is not added twice")
+    func vocabularyUnknown() async throws {
+        let search = makeSearch()
+        let results = await found(search, "喝")
+        #expect(search.state.vocabulary(for: results[0]) == nil)
+        search.send(.vocabularyTapped(results[0]))
+        #expect(search.state.editor == nil)
     }
 }

@@ -16,12 +16,13 @@ struct WordEditorViewModelTests {
 
     private func makeEditor(
         _ word: Word?,
+        draft: WordDraft = WordDraft(),
         lexicon: FakeLexiconRepository? = nil,
         dictionary: FakeDictionaryRepository? = nil,
         suggestionDelay: Duration = .zero
     ) -> (WordEditorViewModel, EffectLog<WordEditorEffect>) {
         let viewModel = WordEditorViewModel(
-            word: word,
+            target: word.map(WordEditorTarget.edit) ?? .new(draft),
             saveWord: SaveWordUseCase(repository: repository),
             deleteWords: DeleteWordsUseCase(repository: repository),
             suggestWord: SuggestWordUseCase(repository: lexicon ?? self.lexicon),
@@ -44,6 +45,22 @@ struct WordEditorViewModelTests {
 
         #expect(await log.contains(.dismiss))
         #expect(await repository.writes == ["saveWord new to drink|喝|"])
+    }
+
+    @Test("a new word filled in from the dictionary opens with its reading and headline, and saves as new")
+    func prefilledWord() async {
+        let (editor, log) = makeEditor(nil, draft: WordDraft(english: "row, line", hanzi: "行", pinyin: "háng"))
+        #expect(editor.state.title == "New word")
+        #expect(!editor.state.canDelete)
+        editor.send(.appeared)
+        #expect(await waitUntil { !editor.state.entries.isEmpty })
+        #expect(editor.state.meanings == ["row, line"])
+        #expect(editor.state.pinyinSuggestion == nil)
+        #expect(!editor.state.isCustom("row, line"))
+
+        editor.send(.saveTapped)
+        #expect(await log.contains(.dismiss))
+        #expect(await repository.writes == ["saveWord new row, line|行|háng"])
     }
 
     @Test("an existing word opens filled in and saves under its own identity")

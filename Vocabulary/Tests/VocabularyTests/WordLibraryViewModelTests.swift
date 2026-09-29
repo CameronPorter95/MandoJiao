@@ -113,7 +113,7 @@ struct WordLibraryViewModelTests {
 
         library.send(.editorDismissed)
         library.send(.addTapped)
-        #expect(library.state.editor == .new)
+        #expect(library.state.editor == .new(WordDraft()))
     }
 
     @Test("the dictionary opens on a word's Hanzi and its reading")

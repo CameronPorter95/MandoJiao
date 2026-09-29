@@ -1,14 +1,14 @@
 import Foundation
 import VocabularyDomain
 
-/// Every entry of the dictionary made searchable by Hanzi, by pinyin without tones, and by
-/// English. Built once, on the first search, since most sessions never search.
+/// Every entry of the dictionary made searchable by Hanzi, by pinyin with or without tones,
+/// and by English. Built once, on the first search, since most sessions never search.
 nonisolated struct DictionarySearch: Sendable {
     private struct Record: Sendable {
         let line: Substring
         let simplified: String
         let traditional: String
-        let toneless: String
+        let pinyin: PinyinSpelling
         /// Each sense's glosses, asides dropped and lowercased: "to walk, to go" is two.
         let glosses: [[String]]
         let isPreferred: Bool
@@ -42,7 +42,7 @@ nonisolated struct DictionarySearch: Sendable {
                 line: line,
                 simplified: entry.simplified,
                 traditional: entry.traditional,
-                toneless: SearchQuery.toneless(entry.pinyin),
+                pinyin: PinyinSpelling(entry.pinyin),
                 glosses: entry.senses.map(Self.glosses),
                 isPreferred: entry.isPreferred,
                 headline: hsk?.headline,
@@ -126,9 +126,9 @@ nonisolated struct DictionarySearch: Sendable {
         return nil
     }
 
-    private static func pinyinRank(_ record: Record, _ query: String) -> Rank? {
-        if record.toneless == query { return rank(record, match: 0) }
-        if record.toneless.hasPrefix(query) { return rank(record, match: 3) }
+    private static func pinyinRank(_ record: Record, _ query: PinyinSpelling) -> Rank? {
+        if record.pinyin.isSpelt(as: query) { return rank(record, match: 0) }
+        if record.pinyin.hasPrefix(query) { return rank(record, match: 3) }
         return nil
     }
 
