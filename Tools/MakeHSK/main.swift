@@ -8,7 +8,7 @@ import Foundation
 //
 // Output is one line per word of the 2025 revision of HSK 3.0 ("newest" in the source):
 // level, frequency rank, Hanzi, pinyin, then meanings joined by U+001F, tab separated,
-// levels 7 to 9 as level 7.
+// levels 7 to 9 as level 7, and "=" after them where headlines.tsv gave every meaning.
 //
 // Pinyin and meanings come from the bundled dictionary, so an HSK word reads as one whose
 // senses were chosen in the word editor: senses as the dictionary writes them, asides and
@@ -75,16 +75,22 @@ for line in try String(contentsOfFile: arguments[2], encoding: .utf8).split(sepa
 }
 
 /// Hanzi to a reading, blank to keep HSK's, and the headline to put first.
-var headlines: [String: (pinyin: String, headline: String)] = [:]
+/// A fourth column, where given, is every other meaning, " | " between them, replacing the
+/// dictionary's: 最's "(before an adjective or verb) to the highest degree, (the) most ...,
+/// -est" says its headline again inside a longer sense.
+var headlines: [String: (pinyin: String, headline: String, others: [String]?)] = [:]
 for line in try String(contentsOfFile: arguments[3], encoding: .utf8).split(separator: "\n") where !line.hasPrefix("#") {
     let fields = line.split(separator: "\t", omittingEmptySubsequences: false).map(String.init)
-    guard fields.count == 3, !fields[2].isEmpty else {
+    guard fields.count == 3 || fields.count == 4, !fields[2].isEmpty else {
         FileHandle.standardError.write(Data("headlines.tsv: bad line \(line)\n".utf8))
         exit(1)
     }
-    headlines[fields[0]] = (fields[1], fields[2])
+    headlines[fields[0]] = (fields[1], fields[2], fields.count == 4 ? fields[3].components(separatedBy: " | ") : nil)
 }
 var unusedHeadlines = Set(headlines.keys)
+/// The reading whose meanings headlines.tsv gave in full, marked in the output so the app
+/// shows them in place of the dictionary's.
+var exactReading: [String: String] = [:]
 
 /// The chosen headline first, then the reading's other senses. A reading given in
 /// headlines.tsv takes that reading's senses instead.
@@ -104,6 +110,10 @@ func withHeadline(_ hanzi: String, _ pinyin: String, _ senses: [String]) -> (pin
     if !senses.contains(chosen.headline),
        let line = dictionary[hanzi]?.first(where: { comparable($0.pinyin) == comparable(pinyin) && $0.senses.contains(chosen.headline) }) {
         senses = line.senses
+    }
+    if let others = chosen.others {
+        exactReading[hanzi] = pinyin
+        return (pinyin, [chosen.headline] + others)
     }
     return (pinyin, headed(chosen.headline, senses))
 }
@@ -152,8 +162,10 @@ func cleaned(_ meanings: [String]) -> [String] {
     }
 }
 
+/// A sixth field, "=", marks meanings headlines.tsv gave in full.
 func line(_ level: Int, _ rank: Int, _ hanzi: String, _ pinyin: String, _ meanings: [String]) -> String {
-    "\(level)\t\(rank)\t\(hanzi)\t\(pinyin)\t\(meanings.prefix(meaningLimit).joined(separator: separator))"
+    let exact = exactReading[hanzi] == pinyin ? "\t=" : ""
+    return "\(level)\t\(rank)\t\(hanzi)\t\(pinyin)\t\(meanings.prefix(meaningLimit).joined(separator: separator))\(exact)"
 }
 
 /// Tone marks kept, spaces and case dropped, so `yín háng` and `yínháng` compare equal.

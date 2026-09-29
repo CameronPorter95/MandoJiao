@@ -5,12 +5,14 @@
 #
 # Hanzi, then a reading when HSK's is not the everyday one (blank to keep it), then the
 # headline, tab separated. A headline that is one of the reading's senses is moved to the
-# front; one that is not is put first, with the dictionary's senses after it. Written in
-# the dictionary's style, asides and all, since a tile shows it through Gloss.plain.
+# front; one that is not is put first, with the dictionary's senses after it. A fourth
+# column, where given, is every other meaning, " | " between them, in place of the
+# dictionary's. Written in the dictionary's style, asides and all, since a tile shows it
+# through Gloss.plain.
 #
 # HSK 1 to 3 were reviewed by a native speaker on 2026-09-28. Where she found two meanings
-# equally common (离, 不好意思, 才, 记) the headline carries both. HSK 4 was reviewed
-# the same way, the same day, and HSK 5 on 2026-09-29.
+# equally common (离) the headline carries both; for 不好意思, 才 and 记 she chose the drafts
+# on a second pass. HSK 4 was reviewed the same way, the same day, and HSK 5 on 2026-09-29.
 #
 # HSK 1
 在		at, in
@@ -37,7 +39,7 @@
 同学		classmate
 # HSK 2
 让		to let sb do sth
-最		most
+最		(the) most ...	best or most extreme example
 次		(classifier for occurrences) time
 时		time
 跟		with
@@ -63,13 +65,13 @@
 游		to swim
 旅游		to travel
 题		exam question
-不好意思		to be sorry (for inconveniencing sb), to feel embarrassed
+不好意思		to be sorry (for inconveniencing sb)
 比		than, compared with
 进		to enter
 教	jiāo	to teach, to instruct
 # HSK 3
 被		(passive marker) by
-才		only then, just; ability, talent
+才		only then, just
 带		to bring, to take along
 种		kind, type
 一直		continuously, always, all the way through
@@ -95,7 +97,7 @@
 差		not up to standard, inferior
 市		city
 常		often
-记		to remember, to record
+记		to remember
 表演		performance
 关		to close, to shut, to turn off
 牛		cattle

@@ -52,14 +52,22 @@ nonisolated struct HSKTests {
         ("在", "zài", "at, in"), ("穿", "chuān", "to wear, to put on (clothes, shoes etc.)"), ("钱", "qián", "money"),
         ("告诉", "gàosu", "to tell, to inform, to let know"), ("长", "cháng", "long"), ("妻子", "qīzi", "wife"),
         ("周", "zhōu", "week"), ("故事", "gùshi", "narrative, story, tale"),
-        // From the native speaker's review, both meanings being common in the last.
-        ("牛", "niú", "cattle"), ("才", "cái", "only then, just; ability, talent"),
-        ("最", "zuì", "most"), ("同学", "tóngxué", "classmate"),
+        // From the native speaker's review.
+        ("牛", "niú", "cattle"), ("才", "cái", "only then, just"),
+        ("最", "zuì", "(the) most ..."), ("同学", "tóngxué", "classmate"),
     ])
     func headlines(hanzi: String, pinyin: String, headline: String) {
         let word = words.first { $0.hanzi == hanzi }
         #expect(word?.pinyin == pinyin)
         #expect(word?.meanings.first == headline)
+    }
+
+    @Test("a word whose every meaning was chosen by hand has exactly those")
+    func replacedSenses() {
+        let zui = words.first { $0.hanzi == "最" }
+        #expect(zui?.meanings == ["(the) most ...", "best or most extreme example"])
+        #expect(zui?.replacesSenses == true)
+        #expect(words.first { $0.hanzi == "在" }?.replacesSenses == false)
     }
 
     @Test("the source's spellings of a reading are matched to the dictionary's", arguments: [

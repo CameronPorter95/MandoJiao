@@ -81,9 +81,11 @@ nonisolated struct DictionaryTests {
         let li = try #require(try await dictionary.entries(forHanzi: "里").first { $0.pinyin == "lǐ" })
         #expect(li.senses.first == "inside")
         #expect(li.senses.contains("li, ancient measure of length, approx. 500 m"))
-        let cai = try await dictionary.entries(forHanzi: "才").first { $0.isPreferred }
-        #expect(cai?.senses.first == "only then, just; ability, talent")
-        #expect(cai?.senses.contains("ability, talent") == false)
+        // 离's headline says two of its senses, so neither is listed again.
+        let leave = try await dictionary.entries(forHanzi: "离").first { $0.pinyin == "lí" }
+        #expect(leave?.senses.first == "to leave; (in giving distances) from")
+        #expect(leave?.senses.contains("to leave") == false)
+        #expect(leave?.senses.contains("(in giving distances) from") == false)
         // "to" is a part of none of "to give"'s parts, so it stays.
         #expect(try await dictionary.entries(forHanzi: "给").first?.senses.prefix(2) == ["to give", "to"])
         // Each of a character's HSK readings heads its own line.
@@ -91,6 +93,8 @@ nonisolated struct DictionaryTests {
         #expect(chang.first { $0.pinyin == "cháng" }?.senses.first == "long")
         #expect(chang.first { $0.pinyin == "zhǎng" }?.senses.first == "to grow")
         #expect(try await dictionary.search("bullet", limit: 1).first?.pinyin == "dàn")
+        // Meanings chosen in full replace the reading's senses outright.
+        #expect(try await dictionary.entries(forHanzi: "最").first?.senses == ["(the) most ...", "best or most extreme example"])
         // Only the reading HSK means: 告诉's gàosù is still "to press charges".
         #expect(try await dictionary.entries(forHanzi: "告诉").first { $0.pinyin == "gàosù" }?.senses.first
             == "to press charges, to file a complaint")

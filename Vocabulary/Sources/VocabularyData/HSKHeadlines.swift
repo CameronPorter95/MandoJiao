@@ -10,6 +10,8 @@ nonisolated struct HSKHeadlines: Sendable {
         let pinyin: String
         let rank: Int
         let headline: String
+        /// Every meaning, where they were all chosen by hand and replace the dictionary's.
+        let meanings: [String]?
     }
 
     /// Each character's readings, the main one first: 长 is cháng and zhǎng.
@@ -19,7 +21,10 @@ nonisolated struct HSKHeadlines: Sendable {
         var words: [String: [Word]] = [:]
         for word in hsk {
             guard let headline = word.meanings.first else { continue }
-            words[word.hanzi, default: []].append(Word(pinyin: word.pinyin, rank: word.rank, headline: headline))
+            words[word.hanzi, default: []].append(Word(
+                pinyin: word.pinyin, rank: word.rank, headline: headline,
+                meanings: word.replacesSenses ? word.meanings : nil
+            ))
         }
         self.words = words
     }
@@ -59,7 +64,8 @@ nonisolated struct HSKHeadlines: Sendable {
                 traditional: entry.traditional,
                 pinyin: entry.pinyin,
                 isPreferred: entry.isPreferred,
-                senses: [word.headline] + entry.senses.filter { $0 != word.headline && !Self.parts($0).isSubset(of: said) }
+                senses: word.meanings
+                    ?? [word.headline] + entry.senses.filter { $0 != word.headline && !Self.parts($0).isSubset(of: said) }
             )
         }
         return result
