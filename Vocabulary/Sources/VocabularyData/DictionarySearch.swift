@@ -42,7 +42,7 @@ nonisolated struct DictionarySearch: Sendable {
                 line: line,
                 simplified: entry.simplified,
                 traditional: entry.traditional,
-                toneless: Self.toneless(entry.pinyin),
+                toneless: SearchQuery.toneless(entry.pinyin),
                 glosses: entry.senses.map(Self.glosses),
                 isPreferred: entry.isPreferred,
                 headline: hsk?.headline,
@@ -60,16 +60,14 @@ nonisolated struct DictionarySearch: Sendable {
     /// commoner ones. An exact pinyin and an exact English match rank alike, so "you" is 你
     /// before 有 yǒu, frequency deciding.
     func results(for query: String, limit: Int) -> [DictionarySearchResult] {
-        let query = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        let query = SearchQuery(query)
         guard !query.isEmpty else { return [] }
         let rank: (Record) -> Rank?
-        if query.unicodeScalars.contains(where: Self.isHan) {
-            rank = { Self.hanziRank($0, query) }
+        if query.isHanzi {
+            rank = { Self.hanziRank($0, query.text) }
         } else {
-            let english = query.lowercased()
-            let pinyin = Self.isPinyin(query) ? Self.toneless(query) : nil
             rank = { record in
-                [pinyin.flatMap { Self.pinyinRank(record, $0) }, Self.englishRank(record, english)]
+                [query.pinyin.flatMap { Self.pinyinRank(record, $0) }, Self.englishRank(record, query.english)]
                     .compactMap { $0 }.min()
             }
         }
@@ -129,7 +127,6 @@ nonisolated struct DictionarySearch: Sendable {
     }
 
     private static func pinyinRank(_ record: Record, _ query: String) -> Rank? {
-        guard !query.isEmpty else { return nil }
         if record.toneless == query { return rank(record, match: 0) }
         if record.toneless.hasPrefix(query) { return rank(record, match: 3) }
         return nil
@@ -169,19 +166,5 @@ nonisolated struct DictionarySearch: Sendable {
         return kept.split(separator: ",")
             .map { $0.split(separator: " ").joined(separator: " ") }
             .filter { !$0.isEmpty }
-    }
-
-    /// Letters only: "Yín háng", "yin2 hang2" and "yinhang" are all "yinhang".
-    static func toneless(_ pinyin: String) -> String {
-        pinyin.folding(options: [.diacriticInsensitive, .caseInsensitive], locale: nil)
-            .filter { $0.isLetter }
-    }
-
-    private static func isPinyin(_ query: String) -> Bool {
-        query.allSatisfy { $0.isLetter || $0.isNumber || $0 == " " || $0 == "'" }
-    }
-
-    private static func isHan(_ scalar: Unicode.Scalar) -> Bool {
-        (0x3400...0x9FFF).contains(scalar.value) || (0x20000...0x2FFFF).contains(scalar.value)
     }
 }

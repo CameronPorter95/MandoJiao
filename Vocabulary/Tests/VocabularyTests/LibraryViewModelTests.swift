@@ -65,6 +65,22 @@ struct LibraryViewModelTests {
         #expect(await waitUntil { library.state.path == [.folder(Fixtures.level1.id)] })
     }
 
+    @Test("a folder's words push over it, and are popped when the folder is deleted")
+    func folderWords() async {
+        let (library, _) = await makeLibrary()
+        library.send(.selected(.folder(Fixtures.hsk.id)))
+        library.send(.opened(.folder(Fixtures.level1.id)))
+        library.send(.opened(.words(folderID: Fixtures.level1.id)))
+        #expect(library.state.path == [.folder(Fixtures.level1.id), .words(folderID: Fixtures.level1.id)])
+
+        await repository.replace(Vocabulary(
+            words: Fixtures.words,
+            decks: [Fixtures.fullDeck],
+            folders: [Fixtures.starter, Fixtures.hsk]
+        ))
+        #expect(await waitUntil { library.state.path.isEmpty })
+    }
+
     @Test("dragging a folder moves it at once and saves where it landed")
     func dragging() async {
         let (library, _) = await makeLibrary()

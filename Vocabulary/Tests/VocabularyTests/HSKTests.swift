@@ -84,6 +84,26 @@ nonisolated struct HSKTests {
         #expect(words.first { $0.hanzi == "教" }?.pinyin == "jiāo")
     }
 
+    @Test("every installed word is found by its pinyin with tones, without them, and by tone numbers")
+    func searchablePinyin() {
+        let numbered = { (pinyin: String) in
+            pinyin.decomposedStringWithCanonicalMapping.unicodeScalars.map { scalar -> String in
+                switch scalar.value {
+                case 0x304: "1"
+                case 0x301: "2"
+                case 0x30C: "3"
+                case 0x300: "4"
+                default: String(scalar)
+                }
+            }.joined()
+        }
+        let missed = words.filter { hsk in
+            let word = Word(meanings: hsk.meanings, hanzi: hsk.hanzi, pinyin: hsk.pinyin)
+            return ![hsk.pinyin, SearchQuery.toneless(hsk.pinyin), numbered(hsk.pinyin)].allSatisfy(word.matches)
+        }
+        #expect(missed.isEmpty, "\(missed.prefix(5).map(\.pinyin))")
+    }
+
     @Test("a level splits evenly into decks of at most 50, most common words first")
     func plan() throws {
         let hsk1 = HSK.plan(level: 1, words: words, topLevelFolders: 1)

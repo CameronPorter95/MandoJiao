@@ -7,10 +7,12 @@ public enum LibrarySelection: Hashable, Sendable {
     case folder(UUID)
 }
 
-/// A screen pushed over the selection: a folder opened from inside another, or a deck.
+/// A screen pushed over the selection: a folder opened from inside another, a deck, or a
+/// folder's words.
 public enum LibraryPage: Hashable, Sendable {
     case folder(UUID)
     case deck(UUID)
+    case words(folderID: UUID)
 }
 
 /// What a screen the library pushes starts from, and how it asks to push another.
@@ -21,9 +23,11 @@ public struct LibraryPageContext {
     public let vocabulary: Vocabulary
     public let openDeck: (UUID) -> Void
     public let openFolder: (UUID) -> Void
+    /// A folder's words, by the folder's id.
+    public let openWords: (UUID) -> Void
     /// One folder's screen's share of the layout, which is its own.
     public let layout: (UUID) -> FolderLayout
-    /// The list of all words' share of it.
+    /// The word lists' share of it, all words and every folder's alike.
     public let wordList: WordListLayout
 }
 
