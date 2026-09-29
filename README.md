@@ -71,7 +71,10 @@ with or without tones, or by English. Pinyin without tones finds every tone; a t
 as "wéi" or "wei2", finds only that tone. The word list is searched the same way. A headword's page lists every reading with all its
 senses, and each of its characters. The dictionary is read-only and apart from your
 vocabulary: editing a word, its meanings can be chosen from the dictionary's senses, which
-copies them into the word.
+copies them into the word. Each reading on a page, and each search result by swiping
+right, can be added to the vocabulary, which opens a new word filled in with its Hanzi,
+pinyin and first sense, or, once saved, opens the word in the vocabulary instead. Search
+results already in the vocabulary are ticked.
 
 ## Building
 

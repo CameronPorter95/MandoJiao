@@ -4,7 +4,7 @@ import VocabularyDomain
 
 public struct WordLibraryRoute: View {
     @State private var viewModel: WordLibraryViewModel
-    private let makeEditor: (Word?) -> WordEditorRoute
+    private let makeEditor: (WordEditorTarget) -> WordEditorRoute
     private let makeDictionary: (DictionaryHeadword) -> DictionaryRoute
     private let layout: WordListLayout
 
@@ -13,7 +13,7 @@ public struct WordLibraryRoute: View {
     public init(
         viewModel: WordLibraryViewModel,
         layout: WordListLayout,
-        makeEditor: @escaping (Word?) -> WordEditorRoute,
+        makeEditor: @escaping (WordEditorTarget) -> WordEditorRoute,
         makeDictionary: @escaping (DictionaryHeadword) -> DictionaryRoute
     ) {
         _viewModel = State(initialValue: viewModel)
@@ -30,7 +30,7 @@ public struct WordLibraryRoute: View {
                     set: { if $0 == nil { viewModel.send(.editorDismissed) } }
                 )
             ) { target in
-                makeEditor(target.word)
+                makeEditor(target)
             }
             .sheet(
                 item: Binding(

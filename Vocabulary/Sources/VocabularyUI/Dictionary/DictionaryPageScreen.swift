@@ -42,7 +42,7 @@ struct DictionaryPageScreen: View {
                     }
                 }
                 ForEach(readings) { reading in
-                    ReadingSection(reading: reading)
+                    ReadingSection(reading: reading, vocabulary: state.vocabulary(for: reading), onAction: onAction)
                 }
                 if !characters.isEmpty {
                     Section("Characters") {
@@ -58,11 +58,14 @@ struct DictionaryPageScreen: View {
         .navigationTitle(state.headword.hanzi)
         .inlineNavigationTitle()
         .onAppear { onAction(.appeared) }
+        .onDisappear { onAction(.disappeared) }
     }
 }
 
 private struct ReadingSection: View {
     let reading: DictionaryPageState.Reading
+    let vocabulary: ReadingInVocabulary?
+    let onAction: (DictionaryPageAction) -> Void
 
     var body: some View {
         Section {
@@ -80,10 +83,25 @@ private struct ReadingSection: View {
                 }
             }
         } header: {
-            Text(reading.entry.pinyin)
-                .font(.title3.weight(.semibold))
-                .foregroundStyle(Color.primary)
-                .textCase(nil)
+            HStack(alignment: .firstTextBaseline) {
+                Text(reading.entry.pinyin)
+                    .font(.title3.weight(.semibold))
+                    .foregroundStyle(Color.primary)
+                Spacer()
+                if let vocabulary {
+                    Button {
+                        onAction(.vocabularyTapped(reading.id))
+                    } label: {
+                        Label(
+                            vocabulary.isSaved ? "In vocabulary" : "Add",
+                            systemImage: vocabulary.isSaved ? "checkmark.circle.fill" : "plus.circle"
+                        )
+                        .font(.subheadline.weight(.medium))
+                    }
+                    .accessibilityHint(vocabulary.isSaved ? "Opens the saved word" : "Adds this reading to your vocabulary")
+                }
+            }
+            .textCase(nil)
         }
     }
 }
@@ -122,7 +140,8 @@ private struct CharacterRow: View {
                         .init(hanzi: "银", pinyin: "yín", gloss: "silver"),
                         .init(hanzi: "行", pinyin: "xíng", gloss: "to walk, to go, to travel"),
                     ]
-                )
+                ),
+                words: []
             ),
             onAction: { _ in }
         )

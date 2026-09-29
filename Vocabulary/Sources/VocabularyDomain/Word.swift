@@ -75,6 +75,31 @@ public nonisolated struct Word: Identifiable, Hashable, Sendable {
         return meanings.contains { $0.lowercased().contains(query.english) }
             || query.pinyin.map { PinyinSpelling(pinyin).contains($0) } ?? false
     }
+
+    /// Whether this word is that reading of its Hanzi, however its pinyin was typed:
+    /// "yin2 hang2" is yínháng. A word saved without pinyin is no reading in particular.
+    public func isReading(of entry: DictionaryEntry) -> Bool {
+        hanzi == entry.simplified && !pinyin.isEmpty && Self.spelling(pinyin) == Self.spelling(entry.pinyin)
+    }
+
+    /// The letters, and the tones in the order written, so marks and numbers compare alike.
+    /// A 5 for the neutral tone is dropped, as a neutral tone is written with no mark.
+    private static func spelling(_ pinyin: String) -> (letters: String, tones: [Int]) {
+        var letters = String.UnicodeScalarView()
+        var tones: [Int] = []
+        for scalar in pinyin.lowercased().decomposedStringWithCanonicalMapping.unicodeScalars {
+            switch scalar.value {
+            case 0x304: tones.append(1)
+            case 0x301: tones.append(2)
+            case 0x30C: tones.append(3)
+            case 0x300: tones.append(4)
+            case 0x31...0x34: tones.append(Int(scalar.value) - 0x30)
+            case 0x300...0x36F: continue
+            default: if scalar.properties.isAlphabetic { letters.append(scalar) }
+            }
+        }
+        return (String(letters), tones)
+    }
 }
 
 public nonisolated extension Array where Element == Word {

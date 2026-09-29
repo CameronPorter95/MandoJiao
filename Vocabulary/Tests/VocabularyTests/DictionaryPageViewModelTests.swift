@@ -11,12 +11,15 @@ import VocabularyTestSupport
 struct DictionaryPageViewModelTests {
     private let dictionary = FakeDictionaryRepository()
 
-    private func makePage(_ hanzi: String, pinyin: String? = nil) -> DictionaryPageViewModel {
+    private func makePage(_ hanzi: String, pinyin: String? = nil, vocabulary: FakeVocabularyRepository? = nil) -> DictionaryPageViewModel {
         DictionaryPageViewModel(
             headword: DictionaryHeadword(hanzi: hanzi, pinyin: pinyin),
-            lookUpDictionary: LookUpDictionaryUseCase(repository: dictionary)
+            lookUpDictionary: LookUpDictionaryUseCase(repository: dictionary),
+            observeVocabulary: vocabulary.map { ObserveVocabularyUseCase(repository: $0) }
         )
     }
+
+    private static let hang = Word(english: "row", hanzi: "行", pinyin: "háng")
 
     private func loaded(_ page: DictionaryPageViewModel) async -> (readings: [DictionaryPageState.Reading], characters: [DictionaryPageState.Character])? {
         page.send(.appeared)
@@ -55,7 +58,8 @@ struct DictionaryPageViewModelTests {
         let fake = FakeDictionaryRepository(FakeDictionaryRepository.words.filter { $0.simplified != "银行" } + [yinhang])
         let page = DictionaryPageViewModel(
             headword: DictionaryHeadword(hanzi: "银行"),
-            lookUpDictionary: LookUpDictionaryUseCase(repository: fake)
+            lookUpDictionary: LookUpDictionaryUseCase(repository: fake),
+            observeVocabulary: nil
         )
         let loaded = try #require(await loaded(page))
         #expect(loaded.characters.map(\.pinyin) == ["yín", "háng"])
@@ -93,5 +97,64 @@ struct DictionaryPageViewModelTests {
         page.send(.appeared)
         await settle()
         #expect(await dictionary.lookups == ["喝"])
+    }
+
+    @Test("a saved reading opens its word, and one not saved opens a new word with its first sense")
+    func vocabulary() async throws {
+        let repository = FakeVocabularyRepository(Vocabulary(words: Fixtures.words + [Self.hang], decks: [], folders: []))
+        let page = makePage("行", vocabulary: repository)
+        let readings = try #require(await loaded(page)).readings
+        #expect(await waitUntil { page.state.words != nil })
+        #expect(readings.map { page.state.vocabulary(for: $0) } == [.absent, .saved(Self.hang)])
+
+        page.send(.vocabularyTapped(readings[0].id))
+        #expect(page.state.editor == .new(WordDraft(meanings: ["to walk"], hanzi: "行", pinyin: "xíng")))
+        page.send(.editorDismissed)
+        #expect(page.state.editor == nil)
+
+        page.send(.vocabularyTapped(readings[1].id))
+        #expect(page.state.editor == .edit(Self.hang))
+    }
+
+    @Test("a reading shows as saved as soon as the editor saves it, until the page is left")
+    func vocabularyLive() async throws {
+        let repository = FakeVocabularyRepository(Fixtures.vocabulary)
+        let page = makePage("行", vocabulary: repository)
+        let readings = try #require(await loaded(page)).readings
+        #expect(await waitUntil { page.state.words != nil })
+        #expect(page.state.vocabulary(for: readings[0]) == .absent)
+
+        try await repository.saveWord(id: nil, draft: WordDraft(english: "to walk", hanzi: "行", pinyin: "xing2"))
+        #expect(await waitUntil {
+            if case .saved = page.state.vocabulary(for: readings[0]) { return true }
+            return false
+        })
+
+        page.send(.disappeared)
+        await repository.replace(Fixtures.vocabulary)
+        await settle()
+        #expect(page.state.vocabulary(for: readings[0]) != .absent)
+    }
+
+    @Test("a reading with no senses opens a new word with no meaning to fill in")
+    func vocabularyWithoutSenses() async throws {
+        let fake = FakeDictionaryRepository([FakeDictionaryRepository.entry("于", "Yú", preferred: true)])
+        let page = DictionaryPageViewModel(
+            headword: DictionaryHeadword(hanzi: "于"),
+            lookUpDictionary: LookUpDictionaryUseCase(repository: fake),
+            observeVocabulary: ObserveVocabularyUseCase(repository: FakeVocabularyRepository(.empty))
+        )
+        let readings = try #require(await loaded(page)).readings
+        page.send(.vocabularyTapped(readings[0].id))
+        #expect(page.state.editor == .new(WordDraft(meanings: [], hanzi: "于", pinyin: "Yú")))
+    }
+
+    @Test("without the vocabulary, as in the word editor's dictionary, no reading can be added or opened")
+    func noVocabulary() async throws {
+        let page = makePage("行")
+        let readings = try #require(await loaded(page)).readings
+        #expect(readings.allSatisfy { page.state.vocabulary(for: $0) == nil })
+        page.send(.vocabularyTapped(readings[0].id))
+        #expect(page.state.editor == nil)
     }
 }

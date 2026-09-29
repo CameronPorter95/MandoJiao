@@ -24,6 +24,20 @@ struct DictionaryPageState: Equatable {
 
     let headword: DictionaryHeadword
     var content: Content = .loading
+    /// The saved words, nil until they are known or where the page offers no way into the
+    /// vocabulary, as in the word editor's own dictionary.
+    var words: [Word]?
+    var editor: WordEditorTarget?
+
+    /// Nil where a reading can be neither added nor opened in the vocabulary.
+    func vocabulary(for reading: Reading) -> ReadingInVocabulary? {
+        ReadingInVocabulary(reading.entry, in: words)
+    }
+
+    func reading(_ id: Reading.ID) -> Reading? {
+        guard case .loaded(let readings, _) = content else { return nil }
+        return readings.first { $0.id == id }
+    }
 
     /// Only when it differs, since for most characters it does not.
     var traditional: String? {
@@ -71,5 +85,9 @@ struct DictionaryPageState: Equatable {
 
 enum DictionaryPageAction: Equatable {
     case appeared
+    case disappeared
     case retryTapped
+    /// Adds the reading, or opens it where it is already saved.
+    case vocabularyTapped(DictionaryPageState.Reading.ID)
+    case editorDismissed
 }
