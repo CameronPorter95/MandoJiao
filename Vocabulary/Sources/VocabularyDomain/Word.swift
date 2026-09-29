@@ -65,13 +65,14 @@ public nonisolated struct Word: Identifiable, Hashable, Sendable {
         )
     }
 
-    /// Case-insensitive on any meaning and pinyin, exact on Hanzi.
+    /// Read as the dictionary reads a query: Hanzi exactly, otherwise any meaning ignoring
+    /// case, or pinyin ignoring tones and spaces, so "shui3" and "yin hang" find 水 and 银行.
     public func matches(_ query: String) -> Bool {
-        let query = query.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        let query = SearchQuery(query)
         guard !query.isEmpty else { return true }
-        return meanings.contains { $0.lowercased().contains(query) }
-            || hanzi.contains(query)
-            || pinyin.lowercased().contains(query)
+        if query.isHanzi { return hanzi.contains(query.text) }
+        return meanings.contains { $0.lowercased().contains(query.english) }
+            || query.pinyin.map { SearchQuery.toneless(pinyin).contains($0) } ?? false
     }
 }
 

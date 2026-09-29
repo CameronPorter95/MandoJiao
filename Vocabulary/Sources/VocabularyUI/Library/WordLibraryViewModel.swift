@@ -6,14 +6,23 @@ import VocabularyDomain
 @MainActor
 @Observable
 public final class WordLibraryViewModel {
-    private(set) var state = WordLibraryState()
+    private(set) var state: WordLibraryState
 
     private let effectChannel = EffectChannel<WordLibraryEffect>()
     private let observeVocabulary: ObserveVocabularyUseCase
     private let deleteWords: DeleteWordsUseCase
     private var observation: Task<Void, Never>?
 
-    public init(observeVocabulary: ObserveVocabularyUseCase, deleteWords: DeleteWordsUseCase) {
+    /// All words without a `folderID`, or the words in the decks beneath that folder.
+    /// `vocabulary` is the library's latest snapshot, so a folder's list shows its words
+    /// before its own subscription delivers.
+    public init(
+        folderID: UUID?,
+        vocabulary: Vocabulary,
+        observeVocabulary: ObserveVocabularyUseCase,
+        deleteWords: DeleteWordsUseCase
+    ) {
+        state = WordLibraryState(folderID: folderID, vocabulary: vocabulary)
         self.observeVocabulary = observeVocabulary
         self.deleteWords = deleteWords
     }

@@ -39,6 +39,37 @@ struct VocabularyDomainTests {
         #expect(!Fixtures.water.matches("tea"))
     }
 
+    @Test("search reads pinyin as the dictionary does, ignoring tones, tone numbers and spaces", arguments: [
+        "shui", "SHUI", "shui3", "shuí", "  shui ",
+    ])
+    func searchIgnoresTones(query: String) {
+        #expect(Fixtures.water.matches(query))
+    }
+
+    @Test("search finds a longer word by its pinyin however the syllables are written", arguments: [
+        "yínháng", "yin2hang2", "Yin hang", "yinhang", "hang",
+    ])
+    func searchJoinsSyllables(query: String) {
+        #expect(Word(english: "bank", hanzi: "银行", pinyin: "yín háng").matches(query))
+    }
+
+    /// The cost of ignoring tones, as in the dictionary: a toneless query cannot tell 妈
+    /// from 马, so both stay in the list.
+    @Test("search cannot tell words apart by tone alone")
+    func searchTonesIndistinguishable() {
+        #expect(Word(english: "mother", hanzi: "妈", pinyin: "mā").matches("mǎ"))
+        #expect(Word(english: "horse", hanzi: "马", pinyin: "mǎ").matches("mā"))
+    }
+
+    @Test("a Hanzi query matches only Hanzi, and one with no letters matches no pinyin")
+    func searchQueryKinds() {
+        #expect(!Fixtures.water.matches("水水"))
+        #expect(!Word(english: "three", hanzi: "三", pinyin: "sān").matches("3"))
+        #expect(SearchQuery("银行").pinyin == nil)
+        #expect(SearchQuery("to drink!").pinyin == nil)
+        #expect(SearchQuery("Yín háng").pinyin == "yinhang")
+    }
+
     @Test("a draft needs English and Hanzi, and is saved trimmed")
     func drafts() {
         #expect(!WordDraft(english: " ", hanzi: "水").isComplete)

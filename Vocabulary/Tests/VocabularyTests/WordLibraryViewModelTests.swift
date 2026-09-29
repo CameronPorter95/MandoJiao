@@ -14,6 +14,8 @@ struct WordLibraryViewModelTests {
 
     private func makeLibrary() async -> (WordLibraryViewModel, EffectLog<WordLibraryEffect>) {
         let viewModel = WordLibraryViewModel(
+            folderID: nil,
+            vocabulary: .empty,
             observeVocabulary: ObserveVocabularyUseCase(repository: repository),
             deleteWords: DeleteWordsUseCase(repository: repository)
         )
@@ -31,6 +33,76 @@ struct WordLibraryViewModelTests {
 
         library.send(.searchChanged("sh"))
         #expect(library.state.words(sortedBy: .default).map(\.english) == ["book", "water", "mobile phone"].sorted())
+    }
+
+    @Test("the list is searched by pinyin ignoring tones, by English, and by Hanzi, as the dictionary is", arguments: [
+        ("shui", ["water"]), ("shuǐ", ["water"]), ("shui3", ["water"]), ("shou ji", ["mobile phone"]),
+        ("cha", ["tea"]), ("WATER", ["water"]), ("手机", ["mobile phone"]),
+    ])
+    func searchingLikeTheDictionary(query: String, found: [String]) async {
+        let (library, _) = await makeLibrary()
+        library.send(.searchChanged(query))
+        #expect(library.state.words(sortedBy: .default).map(\.english) == found)
+    }
+
+    /// Kitchen holds Drinks, with water and tea, and Pantry, which holds Snacks, sharing tea
+    /// and adding green. Book is in no deck here.
+    private enum Kitchen {
+        static let kitchen = FolderSummary(id: UUID(), name: "Kitchen", createdAt: .now)
+        static let pantry = FolderSummary(id: UUID(), name: "Pantry", createdAt: .now, parentID: kitchen.id)
+        static let empty = FolderSummary(id: UUID(), name: "Empty", createdAt: .now)
+        static let drinks = DeckSummary(
+            id: UUID(), name: "Drinks", createdAt: .now, wordIDs: [Fixtures.water.id, Fixtures.tea.id], folderID: kitchen.id
+        )
+        static let snacks = DeckSummary(
+            id: UUID(), name: "Snacks", createdAt: .now, wordIDs: [Fixtures.tea.id, Fixtures.green.id], folderID: pantry.id
+        )
+        static let vocabulary = Vocabulary(
+            words: Fixtures.words, decks: [drinks, snacks], folders: [kitchen, pantry, empty]
+        )
+    }
+
+    private func makeFolderList(_ folderID: UUID, repository: FakeVocabularyRepository) -> WordLibraryViewModel {
+        WordLibraryViewModel(
+            folderID: folderID,
+            vocabulary: Kitchen.vocabulary,
+            observeVocabulary: ObserveVocabularyUseCase(repository: repository),
+            deleteWords: DeleteWordsUseCase(repository: repository)
+        )
+    }
+
+    @Test("a folder lists every word in its decks and its folders' decks, once each, before its subscription delivers")
+    func folderWords() {
+        let list = makeFolderList(Kitchen.kitchen.id, repository: FakeVocabularyRepository(Kitchen.vocabulary))
+        #expect(list.state.words(sortedBy: .default).map(\.english) == ["green", "tea", "water"])
+        #expect(list.state.hasWords)
+
+        let pantry = makeFolderList(Kitchen.pantry.id, repository: FakeVocabularyRepository(Kitchen.vocabulary))
+        #expect(pantry.state.words(sortedBy: .default).map(\.english) == ["green", "tea"])
+    }
+
+    @Test("a folder's list is sorted and searched as the list of all words is, and never shows a word outside it")
+    func folderSortAndSearch() {
+        let list = makeFolderList(Kitchen.kitchen.id, repository: FakeVocabularyRepository(Kitchen.vocabulary))
+        #expect(list.state.words(sortedBy: WordSort(field: .mistakes, ascending: false)).map(\.english) == ["tea", "green", "water"])
+
+        // Book, shū, is in no deck of Kitchen's.
+        list.send(.searchChanged("shu"))
+        #expect(list.state.words(sortedBy: .default).map(\.english) == ["water"])
+    }
+
+    @Test("a folder with no words in its decks has none, and nor does one that is gone")
+    func folderWithoutWords() async {
+        let empty = makeFolderList(Kitchen.empty.id, repository: FakeVocabularyRepository(Kitchen.vocabulary))
+        #expect(!empty.state.hasWords)
+        #expect(empty.state.words(sortedBy: .default).isEmpty)
+
+        let repository = FakeVocabularyRepository(Kitchen.vocabulary)
+        let list = makeFolderList(Kitchen.kitchen.id, repository: repository)
+        list.send(.appeared)
+        await repository.replace(Vocabulary(words: Fixtures.words, decks: [], folders: []))
+        #expect(await waitUntil { !list.state.hasWords })
+        #expect(list.state.words(sortedBy: .default).isEmpty)
     }
 
     @Test("the editor opens on the chosen word, or blank for a new one")

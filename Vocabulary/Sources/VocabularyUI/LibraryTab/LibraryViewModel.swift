@@ -160,7 +160,7 @@ public final class LibraryViewModel {
         }
         if let gone = state.path.firstIndex(where: { page in
             switch page {
-            case .folder(let id): vocabulary.folder(id: id) == nil
+            case .folder(let id), .words(let id): vocabulary.folder(id: id) == nil
             case .deck(let id): vocabulary.deck(id: id) == nil
             }
         }) {

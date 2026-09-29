@@ -8,6 +8,7 @@ struct FolderDetailScreen: View {
     let onAction: (FolderDetailAction) -> Void
     let onOpenDeck: (UUID) -> Void
     let onOpenFolder: (UUID) -> Void
+    let onOpenWords: () -> Void
 
     // Not List(selection:), which turns a tap on Start lesson into a row selection.
     var body: some View {
@@ -33,6 +34,17 @@ struct FolderDetailScreen: View {
                 } else {
                     Text("The decks in this folder need at least \(state.minimumMatchingWords) words between them.")
                 }
+            }
+
+            Section {
+                Button(action: onOpenWords) {
+                    LabeledContent {
+                        Text("\(state.listedWordCount)")
+                    } label: {
+                        Label("All words", systemImage: "character.book.closed")
+                    }
+                }
+                .tint(.primary)
             }
 
             if !state.subfolders.isEmpty {
@@ -80,10 +92,10 @@ struct FolderDetailScreen: View {
                 Button { onAction(.namingTapped(.newDeck)) } label: {
                     Label("New deck", systemImage: "plus")
                 }
+                Button { onAction(.namingTapped(.newFolder)) } label: {
+                    Label("New folder", systemImage: "folder.badge.plus")
+                }
                 Menu {
-                    Button { onAction(.namingTapped(.newFolder)) } label: {
-                        Label("New folder", systemImage: "folder.badge.plus")
-                    }
                     Button { onAction(.namingTapped(.rename)) } label: {
                         Label("Rename", systemImage: "pencil")
                     }
