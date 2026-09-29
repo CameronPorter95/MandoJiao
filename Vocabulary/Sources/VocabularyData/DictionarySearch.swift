@@ -81,7 +81,7 @@ nonisolated struct DictionarySearch: Sendable {
         for (record, _) in ranked {
             guard results.count < limit else { break }
             guard let entry = BundledDictionary.Index.entry(record.line),
-                  seen.insert("\(entry.simplified)\t\(entry.pinyin)").inserted
+                  seen.insert("\(entry.simplified)\t\(entry.pinyin.lowercased())").inserted
             else { continue }
             results.append(DictionarySearchResult(entry: entry, headline: record.headline))
         }

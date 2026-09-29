@@ -43,8 +43,8 @@ nonisolated struct DictionaryTests {
         #expect(try await dictionary.entries(forHanzi: "姓名").first?.senses == ["surname and given name, full name"])
         #expect(try await dictionary.entries(forHanzi: "湘").first?.senses.first == "Hunan province in south central China")
         #expect(try await dictionary.entries(forHanzi: "欧盟").first?.senses == ["European Union", "EU"])
-        // A bare surname still points nowhere worth keeping.
-        #expect(try await dictionary.entries(forHanzi: "于").first { $0.pinyin == "Yú" }?.senses == [])
+        // A bare surname still points nowhere worth keeping, so 于 Yú adds nothing to 于 yú.
+        #expect(try await raw("于").contains { $0.senses.contains { $0.hasPrefix("surname") } } == false)
     }
 
     @Test("of two lines in one reading, a rare traditional form loses", arguments: [
@@ -69,6 +69,16 @@ nonisolated struct DictionaryTests {
         // 爲 wéi, "variant of 為|为[wei2]", takes wéi's senses, not the preferred wèi's.
         #expect(wei.first { $0.pinyin == "wéi" }?.senses.contains("because of") == false)
         #expect(wei.first { $0.pinyin == "wéi" }?.traditional == "為, 爲")
+        // A reading capitalised for a proper noun joins its lower-case one, everyday senses first.
+        let sui = try await raw("随")
+        #expect(sui.map(\.pinyin) == ["suí"])
+        #expect(sui.first?.senses.first == "to follow")
+        let zhong = try #require(try await raw("中").first { $0.pinyin == "zhōng" })
+        #expect(zhong.senses.first == "within, among, in")
+        #expect(zhong.senses.contains { $0.contains("China") })
+        #expect(try await raw("中").contains { $0.pinyin == "Zhōng" } == false)
+        // One only ever capitalised keeps its capital.
+        #expect(try await raw("欧洲").map(\.pinyin) == ["Ōuzhōu"])
         // A reference names a reading's case too: 㥁, "variant of 德[de2]", is "virtue", not Germany.
         #expect(try await raw("㥁").first?.senses.first == "virtue")
     }

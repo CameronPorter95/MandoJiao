@@ -40,15 +40,25 @@ actor BundledDictionary {
         /// lines, differing in traditional form (韭 and 韮) and sometimes senses (周 has "week"
         /// on 週's line, "to make a circuit" on 周's); read as one, their senses in order with
         /// repeats dropped, the preferred line's first, and their traditional forms together.
+        /// A reading capitalised for a proper noun is the same reading: 随 Suí, a surname with
+        /// no senses left, and 中 Zhōng, "China", join 随 suí and 中 zhōng, the everyday senses
+        /// first and the reading written in lower case. One only ever capitalised, like 欧洲
+        /// Ōuzhōu, keeps its capital.
         func entries(forHanzi hanzi: String) -> [DictionaryEntry] {
             let lines = (lines[hanzi] ?? []).compactMap(Self.entry).sorted { $0.isPreferred && !$1.isPreferred }
             var readings: [String] = []
             var byReading: [String: [DictionaryEntry]] = [:]
             for line in lines {
-                if byReading[line.pinyin] == nil { readings.append(line.pinyin) }
-                byReading[line.pinyin, default: []].append(line)
+                let reading = line.pinyin.lowercased()
+                if byReading[reading] == nil { readings.append(reading) }
+                byReading[reading, default: []].append(line)
             }
-            return readings.compactMap { byReading[$0].map(Self.merged) }
+            return readings.compactMap { reading in
+                byReading[reading].map { lines in
+                    // Stable, so the preferred line still leads its own case.
+                    Self.merged(lines.filter { $0.pinyin == reading } + lines.filter { $0.pinyin != reading })
+                }
+            }
         }
 
         private static func merged(_ lines: [DictionaryEntry]) -> DictionaryEntry {
