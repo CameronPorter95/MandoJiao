@@ -3,6 +3,7 @@ import Foundation
 /// One reading of a headword in the dictionary, with every sense it has. Never edited.
 public nonisolated struct DictionaryEntry: Hashable, Sendable {
     public let simplified: String
+    /// Several, comma separated, where CC-CEDICT gives the reading more than one: "為, 爲".
     public let traditional: String
     public let pinyin: String
     /// The reading suggestions use when a headword has several.

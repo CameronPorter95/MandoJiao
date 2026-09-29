@@ -36,9 +36,36 @@ actor BundledDictionary {
         let lines: [String: [Substring]]
         let longestHeadword: Int
 
-        /// The preferred reading first.
+        /// One entry per reading, the preferred first. CC-CEDICT gives some readings several
+        /// lines, differing in traditional form (韭 and 韮) and sometimes senses (周 has "week"
+        /// on 週's line, "to make a circuit" on 周's); read as one, their senses in order with
+        /// repeats dropped, the preferred line's first, and their traditional forms together.
         func entries(forHanzi hanzi: String) -> [DictionaryEntry] {
-            (lines[hanzi] ?? []).compactMap(Self.entry).sorted { $0.isPreferred && !$1.isPreferred }
+            let lines = (lines[hanzi] ?? []).compactMap(Self.entry).sorted { $0.isPreferred && !$1.isPreferred }
+            var readings: [String] = []
+            var byReading: [String: [DictionaryEntry]] = [:]
+            for line in lines {
+                if byReading[line.pinyin] == nil { readings.append(line.pinyin) }
+                byReading[line.pinyin, default: []].append(line)
+            }
+            return readings.compactMap { byReading[$0].map(Self.merged) }
+        }
+
+        private static func merged(_ lines: [DictionaryEntry]) -> DictionaryEntry {
+            guard let first = lines.first, lines.count > 1 else { return lines[0] }
+            var traditional: [String] = []
+            var senses: [String] = []
+            for line in lines {
+                if !traditional.contains(line.traditional) { traditional.append(line.traditional) }
+                for sense in line.senses where !senses.contains(sense) { senses.append(sense) }
+            }
+            return DictionaryEntry(
+                simplified: first.simplified,
+                traditional: traditional.joined(separator: ", "),
+                pinyin: first.pinyin,
+                isPreferred: lines.contains(where: \.isPreferred),
+                senses: senses
+            )
         }
 
         static func entry(_ line: Substring) -> DictionaryEntry? {
