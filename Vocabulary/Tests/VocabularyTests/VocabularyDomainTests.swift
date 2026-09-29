@@ -86,6 +86,31 @@ struct VocabularyDomainTests {
         #expect(!xian.matches("xiàn"))
     }
 
+    @Test("a word is a dictionary reading however its pinyin is typed", arguments: [
+        "yínháng", "yín háng", "Yínháng", "yin2hang2", "yin2 hang2",
+    ])
+    func wordIsReading(pinyin: String) {
+        let entry = DictionaryEntry(simplified: "银行", traditional: "銀行", pinyin: "yínháng", isPreferred: true, senses: ["bank"])
+        #expect(Word(english: "bank", hanzi: "银行", pinyin: pinyin).isReading(of: entry))
+    }
+
+    @Test("a word is not a reading with other tones, other Hanzi, or no pinyin")
+    func wordIsNotReading() {
+        let xing = DictionaryEntry(simplified: "行", traditional: "行", pinyin: "xíng", isPreferred: true, senses: ["to walk"])
+        #expect(!Word(english: "row", hanzi: "行", pinyin: "háng").isReading(of: xing))
+        #expect(!Word(english: "walk", hanzi: "行", pinyin: "xìng").isReading(of: xing))
+        #expect(!Word(english: "walk", hanzi: "行", pinyin: "xing").isReading(of: xing))
+        #expect(!Word(english: "walk", hanzi: "走", pinyin: "xíng").isReading(of: xing))
+        #expect(!Word(english: "walk", hanzi: "行").isReading(of: xing))
+    }
+
+    @Test("a neutral tone is a reading whether written with a 5 or nothing")
+    func wordIsReadingNeutral() {
+        let xiexie = DictionaryEntry(simplified: "谢谢", traditional: "謝謝", pinyin: "xièxie", isPreferred: true, senses: ["thanks"])
+        #expect(Word(english: "thanks", hanzi: "谢谢", pinyin: "xie4xie5").isReading(of: xiexie))
+        #expect(Word(english: "thanks", hanzi: "谢谢", pinyin: "xie4xie").isReading(of: xiexie))
+    }
+
     @Test("a Hanzi query matches only Hanzi, and one with no letters matches no pinyin")
     func searchQueryKinds() {
         #expect(!Fixtures.water.matches("水水"))

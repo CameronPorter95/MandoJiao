@@ -10,22 +10,53 @@ public final class DictionaryPageViewModel {
     private(set) var state: DictionaryPageState
 
     private let lookUpDictionary: LookUpDictionaryUseCase
+    private let observeVocabulary: ObserveVocabularyUseCase?
     private var loading: Task<Void, Never>?
+    private var observation: Task<Void, Never>?
 
-    public init(headword: DictionaryHeadword, lookUpDictionary: LookUpDictionaryUseCase) {
+    /// Without `observeVocabulary` the page offers no way into the vocabulary.
+    public init(
+        headword: DictionaryHeadword,
+        lookUpDictionary: LookUpDictionaryUseCase,
+        observeVocabulary: ObserveVocabularyUseCase?
+    ) {
         state = DictionaryPageState(headword: headword)
         self.lookUpDictionary = lookUpDictionary
+        self.observeVocabulary = observeVocabulary
     }
 
     func send(_ action: DictionaryPageAction) {
         switch action {
         case .appeared:
+            observe()
             guard loading == nil, state.content == .loading else { return }
             load()
+
+        case .disappeared:
+            observation?.cancel()
+            observation = nil
 
         case .retryTapped:
             state.content = .loading
             load()
+
+        case .vocabularyTapped(let id):
+            guard let reading = state.reading(id), let vocabulary = state.vocabulary(for: reading) else { return }
+            state.editor = vocabulary.editor(for: reading.entry)
+
+        case .editorDismissed:
+            state.editor = nil
+        }
+    }
+
+    /// Live, so a reading shows as saved as soon as the editor saves it.
+    private func observe() {
+        guard let observeVocabulary, observation == nil else { return }
+        let stream = observeVocabulary()
+        observation = Task { [weak self] in
+            for await vocabulary in stream {
+                self?.state.words = vocabulary.words
+            }
         }
     }
 

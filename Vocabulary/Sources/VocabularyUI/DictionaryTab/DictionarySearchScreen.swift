@@ -11,8 +11,23 @@ struct DictionarySearchScreen: View {
         List {
             if case .found(let entries) = state.results {
                 ForEach(entries, id: \.self) { result in
+                    let vocabulary = state.vocabulary(for: result)
                     NavigationLink(value: DictionaryHeadword(hanzi: result.simplified, pinyin: result.pinyin)) {
-                        DictionaryResultRow(result: result)
+                        DictionaryResultRow(result: result, isSaved: vocabulary?.isSaved ?? false)
+                    }
+                    .swipeActions(edge: .leading) {
+                        if let vocabulary {
+                            Button {
+                                onAction(.vocabularyTapped(result))
+                            } label: {
+                                if vocabulary.isSaved {
+                                    Label("Edit", systemImage: "pencil")
+                                } else {
+                                    Label("Add", systemImage: "plus")
+                                }
+                            }
+                            .tint(Theme.accent)
+                        }
                     }
                 }
             }
@@ -44,11 +59,14 @@ struct DictionarySearchScreen: View {
         // writes its pending correction back into the field, so a cleared query came back.
         .autocorrectionDisabled()
         .navigationTitle("Dictionary")
+        .onAppear { onAction(.appeared) }
+        .onDisappear { onAction(.disappeared) }
     }
 }
 
 private struct DictionaryResultRow: View {
     let result: DictionarySearchResult
+    let isSaved: Bool
 
     var body: some View {
         HStack(spacing: 12) {
@@ -63,6 +81,12 @@ private struct DictionaryResultRow: View {
                     .lineLimit(1)
                     .foregroundStyle(result.summary == nil ? .secondary : .primary)
             }
+            if isSaved {
+                Spacer()
+                Image(systemName: "checkmark.circle.fill")
+                    .foregroundStyle(Theme.accent)
+                    .accessibilityLabel("In vocabulary")
+            }
         }
     }
 }
@@ -73,7 +97,7 @@ private struct DictionaryResultRow: View {
             state: DictionarySearchState(query: "bank", results: .found([
                 DictionarySearchResult(entry: DictionaryEntry(simplified: "银行", traditional: "銀行", pinyin: "yínháng", isPreferred: true, senses: ["bank"])),
                 DictionarySearchResult(entry: DictionaryEntry(simplified: "岸", traditional: "岸", pinyin: "àn", isPreferred: true, senses: ["bank, shore, beach, coast"])),
-            ])),
+            ]), words: [Word(english: "bank", hanzi: "银行", pinyin: "yínháng")]),
             onAction: { _ in }
         )
     }
