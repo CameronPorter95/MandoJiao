@@ -54,6 +54,7 @@ nonisolated struct HSKTests {
         ("周", "zhōu", "week"), ("故事", "gùshi", "narrative, story, tale"),
         // From the native speaker's review, both meanings being common in the last.
         ("牛", "niú", "cattle"), ("才", "cái", "only then, just; ability, talent"),
+        ("最", "zuì", "most"), ("同学", "tóngxué", "classmate"),
     ])
     func headlines(hanzi: String, pinyin: String, headline: String) {
         let word = words.first { $0.hanzi == hanzi }
