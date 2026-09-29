@@ -119,6 +119,18 @@ nonisolated struct DictionaryTests {
         #expect(try await dictionary.search("银", limit: 20).allSatisfy { $0.simplified.contains("银") })
     }
 
+    @Test("search by pinyin finds every tone without one, and only the tone written with one")
+    func searchByTone() async throws {
+        let toneless = try await dictionary.search("wei", limit: 200).map(\.pinyin)
+        #expect(Set(["wéi", "wèi", "wěi", "wēi"]).isSubset(of: toneless))
+        for (query, tone) in [("wéi", "wéi"), ("wei2", "wéi"), ("wèi", "wèi"), ("wei4", "wèi")] {
+            let results = try await dictionary.search(query, limit: 200)
+            #expect(!results.isEmpty && results.allSatisfy { $0.pinyin.lowercased().hasPrefix(tone) }, "\(query)")
+        }
+        #expect(try await dictionary.search("wéi", limit: 20).contains { $0.simplified == "为" })
+        #expect(try await dictionary.search("wèi", limit: 20).contains { $0.simplified == "为" })
+    }
+
     @Test("search finds a headword by English, a whole gloss before a gloss merely holding the word")
     func searchByEnglish() async throws {
         #expect(try await dictionary.search("cat", limit: 5).first?.simplified == "猫")

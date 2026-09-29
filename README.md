@@ -67,7 +67,8 @@ the words in every deck beneath it, searched and sorted as All words is.
 ## Dictionary
 
 The whole of CC-CEDICT is bundled, and the Dictionary tab searches it by Hanzi, by pinyin
-with or without tones, or by English. A headword's page lists every reading with all its
+with or without tones, or by English. Pinyin without tones finds every tone; a tone written,
+as "wéi" or "wei2", finds only that tone. The word list is searched the same way. A headword's page lists every reading with all its
 senses, and each of its characters. The dictionary is read-only and apart from your
 vocabulary: editing a word, its meanings can be chosen from the dictionary's senses, which
 copies them into the word.
