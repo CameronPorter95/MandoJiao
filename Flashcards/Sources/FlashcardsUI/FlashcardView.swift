@@ -11,6 +11,7 @@ struct FlashcardView: View {
     let phase: FlashcardLesson.Phase
     let onSubmitTyped: (String) -> Void
     let onPick: (UUID) -> Void
+    let onDontKnow: () -> Void
     let onContinue: () -> Void
 
     @State private var typed = ""
@@ -72,10 +73,16 @@ struct FlashcardView: View {
     private var verdict: some View {
         if case .answered(let isCorrect, let given) = phase {
             VStack(spacing: 10) {
-                Label(isCorrect ? "Correct" : "Not quite", systemImage: isCorrect ? "checkmark.circle.fill" : "xmark.circle.fill")
-                    .font(.headline)
-                    .foregroundStyle(isCorrect ? Theme.success : Theme.miss)
-                if !isCorrect, card.format == .typed {
+                if !isCorrect, given.isEmpty {
+                    Text("The answer is")
+                        .font(.headline)
+                        .foregroundStyle(.secondary)
+                } else {
+                    Label(isCorrect ? "Correct" : "Not quite", systemImage: isCorrect ? "checkmark.circle.fill" : "xmark.circle.fill")
+                        .font(.headline)
+                        .foregroundStyle(isCorrect ? Theme.success : Theme.miss)
+                }
+                if !isCorrect, !given.isEmpty, card.format == .typed {
                     Text("You wrote \(given)")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
@@ -118,9 +125,18 @@ struct FlashcardView: View {
             .tint(Theme.accent)
             .keyboardShortcut(.defaultAction)
         } else {
-            switch card.format {
-            case .typed: typingControl
-            case .picked(let options): optionsControl(options)
+            VStack(spacing: 12) {
+                switch card.format {
+                case .typed: typingControl
+                case .picked(let options): optionsControl(options)
+                }
+                // Counts as a mistake, and shows the answer.
+                Button("Don't know") {
+                    isFieldFocused = false
+                    onDontKnow()
+                }
+                .font(.subheadline)
+                .tint(.secondary)
             }
         }
     }

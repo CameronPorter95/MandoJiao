@@ -31,7 +31,9 @@ pinyin, since the Hanzi is already on the card.
 One word at a time, shown in Chinese or English, chosen by the app, and answered
 either by typing or by picking from four. A card showing Chinese takes the English,
 any of the word's meanings; one showing English takes the Hanzi only. One try per
-card, then the word in full.
+card, or Don't know, which counts as a mistake, then the word in full. A right answer
+plays the matching board's tone, climbing through the lesson, and the end plays its
+finishing tune.
 
 ## Grading
 

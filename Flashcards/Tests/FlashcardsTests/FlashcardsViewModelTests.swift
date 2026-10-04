@@ -11,6 +11,7 @@ import VocabularyDomain
 @MainActor
 struct FlashcardsViewModelTests {
     private let repository = FakeVocabularyRepository()
+    private let sounds = FakeSounds()
 
     private let cards = [
         Flashcard(word: Words.water, direction: .englishToChinese, format: .typed),
@@ -22,6 +23,7 @@ struct FlashcardsViewModelTests {
         let viewModel = FlashcardsViewModel(
             request: LessonRequest(title: "t", pool: cards.map(\.word)),
             recordResults: RecordLessonResultsUseCase(repository: repository),
+            sounds: sounds,
             makePlan: { FlashcardPlan(title: $0.title, cards: cards) }
         )
         viewModel.send(.appeared)
@@ -40,6 +42,47 @@ struct FlashcardsViewModelTests {
         viewModel.send(.optionPicked(Words.book.id))
         #expect(await log.contains(.haptic(.error)))
         #expect(log.effects.filter { if case .haptic = $0 { true } else { false } }.count == 2)
+    }
+
+    @Test("a right answer plays the success tone, climbing through the lesson, and a wrong one plays nothing")
+    func successTone() {
+        let (viewModel, _) = makeViewModel()
+        #expect(sounds.played == ["prepare"])
+        viewModel.send(.typedAnswerSubmitted("水"))
+        #expect(sounds.played == ["prepare", "match 0 of 2"])
+        viewModel.send(.continueTapped)
+        viewModel.send(.optionPicked(Words.book.id))
+        #expect(sounds.played == ["prepare", "match 0 of 2"])
+    }
+
+    @Test("leaving the last card plays the lesson complete tune, once")
+    func completeTune() {
+        let (viewModel, _) = makeViewModel()
+        viewModel.send(.typedAnswerSubmitted("水"))
+        viewModel.send(.continueTapped)
+        #expect(!sounds.played.contains("complete"))
+        viewModel.send(.optionPicked(Words.tea.id))
+        viewModel.send(.continueTapped)
+        viewModel.send(.continueTapped)
+        #expect(sounds.played == ["prepare", "match 0 of 2", "match 1 of 2", "complete"])
+    }
+
+    @Test("don't know shows the answer and counts as a mistake, with no tone or buzz")
+    func dontKnow() async {
+        let (viewModel, log) = makeViewModel()
+        viewModel.send(.dontKnowTapped)
+        #expect(viewModel.state.lesson?.phase == .answered(isCorrect: false, given: ""))
+        viewModel.send(.continueTapped)
+        viewModel.send(.dontKnowTapped)
+        viewModel.send(.continueTapped)
+
+        #expect(await waitUntil { await repository.recordedResults.count == 1 })
+        let results = await repository.recordedResults.first
+        #expect(results?.misses == [Words.water.id: 1, Words.tea.id: 1])
+        #expect(results?.answers.map(\.wrongAttempts) == [0, 0])
+        #expect(results?.answers.map(\.isCorrect) == [false, false])
+        #expect(sounds.played == ["prepare", "complete"])
+        #expect(!log.effects.contains { if case .haptic = $0 { true } else { false } })
     }
 
     @Test("the last card left records every answer, with the tallies the mistakes list uses")
@@ -88,7 +131,8 @@ struct FlashcardsViewModelTests {
     func noWords() async {
         let viewModel = FlashcardsViewModel(
             request: LessonRequest(title: "t", pool: [WordPair(english: "", hanzi: "空")]),
-            recordResults: RecordLessonResultsUseCase(repository: repository)
+            recordResults: RecordLessonResultsUseCase(repository: repository),
+            sounds: sounds
         )
         let log = EffectLog(viewModel.effects())
         viewModel.send(.appeared)
@@ -96,4 +140,13 @@ struct FlashcardsViewModelTests {
         viewModel.send(.closeTapped)
         #expect(await log.contains(.close))
     }
+}
+
+@MainActor
+private final class FakeSounds: MatchSoundPlaying {
+    private(set) var played: [String] = []
+    func prepare() { played.append("prepare") }
+    func playMatch(step: Int, of total: Int) { played.append("match \(step) of \(total)") }
+    func playMiss() { played.append("miss") }
+    func playLessonComplete() { played.append("complete") }
 }

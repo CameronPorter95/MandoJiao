@@ -18,6 +18,7 @@ enum FlashcardsAction: Equatable {
     case appeared
     case typedAnswerSubmitted(String)
     case optionPicked(UUID)
+    case dontKnowTapped
     case continueTapped
     case practiseAgainTapped
     case closeTapped

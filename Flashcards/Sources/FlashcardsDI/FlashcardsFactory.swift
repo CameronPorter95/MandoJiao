@@ -1,4 +1,5 @@
 import CoreDI
+import CoreSound
 import FlashcardsUI
 
 /// The only place that builds the flash card lesson.
@@ -9,7 +10,7 @@ public enum FlashcardsFactory: NavigationInputRouteFactory {
         input: FlashcardsInput
     ) -> FlashcardsRoute {
         FlashcardsRoute(
-            viewModel: FlashcardsViewModel(request: input.request, recordResults: input.recordResults),
+            viewModel: FlashcardsViewModel(request: input.request, recordResults: input.recordResults, sounds: ToneEngine.shared),
             navigation: navigation
         )
     }

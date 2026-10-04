@@ -102,8 +102,15 @@ cannot tell 看 from 见. Text a card cannot take (pinyin for Hanzi, Hanzi for E
 is turned away without spending the try. The costs, each pinned by a test: a traditional
 form is wrong, and so is a synonym the word does not list.
 
-One try per card, then the word in full. Typed and picked answers are recorded as
-separate exercises, since typing recalls a word and picking only recognises it.
+One try per card, then the word in full. Don't know gives the card up: it counts as a
+mistake and is recorded as wrong with no tries, so giving up reads apart from guessing
+wrong. Typed and picked answers are recorded as separate exercises, since typing recalls
+a word and picking only recognises it.
+
+A right answer plays the matching board's success tone, spread across the lesson so it
+climbs to the octave on the last card, and leaving the last card plays the lesson
+complete tune. A wrong answer and Don't know play nothing. Unlike the speaking lesson,
+flash cards never record audio, so the tones cost recognition nothing.
 
 ## The mistakes list
 

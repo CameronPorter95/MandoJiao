@@ -38,6 +38,7 @@ let package = Package(
             dependencies: [
                 "FlashcardsDomain", "FlashcardsUI",
                 .product(name: "VocabularyDomain", package: "Vocabulary"),
+                .product(name: "CoreSound", package: "Core"),
                 .product(name: "CoreDI", package: "Core"),
             ],
             swiftSettings: mainActorByDefault

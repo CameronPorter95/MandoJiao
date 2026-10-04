@@ -15,6 +15,7 @@ public final class FlashcardsViewModel {
     private let effectChannel = EffectChannel<FlashcardsEffect>()
     private let request: LessonRequest
     private let recordResults: RecordLessonResultsUseCase
+    private let sounds: any MatchSoundPlaying
     private let makePlan: MakePlan
     private var didRecordResults = false
 
@@ -22,10 +23,12 @@ public final class FlashcardsViewModel {
     public init(
         request: LessonRequest,
         recordResults: RecordLessonResultsUseCase,
+        sounds: any MatchSoundPlaying,
         makePlan: @escaping MakePlan = { FlashcardPlanBuilder.makeLesson(title: $0.title, from: $0.pool) }
     ) {
         self.request = request
         self.recordResults = recordResults
+        self.sounds = sounds
         self.makePlan = makePlan
     }
 
@@ -34,6 +37,7 @@ public final class FlashcardsViewModel {
     func send(_ action: FlashcardsAction) {
         switch action {
         case .appeared:
+            sounds.prepare()
             if state.lesson == nil { startLesson() }
 
         case .typedAnswerSubmitted(let text):
@@ -45,11 +49,18 @@ public final class FlashcardsViewModel {
             else { return }
             settle(state.lesson?.pick(option))
 
+        case .dontKnowTapped:
+            // No buzz: giving up is asking for the answer, not getting it wrong.
+            state.lesson?.skip()
+
         case .continueTapped:
+            guard let lesson = state.lesson, !lesson.isFinished else { return }
             state.lesson?.advance()
+            guard state.lesson?.isFinished == true else { return }
+            sounds.playLessonComplete()
             // Recorded as soon as the last card is answered and left, so the review and the
             // mistakes list agree even if the app is killed from here.
-            if state.lesson?.isFinished == true { recordResultsOnce() }
+            recordResultsOnce()
 
         case .practiseAgainTapped:
             startLesson()
@@ -70,9 +81,12 @@ public final class FlashcardsViewModel {
         }
     }
 
-    /// Nil is an answer the card could not take, which gets no verdict.
+    /// Nil is an answer the card could not take, which gets no verdict. A right answer
+    /// plays matching's success tone, climbing through the lesson to the octave on the last
+    /// card; a wrong one only buzzes.
     private func settle(_ verdict: Bool?) {
-        guard let verdict else { return }
+        guard let verdict, let lesson = state.lesson else { return }
+        if verdict { sounds.playMatch(step: lesson.cardIndex, of: lesson.plan.cardCount) }
         effectChannel.send(.haptic(verdict ? .success : .error))
     }
 

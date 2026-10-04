@@ -29,7 +29,8 @@ public nonisolated struct Answer: Hashable, Sendable {
     public let direction: Direction?
     /// Whether it ended right, however many tries that took.
     public let isCorrect: Bool
-    /// Wrong tries before it came right, or before the tries ran out.
+    /// Wrong tries before it came right, or before the tries ran out. Zero on a wrong answer
+    /// is one given up without a try, as a flash card's Don't know is.
     public let wrongAttempts: Int
 
     public init(wordID: UUID, exercise: Exercise, direction: Direction?, isCorrect: Bool, wrongAttempts: Int) {

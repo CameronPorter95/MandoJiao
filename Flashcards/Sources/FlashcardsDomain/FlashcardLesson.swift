@@ -8,7 +8,8 @@ import VocabularyDomain
 public nonisolated struct FlashcardLesson: Equatable, Sendable {
     public enum Phase: Equatable, Sendable {
         case answering
-        /// `given` is what was typed, or the option picked as it showed.
+        /// `given` is what was typed, or the option picked as it showed, and empty when the
+        /// learner said they did not know.
         case answered(isCorrect: Bool, given: String)
     }
 
@@ -70,6 +71,16 @@ public nonisolated struct FlashcardLesson: Equatable, Sendable {
         return isRight
     }
 
+    /// Gives the card up: the answer shows and it counts as a mistake, recorded as wrong
+    /// with no tries, which tells giving up apart from guessing wrong. Nil when the card
+    /// is already answered.
+    @discardableResult
+    public mutating func skip() -> Bool? {
+        guard !isFinished, phase == .answering else { return nil }
+        settle(false, given: "", tries: 0)
+        return false
+    }
+
     /// Moves to the next card, or finishes after the last. Only once the card is answered.
     public mutating func advance() {
         guard !isFinished, phase != .answering else { return }
@@ -82,7 +93,7 @@ public nonisolated struct FlashcardLesson: Equatable, Sendable {
         cardIndex = next
     }
 
-    private mutating func settle(_ isRight: Bool, given: String) {
+    private mutating func settle(_ isRight: Bool, given: String, tries: Int = 1) {
         let id = card.word.id
         if isRight {
             cleanSolvesByPairID[id, default: 0] += 1
@@ -91,7 +102,7 @@ public nonisolated struct FlashcardLesson: Equatable, Sendable {
         }
         answers.append(Answer(
             wordID: id, exercise: card.exercise, direction: card.direction,
-            isCorrect: isRight, wrongAttempts: isRight ? 0 : 1
+            isCorrect: isRight, wrongAttempts: isRight ? 0 : tries
         ))
         phase = .answered(isCorrect: isRight, given: given)
     }

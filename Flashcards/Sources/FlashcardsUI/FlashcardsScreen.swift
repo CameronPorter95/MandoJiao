@@ -29,6 +29,7 @@ struct FlashcardsScreen: View {
                         phase: lesson.phase,
                         onSubmitTyped: { onAction(.typedAnswerSubmitted($0)) },
                         onPick: { onAction(.optionPicked($0)) },
+                        onDontKnow: { onAction(.dontKnowTapped) },
                         onContinue: { onAction(.continueTapped) }
                     )
                     .id(lesson.cardIndex)

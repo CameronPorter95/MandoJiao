@@ -218,6 +218,19 @@ struct FlashcardLessonTests {
         #expect(lesson.clearedPairs == [Words.water, Words.tea])
     }
 
+    @Test("don't know settles the card as a mistake with no tries, and only while it waits for an answer")
+    func dontKnow() {
+        var lesson = lesson([typedWater, pickedTea])
+        #expect(lesson.skip() == false)
+        #expect(lesson.phase == .answered(isCorrect: false, given: ""))
+        #expect(lesson.missesByPairID == [Words.water.id: 1])
+        #expect(lesson.answers.first?.wrongAttempts == 0)
+        #expect(lesson.skip() == nil)
+        #expect(lesson.submit(typed: "水") == nil)
+        lesson.advance()
+        #expect(lesson.cardIndex == 1)
+    }
+
     @Test("a card closed on before it was answered is not counted")
     func closedEarly() {
         var lesson = lesson([typedWater, pickedTea])
