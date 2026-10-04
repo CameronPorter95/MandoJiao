@@ -20,6 +20,16 @@ public enum FolderDetailFactory: NavigationInputRouteFactory {
             deleteDeck: DeleteDeckUseCase(repository: repository),
             deleteFolder: DeleteFolderUseCase(repository: repository)
         )
-        return FolderDetailRoute(viewModel: viewModel, navigation: navigation, layout: input.layout)
+        return FolderDetailRoute(viewModel: viewModel, navigation: navigation, layout: input.layout) { searchText in
+            WordLibraryFactory.makeRoute(
+                dependencies: dependencies,
+                input: WordLibraryInput(
+                    folderID: input.folderID,
+                    layout: input.wordList,
+                    searchText: searchText,
+                    vocabulary: input.vocabulary
+                )
+            )
+        }
     }
 }

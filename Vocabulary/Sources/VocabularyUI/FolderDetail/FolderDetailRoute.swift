@@ -5,13 +5,21 @@ public struct FolderDetailRoute: View {
     @State private var viewModel: FolderDetailViewModel
     private let navigation: FolderDetailNavigation
     private let layout: FolderLayout
+    private let results: (String) -> WordLibraryRoute
 
     @State private var error: VocabularyError?
 
-    public init(viewModel: FolderDetailViewModel, navigation: FolderDetailNavigation, layout: FolderLayout) {
+    /// `results` builds the words found by the folder's search, for what has been typed.
+    public init(
+        viewModel: FolderDetailViewModel,
+        navigation: FolderDetailNavigation,
+        layout: FolderLayout,
+        results: @escaping (String) -> WordLibraryRoute
+    ) {
         _viewModel = State(initialValue: viewModel)
         self.navigation = navigation
         self.layout = layout
+        self.results = results
     }
 
     public var body: some View {
@@ -21,7 +29,7 @@ public struct FolderDetailRoute: View {
             onAction: { viewModel.send($0) },
             onOpenDeck: { navigation.didOpenDeck($0) },
             onOpenFolder: { navigation.didOpenFolder($0) },
-            onOpenWords: { navigation.didOpenWords(viewModel.state.folderID) }
+            results: { AnyView(results($0)) }
         )
         .onAppear { viewModel.send(.appeared) }
         .onDisappear { viewModel.send(.disappeared) }

@@ -17,6 +17,7 @@ struct WordLibraryViewModelTests {
             folderID: nil,
             vocabulary: .empty,
             sort: .default,
+            searchText: "",
             observeVocabulary: ObserveVocabularyUseCase(repository: repository),
             deleteWords: DeleteWordsUseCase(repository: repository)
         )
@@ -85,24 +86,37 @@ struct WordLibraryViewModelTests {
             folderID: folderID,
             vocabulary: Kitchen.vocabulary,
             sort: .default,
+            searchText: "",
             observeVocabulary: ObserveVocabularyUseCase(repository: repository),
             deleteWords: DeleteWordsUseCase(repository: repository)
         )
     }
 
-    @Test("a folder lists every word in its decks and its folders' decks, once each, before its subscription delivers")
+    @Test("a folder lists every word in its decks and its folders' decks, once each, as it appears and before its subscription delivers")
     func folderWords() {
         let list = makeFolderList(Kitchen.kitchen.id, repository: FakeVocabularyRepository(Kitchen.vocabulary))
+        #expect(list.state.listed.isEmpty)
+        list.send(.appeared)
         #expect(list.state.words.map(\.english) == ["green", "tea", "water"])
         #expect(list.state.hasWords)
 
         let pantry = makeFolderList(Kitchen.pantry.id, repository: FakeVocabularyRepository(Kitchen.vocabulary))
+        pantry.send(.appeared)
         #expect(pantry.state.words.map(\.english) == ["green", "tea"])
+    }
+
+    @Test("the count reads as all of them, or how many the search finds of them")
+    func counting() async {
+        let (library, _) = await makeLibrary()
+        #expect(library.state.count == "6 words")
+        library.send(.searchChanged("sh"))
+        #expect(library.state.count == "3 of 6 words")
     }
 
     @Test("a folder's list is sorted and searched as the list of all words is, and never shows a word outside it")
     func folderSortAndSearch() {
         let list = makeFolderList(Kitchen.kitchen.id, repository: FakeVocabularyRepository(Kitchen.vocabulary))
+        list.send(.appeared)
         list.send(.sortChanged(WordSort(field: .mistakes, ascending: false)))
         #expect(list.state.words.map(\.english) == ["tea", "green", "water"])
 
@@ -126,15 +140,14 @@ struct WordLibraryViewModelTests {
         #expect(list.state.words.isEmpty)
     }
 
-    @Test("the editor opens on the chosen word, or blank for a new one")
+    @Test("the editor opens on the chosen word")
     func editor() async {
         let (library, _) = await makeLibrary()
         library.send(.editTapped(Fixtures.tea.id))
         #expect(library.state.editor == .edit(Fixtures.tea))
 
         library.send(.editorDismissed)
-        library.send(.addTapped)
-        #expect(library.state.editor == .new(WordDraft()))
+        #expect(library.state.editor == nil)
     }
 
     @Test("the dictionary opens on a word's Hanzi and its reading")

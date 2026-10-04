@@ -11,53 +11,65 @@ struct WordLibraryScreen: View {
     var body: some View {
         let filteredWords = state.words
         List {
-            ForEach(filteredWords) { word in
-                Button {
-                    onAction(.editTapped(word.id))
-                } label: {
-                    HStack {
-                        WordRow(word: word)
-                        Spacer()
-                        Image(systemName: "chevron.right")
-                            .font(.caption.weight(.semibold))
-                            .foregroundStyle(.tertiary)
-                    }
-                    .contentShape(Rectangle())
-                }
-                .tint(.primary)
-                .swipeActions(edge: .leading) {
-                    if !word.hanzi.isEmpty {
-                        Button {
-                            onAction(.dictionaryTapped(word.id))
-                        } label: {
-                            Label("Dictionary", systemImage: "character.book.closed")
-                        }
-                        .tint(Theme.accent)
-                    }
-                }
-                .contextMenu {
+            Section {
+                ForEach(filteredWords) { word in
                     Button {
                         onAction(.editTapped(word.id))
                     } label: {
-                        Label("Edit", systemImage: "pencil")
+                        HStack {
+                            WordRow(word: word)
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                                .font(.caption.weight(.semibold))
+                                .foregroundStyle(.tertiary)
+                        }
+                        .contentShape(Rectangle())
                     }
-                    if !word.hanzi.isEmpty {
+                    .tint(.primary)
+                    .swipeActions(edge: .leading) {
+                        if !word.hanzi.isEmpty {
+                            Button {
+                                onAction(.dictionaryTapped(word.id))
+                            } label: {
+                                Label("Dictionary", systemImage: "character.book.closed")
+                            }
+                            .tint(Theme.accent)
+                        }
+                    }
+                    .contextMenu {
                         Button {
-                            onAction(.dictionaryTapped(word.id))
+                            onAction(.editTapped(word.id))
                         } label: {
-                            Label("View in dictionary", systemImage: "character.book.closed")
+                            Label("Edit", systemImage: "pencil")
+                        }
+                        if !word.hanzi.isEmpty {
+                            Button {
+                                onAction(.dictionaryTapped(word.id))
+                            } label: {
+                                Label("View in dictionary", systemImage: "character.book.closed")
+                            }
+                        }
+                    }
+                    .swipeActions(edge: .trailing) {
+                        Button(role: .destructive) {
+                            onAction(.deleteTapped([word.id]))
+                        } label: {
+                            Label("Delete", systemImage: "trash")
                         }
                     }
                 }
-                .swipeActions(edge: .trailing) {
-                    Button(role: .destructive) {
-                        onAction(.deleteTapped([word.id]))
-                    } label: {
-                        Label("Delete", systemImage: "trash")
+            } header: {
+                if state.hasWords {
+                    HStack {
+                        Text(state.count)
+                        Spacer()
+                        WordSortMenu(sort: layout.sort, onChange: layout.setSort)
                     }
+                    .textCase(nil)
                 }
             }
         }
+        .insetGroupedList()
         .overlay {
             if !state.hasWords, state.folderID != nil {
                 ContentUnavailableView(
@@ -75,30 +87,11 @@ struct WordLibraryScreen: View {
                 ContentUnavailableView.search(text: state.searchText)
             }
         }
-        .searchField(initial: state.searchText, prompt: "Search words") { onAction(.searchChanged($0)) }
-        .navigationTitle("All words")
-        .toolbar {
-            ToolbarItemGroup(placement: .primaryAction) {
-                // A word added here would be in no deck, so not in the folder's list.
-                if state.folderID == nil {
-                    Button {
-                        onAction(.addTapped)
-                    } label: {
-                        Label("Add word", systemImage: "plus")
-                    }
-                }
-                Menu {
-                    WordSortMenu(sort: layout.sort, onChange: layout.setSort)
-                } label: {
-                    Label("More", systemImage: "ellipsis")
-                }
-            }
-        }
     }
 }
 
-/// Sort by, as a submenu: the field, then an order named for that field, as a folder's
-/// screen sorts its decks.
+/// The field, then an order named for that field, as a folder's screen sorts its decks.
+/// Above the results rather than in the toolbar, which belongs to the screen searched.
 private struct WordSortMenu: View {
     let sort: WordSort
     let onChange: (WordSort) -> Void
@@ -118,12 +111,8 @@ private struct WordSortMenu: View {
                 ForEach(sort.field.orders, id: \.ascending) { Text($0.title).tag($0.ascending) }
             }
         } label: {
-            Label {
-                Text("Sort by")
-                Text(sort.field.title)
-            } icon: {
-                Image(systemName: "arrow.up.arrow.down")
-            }
+            Label(sort.field.title, systemImage: "arrow.up.arrow.down")
+                .font(.subheadline)
         }
     }
 }
@@ -152,9 +141,14 @@ private extension WordSort.Field {
 }
 
 #Preview {
+    let state = {
+        var state = WordLibraryState(vocabulary: SampleVocabulary.previewVocabulary)
+        state.relist()
+        return state
+    }()
     NavigationStack {
         WordLibraryScreen(
-            state: WordLibraryState(vocabulary: SampleVocabulary.previewVocabulary),
+            state: state,
             layout: WordListLayout(sort: .default, setSort: { _ in }),
             onAction: { _ in }
         )

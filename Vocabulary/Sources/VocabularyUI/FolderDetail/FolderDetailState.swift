@@ -12,6 +12,9 @@ struct FolderDetailState: Equatable {
     var newName = ""
     /// A subfolder with something inside, waiting on confirmation before it goes.
     var pendingFolderDeletion: UUID?
+    /// While open, the folder's words show in place of its folders and decks.
+    var isSearching = false
+    var searchText = ""
 
     enum Naming: Equatable {
         case newDeck
@@ -61,8 +64,6 @@ struct FolderDetailState: Equatable {
     }
 
     var wordCount: Int { folder.map(vocabulary.usableWordCount(in:)) ?? 0 }
-    /// Usable or not, as the folder's list of words shows them.
-    var listedWordCount: Int { folder.map { vocabulary.words(in: $0).count } ?? 0 }
     var canStartLesson: Bool { wordCount >= minimumMatchingWords }
 
     private func subfolders(in parentID: UUID) -> [Subfolder] {
@@ -81,6 +82,8 @@ enum FolderDetailAction: Equatable {
     case appeared
     case disappeared
     case startLessonTapped
+    case searchPresentedChanged(Bool)
+    case searchChanged(String)
     case namingTapped(FolderDetailState.Naming)
     case newNameChanged(String)
     case namingConfirmed

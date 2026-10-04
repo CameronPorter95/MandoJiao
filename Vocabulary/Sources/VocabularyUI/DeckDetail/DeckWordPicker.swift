@@ -36,7 +36,7 @@ struct DeckWordPicker: View {
                     ContentUnavailableView(
                         "No words yet",
                         systemImage: "character.book.closed",
-                        description: Text("Add words in All words, then pick them here.")
+                        description: Text("Add words with New word in My Vocabulary, or from the dictionary, then pick them here.")
                     )
                 } else if state.pickerWords.isEmpty {
                     ContentUnavailableView.search(text: state.pickerSearchText)

@@ -62,6 +62,12 @@ public final class FolderDetailViewModel {
             guard let folder = state.folder, state.canStartLesson else { return }
             requestLesson(title: folder.name, pool: state.vocabulary.words(in: folder).pairs)
 
+        case .searchPresentedChanged(let isPresented):
+            state.isSearching = isPresented
+
+        case .searchChanged(let text):
+            state.searchText = text
+
         case .namingTapped(let naming):
             state.newName = naming == .rename ? state.folder?.name ?? "" : ""
             state.naming = naming

@@ -1,4 +1,5 @@
 import CoreDesignSystem
+import CoreUI
 import SwiftUI
 import VocabularyDomain
 
@@ -8,10 +9,63 @@ struct FolderDetailScreen: View {
     let onAction: (FolderDetailAction) -> Void
     let onOpenDeck: (UUID) -> Void
     let onOpenFolder: (UUID) -> Void
-    let onOpenWords: () -> Void
+    /// The search's results for what has been typed: every word in the decks beneath.
+    let results: (String) -> AnyView
+
+    /// While the search is open, the folder's words show in place of its folders and decks.
+    var body: some View {
+        Group {
+            if state.isSearching {
+                results(state.searchText)
+            } else {
+                contents
+            }
+        }
+        .searchField(
+            initial: state.searchText,
+            prompt: "Search words",
+            onChange: { onAction(.searchChanged($0)) },
+            onPresentedChange: { onAction(.searchPresentedChanged($0)) }
+        )
+        .navigationTitle(state.title)
+        .toolbar {
+            ToolbarItemGroup(placement: .primaryAction) {
+                Button { onAction(.namingTapped(.newDeck)) } label: {
+                    Label("New deck", systemImage: "plus")
+                }
+                Button { onAction(.namingTapped(.newFolder)) } label: {
+                    Label("New folder", systemImage: "folder.badge.plus")
+                }
+                Menu {
+                    Button { onAction(.namingTapped(.rename)) } label: {
+                        Label("Rename", systemImage: "pencil")
+                    }
+                    Divider()
+                    DeckSortMenu(sort: layout.deckSort, onChange: layout.setDeckSort)
+                } label: {
+                    Label("More", systemImage: "ellipsis")
+                }
+            }
+        }
+        .namingAlert(
+            namingTitle,
+            isPresented: state.naming != nil,
+            name: state.newName,
+            message: namingMessage,
+            confirm: state.naming == .rename ? "Rename" : "Create",
+            onNameChanged: { onAction(.newNameChanged($0)) },
+            onConfirm: { onAction(.namingConfirmed) },
+            onCancel: { onAction(.namingCancelled) }
+        )
+        .folderDeletionDialog(
+            state.deletionWarning,
+            onConfirm: { onAction(.deleteFolderConfirmed) },
+            onCancel: { onAction(.deleteFolderCancelled) }
+        )
+    }
 
     // Not List(selection:), which turns a tap on Start lesson into a row selection.
-    var body: some View {
+    private var contents: some View {
         List {
             Section {
                 Button {
@@ -34,17 +88,6 @@ struct FolderDetailScreen: View {
                 } else {
                     Text("The decks in this folder need at least \(state.minimumMatchingWords) words between them.")
                 }
-            }
-
-            Section {
-                Button(action: onOpenWords) {
-                    LabeledContent {
-                        Text("\(state.listedWordCount)")
-                    } label: {
-                        Label("All words", systemImage: "character.book.closed")
-                    }
-                }
-                .tint(.primary)
             }
 
             if !state.subfolders.isEmpty {
@@ -86,41 +129,6 @@ struct FolderDetailScreen: View {
             }
         }
         .insetGroupedList()
-        .navigationTitle(state.title)
-        .toolbar {
-            ToolbarItemGroup(placement: .primaryAction) {
-                Button { onAction(.namingTapped(.newDeck)) } label: {
-                    Label("New deck", systemImage: "plus")
-                }
-                Button { onAction(.namingTapped(.newFolder)) } label: {
-                    Label("New folder", systemImage: "folder.badge.plus")
-                }
-                Menu {
-                    Button { onAction(.namingTapped(.rename)) } label: {
-                        Label("Rename", systemImage: "pencil")
-                    }
-                    Divider()
-                    DeckSortMenu(sort: layout.deckSort, onChange: layout.setDeckSort)
-                } label: {
-                    Label("More", systemImage: "ellipsis")
-                }
-            }
-        }
-        .namingAlert(
-            namingTitle,
-            isPresented: state.naming != nil,
-            name: state.newName,
-            message: namingMessage,
-            confirm: state.naming == .rename ? "Rename" : "Create",
-            onNameChanged: { onAction(.newNameChanged($0)) },
-            onConfirm: { onAction(.namingConfirmed) },
-            onCancel: { onAction(.namingCancelled) }
-        )
-        .folderDeletionDialog(
-            state.deletionWarning,
-            onConfirm: { onAction(.deleteFolderConfirmed) },
-            onCancel: { onAction(.deleteFolderCancelled) }
-        )
     }
 
     private var namingTitle: String {

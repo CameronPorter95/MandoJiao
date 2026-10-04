@@ -14,16 +14,17 @@ public final class WordLibraryViewModel {
     private var observation: Task<Void, Never>?
 
     /// All words without a `folderID`, or the words in the decks beneath that folder.
-    /// `vocabulary` is the library's latest snapshot, so a folder's list shows its words
-    /// before its own subscription delivers.
+    /// `vocabulary` is the library's latest snapshot, so the list shows its words before its
+    /// own subscription delivers. Nothing is sorted until it appears.
     public init(
         folderID: UUID?,
         vocabulary: Vocabulary,
         sort: WordSort,
+        searchText: String,
         observeVocabulary: ObserveVocabularyUseCase,
         deleteWords: DeleteWordsUseCase
     ) {
-        state = WordLibraryState(folderID: folderID, vocabulary: vocabulary, sort: sort)
+        state = WordLibraryState(folderID: folderID, vocabulary: vocabulary, sort: sort, searchText: searchText)
         self.observeVocabulary = observeVocabulary
         self.deleteWords = deleteWords
     }
@@ -34,6 +35,7 @@ public final class WordLibraryViewModel {
         switch action {
         case .appeared:
             guard observation == nil else { return }
+            state.relist()
             let stream = observeVocabulary()
             observation = Task { [weak self] in
                 for await vocabulary in stream {
@@ -51,9 +53,6 @@ public final class WordLibraryViewModel {
         case .sortChanged(let sort):
             guard sort != state.sort else { return }
             state.sort = sort
-
-        case .addTapped:
-            state.editor = .new(WordDraft())
 
         case .editTapped(let id):
             guard let word = state.vocabulary.words.first(where: { $0.id == id }) else { return }

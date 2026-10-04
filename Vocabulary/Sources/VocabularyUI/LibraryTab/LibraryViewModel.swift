@@ -88,6 +88,18 @@ public final class LibraryViewModel {
         case .hskLevelsDismissed:
             state.isShowingHSKLevels = false
 
+        case .searchPresentedChanged(let isPresented):
+            state.isSearching = isPresented
+
+        case .searchChanged(let text):
+            state.searchText = text
+
+        case .newWordTapped:
+            state.editor = .new(WordDraft())
+
+        case .editorDismissed:
+            state.editor = nil
+
         case .editTapped:
             state.isEditing.toggle()
 
@@ -160,7 +172,7 @@ public final class LibraryViewModel {
         }
         if let gone = state.path.firstIndex(where: { page in
             switch page {
-            case .folder(let id), .words(let id): vocabulary.folder(id: id) == nil
+            case .folder(let id): vocabulary.folder(id: id) == nil
             case .deck(let id): vocabulary.deck(id: id) == nil
             }
         }) {

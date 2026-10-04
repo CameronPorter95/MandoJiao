@@ -54,6 +54,17 @@ struct FolderDetailViewModelTests {
         #expect(hsk.state.summary == "0 decks · 2 folders")
     }
 
+    @Test("opening the search shows the folder's words in place of its folders and decks, until it closes")
+    func searching() async {
+        let (detail, _) = await makeDetail(Fixtures.hsk.id)
+        detail.send(.searchPresentedChanged(true))
+        #expect(detail.state.isSearching)
+        detail.send(.searchChanged("cha"))
+        #expect(detail.state.searchText == "cha")
+        detail.send(.searchPresentedChanged(false))
+        #expect(!detail.state.isSearching)
+    }
+
     @Test("a folder's lesson draws from every deck beneath it, even with no decks of its own")
     func startingALesson() async {
         let (hsk, log) = await makeDetail(Fixtures.hsk.id)
