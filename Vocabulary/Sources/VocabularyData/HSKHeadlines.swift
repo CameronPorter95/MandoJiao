@@ -2,12 +2,13 @@ import Foundation
 import VocabularyDomain
 
 /// Each HSK word's headline, put first among its reading's senses wherever the dictionary is
-/// read, so the dictionary and a library word agree. For common words it was chosen by hand
+/// read, so the dictionary and a library word agree, and its level marked on that reading. For common words it was chosen by hand
 /// (Tools/MakeHSK/headlines.tsv) where CC-CEDICT's first sense is not the everyday one, and
 /// is sometimes not a CC-CEDICT sense at all: 在 heads with "at, in".
 nonisolated struct HSKHeadlines: Sendable {
     struct Word: Sendable {
         let pinyin: String
+        let level: Int
         let rank: Int
         let headline: String
         /// Every meaning, where they were all chosen by hand and replace the dictionary's.
@@ -22,7 +23,7 @@ nonisolated struct HSKHeadlines: Sendable {
         for word in hsk {
             guard let headline = word.meanings.first else { continue }
             words[word.hanzi, default: []].append(Word(
-                pinyin: word.pinyin, rank: word.rank, headline: headline,
+                pinyin: word.pinyin, level: word.level, rank: word.rank, headline: headline,
                 meanings: word.replacesSenses ? word.meanings : nil
             ))
         }
@@ -65,7 +66,8 @@ nonisolated struct HSKHeadlines: Sendable {
                 pinyin: entry.pinyin,
                 isPreferred: entry.isPreferred,
                 senses: word.meanings
-                    ?? [word.headline] + entry.senses.filter { $0 != word.headline && !Self.parts($0).isSubset(of: said) }
+                    ?? [word.headline] + entry.senses.filter { $0 != word.headline && !Self.parts($0).isSubset(of: said) },
+                hskLevel: word.level
             )
         }
         return result
