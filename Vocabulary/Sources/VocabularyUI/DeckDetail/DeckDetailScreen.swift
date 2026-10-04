@@ -62,6 +62,7 @@ struct DeckDetailScreen: View {
                 }
             }
         }
+        .barCollapseRoom()
         .overlay {
             if state.wordCount > 0, state.words.isEmpty {
                 ContentUnavailableView.search(text: state.searchText)
