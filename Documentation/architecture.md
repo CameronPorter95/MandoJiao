@@ -377,7 +377,8 @@ Today `Vocabulary` is the only package that persists, so
 stores something.
 
 Until the first release there is one schema, `VocabularySchemaV1`, and no migration
-plan: the app is not live, so a change edits it and the app is reinstalled. From the
+plan: the app is not live, so a change edits it, SwiftData infers the change where it
+can, and the app is reinstalled where it cannot. From the
 first release each package's schema is versioned with a `SchemaMigrationPlan`, and a
 new version keeps every previous one in code, exactly as shipped, so an old store can
 still be opened and migrated.

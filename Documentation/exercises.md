@@ -68,9 +68,13 @@ solvable. A tile shows only the headline, but 行 on "to walk" beside 可以 on 
 would still be a board where "okay" fits both.
 
 A pair's `english` is the headline shortened with `Gloss.plain`, and `otherMeanings`
-the rest. Tiles and speaking prompts show the headline alone. The rest appear once
-the answer is out: on a solved English tile, in a speaking card's answer, and in the
-lesson summary.
+the rest. Tiles show the headline alone, and the rest appear once the answer is out:
+on a solved English tile and in the lesson summary.
+
+A speaking card shows the Hanzi to read aloud, not the English: an English headline
+could ask for several Chinese words, and which one the card wanted was ambiguous. Its
+answer is the pinyin and every meaning. A typed answer must be pinyin, since typing the
+characters on the card would be copying them.
 
 `SpeakingPlanBuilder` does none of that. One card per word, in the order given,
 capped. Dropping the five-at-a-time floor is the entire reason the speaking lesson exists:

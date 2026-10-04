@@ -82,6 +82,7 @@ public final class SpeakingViewModel {
             stopListening(submitting: true)
 
         case .typedAnswerSubmitted(let answer):
+            guard SpeakingLesson.canSubmitTyped(answer) else { return }
             submit(SpeechOutcome(best: answer))
 
         case .typingToggled:

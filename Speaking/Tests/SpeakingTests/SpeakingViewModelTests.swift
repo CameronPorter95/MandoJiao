@@ -150,6 +150,21 @@ struct SpeakingViewModelTests {
         #expect(harness.recogniser.startCount == 0)
     }
 
+    @Test("typed Hanzi is not checked and spends no try, since it would copy the card")
+    func typedHanziIgnored() async {
+        let harness = Harness(cards: [water, phone])
+        await harness.appear()
+        harness.viewModel.send(.typingToggled)
+
+        harness.viewModel.send(.typedAnswerSubmitted("水"))
+        await settle()
+        #expect(harness.viewModel.state.lesson?.attemptsUsed == 0)
+        #expect(harness.viewModel.state.lesson?.phase == .idle)
+
+        harness.viewModel.send(.typedAnswerSubmitted("shui"))
+        #expect(await waitUntil { harness.viewModel.state.lesson?.cardIndex == 1 })
+    }
+
     @Test("leaving the foreground stops listening without grading anything")
     func leavingTheForeground() async {
         let harness = Harness(cards: [water], heard: ["shui"], waitForEnd: Harness.untilCancelled)

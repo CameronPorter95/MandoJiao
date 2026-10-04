@@ -75,8 +75,8 @@ times; once it reported `TEST SUCCEEDED` while eight new tests were skipped. A
 green result on its own is not evidence that anything ran.
 
 `xcodebuild test` prints one `Test run with` line per test bundle, five in all.
-Add them up. Current suite: 367 tests in 38 suites: 13 in `Core`, 215 in `Vocabulary`,
-94 in `Speaking`, 41 in `Matching`, 4 in `Settings`. The app target has no tests of
+Add them up. Current suite: 369 tests in 38 suites: 13 in `Core`, 215 in `Vocabulary`,
+96 in `Speaking`, 41 in `Matching`, 4 in `Settings`. The app target has no tests of
 its own. If a bundle's line is missing, it did not run.
 
 ```sh
@@ -135,12 +135,14 @@ not enough; if the behaviour reverses, a test should say so.
 - **Protocols and extensions take the default isolation too.** Domain and data
   protocols are `nonisolated protocol`, and extensions on nonisolated types need
   `nonisolated extension`. Details in `Documentation/working-on-this.md`.
-- **Until the first release, the store has one schema and no migrations.** The app is
-  not live, so a schema change edits `VocabularySchemaV1` and the app is reinstalled.
-  A store written by any other shape fails to open with "unknown model version" and
-  the app traps at launch, so say when a change needs a reinstall. Before release,
-  versioning comes back: from then on never change a built version, add one, and test
-  each migration against a real store fixture written by the build before it.
+- **Until the first release, the store has one schema and no migration plan.** The app
+  is not live, so a schema change edits `VocabularySchemaV1`. With no plan, SwiftData
+  infers the change where it can: the fold to one schema, which dropped an attribute and
+  added an entity, opened the earlier build's store on the simulator. Where it cannot,
+  the store fails to open and the app traps at launch, and the fix is to reinstall; say
+  when a change might need that. Before release, versioning comes back: from then on
+  never change a built version, add one, and test each migration against a real store
+  fixture written by the build before it.
 - **A callback closure inside a main-actor type is main-actor, checked at runtime.**
   Everything builds as Swift 6, which traps if a framework calls such a closure on
   another thread. Audio taps and similar callbacks must be `@Sendable` and capture

@@ -9,9 +9,10 @@ typealias Deck = VocabularySchemaV1.Deck
 typealias Folder = VocabularySchemaV1.Folder
 typealias AnswerRecord = VocabularySchemaV1.AnswerRecord
 
-/// The store's one shape. Until the app is released, a change is made here and the app is
-/// reinstalled, since a store written by any other shape fails to open: there is no one
-/// else's data to migrate. Versions and a migration plan come back before the first release.
+/// The store's one shape. Until the app is released, a change is made here: with no migration
+/// plan SwiftData infers it where it can, and where it cannot the app is reinstalled, since
+/// there is no one else's data to migrate. Versions and a plan come back before the first
+/// release.
 nonisolated enum VocabularySchemaV1: VersionedSchema {
     static let versionIdentifier = Schema.Version(1, 0, 0)
     static var models: [any PersistentModel.Type] { [VocabWord.self, Deck.self, Folder.self, AnswerRecord.self] }

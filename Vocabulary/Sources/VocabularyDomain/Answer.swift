@@ -12,9 +12,11 @@ public nonisolated struct Answer: Hashable, Sendable {
 
     /// What was shown, and what was asked for. Stored by raw value.
     public enum Direction: String, Hashable, Sendable, CaseIterable {
-        /// The English shown, the Chinese asked for, as a speaking card does.
         case englishToChinese
         case chineseToEnglish
+        /// The Hanzi shown and read aloud, as a speaking card does: reading and saying the
+        /// word, not recalling it from its meaning.
+        case readAloud
     }
 
     public let wordID: UUID

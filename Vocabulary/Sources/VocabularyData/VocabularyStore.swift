@@ -4,8 +4,8 @@ import VocabularyDomain
 
 /// The data layer's one entry point. Everything concrete behind it stays internal.
 public enum VocabularyStore {
-    /// Opens the store. One written by an earlier shape fails to open; before release the
-    /// app is reinstalled instead, as `VocabularySchemaV1` explains.
+    /// Opens the store. One written by an earlier shape is migrated where SwiftData can infer
+    /// how, and otherwise fails to open, as `VocabularySchemaV1` explains.
     public static func makeContainer(inMemory: Bool = false) throws -> ModelContainer {
         try ModelContainer(
             for: Schema(versionedSchema: VocabularySchemaV1.self),

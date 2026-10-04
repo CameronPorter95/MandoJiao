@@ -123,9 +123,17 @@ public struct SpeakingLesson: Equatable, Sendable {
         return settled + [answer(isCorrect: false, wrongAttempts: attemptsUsed)]
     }
 
-    /// The English shown, the Chinese said.
+    /// The Hanzi shown, read aloud.
     private func answer(isCorrect: Bool, wrongAttempts: Int) -> Answer {
-        Answer(wordID: card.id, exercise: .speaking, direction: .englishToChinese, isCorrect: isCorrect, wrongAttempts: wrongAttempts)
+        Answer(wordID: card.id, exercise: .speaking, direction: .readAloud, isCorrect: isCorrect, wrongAttempts: wrongAttempts)
+    }
+
+    /// Whether a typed answer can be checked: pinyin, never Hanzi, since the card shows the
+    /// characters and typing them would be copying. A spoken answer comes back as Hanzi and
+    /// is not held to this.
+    public static func canSubmitTyped(_ text: String) -> Bool {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        return !trimmed.isEmpty && !AnswerGrader.containsHan(trimmed)
     }
 
     /// Clears a failed verdict so a fresh attempt can show its own.
