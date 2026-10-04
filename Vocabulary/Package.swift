@@ -63,7 +63,6 @@ let package = Package(
                 .product(name: "CoreUI", package: "Core"),
                 .product(name: "CoreTestSupport", package: "Core"),
             ],
-            resources: [.copy("Fixtures/VocabularyV1.store"), .copy("Fixtures/VocabularyV3.store")],
             swiftSettings: mainActorByDefault
         ),
     ],

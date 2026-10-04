@@ -2,15 +2,19 @@ import Foundation
 
 /// What a finished lesson says about each word, keyed by word identity.
 public nonisolated struct LessonResults: Equatable, Sendable {
+    /// For the mistakes list.
     public var misses: [UUID: Int]
     public var cleanSolves: [UUID: Int]
+    /// Every word put to the learner, in the order answered, kept whether right or wrong.
+    public var answers: [Answer]
 
-    public init(misses: [UUID: Int], cleanSolves: [UUID: Int]) {
+    public init(misses: [UUID: Int], cleanSolves: [UUID: Int], answers: [Answer] = []) {
         self.misses = misses
         self.cleanSolves = cleanSolves
+        self.answers = answers
     }
 
-    public var isEmpty: Bool { misses.isEmpty && cleanSolves.isEmpty }
+    public var isEmpty: Bool { misses.isEmpty && cleanSolves.isEmpty && answers.isEmpty }
 }
 
 /// How one lesson changes one word's outstanding mistakes.

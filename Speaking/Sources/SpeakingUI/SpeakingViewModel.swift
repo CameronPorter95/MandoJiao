@@ -82,6 +82,7 @@ public final class SpeakingViewModel {
             stopListening(submitting: true)
 
         case .typedAnswerSubmitted(let answer):
+            guard SpeakingLesson.canSubmitTyped(answer) else { return }
             submit(SpeechOutcome(best: answer))
 
         case .typingToggled:
@@ -301,7 +302,7 @@ public final class SpeakingViewModel {
     private func recordResultsOnce() {
         guard let lesson = state.lesson, !didRecordResults else { return }
         didRecordResults = true
-        let results = LessonResults(misses: lesson.missesByPairID, cleanSolves: lesson.cleanSolvesByPairID)
+        let results = LessonResults(misses: lesson.missesByPairID, cleanSolves: lesson.cleanSolvesByPairID, answers: lesson.answers)
 
         // Outlives a close on purpose: the speaking lesson has gone, but the results still land.
         Task { [recordResults] in

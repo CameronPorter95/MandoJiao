@@ -162,7 +162,7 @@ struct VocabularyRepositoryTests {
         #expect(renamed.createdAt == created.createdAt)
     }
 
-    @Test("a word keeps every meaning in order, and one saved before meanings reads as its one")
+    @Test("a word keeps every meaning in order")
     func meanings() async throws {
         try await repository.saveWord(id: nil, draft: WordDraft(meanings: ["to drink", "to shout"], hanzi: "喝"), deckID: nil)
         let saved = try #require(await current().words.first)
@@ -170,12 +170,37 @@ struct VocabularyRepositoryTests {
 
         try await repository.saveWord(id: saved.id, draft: WordDraft(meanings: ["to shout", "to drink"], hanzi: "喝"), deckID: nil)
         #expect(await current().words.first?.meanings == ["to shout", "to drink"])
-        let stored = try container.mainContext.fetch(FetchDescriptor<VocabWord>()).first
-        #expect(stored?.english == "to shout")
+    }
 
-        container.mainContext.insert(VocabWord(english: "water", hanzi: "水"))
-        try container.mainContext.save()
-        #expect(await current().words.first { $0.hanzi == "水" }?.meanings == ["water"])
+    @Test("every answer a lesson records is kept with its word, as given, and goes when the word does")
+    func answers() async throws {
+        let ids = try await addWaterTeaBook()
+        let before = Date.now
+        try await repository.recordResults(LessonResults(misses: [ids.tea: 1], cleanSolves: [ids.water: 1], answers: [
+            Answer(wordID: ids.water, exercise: .speaking, direction: .englishToChinese, isCorrect: true, wrongAttempts: 2),
+            Answer(wordID: ids.tea, exercise: .matching, direction: nil, isCorrect: false, wrongAttempts: 1),
+            Answer(wordID: ids.water, exercise: .matching, direction: nil, isCorrect: true, wrongAttempts: 0),
+            // A word deleted while the lesson was open.
+            Answer(wordID: UUID(), exercise: .matching, direction: nil, isCorrect: true, wrongAttempts: 0),
+        ]))
+
+        let records = try container.mainContext.fetch(FetchDescriptor<AnswerRecord>())
+        #expect(records.count == 3)
+        let water = records.filter { $0.word?.uuid == ids.water }.sorted { $0.exercise > $1.exercise }
+        #expect(water.map(\.exercise) == ["speaking", "matching"])
+        #expect(water.first?.direction == "englishToChinese")
+        #expect(water.first?.wrongAttempts == 2)
+        #expect(water.first?.isCorrect == true)
+        let tea = try #require(records.first { $0.word?.uuid == ids.tea })
+        #expect(tea.direction == nil)
+        #expect(!tea.isCorrect)
+        #expect(records.allSatisfy { $0.answeredAt >= before })
+        // The mistakes list still reads the tallies.
+        #expect(await current().byEnglish["tea"]?.missCount == 1)
+
+        try await repository.deleteWords(ids: [ids.water])
+        let left = try container.mainContext.fetch(FetchDescriptor<AnswerRecord>())
+        #expect(left.map { $0.word?.uuid } == [ids.tea])
     }
 
     @Test("deleting a deck leaves its words in the library")

@@ -3,7 +3,7 @@ import SpeakingDomain
 import SwiftUI
 import VocabularyDomain
 
-/// One speech card: the English prompt, the answer control, and the verdict.
+/// One speech card: the Hanzi to read aloud, the answer control, and the verdict.
 ///
 /// Presentational. `SpeakingViewModel` owns the microphone and the lesson.
 struct SpeakingCardView: View {
@@ -58,15 +58,17 @@ struct SpeakingCardView: View {
 
     // MARK: - Prompt
 
+    /// The Hanzi, not the English: an English headline could ask for several words, and
+    /// the owner found it ambiguous which one the card wanted.
     private var prompt: some View {
         VStack(spacing: 6) {
-            Text("Say this in Chinese")
+            Text("Read this aloud")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
-            Text(card.english)
-                .font(.system(size: 38, weight: .bold))
+            Text(card.hanzi)
+                .font(.system(size: 64, weight: .medium))
                 .multilineTextAlignment(.center)
-                .minimumScaleFactor(0.6)
+                .minimumScaleFactor(0.5)
                 .lineLimit(2)
         }
     }
@@ -123,16 +125,17 @@ struct SpeakingCardView: View {
         }
     }
 
+    /// How it is said and what it means, since the prompt already showed the Hanzi.
     private var answer: some View {
         VStack(spacing: 4) {
-            Text(card.hanzi)
-                .font(.system(size: 48, weight: .medium))
             if !revealedPinyin.isEmpty {
                 Text(revealedPinyin)
-                    .font(.title3)
-                    .foregroundStyle(.secondary)
+                    .font(.system(size: 34, weight: .semibold))
             }
-            // The prompt showed only the headline; the answer is the whole word.
+            Text(card.english)
+                .font(.title3)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
             if !card.otherMeanings.isEmpty {
                 Text("Also \(card.otherMeanings.joined(separator: "; "))")
                     .font(.subheadline)
@@ -230,7 +233,7 @@ struct SpeakingCardView: View {
 
     private var typingControl: some View {
         VStack(spacing: 12) {
-            TextField("pinyin or 汉字", text: $typed)
+            TextField("pinyin", text: $typed)
                 .neverAutocapitalize()
                 .autocorrectionDisabled()
                 .font(.title3)
@@ -252,7 +255,14 @@ struct SpeakingCardView: View {
             }
             .buttonStyle(.borderedProminent)
             .tint(Theme.accent)
-            .disabled(typed.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            .disabled(!SpeakingLesson.canSubmitTyped(typed))
+
+            if AnswerGrader.containsHan(typed) {
+                Text("Type the pinyin. The characters are already on the card.")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+            }
 
             if canListen {
                 Button("Speak it instead", action: onToggleTyping)
@@ -274,7 +284,7 @@ struct SpeakingCardView: View {
 
     private func submitTyped() {
         let answer = typed.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !answer.isEmpty else { return }
+        guard SpeakingLesson.canSubmitTyped(answer) else { return }
         onSubmitTyped(answer)
         typed = ""
     }

@@ -14,13 +14,11 @@ actor VocabularyLocalSourceImpl: VocabularyLocalSource {
         try storeWork {
             if let id {
                 guard let word = try word(id: id) else { return }
-                word.english = draft.english
                 word.meanings = draft.meanings
                 word.hanzi = draft.hanzi
                 word.pinyin = draft.pinyin
             } else {
-                let word = VocabWord(english: draft.english, hanzi: draft.hanzi, pinyin: draft.pinyin)
-                word.meanings = draft.meanings
+                let word = VocabWord(meanings: draft.meanings, hanzi: draft.hanzi, pinyin: draft.pinyin)
                 modelContext.insert(word)
                 if let deckID, let deck = try deck(id: deckID) {
                     deck.words.append(word)
@@ -139,10 +137,18 @@ actor VocabularyLocalSourceImpl: VocabularyLocalSource {
         try storeWork { try BuiltInInstaller.install(plan, in: modelContext) }
     }
 
+    /// Every answer is kept with its word, all at the time the lesson is recorded, which is
+    /// as fine as strength over days needs. An answer to a word since deleted is dropped.
     func recordResults(_ results: LessonResults) throws {
         try storeWork {
             var changed = false
+            let answeredAt = Date.now
+            let answers = Dictionary(grouping: results.answers, by: \.wordID)
             for word in try modelContext.fetch(FetchDescriptor<VocabWord>()) {
+                for answer in answers[word.uuid] ?? [] {
+                    modelContext.insert(AnswerRecord(answer, word: word, at: answeredAt))
+                    changed = true
+                }
                 switch MistakeUpdate.applying(results, to: word.uuid, missCount: word.missCount) {
                 case .missed(let missCount):
                     word.missCount = missCount
@@ -206,7 +212,7 @@ extension VocabWord {
     nonisolated var domainWord: Word {
         Word(
             id: uuid,
-            meanings: meanings.isEmpty ? (english.isEmpty ? [] : [english]) : meanings,
+            meanings: meanings,
             hanzi: hanzi,
             pinyin: pinyin,
             missCount: missCount,

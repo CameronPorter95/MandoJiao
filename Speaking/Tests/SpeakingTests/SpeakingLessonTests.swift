@@ -30,6 +30,46 @@ struct SpeakingLessonTests {
         #expect(lesson.failedAttempts == 0)
     }
 
+    @Test("each settled card is an answer, read aloud, with the wrong tries before it")
+    func answers() {
+        var lesson = makeLesson()
+        lesson.submit("cha")
+        lesson.submit("shui")
+        lesson.advance()
+        lesson.submit("cha")
+        lesson.submit("cha")
+        lesson.submit("cha")
+
+        #expect(lesson.answers == [
+            Answer(wordID: water.id, exercise: .speaking, direction: .readAloud, isCorrect: true, wrongAttempts: 1),
+            Answer(wordID: phone.id, exercise: .speaking, direction: .readAloud, isCorrect: false, wrongAttempts: 3),
+        ])
+    }
+
+    @Test("a card closed on after a wrong try counts as wrong, and one never tried is not counted")
+    func answersWhenClosedEarly() {
+        var lesson = makeLesson()
+        #expect(lesson.answers.isEmpty)
+
+        lesson.submit("cha")
+        #expect(lesson.answers == [
+            Answer(wordID: water.id, exercise: .speaking, direction: .readAloud, isCorrect: false, wrongAttempts: 1),
+        ])
+
+        lesson.submit("shui")
+        lesson.advance()
+        #expect(lesson.answers.map(\.isCorrect) == [true])
+    }
+
+    @Test("a typed answer must be pinyin, since the card shows the Hanzi it would copy")
+    func typedAnswersArePinyin() {
+        #expect(SpeakingLesson.canSubmitTyped("shui3"))
+        #expect(SpeakingLesson.canSubmitTyped(" shuǐ "))
+        #expect(!SpeakingLesson.canSubmitTyped("水"))
+        #expect(!SpeakingLesson.canSubmitTyped("shui 水"))
+        #expect(!SpeakingLesson.canSubmitTyped("  "))
+    }
+
     @Test("attempts count down and report how many are left")
     func attemptsCountDown() {
         var lesson = makeLesson()

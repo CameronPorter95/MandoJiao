@@ -376,9 +376,12 @@ Today `Vocabulary` is the only package that persists, so
 `VocabularyRepositoryFactory.openStore` builds the container on its own. Composition becomes real when a second package
 stores something.
 
-Each package's schema is versioned (`VocabularySchemaV1`, `V2`, and a
-`SchemaMigrationPlan`), and a new version keeps every previous one in code, exactly as
-shipped, so an old store can still be opened and migrated.
+Until the first release there is one schema, `VocabularySchemaV1`, and no migration
+plan: the app is not live, so a change edits it, SwiftData infers the change where it
+can, and the app is reinstalled where it cannot. From the
+first release each package's schema is versioned with a `SchemaMigrationPlan`, and a
+new version keeps every previous one in code, exactly as shipped, so an old store can
+still be opened and migrated.
 
 ### 13. Dependency injection via a composition-root factory
 
@@ -493,7 +496,7 @@ Each layer is tested in isolation through its seams. Tests use Swift Testing.
 | **Domain rules** | Nothing | Grading at every strictness, board dealing, plan building. The existing `AnswerGraderTests`, `StrictnessTests`, `MatchingBoardTests` and builder tests are already this. |
 | **Repository** | The local source (protocol fake) | Mapping, error classification (`persistence` vs `unexpected`), cancellation propagating. |
 | **Local source** | Nothing, use a real in-memory SwiftData container, through the repository | Round-trip, the mistakes-list arithmetic, deck membership. `VocabularyRepositoryTests`. |
-| **Schema migration** | Nothing, migrate a copy of a real store from the previous version | Every record survives, and the migration's own fix-ups hold. `VocabularyMigrationTests`. |
+| **Schema migration** | Nothing, migrate a copy of a real store from the previous version | Every record survives, and the migration's own fix-ups hold. None until the first release, which has no migrations. |
 | **View model** | The use cases (via a fake repository) + the recogniser + injected timing | Action → state, the three-attempt rule, auto-listen after a correct answer, the heard-nothing rule, error effect emission. |
 
 Notes:

@@ -148,10 +148,10 @@ the way it does, including the things that were tried and did not work.
   isolated, and an `actor` cannot conform to it. Domain and data protocols are
   declared `nonisolated protocol`, and domain types `nonisolated struct`. Extensions
   on them need `nonisolated extension` as well; they do not inherit it.
-- **Never create a version 1 model object in a process that has opened version 2.**
-  SwiftData resolves `VocabularySchemaV1.Deck` to version 2's `Deck` entity and
-  throws on the missing `uuid`. The migration test migrates a copy of a real store
-  written by the old build (`Vocabulary/Tests/VocabularyTests/Fixtures/VocabularyV1.store`) instead.
+- **With versions, never create an older version's model object in a process that has
+  opened a newer one.** SwiftData resolved version 1's `Deck` to version 2's entity and
+  threw on the missing `uuid`, so migrations were tested on a copy of a real store
+  written by the old build instead. There are no versions until the first release.
 - **A test that blocks the main actor breaks the timing tests.** Every suite shares
   the main actor, and `EndpointingTests` needs a 100ms sleep to wake before a 150ms
   window. The migration test opens an on-disk store synchronously, which starved it
