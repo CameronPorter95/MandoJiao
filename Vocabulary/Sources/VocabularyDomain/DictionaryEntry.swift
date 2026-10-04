@@ -10,13 +10,17 @@ public nonisolated struct DictionaryEntry: Hashable, Sendable {
     public let isPreferred: Bool
     /// As the dictionary gives them, asides included, most common first.
     public let senses: [String]
+    /// The HSK level of the syllabus word with this reading, 7 for levels 7 to 9. Nil for a
+    /// reading not in the syllabus, as 长 zhǎng would be if only cháng were.
+    public let hskLevel: Int?
 
-    public init(simplified: String, traditional: String, pinyin: String, isPreferred: Bool, senses: [String]) {
+    public init(simplified: String, traditional: String, pinyin: String, isPreferred: Bool, senses: [String], hskLevel: Int? = nil) {
         self.simplified = simplified
         self.traditional = traditional
         self.pinyin = pinyin
         self.isPreferred = isPreferred
         self.senses = senses
+        self.hskLevel = hskLevel
     }
 }
 

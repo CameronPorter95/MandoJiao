@@ -7,6 +7,25 @@ import Testing
 /// sense fails here.
 @Suite("Dictionary")
 nonisolated struct DictionaryTests {
+    @Test("an HSK word's reading carries its level, and no other reading of the headword does")
+    func hskLevels() async throws {
+        #expect(try await dictionary.entries(forHanzi: "在").first?.hskLevel == 1)
+        #expect(try await dictionary.entries(forHanzi: "银行").first?.hskLevel == 3)
+        let chang = try await dictionary.entries(forHanzi: "长")
+        #expect(chang.first { $0.pinyin == "cháng" }?.hskLevel == 2)
+        #expect(chang.first { $0.pinyin == "zhǎng" }?.hskLevel == 2)
+        // HSK's 告诉 is gàosu, "to tell"; CC-CEDICT's gàosù, "to press charges", is not in it.
+        let tell = try await dictionary.entries(forHanzi: "告诉")
+        #expect(tell.first { $0.pinyin == "gàosu" }?.hskLevel == 2)
+        #expect(tell.first { $0.pinyin == "gàosù" }?.hskLevel == nil)
+        // Levels 7 to 9 are one list, so one level.
+        #expect(try await dictionary.entries(forHanzi: "犯罪").first?.hskLevel == 7)
+        // Not in the syllabus at all.
+        let notHSK = try await dictionary.entries(forHanzi: "鼎盛")
+        #expect(!notHSK.isEmpty)
+        #expect(notHSK.allSatisfy { $0.hskLevel == nil })
+    }
+
     private let dictionary = DictionaryRepositoryImpl()
 
     /// CC-CEDICT as bundled, before HSK's headlines are put first.

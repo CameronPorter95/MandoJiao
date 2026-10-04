@@ -87,6 +87,9 @@ private struct ReadingSection: View {
                 Text(reading.entry.pinyin)
                     .font(.title3.weight(.semibold))
                     .foregroundStyle(Color.primary)
+                if let level = reading.entry.hskLevel {
+                    HSKBadge(level: level)
+                }
                 Spacer()
                 if let vocabulary {
                     Button {
@@ -103,6 +106,21 @@ private struct ReadingSection: View {
             }
             .textCase(nil)
         }
+    }
+}
+
+/// The reading's HSK level, beside its pinyin, so it reads as a fact about this reading.
+private struct HSKBadge: View {
+    let level: Int
+
+    var body: some View {
+        Text(HSK.levelName(level))
+            .font(.caption.weight(.semibold))
+            .foregroundStyle(.secondary)
+            .padding(.horizontal, 7)
+            .padding(.vertical, 2)
+            .background(Capsule().fill(.quaternary))
+            .accessibilityLabel(level == 7 ? "HSK levels 7 to 9" : "HSK level \(level)")
     }
 }
 
@@ -133,7 +151,7 @@ private struct CharacterRow: View {
                 headword: DictionaryHeadword(hanzi: "银行", pinyin: "yínháng"),
                 content: .loaded(
                     readings: DictionaryPageState.readings(
-                        [DictionaryEntry(simplified: "银行", traditional: "銀行", pinyin: "yínháng", isPreferred: true, senses: ["bank"])],
+                        [DictionaryEntry(simplified: "银行", traditional: "銀行", pinyin: "yínháng", isPreferred: true, senses: ["bank"], hskLevel: 3)],
                         first: "yín háng"
                     ),
                     characters: [
