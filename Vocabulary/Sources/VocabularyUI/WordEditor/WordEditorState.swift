@@ -11,6 +11,12 @@ struct WordEditorState: Equatable {
         let entries: [DictionaryEntry]
     }
 
+    /// A deck a new word can join, titled by where it sits.
+    struct DeckChoice: Identifiable, Equatable {
+        let id: UUID
+        let title: String
+    }
+
     /// Nil for a new word.
     let wordID: UUID?
     var draft: WordDraft
@@ -20,6 +26,11 @@ struct WordEditorState: Equatable {
     var meaningsEdited: Bool
     var dictionary: DictionaryHeadword?
     var isChoosingSenses = false
+    /// For the decks a new word can join. Empty until first heard, and never heard for a
+    /// saved word.
+    var vocabulary: Vocabulary = .empty
+    /// Kept while its deck is gone, but only saved into while it exists.
+    var deckID: UUID?
 
     init(wordID: UUID?, draft: WordDraft, lookup: Lookup? = nil) {
         self.wordID = wordID
@@ -31,6 +42,25 @@ struct WordEditorState: Equatable {
     var title: String { wordID == nil ? "New word" : "Edit word" }
     var canSave: Bool { submission.isComplete }
     var canDelete: Bool { wordID != nil }
+
+    /// Only a new word joins a deck here. A saved one's decks are changed from each deck.
+    var deckChoices: [DeckChoice] {
+        guard wordID == nil else { return [] }
+        return vocabulary.decks
+            .map { deck in
+                let title = deck.folderID == nil
+                    ? deck.displayName
+                    : "\(vocabulary.location(of: deck.folderID)) › \(deck.displayName)"
+                return DeckChoice(id: deck.id, title: title)
+            }
+            .sorted { $0.title.localizedStandardCompare($1.title) == .orderedAscending }
+    }
+
+    /// The deck the word will join, nil if none was chosen or it has since been deleted.
+    var chosenDeckID: UUID? {
+        guard wordID == nil else { return nil }
+        return deckID.flatMap { vocabulary.deck(id: $0)?.id }
+    }
 
     /// Every reading of the Hanzi as typed, empty while it is being looked up.
     var entries: [DictionaryEntry] {
@@ -105,6 +135,7 @@ struct WordEditorState: Equatable {
 
 enum WordEditorAction: Equatable {
     case appeared
+    case disappeared
     case hanziChanged(String)
     case pinyinChanged(String)
     case senseToggled(String)
@@ -116,6 +147,7 @@ enum WordEditorAction: Equatable {
     case sensesDismissed
     case dictionaryTapped
     case dictionaryDismissed
+    case deckChosen(UUID?)
     case saveTapped
     case deleteTapped
     case cancelTapped

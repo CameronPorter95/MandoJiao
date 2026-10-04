@@ -14,8 +14,10 @@ public final class WordEditorViewModel {
     private let deleteWords: DeleteWordsUseCase
     private let suggestWord: SuggestWordUseCase
     private let lookUpDictionary: LookUpDictionaryUseCase
+    private let observeVocabulary: ObserveVocabularyUseCase
     private let suggestionDelay: Duration
     private var suggestionTask: Task<Void, Never>?
+    private var observation: Task<Void, Never>?
 
     /// `suggestionDelay` waits for typing to pause before looking the Hanzi up.
     public init(
@@ -24,6 +26,7 @@ public final class WordEditorViewModel {
         deleteWords: DeleteWordsUseCase,
         suggestWord: SuggestWordUseCase,
         lookUpDictionary: LookUpDictionaryUseCase,
+        observeVocabulary: ObserveVocabularyUseCase,
         suggestionDelay: Duration = .milliseconds(250)
     ) {
         state = switch target {
@@ -36,6 +39,7 @@ public final class WordEditorViewModel {
         self.deleteWords = deleteWords
         self.suggestWord = suggestWord
         self.lookUpDictionary = lookUpDictionary
+        self.observeVocabulary = observeVocabulary
         self.suggestionDelay = suggestionDelay
     }
 
@@ -45,6 +49,11 @@ public final class WordEditorViewModel {
         switch action {
         case .appeared:
             suggest()
+            observe()
+
+        case .disappeared:
+            observation?.cancel()
+            observation = nil
 
         case .hanziChanged(let text):
             state.draft.hanzi = text
@@ -100,12 +109,16 @@ public final class WordEditorViewModel {
         case .dictionaryDismissed:
             state.dictionary = nil
 
+        case .deckChosen(let id):
+            state.deckID = id
+
         case .saveTapped:
             guard state.canSave else { return }
             let id = state.wordID
             let draft = state.submission
+            let deckID = state.chosenDeckID
             write(failure: VocabularyError.saveWordFailed) { [saveWord] in
-                try await saveWord(id: id, draft: draft)
+                try await saveWord(id: id, draft: draft, deckID: deckID)
             }
 
         case .deleteTapped:
@@ -121,6 +134,18 @@ public final class WordEditorViewModel {
 
     private static func isBlank(_ meaning: String) -> Bool {
         meaning.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
+    /// Live, so a deck made or deleted while the editor is open is offered or taken away.
+    /// A saved word is offered no decks, so has nothing to hear.
+    private func observe() {
+        guard state.wordID == nil, observation == nil else { return }
+        let stream = observeVocabulary()
+        observation = Task { [weak self] in
+            for await vocabulary in stream {
+                self?.state.vocabulary = vocabulary
+            }
+        }
     }
 
     /// The lexicon and the dictionary are asked separately, so either failing still leaves

@@ -7,7 +7,7 @@ import VocabularyDomain
 /// fails. An id that no longer exists is ignored rather than treated as a failure.
 nonisolated protocol VocabularyLocalSource: Sendable {
     func snapshot() async throws -> Vocabulary
-    func saveWord(id: UUID?, draft: WordDraft) async throws
+    func saveWord(id: UUID?, draft: WordDraft, deckID: UUID?) async throws
     func deleteWords(ids: [UUID]) async throws
     func createDeck(name: String, folderID: UUID) async throws
     func renameDeck(id: UUID, name: String) async throws

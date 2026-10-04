@@ -43,6 +43,10 @@ struct WordEditorScreen: View {
                 }
                 meaningsSection
 
+                if !state.deckChoices.isEmpty {
+                    deckSection
+                }
+
                 if state.dictionaryHeadword != nil {
                     dictionarySection
                 }
@@ -138,6 +142,23 @@ struct WordEditorScreen: View {
                 Text("The headline is shown on tiles and prompts, the rest once the answer is out."
                     + (state.meanings.count > 1 ? " Hold and drag to reorder, swipe to remove." : ""))
             }
+        }
+    }
+
+    /// Pushed rather than a menu, since the HSK levels alone bring dozens of decks.
+    private var deckSection: some View {
+        Section {
+            Picker("Deck", selection: Binding(get: { state.chosenDeckID }, set: { onAction(.deckChosen($0)) })) {
+                Text("None").tag(UUID?.none)
+                ForEach(state.deckChoices) { choice in
+                    Text(choice.title).tag(UUID?.some(choice.id))
+                }
+            }
+            .pushedPicker()
+        } header: {
+            Text("Add to")
+        } footer: {
+            Text("Optional. The word joins the deck, and so every folder above it.")
         }
     }
 
