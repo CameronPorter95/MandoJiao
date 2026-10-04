@@ -1,31 +1,29 @@
 import CoreDesignSystem
+import CoreUI
 import SwiftUI
 import VocabularyDomain
 
-/// The tree of folders, with All words and the top-level decks pinned above it.
+/// The tree of folders, searchable: while the search is open, every word in the library
+/// shows in its place, filtered as typed.
 struct LibrarySidebar: View {
     let state: LibraryState
+    /// The search's results for what has been typed.
+    let results: (String) -> AnyView
     let onAction: (LibraryAction) -> Void
 
-    private static let pinned = [
-        OutlinePinnedRow(id: "allWords", title: "All words", systemImage: "character.book.closed"),
-    ]
-
     var body: some View {
-        FolderOutline(
-            pinned: Self.pinned,
-            nodes: nodes(in: nil),
-            selection: outlineSelection,
-            expanded: state.layout.expanded(in: .tree),
-            isEditing: state.isEditing,
-            canMove: { state.vocabulary.canMoveFolder($0.item, into: $0.parent) },
-            onMove: { onAction(.folderMoved(id: $0.item, parentID: $0.parent, index: $0.index)) },
-            onSelect: { onAction(.selected(librarySelection($0))) },
-            onExpand: { onAction(.folderExpanded($0, $1, in: .tree)) },
-            actions: actions(for:),
-            canPractise: state.canPractise,
-            onPractise: { onAction(.practiseFolderTapped($0)) },
-            onDelete: { onAction(.deleteFolderTapped($0)) }
+        Group {
+            if state.isSearching {
+                results(state.searchText)
+            } else {
+                outline
+            }
+        }
+        .searchField(
+            initial: state.searchText,
+            prompt: "Search words",
+            onChange: { onAction(.searchChanged($0)) },
+            onPresentedChange: { onAction(.searchPresentedChanged($0)) }
         )
         .navigationTitle("My Vocabulary")
         .toolbar {
@@ -37,6 +35,9 @@ struct LibrarySidebar: View {
                     Label("New folder", systemImage: "folder.badge.plus")
                 }
                 Menu {
+                    Button { onAction(.newWordTapped) } label: {
+                        Label("New word…", systemImage: "character.book.closed")
+                    }
                     Button { onAction(.hskLevelsTapped) } label: {
                         Label("HSK levels…", systemImage: "graduationcap")
                     }
@@ -62,6 +63,23 @@ struct LibrarySidebar: View {
         )
     }
 
+    private var outline: some View {
+        FolderOutline(
+            nodes: nodes(in: nil),
+            selection: outlineSelection,
+            expanded: state.layout.expanded(in: .tree),
+            isEditing: state.isEditing,
+            canMove: { state.vocabulary.canMoveFolder($0.item, into: $0.parent) },
+            onMove: { onAction(.folderMoved(id: $0.item, parentID: $0.parent, index: $0.index)) },
+            onSelect: { if case .node(let id) = $0 { onAction(.selected(.folder(id))) } },
+            onExpand: { onAction(.folderExpanded($0, $1, in: .tree)) },
+            actions: actions(for:),
+            canPractise: state.canPractise,
+            onPractise: { onAction(.practiseFolderTapped($0)) },
+            onDelete: { onAction(.deleteFolderTapped($0)) }
+        )
+    }
+
     private var isNew: Bool {
         if case .new = state.naming { true } else { false }
     }
@@ -74,16 +92,8 @@ struct LibrarySidebar: View {
 
     private var outlineSelection: OutlineSelection<UUID>? {
         switch state.selection {
-        case .allWords: .pinned("allWords")
         case .folder(let id): .node(id)
         case nil: nil
-        }
-    }
-
-    private func librarySelection(_ selection: OutlineSelection<UUID>) -> LibrarySelection {
-        switch selection {
-        case .pinned: .allWords
-        case .node(let id): .folder(id)
         }
     }
 

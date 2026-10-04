@@ -29,21 +29,15 @@ public enum LibraryFactory: NavigationInputRouteFactory {
                 navigation: .library(
                     presentMatching: navigation.library.didRequestMatching,
                     openDeck: context.openDeck,
-                    openFolder: context.openFolder,
-                    openWords: context.openWords
+                    openFolder: context.openFolder
                 ),
                 input: FolderDetailInput(
                     folderID: folderID,
                     minimumMatchingWords: input.minimumMatchingWords,
                     layout: context.layout(folderID),
+                    wordList: context.wordList,
                     vocabulary: context.vocabulary
                 )
-            ))
-        }
-        let words = { (folderID: UUID?, context: LibraryPageContext) in
-            AnyView(WordLibraryFactory.makeRoute(
-                dependencies: dependencies,
-                input: WordLibraryInput(folderID: folderID, layout: context.wordList, vocabulary: context.vocabulary)
             ))
         }
         return LibraryRoute(
@@ -51,7 +45,6 @@ public enum LibraryFactory: NavigationInputRouteFactory {
             navigation: navigation.library,
             root: { selection, context in
                 switch selection {
-                case .allWords: words(nil, context)
                 case .folder(let id): folder(id, context)
                 }
             },
@@ -59,8 +52,6 @@ public enum LibraryFactory: NavigationInputRouteFactory {
                 switch page {
                 case .folder(let id):
                     folder(id, context)
-                case .words(let folderID):
-                    words(folderID, context)
                 case .deck(let id):
                     AnyView(DeckDetailFactory.makeRoute(
                         dependencies: dependencies,
@@ -73,6 +64,13 @@ public enum LibraryFactory: NavigationInputRouteFactory {
                     ))
                 }
             },
+            results: { searchText, context in
+                AnyView(WordLibraryFactory.makeRoute(
+                    dependencies: dependencies,
+                    input: WordLibraryInput(folderID: nil, layout: context.wordList, searchText: searchText, vocabulary: context.vocabulary)
+                ))
+            },
+            makeEditor: { WordEditorFactory.makeRoute(dependencies: dependencies, input: $0) },
             hskLevels: { AnyView(HSKLevelsFactory.makeRoute(dependencies: dependencies)) }
         )
     }

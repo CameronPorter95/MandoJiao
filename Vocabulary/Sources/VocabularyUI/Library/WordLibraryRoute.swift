@@ -2,22 +2,27 @@ import CoreUI
 import SwiftUI
 import VocabularyDomain
 
+/// The results of a search, shown by the screen searched in place of its own content.
 public struct WordLibraryRoute: View {
     @State private var viewModel: WordLibraryViewModel
     private let makeEditor: (WordEditorTarget) -> WordEditorRoute
     private let makeDictionary: (DictionaryHeadword) -> DictionaryRoute
     private let layout: WordListLayout
+    private let searchText: String
 
     @State private var error: VocabularyError?
 
+    /// `searchText` is the screen searched's, handed on as it changes.
     public init(
         viewModel: WordLibraryViewModel,
         layout: WordListLayout,
+        searchText: String,
         makeEditor: @escaping (WordEditorTarget) -> WordEditorRoute,
         makeDictionary: @escaping (DictionaryHeadword) -> DictionaryRoute
     ) {
         _viewModel = State(initialValue: viewModel)
         self.layout = layout
+        self.searchText = searchText
         self.makeEditor = makeEditor
         self.makeDictionary = makeDictionary
     }
@@ -40,6 +45,8 @@ public struct WordLibraryRoute: View {
             ) {
                 makeDictionary($0)
             }
+            .onChange(of: layout.sort) { _, sort in viewModel.send(.sortChanged(sort)) }
+            .onChange(of: searchText) { _, text in viewModel.send(.searchChanged(text)) }
             .onAppear { viewModel.send(.appeared) }
             .onDisappear { viewModel.send(.disappeared) }
             .task {

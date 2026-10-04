@@ -88,7 +88,12 @@ public struct FolderOutline<ID: Hashable & Sendable>: View {
 
     public var body: some View {
         #if os(iOS)
+        // Under the bars, which UIKit insets the content for, as a SwiftUI List is. Inside
+        // them, SwiftUI moved the whole view as the navigation bar's large title and search
+        // field collapsed, so rows ran ahead of the finger, three times as far while the bar
+        // collapsed, and closing a search left the bar without its title.
         OutlineCollection(outline: self)
+            .ignoresSafeArea()
         #else
         List {
             ForEach(pinned, id: \.id) { row in

@@ -61,9 +61,11 @@ after `Tools/MakeDictionary`. Add, edit and
 delete your own in My Vocabulary, and group them into decks to practise a subset.
 Every deck lives in a folder, and folders hold decks and other folders to any depth,
 arranged by dragging in the Vocabulary tab's tree as in Notes. On iPad the tree sits beside the folder or deck that is open. A lesson
-draws from all your words, one deck, or every deck beneath a folder. Each folder lists
-the words in every deck beneath it, searched and sorted as All words is. A new word can be
-added straight into a deck, chosen by its folder's path, from the word editor.
+draws from all your words, one deck, or every deck beneath a folder. My Vocabulary and
+each folder are searchable: opening the search lists every word in scope, all of them or
+those in every deck beneath the folder, sorted as chosen, and typing filters them. New words
+are added from My Vocabulary's menu or the dictionary, and can go straight into a deck,
+chosen by its folder's path, from the word editor.
 
 ## Dictionary
 

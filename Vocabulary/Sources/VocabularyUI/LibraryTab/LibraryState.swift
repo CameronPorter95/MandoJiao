@@ -1,18 +1,15 @@
 import Foundation
 import VocabularyDomain
 
-/// What the library's sidebar has open.
+/// What the library's sidebar has open. Words are found by searching, not opened.
 public enum LibrarySelection: Hashable, Sendable {
-    case allWords
     case folder(UUID)
 }
 
-/// A screen pushed over the selection: a folder opened from inside another, a deck, or a
-/// folder's words.
+/// A screen pushed over the selection: a folder opened from inside another, or a deck.
 public enum LibraryPage: Hashable, Sendable {
     case folder(UUID)
     case deck(UUID)
-    case words(folderID: UUID)
 }
 
 /// What a screen the library pushes starts from, and how it asks to push another.
@@ -23,15 +20,13 @@ public struct LibraryPageContext {
     public let vocabulary: Vocabulary
     public let openDeck: (UUID) -> Void
     public let openFolder: (UUID) -> Void
-    /// A folder's words, by the folder's id.
-    public let openWords: (UUID) -> Void
     /// One folder's screen's share of the layout, which is its own.
     public let layout: (UUID) -> FolderLayout
-    /// The word lists' share of it, all words and every folder's alike.
+    /// The search results' share of it, the library's and every folder's alike.
     public let wordList: WordListLayout
 }
 
-/// How the list of all words is sorted. The library owns the saved layout, so the list asks
+/// How a search's results are sorted. The library owns the saved layout, so the list asks
 /// it to change rather than saving its own copy, which the library's next save would undo.
 @MainActor
 public struct WordListLayout {
@@ -77,6 +72,11 @@ struct LibraryState: Equatable {
     /// A folder with something inside, waiting on confirmation before it goes.
     var pendingFolderDeletion: UUID?
     var isShowingHSKLevels = false
+    /// While open, every word in the library shows in place of the tree, filtered as typed.
+    var isSearching = false
+    var searchText = ""
+    /// A new word, since the library has no list of words to add one from.
+    var editor: WordEditorTarget?
 
     var deletionWarning: String? { pendingFolderDeletion.flatMap(vocabulary.deletionWarning(forFolder:)) }
 
@@ -116,6 +116,10 @@ enum LibraryAction: Equatable {
     case wordSortChanged(WordSort)
     case hskLevelsTapped
     case hskLevelsDismissed
+    case searchPresentedChanged(Bool)
+    case searchChanged(String)
+    case newWordTapped
+    case editorDismissed
     case editTapped
     case folderMoved(id: UUID, parentID: UUID?, index: Int)
     case newFolderTapped(parentID: UUID?)

@@ -65,20 +65,31 @@ struct LibraryViewModelTests {
         #expect(await waitUntil { library.state.path == [.folder(Fixtures.level1.id)] })
     }
 
-    @Test("a folder's words push over it, and are popped when the folder is deleted")
-    func folderWords() async {
+    @Test("opening the search shows the words in place of the tree, before anything is typed, until it closes")
+    func searching() async {
         let (library, _) = await makeLibrary()
-        library.send(.selected(.folder(Fixtures.hsk.id)))
-        library.send(.opened(.folder(Fixtures.level1.id)))
-        library.send(.opened(.words(folderID: Fixtures.level1.id)))
-        #expect(library.state.path == [.folder(Fixtures.level1.id), .words(folderID: Fixtures.level1.id)])
+        #expect(!library.state.isSearching)
 
-        await repository.replace(Vocabulary(
-            words: Fixtures.words,
-            decks: [Fixtures.fullDeck],
-            folders: [Fixtures.starter, Fixtures.hsk]
-        ))
-        #expect(await waitUntil { library.state.path.isEmpty })
+        library.send(.searchPresentedChanged(true))
+        #expect(library.state.isSearching)
+        #expect(library.state.searchText == "")
+
+        library.send(.searchChanged("shui"))
+        #expect(library.state.searchText == "shui")
+
+        library.send(.searchChanged(""))
+        library.send(.searchPresentedChanged(false))
+        #expect(!library.state.isSearching)
+    }
+
+    @Test("a new word opens a blank editor from the library, which has no list of words to add from")
+    func newWord() async {
+        let (library, _) = await makeLibrary()
+        library.send(.newWordTapped)
+        #expect(library.state.editor == .new(WordDraft()))
+
+        library.send(.editorDismissed)
+        #expect(library.state.editor == nil)
     }
 
     @Test("dragging a folder moves it at once and saves where it landed")
