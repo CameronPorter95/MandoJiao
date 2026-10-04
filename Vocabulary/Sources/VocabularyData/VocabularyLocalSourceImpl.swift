@@ -10,7 +10,7 @@ actor VocabularyLocalSourceImpl: VocabularyLocalSource {
         try storeWork { try vocabulary() }
     }
 
-    func saveWord(id: UUID?, draft: WordDraft) throws {
+    func saveWord(id: UUID?, draft: WordDraft, deckID: UUID?) throws {
         try storeWork {
             if let id {
                 guard let word = try word(id: id) else { return }
@@ -22,6 +22,10 @@ actor VocabularyLocalSourceImpl: VocabularyLocalSource {
                 let word = VocabWord(english: draft.english, hanzi: draft.hanzi, pinyin: draft.pinyin)
                 word.meanings = draft.meanings
                 modelContext.insert(word)
+                if let deckID, let deck = try deck(id: deckID) {
+                    deck.words.append(word)
+                    deck.editedAt = .now
+                }
             }
             try modelContext.save()
         }

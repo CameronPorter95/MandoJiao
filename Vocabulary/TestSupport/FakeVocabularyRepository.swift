@@ -36,13 +36,17 @@ public actor FakeVocabularyRepository: VocabularyRepository {
         return stream
     }
 
-    public func saveWord(id: UUID?, draft: WordDraft) throws {
-        try write("saveWord \(id.map { _ in "existing" } ?? "new") \(draft.meanings.joined(separator: "; "))|\(draft.hanzi)|\(draft.pinyin)") {
+    public func saveWord(id: UUID?, draft: WordDraft, deckID: UUID?) throws {
+        let deck = id == nil ? deckID.flatMap(snapshot.deck(id:)) : nil
+        try write("saveWord \(id.map { _ in "existing" } ?? "new") \(draft.meanings.joined(separator: "; "))|\(draft.hanzi)|\(draft.pinyin)\(deck.map { " into \($0.name)" } ?? "")") {
             let word = Word(id: id ?? UUID(), meanings: draft.meanings, hanzi: draft.hanzi, pinyin: draft.pinyin)
             if let index = snapshot.words.firstIndex(where: { $0.id == id }) {
                 snapshot.words[index] = word
             } else {
                 snapshot.words.append(word)
+                if let deck, let index = snapshot.decks.firstIndex(of: deck) {
+                    snapshot.decks[index] = deck.settingMembership(of: word.id, to: true)
+                }
             }
         }
     }

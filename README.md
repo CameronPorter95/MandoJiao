@@ -62,7 +62,8 @@ delete your own in My Vocabulary, and group them into decks to practise a subset
 Every deck lives in a folder, and folders hold decks and other folders to any depth,
 arranged by dragging in the Vocabulary tab's tree as in Notes. On iPad the tree sits beside the folder or deck that is open. A lesson
 draws from all your words, one deck, or every deck beneath a folder. Each folder lists
-the words in every deck beneath it, searched and sorted as All words is.
+the words in every deck beneath it, searched and sorted as All words is. A new word can be
+added straight into a deck, chosen by its folder's path, from the word editor.
 
 ## Dictionary
 
@@ -73,7 +74,8 @@ senses, and each of its characters. The dictionary is read-only and apart from y
 vocabulary: editing a word, its meanings can be chosen from the dictionary's senses, which
 copies them into the word. Each reading on a page, and each search result by swiping
 right, can be added to the vocabulary, which opens a new word filled in with its Hanzi,
-pinyin and first sense, or, once saved, opens the word in the vocabulary instead. Search
+pinyin and first sense, and a deck to add it to, or, once saved, opens the word in the
+vocabulary instead. Search
 results already in the vocabulary are ticked.
 
 ## Building

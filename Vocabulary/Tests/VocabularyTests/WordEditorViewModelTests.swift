@@ -27,6 +27,7 @@ struct WordEditorViewModelTests {
             deleteWords: DeleteWordsUseCase(repository: repository),
             suggestWord: SuggestWordUseCase(repository: lexicon ?? self.lexicon),
             lookUpDictionary: LookUpDictionaryUseCase(repository: dictionary ?? self.dictionary),
+            observeVocabulary: ObserveVocabularyUseCase(repository: repository),
             suggestionDelay: suggestionDelay
         )
         return (viewModel, EffectLog(viewModel.effects()))
@@ -75,6 +76,94 @@ struct WordEditorViewModelTests {
 
         #expect(await log.contains(.dismiss))
         #expect(await repository.writes == ["saveWord existing water|水|shui"])
+    }
+
+    @Test("a new word is offered every deck, sectioned by folder in the tree's order, none chosen, and joins the one chosen")
+    func choosingADeck() async throws {
+        let (editor, log) = makeEditor(nil, lexicon: FakeLexiconRepository([]), dictionary: FakeDictionaryRepository([]))
+        editor.send(.appeared)
+        #expect(await waitUntil { !editor.state.deckSections.isEmpty })
+        #expect(editor.state.deckSections.map(\.title) == ["Starter"])
+        #expect(editor.state.deckSections.first?.decks.map(\.name) == ["Full", "Small"])
+        #expect(editor.state.chosenDeckID == nil)
+        #expect(editor.state.chosenDeckTitle == "None")
+
+        editor.send(.deckChosen(Fixtures.smallDeck.id))
+        #expect(editor.state.chosenDeckTitle == "Starter › Small")
+        editor.send(.meaningAdded("to drink"))
+        editor.send(.hanziChanged("喝"))
+        editor.send(.saveTapped)
+
+        #expect(await log.contains(.dismiss))
+        #expect(await repository.writes == ["saveWord new to drink|喝| into Small"])
+        let snapshot = await repository.snapshot
+        let saved = try #require(snapshot.words.first { $0.hanzi == "喝" })
+        #expect(snapshot.deck(id: Fixtures.smallDeck.id)?.wordIDs.last == saved.id)
+    }
+
+    @Test("decks named alike are told apart by their folder's section, nested folders after their parent, and empty folders left out")
+    func deckSectionsNested() async {
+        await repository.replace(Fixtures.nested)
+        let (editor, _) = makeEditor(nil, lexicon: FakeLexiconRepository([]), dictionary: FakeDictionaryRepository([]))
+        editor.send(.appeared)
+        #expect(await waitUntil { editor.state.deckSections.count == 2 })
+        #expect(editor.state.deckSections.map(\.title) == ["Starter", "HSK › Level 1"])
+        #expect(editor.state.deckSections.map { $0.decks.map(\.name) } == [["Full"], ["Part 1", "Part 2"]])
+
+        editor.send(.deckChosen(Fixtures.part2.id))
+        #expect(editor.state.chosenDeckTitle == "HSK › Level 1 › Part 2")
+    }
+
+    @Test("a folder's section of decks folds and unfolds on its own, keeping the deck chosen")
+    func foldingDeckSections() async {
+        await repository.replace(Fixtures.nested)
+        let (editor, _) = makeEditor(nil, lexicon: FakeLexiconRepository([]), dictionary: FakeDictionaryRepository([]))
+        editor.send(.appeared)
+        #expect(await waitUntil { editor.state.deckSections.count == 2 })
+        #expect(editor.state.foldedDeckSections.isEmpty)
+        editor.send(.deckChosen(Fixtures.part1.id))
+        let level1 = editor.state.deckSections[1].id
+
+        editor.send(.deckSectionToggled(level1))
+        #expect(editor.state.foldedDeckSections == [level1])
+        #expect(editor.state.chosenDeckID == Fixtures.part1.id)
+
+        editor.send(.deckSectionToggled(level1))
+        #expect(editor.state.foldedDeckSections.isEmpty)
+    }
+
+    @Test("a deck deleted after it was chosen is no longer chosen, and the word joins no deck")
+    func chosenDeckDeleted() async {
+        let (editor, log) = makeEditor(nil, lexicon: FakeLexiconRepository([]), dictionary: FakeDictionaryRepository([]))
+        editor.send(.appeared)
+        #expect(await waitUntil { !editor.state.deckSections.isEmpty })
+        editor.send(.deckChosen(Fixtures.smallDeck.id))
+        #expect(editor.state.chosenDeckID == Fixtures.smallDeck.id)
+
+        var vocabulary = Fixtures.vocabulary
+        vocabulary.decks.removeAll { $0.id == Fixtures.smallDeck.id }
+        await repository.replace(vocabulary)
+        #expect(await waitUntil { editor.state.deckSections.first?.decks.count == 1 })
+        #expect(editor.state.chosenDeckID == nil)
+
+        editor.send(.meaningAdded("to drink"))
+        editor.send(.hanziChanged("喝"))
+        editor.send(.saveTapped)
+        #expect(await log.contains(.dismiss))
+        #expect(await repository.writes == ["saveWord new to drink|喝|"])
+    }
+
+    @Test("a saved word is offered no decks, its decks being changed from each deck")
+    func savedWordOffersNoDecks() async {
+        let (editor, log) = makeEditor(Fixtures.water)
+        editor.send(.appeared)
+        #expect(await waitUntil { editor.state.lookup != nil })
+        #expect(editor.state.deckSections.isEmpty)
+        #expect(editor.state.vocabulary == .empty)
+
+        editor.send(.saveTapped)
+        #expect(await log.contains(.dismiss))
+        #expect(await repository.writes == ["saveWord existing water|水|shuǐ"])
     }
 
     @Test("deleting removes the word and closes")

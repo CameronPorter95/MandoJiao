@@ -7,9 +7,9 @@ public nonisolated struct SaveWordUseCase: Sendable {
         self.repository = repository
     }
 
-    /// Trims every field. An incomplete draft is not saved.
-    public func callAsFunction(id: UUID?, draft: WordDraft) async throws {
+    /// Trims every field. An incomplete draft is not saved. A new word also joins `deckID`.
+    public func callAsFunction(id: UUID?, draft: WordDraft, deckID: UUID? = nil) async throws {
         guard draft.isComplete else { return }
-        try await repository.saveWord(id: id, draft: draft.trimmed)
+        try await repository.saveWord(id: id, draft: draft.trimmed, deckID: deckID)
     }
 }

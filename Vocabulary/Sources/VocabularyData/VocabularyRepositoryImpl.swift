@@ -23,8 +23,8 @@ actor VocabularyRepositoryImpl: VocabularyRepository {
         return stream
     }
 
-    func saveWord(id: UUID?, draft: WordDraft) async throws {
-        try await write { try await $0.saveWord(id: id, draft: draft) }
+    func saveWord(id: UUID?, draft: WordDraft, deckID: UUID?) async throws {
+        try await write { try await $0.saveWord(id: id, draft: draft, deckID: deckID) }
     }
 
     func deleteWords(ids: [UUID]) async throws {
