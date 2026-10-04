@@ -41,7 +41,7 @@ struct FolderDetailScreen: View {
                     LabeledContent {
                         Text("\(state.listedWordCount)")
                     } label: {
-                        Label("Words", systemImage: "character.book.closed")
+                        Label("All words", systemImage: "character.book.closed")
                     }
                 }
                 .tint(.primary)
