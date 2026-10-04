@@ -141,20 +141,6 @@ private struct OutlineCollection<ID: Hashable & Sendable>: UIViewRepresentable {
     }
 }
 
-/// Leaves the bar room to collapse over a short tree, as `barCollapseRoom()` does for a List.
-private final class OutlineCollectionView: UICollectionView {
-    override func layoutSubviews() {
-        super.layoutSubviews()
-        let extra = BarCollapse.extra(
-            container: bounds.height,
-            content: contentSize.height,
-            top: adjustedContentInset.top,
-            bottom: adjustedContentInset.bottom - contentInset.bottom
-        )
-        if abs(contentInset.bottom - extra) > 0.5 { contentInset.bottom = extra }
-    }
-}
-
 private nonisolated enum OutlineItem<ID: Hashable & Sendable>: Hashable, Sendable {
     case pinned(String)
     case node(ID)
@@ -210,7 +196,7 @@ private final class OutlineCoordinator<ID: Hashable & Sendable>: NSObject, UICol
             return UISwipeActionsConfiguration(actions: [practise])
         }
         let layout = UICollectionViewCompositionalLayout.list(using: list)
-        let collectionView = OutlineCollectionView(frame: .zero, collectionViewLayout: layout)
+        let collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
         collectionView.delegate = self
         collectionView.dragDelegate = self
         collectionView.dropDelegate = self

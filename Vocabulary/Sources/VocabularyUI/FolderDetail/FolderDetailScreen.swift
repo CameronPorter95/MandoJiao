@@ -129,7 +129,6 @@ struct FolderDetailScreen: View {
             }
         }
         .insetGroupedList()
-        .barCollapseRoom()
     }
 
     private var namingTitle: String {
