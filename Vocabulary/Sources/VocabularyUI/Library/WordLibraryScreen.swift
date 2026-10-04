@@ -76,7 +76,7 @@ struct WordLibraryScreen: View {
             }
         }
         .searchField(initial: state.searchText, prompt: "Search words") { onAction(.searchChanged($0)) }
-        .navigationTitle("All words")
+        .navigationTitle(state.folderID == nil ? "All words" : "Words")
         .toolbar {
             ToolbarItemGroup(placement: .primaryAction) {
                 // A word added here would be in no deck, so not in the folder's list.
