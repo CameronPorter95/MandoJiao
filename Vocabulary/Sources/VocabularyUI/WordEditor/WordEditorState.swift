@@ -11,10 +11,13 @@ struct WordEditorState: Equatable {
         let entries: [DictionaryEntry]
     }
 
-    /// A deck a new word can join, titled by where it sits.
-    struct DeckChoice: Identifiable, Equatable {
-        let id: UUID
+    /// The decks in one folder, headed by the folder's path, for a new word to join.
+    struct DeckSection: Identifiable, Equatable {
+        /// Nil for decks in no folder, which only a store from before folders has.
+        let folderID: UUID?
         let title: String
+        let decks: [DeckSummary]
+        var id: String { folderID?.uuidString ?? "none" }
     }
 
     /// Nil for a new word.
@@ -44,16 +47,25 @@ struct WordEditorState: Equatable {
     var canDelete: Bool { wordID != nil }
 
     /// Only a new word joins a deck here. A saved one's decks are changed from each deck.
-    var deckChoices: [DeckChoice] {
+    /// In the library tree's order, each folder before those inside it, leaving out folders
+    /// with no decks of their own.
+    var deckSections: [DeckSection] {
         guard wordID == nil else { return [] }
-        return vocabulary.decks
-            .map { deck in
-                let title = deck.folderID == nil
-                    ? deck.displayName
-                    : "\(vocabulary.location(of: deck.folderID)) › \(deck.displayName)"
-                return DeckChoice(id: deck.id, title: title)
-            }
-            .sorted { $0.title.localizedStandardCompare($1.title) == .orderedAscending }
+        let folderIDs: [UUID?] = [nil] + vocabulary.folders(in: nil).flatMap { top in
+            ([top] + vocabulary.folders(beneath: top.id)).map(\.id)
+        }
+        return folderIDs.compactMap { folderID in
+            let decks = vocabulary.decks(in: folderID)
+            guard !decks.isEmpty else { return nil }
+            return DeckSection(folderID: folderID, title: vocabulary.location(of: folderID), decks: decks)
+        }
+    }
+
+    /// The chosen deck with its folder's path, as the collapsed picker shows it.
+    var chosenDeckTitle: String {
+        guard let deck = chosenDeckID.flatMap(vocabulary.deck(id:)) else { return "None" }
+        guard deck.folderID != nil else { return deck.displayName }
+        return "\(vocabulary.location(of: deck.folderID)) › \(deck.displayName)"
     }
 
     /// The deck the word will join, nil if none was chosen or it has since been deleted.

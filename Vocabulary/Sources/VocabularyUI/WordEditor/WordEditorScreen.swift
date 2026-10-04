@@ -43,7 +43,7 @@ struct WordEditorScreen: View {
                 }
                 meaningsSection
 
-                if !state.deckChoices.isEmpty {
+                if !state.deckSections.isEmpty {
                     deckSection
                 }
 
@@ -145,16 +145,16 @@ struct WordEditorScreen: View {
         }
     }
 
-    /// Pushed rather than a menu, since the HSK levels alone bring dozens of decks.
+    /// Pushed rather than a menu, since the HSK levels alone bring dozens of decks. Not a
+    /// `Picker`, whose collapsed row would show only the deck's own name, and Part 1 is in
+    /// every HSK level.
     private var deckSection: some View {
         Section {
-            Picker("Deck", selection: Binding(get: { state.chosenDeckID }, set: { onAction(.deckChosen($0)) })) {
-                Text("None").tag(UUID?.none)
-                ForEach(state.deckChoices) { choice in
-                    Text(choice.title).tag(UUID?.some(choice.id))
-                }
+            NavigationLink {
+                DeckPicker(state: state, onAction: onAction)
+            } label: {
+                LabeledContent("Deck", value: state.chosenDeckTitle)
             }
-            .pushedPicker()
         } header: {
             Text("Add to")
         } footer: {
@@ -306,5 +306,52 @@ private struct DictionarySensesSection: View {
                 .foregroundStyle(Color.primary)
                 .textCase(nil)
         }
+    }
+}
+
+/// The decks a new word can join, a section per folder, so decks named alike in different
+/// folders read apart. Choosing one goes back to the word.
+private struct DeckPicker: View {
+    let state: WordEditorState
+    let onAction: (WordEditorAction) -> Void
+
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        List {
+            Section {
+                row("None", isChosen: state.chosenDeckID == nil) { onAction(.deckChosen(nil)) }
+            }
+            ForEach(state.deckSections) { section in
+                Section {
+                    ForEach(section.decks) { deck in
+                        row(deck.displayName, isChosen: state.chosenDeckID == deck.id) { onAction(.deckChosen(deck.id)) }
+                    }
+                } header: {
+                    Label(section.title, systemImage: "folder")
+                }
+            }
+        }
+        .navigationTitle("Add to")
+        .inlineNavigationTitle()
+    }
+
+    private func row(_ title: String, isChosen: Bool, choose: @escaping () -> Void) -> some View {
+        Button {
+            choose()
+            dismiss()
+        } label: {
+            HStack {
+                Text(title)
+                    .foregroundStyle(Color.primary)
+                Spacer()
+                if isChosen {
+                    Image(systemName: "checkmark")
+                        .fontWeight(.semibold)
+                        .foregroundStyle(Theme.accent)
+                }
+            }
+        }
+        .accessibilityAddTraits(isChosen ? .isSelected : [])
     }
 }

@@ -19,15 +19,6 @@ extension View {
         #endif
     }
 
-    /// A picker whose options push as a list, for more than a menu holds. A menu on macOS.
-    public func pushedPicker() -> some View {
-        #if os(iOS)
-        pickerStyle(.navigationLink)
-        #else
-        pickerStyle(.menu)
-        #endif
-    }
-
     public func inlineNavigationTitle() -> some View {
         #if os(iOS)
         navigationBarTitleDisplayMode(.inline)
