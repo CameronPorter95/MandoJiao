@@ -19,10 +19,11 @@ public final class WordLibraryViewModel {
     public init(
         folderID: UUID?,
         vocabulary: Vocabulary,
+        sort: WordSort,
         observeVocabulary: ObserveVocabularyUseCase,
         deleteWords: DeleteWordsUseCase
     ) {
-        state = WordLibraryState(folderID: folderID, vocabulary: vocabulary)
+        state = WordLibraryState(folderID: folderID, vocabulary: vocabulary, sort: sort)
         self.observeVocabulary = observeVocabulary
         self.deleteWords = deleteWords
     }
@@ -46,6 +47,10 @@ public final class WordLibraryViewModel {
 
         case .searchChanged(let text):
             state.searchText = text
+
+        case .sortChanged(let sort):
+            guard sort != state.sort else { return }
+            state.sort = sort
 
         case .addTapped:
             state.editor = .new(WordDraft())

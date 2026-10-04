@@ -8,6 +8,7 @@ public enum WordLibraryFactory: InputRouteFactory {
         let viewModel = WordLibraryViewModel(
             folderID: input.folderID,
             vocabulary: input.vocabulary,
+            sort: input.layout.sort,
             observeVocabulary: ObserveVocabularyUseCase(repository: repository),
             deleteWords: DeleteWordsUseCase(repository: repository)
         )

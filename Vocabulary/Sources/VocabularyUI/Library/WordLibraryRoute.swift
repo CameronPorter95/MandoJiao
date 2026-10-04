@@ -40,6 +40,7 @@ public struct WordLibraryRoute: View {
             ) {
                 makeDictionary($0)
             }
+            .onChange(of: layout.sort) { _, sort in viewModel.send(.sortChanged(sort)) }
             .onAppear { viewModel.send(.appeared) }
             .onDisappear { viewModel.send(.disappeared) }
             .task {

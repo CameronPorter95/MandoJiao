@@ -37,24 +37,30 @@ public nonisolated extension Vocabulary {
     }
 
     /// Ties fall back to the English, so the order never shuffles between reads.
+    ///
+    /// Each headline is made plain once, before sorting. Made plain in the comparison, 565
+    /// words, HSK 1 and 2 and Starter, took 85 ms to sort by English; made once, 5.5 ms.
     private static func sorted(_ words: [Word], by sort: WordSort) -> [Word] {
-        words.sorted { a, b in
-            let order: ComparisonResult = switch sort.field {
-            case .english: Self.english(a, b)
-            case .pinyin: Self.pinyin(a, b)
-            case .dateAdded: Self.compare(a.createdAt, b.createdAt)
-            case .mistakes: Self.compare(a.missCount, b.missCount)
+        words
+            .map { (word: $0, english: Gloss.plain($0.english)) }
+            .sorted { a, b in
+                let order: ComparisonResult = switch sort.field {
+                case .english: Self.english(a.english, b.english)
+                case .pinyin: Self.pinyin(a.word, b.word)
+                case .dateAdded: Self.compare(a.word.createdAt, b.word.createdAt)
+                case .mistakes: Self.compare(a.word.missCount, b.word.missCount)
+                }
+                if order == .orderedSame { return Self.english(a.english, b.english) == .orderedAscending }
+                return (order == .orderedAscending) == sort.ascending
             }
-            if order == .orderedSame { return Self.english(a, b) == .orderedAscending }
-            return (order == .orderedAscending) == sort.ascending
-        }
+            .map(\.word)
     }
 
-    /// By the headline as a tile shows it: "(general classifier)" files under G, and case is
-    /// ignored, where a plain comparison put every bracketed headline first and "Europe"
-    /// before "apple".
-    private static func english(_ a: Word, _ b: Word) -> ComparisonResult {
-        Gloss.plain(a.english).localizedStandardCompare(Gloss.plain(b.english))
+    /// By the headline as a tile shows it, made plain: "(general classifier)" files under G,
+    /// and case is ignored, where a plain comparison put every bracketed headline first and
+    /// "Europe" before "apple".
+    private static func english(_ a: String, _ b: String) -> ComparisonResult {
+        a.localizedStandardCompare(b)
     }
 
     /// Tones and case ignored, then tones deciding, so hē and hè sit together.

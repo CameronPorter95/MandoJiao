@@ -9,7 +9,7 @@ struct WordLibraryScreen: View {
     let onAction: (WordLibraryAction) -> Void
 
     var body: some View {
-        let filteredWords = state.words(sortedBy: layout.sort)
+        let filteredWords = state.words
         List {
             ForEach(filteredWords) { word in
                 Button {

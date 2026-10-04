@@ -69,7 +69,11 @@ public nonisolated struct Word: Identifiable, Hashable, Sendable {
     /// case, or pinyin ignoring spaces and any tone not written, so "shui3" and "yin hang"
     /// find 水 and 银行, and "shui2" does not find 水.
     public func matches(_ query: String) -> Bool {
-        let query = SearchQuery(query)
+        matches(SearchQuery(query))
+    }
+
+    /// For a query read once and matched against many words.
+    public func matches(_ query: SearchQuery) -> Bool {
         guard !query.isEmpty else { return true }
         if query.isHanzi { return hanzi.contains(query.text) }
         return meanings.contains { $0.lowercased().contains(query.english) }
