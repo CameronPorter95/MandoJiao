@@ -338,6 +338,9 @@ private struct DeckPicker: View {
                 }
             }
         }
+        // The header's withAnimation does not reach a pushed screen, whose state arrives
+        // from the editor in a later update, so the fold would snap without this.
+        .animation(.default, value: state.foldedDeckSections)
         .navigationTitle("Add to")
         .inlineNavigationTitle()
     }
