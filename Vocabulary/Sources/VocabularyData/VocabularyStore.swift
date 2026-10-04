@@ -4,11 +4,11 @@ import VocabularyDomain
 
 /// The data layer's one entry point. Everything concrete behind it stays internal.
 public enum VocabularyStore {
-    /// Opens the store, migrating an older schema if there is one.
+    /// Opens the store. One written by an earlier shape fails to open; before release the
+    /// app is reinstalled instead, as `VocabularySchemaV1` explains.
     public static func makeContainer(inMemory: Bool = false) throws -> ModelContainer {
         try ModelContainer(
-            for: Schema(versionedSchema: VocabularySchemaV4.self),
-            migrationPlan: VocabularyMigrationPlan.self,
+            for: Schema(versionedSchema: VocabularySchemaV1.self),
             configurations: ModelConfiguration(isStoredInMemoryOnly: inMemory)
         )
     }

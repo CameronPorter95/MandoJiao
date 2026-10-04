@@ -30,6 +30,37 @@ struct SpeakingLessonTests {
         #expect(lesson.failedAttempts == 0)
     }
 
+    @Test("each settled card is an answer, English to Chinese, with the wrong tries before it")
+    func answers() {
+        var lesson = makeLesson()
+        lesson.submit("cha")
+        lesson.submit("shui")
+        lesson.advance()
+        lesson.submit("cha")
+        lesson.submit("cha")
+        lesson.submit("cha")
+
+        #expect(lesson.answers == [
+            Answer(wordID: water.id, exercise: .speaking, direction: .englishToChinese, isCorrect: true, wrongAttempts: 1),
+            Answer(wordID: phone.id, exercise: .speaking, direction: .englishToChinese, isCorrect: false, wrongAttempts: 3),
+        ])
+    }
+
+    @Test("a card closed on after a wrong try counts as wrong, and one never tried is not counted")
+    func answersWhenClosedEarly() {
+        var lesson = makeLesson()
+        #expect(lesson.answers.isEmpty)
+
+        lesson.submit("cha")
+        #expect(lesson.answers == [
+            Answer(wordID: water.id, exercise: .speaking, direction: .englishToChinese, isCorrect: false, wrongAttempts: 1),
+        ])
+
+        lesson.submit("shui")
+        lesson.advance()
+        #expect(lesson.answers.map(\.isCorrect) == [true])
+    }
+
     @Test("attempts count down and report how many are left")
     func attemptsCountDown() {
         var lesson = makeLesson()

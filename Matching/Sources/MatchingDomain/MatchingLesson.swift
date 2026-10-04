@@ -20,6 +20,12 @@ public struct MatchingLesson: Equatable, Sendable {
     /// guessed wrong. Used to retire words from the mistakes list.
     public private(set) var cleanSolvesByPairID: [UUID: Int] = [:]
 
+    /// One per pair matched, on each board it was on, with the wrong guesses it was part of
+    /// there first.
+    private var matched: [Answer] = []
+    /// Wrong guesses each pair was part of on the board showing.
+    private var boardMisses: [UUID: Int] = [:]
+
     public init(plan: MatchingPlan) {
         self.plan = plan
         self.board = MatchingBoard(pairs: plan.exercises.first ?? [])
@@ -58,6 +64,24 @@ public struct MatchingLesson: Equatable, Sendable {
             .sorted { $0.english < $1.english }
     }
 
+    /// Every word answered so far, for its strength. A pair left unmatched on a board the
+    /// lesson was closed on counts as wrong if it was part of a wrong guess, and is not
+    /// counted if it was never tried.
+    public var answers: [Answer] {
+        let answered = Set(matched.suffix(boardMatchCount).map(\.wordID))
+        let unfinished = board.pairs
+            .filter { (boardMisses[$0.id] ?? 0) > 0 && !answered.contains($0.id) }
+            .map { Self.answer($0.id, isCorrect: false, wrongAttempts: boardMisses[$0.id] ?? 0) }
+        return matched + unfinished
+    }
+
+    /// Pairs matched on the board showing, the last of `matched`.
+    private var boardMatchCount = 0
+
+    private static func answer(_ pairID: UUID, isCorrect: Bool, wrongAttempts: Int) -> Answer {
+        Answer(wordID: pairID, exercise: .matching, direction: nil, isCorrect: isCorrect, wrongAttempts: wrongAttempts)
+    }
+
     /// How many matches the lesson asks for in all.
     public var totalMatches: Int { plan.exercises.reduce(0) { $0 + $1.count } }
 
@@ -71,10 +95,13 @@ public struct MatchingLesson: Equatable, Sendable {
             if !wasMissedEarlier {
                 cleanSolvesByPairID[tile.pairID, default: 0] += 1
             }
+            matched.append(Self.answer(tile.pairID, isCorrect: true, wrongAttempts: boardMisses[tile.pairID] ?? 0))
+            boardMatchCount += 1
         case .missed(let tiles):
             missCount += 1
             for missed in tiles {
                 missesByPairID[missed.pairID, default: 0] += 1
+                boardMisses[missed.pairID, default: 0] += 1
             }
         case .selected, .switched, .deselected, .ignored:
             break
@@ -92,5 +119,7 @@ public struct MatchingLesson: Equatable, Sendable {
         }
         exerciseIndex = next
         board = MatchingBoard(pairs: plan.exercises[next])
+        boardMisses = [:]
+        boardMatchCount = 0
     }
 }

@@ -48,6 +48,38 @@ struct MatchingLessonTests {
         #expect(lesson.missesByPairID[pairs[0].id] == 1)
     }
 
+    @Test("each match is an answer, carrying the wrong guesses its word was part of on that board")
+    func answers() {
+        var lesson = makeLesson()
+        _ = lesson.tap(lesson.tile(pairs[0], .english))
+        _ = lesson.tap(lesson.tile(pairs[1], .hanzi))
+        lesson.match(pairs[1])
+        lesson.match(pairs[2])
+
+        #expect(lesson.answers == [
+            Answer(wordID: pairs[1].id, exercise: .matching, direction: nil, isCorrect: true, wrongAttempts: 1),
+            Answer(wordID: pairs[2].id, exercise: .matching, direction: nil, isCorrect: true, wrongAttempts: 0),
+            // Closed now, water was guessed wrong and never matched, so it counts as wrong.
+            Answer(wordID: pairs[0].id, exercise: .matching, direction: nil, isCorrect: false, wrongAttempts: 1),
+        ])
+    }
+
+    @Test("a word is answered once per board it is on, and an untried word not at all")
+    func answersPerBoard() {
+        var lesson = makeLesson(boards: 2)
+        _ = lesson.tap(lesson.tile(pairs[0], .english))
+        _ = lesson.tap(lesson.tile(pairs[1], .hanzi))
+        pairs.forEach { lesson.match($0) }
+        lesson.advance()
+        lesson.match(pairs[0])
+
+        let water = lesson.answers.filter { $0.wordID == pairs[0].id }
+        #expect(water.map(\.wrongAttempts) == [1, 0])
+        #expect(water.map(\.isCorrect) == [true, true])
+        // The second board's other words were never tried.
+        #expect(lesson.answers.count == pairs.count + 1)
+    }
+
     @Test("a cleared board ignores taps until the lesson moves on")
     func clearedBoardIsInert() {
         var lesson = makeLesson()

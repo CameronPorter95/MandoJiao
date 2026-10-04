@@ -37,6 +37,9 @@ public struct SpeakingLesson: Equatable, Sendable {
     public private(set) var missesByPairID: [UUID: Int] = [:]
     public private(set) var cleanSolvesByPairID: [UUID: Int] = [:]
 
+    /// One per settled card: right, with the wrong tries before it, or out of tries.
+    private var settled: [Answer] = []
+
     /// Whether the card just left was solved.
     ///
     /// The speaking lesson keeps the microphone going into the next word after a correct answer,
@@ -99,6 +102,7 @@ public struct SpeakingLesson: Equatable, Sendable {
         if isRight {
             cleanSolvesByPairID[card.id, default: 0] += 1
             phase = .correct(heard: heard)
+            settled.append(answer(isCorrect: true, wrongAttempts: attemptsUsed - 1))
         } else {
             failedAttempts += 1
             if attemptsLeft > 0 {
@@ -106,9 +110,22 @@ public struct SpeakingLesson: Equatable, Sendable {
             } else {
                 missesByPairID[card.id, default: 0] += 1
                 phase = .exhausted(heard: heard)
+                settled.append(answer(isCorrect: false, wrongAttempts: attemptsUsed))
             }
         }
         return isRight
+    }
+
+    /// Every word answered so far, for its strength. A card the lesson was closed on counts
+    /// as wrong if it had a wrong try, and is not counted if it had none.
+    public var answers: [Answer] {
+        guard !isFinished, !phase.isSettled, attemptsUsed > 0 else { return settled }
+        return settled + [answer(isCorrect: false, wrongAttempts: attemptsUsed)]
+    }
+
+    /// The English shown, the Chinese said.
+    private func answer(isCorrect: Bool, wrongAttempts: Int) -> Answer {
+        Answer(wordID: card.id, exercise: .speaking, direction: .englishToChinese, isCorrect: isCorrect, wrongAttempts: wrongAttempts)
     }
 
     /// Clears a failed verdict so a fresh attempt can show its own.
