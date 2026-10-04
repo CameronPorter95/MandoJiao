@@ -34,6 +34,8 @@ struct WordEditorState: Equatable {
     var vocabulary: Vocabulary = .empty
     /// Kept while its deck is gone, but only saved into while it exists.
     var deckID: UUID?
+    /// By `DeckSection.id`. Only for while the editor is open.
+    var foldedDeckSections: Set<String> = []
 
     init(wordID: UUID?, draft: WordDraft, lookup: Lookup? = nil) {
         self.wordID = wordID
@@ -160,6 +162,7 @@ enum WordEditorAction: Equatable {
     case dictionaryTapped
     case dictionaryDismissed
     case deckChosen(UUID?)
+    case deckSectionToggled(String)
     case saveTapped
     case deleteTapped
     case cancelTapped

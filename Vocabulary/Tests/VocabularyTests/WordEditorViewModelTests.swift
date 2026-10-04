@@ -114,6 +114,24 @@ struct WordEditorViewModelTests {
         #expect(editor.state.chosenDeckTitle == "HSK › Level 1 › Part 2")
     }
 
+    @Test("a folder's section of decks folds and unfolds on its own, keeping the deck chosen")
+    func foldingDeckSections() async {
+        await repository.replace(Fixtures.nested)
+        let (editor, _) = makeEditor(nil, lexicon: FakeLexiconRepository([]), dictionary: FakeDictionaryRepository([]))
+        editor.send(.appeared)
+        #expect(await waitUntil { editor.state.deckSections.count == 2 })
+        #expect(editor.state.foldedDeckSections.isEmpty)
+        editor.send(.deckChosen(Fixtures.part1.id))
+        let level1 = editor.state.deckSections[1].id
+
+        editor.send(.deckSectionToggled(level1))
+        #expect(editor.state.foldedDeckSections == [level1])
+        #expect(editor.state.chosenDeckID == Fixtures.part1.id)
+
+        editor.send(.deckSectionToggled(level1))
+        #expect(editor.state.foldedDeckSections.isEmpty)
+    }
+
     @Test("a deck deleted after it was chosen is no longer chosen, and the word joins no deck")
     func chosenDeckDeleted() async {
         let (editor, log) = makeEditor(nil, lexicon: FakeLexiconRepository([]), dictionary: FakeDictionaryRepository([]))

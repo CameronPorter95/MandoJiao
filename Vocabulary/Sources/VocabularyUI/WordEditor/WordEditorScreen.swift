@@ -310,7 +310,8 @@ private struct DictionarySensesSection: View {
 }
 
 /// The decks a new word can join, a section per folder, so decks named alike in different
-/// folders read apart. Choosing one goes back to the word.
+/// folders read apart. Each folds, as a folder's own sections do. Choosing one goes back to
+/// the word.
 private struct DeckPicker: View {
     let state: WordEditorState
     let onAction: (WordEditorAction) -> Void
@@ -323,12 +324,17 @@ private struct DeckPicker: View {
                 row("None", isChosen: state.chosenDeckID == nil) { onAction(.deckChosen(nil)) }
             }
             ForEach(state.deckSections) { section in
+                let isFolded = state.foldedDeckSections.contains(section.id)
                 Section {
-                    ForEach(section.decks) { deck in
-                        row(deck.displayName, isChosen: state.chosenDeckID == deck.id) { onAction(.deckChosen(deck.id)) }
+                    if !isFolded {
+                        ForEach(section.decks) { deck in
+                            row(deck.displayName, isChosen: state.chosenDeckID == deck.id) { onAction(.deckChosen(deck.id)) }
+                        }
                     }
                 } header: {
-                    Label(section.title, systemImage: "folder")
+                    FoldingHeader(title: section.title, systemImage: "folder", isFolded: isFolded) {
+                        onAction(.deckSectionToggled(section.id))
+                    }
                 }
             }
         }

@@ -112,6 +112,11 @@ public final class WordEditorViewModel {
         case .deckChosen(let id):
             state.deckID = id
 
+        case .deckSectionToggled(let id):
+            if state.foldedDeckSections.remove(id) == nil {
+                state.foldedDeckSections.insert(id)
+            }
+
         case .saveTapped:
             guard state.canSave else { return }
             let id = state.wordID
