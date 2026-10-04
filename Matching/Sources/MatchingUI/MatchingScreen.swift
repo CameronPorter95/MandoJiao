@@ -130,7 +130,7 @@ struct MatchingScreen: View {
                 .foregroundStyle(.secondary)
             Text("Not enough words yet")
                 .font(.title3.bold())
-            Text("A lesson needs at least \(MatchingPlanBuilder.pairsPerExercise) words. Add a few more to the library and try again.")
+            Text("A lesson needs at least \(MatchingPlanBuilder.pairsPerExercise) words. Add a few more to your vocabulary and try again.")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
@@ -154,7 +154,7 @@ struct MatchingScreen: View {
 
 extension WordPair {
     var reviewRow: LessonCompleteView.Row {
-        LessonCompleteView.Row(id: id, hanzi: hanzi, english: english, pinyin: pinyin)
+        LessonCompleteView.Row(id: id, hanzi: hanzi, english: meanings.joined(separator: "; "), pinyin: pinyin)
     }
 }
 

@@ -79,6 +79,12 @@ public struct MatchingBoard: Equatable, Sendable {
         pairs.first { $0.id == tile.pairID }?.pinyin
     }
 
+    /// The meanings an English tile leaves out, for once its pair is solved.
+    public func otherMeanings(for tile: Tile) -> [String] {
+        guard tile.side == .english else { return [] }
+        return pairs.first { $0.id == tile.pairID }?.otherMeanings ?? []
+    }
+
     public mutating func tap(_ tile: Tile) -> TapResult {
         guard !isMatched(tile) else { return .ignored }
         missedTileIDs = []

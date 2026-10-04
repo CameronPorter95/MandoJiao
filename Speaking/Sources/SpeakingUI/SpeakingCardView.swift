@@ -132,6 +132,14 @@ struct SpeakingCardView: View {
                     .font(.title3)
                     .foregroundStyle(.secondary)
             }
+            // The prompt showed only the headline; the answer is the whole word.
+            if !card.otherMeanings.isEmpty {
+                Text("Also \(card.otherMeanings.joined(separator: "; "))")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .lineLimit(2)
+            }
         }
     }
 
@@ -274,7 +282,7 @@ struct SpeakingCardView: View {
 
 #Preview("Idle") {
     SpeakingCardView(
-        card: WordPair(english: "water", hanzi: "水", pinyin: "shuǐ"),
+        card: WordPair(english: "water", hanzi: "水", pinyin: "shuǐ", otherMeanings: ["river"]),
         phase: .idle,
         attemptsLeft: 3,
         micState: .idle,
@@ -292,7 +300,7 @@ struct SpeakingCardView: View {
 
 #Preview("Wrong") {
     SpeakingCardView(
-        card: WordPair(english: "water", hanzi: "水", pinyin: "shuǐ"),
+        card: WordPair(english: "water", hanzi: "水", pinyin: "shuǐ", otherMeanings: ["river"]),
         phase: .wrong(heard: "茶", attemptsLeft: 2),
         attemptsLeft: 2,
         micState: .idle,

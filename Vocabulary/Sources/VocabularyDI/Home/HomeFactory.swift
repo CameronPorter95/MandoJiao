@@ -3,8 +3,7 @@ import SwiftUI
 import VocabularyDomain
 import VocabularyUI
 
-/// The package's composition root for the home screen and the stack pushed from it,
-/// which is why it takes the package's whole navigation bundle.
+/// The package's composition root for the home tab and the stack pushed from it.
 public enum HomeFactory: NavigationInputRouteFactory {
     public static func makeRoute(
         dependencies: Dependencies,
@@ -16,20 +15,10 @@ public enum HomeFactory: NavigationInputRouteFactory {
             minimumMatchingWords: input.minimumMatchingWords,
             quickPracticeRounds: input.quickPracticeRounds,
             observeVocabulary: ObserveVocabularyUseCase(repository: repository),
-            createDeck: CreateDeckUseCase(repository: repository),
-            deleteDeck: DeleteDeckUseCase(repository: repository),
             clearMistakes: ClearMistakesUseCase(repository: repository)
         )
         return HomeRoute(viewModel: viewModel, navigation: navigation.home) { destination in
             switch destination {
-            case .library:
-                AnyView(WordLibraryFactory.makeRoute(dependencies: dependencies))
-            case .deck(let id):
-                AnyView(DeckDetailFactory.makeRoute(
-                    dependencies: dependencies,
-                    navigation: navigation.deckDetail,
-                    input: DeckDetailInput(deckID: id, minimumMatchingWords: input.minimumMatchingWords)
-                ))
             case .settings:
                 input.settings()
             }

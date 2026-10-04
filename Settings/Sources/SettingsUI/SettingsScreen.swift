@@ -60,10 +60,11 @@ struct SettingsScreen: View {
             Section {
                 Link("CC-CEDICT", destination: URL(string: "https://cc-cedict.org/wiki/")!)
                 Link("CC BY-SA 4.0 licence", destination: URL(string: "https://creativecommons.org/licenses/by-sa/4.0/")!)
+                Link("Complete HSK Vocabulary", destination: URL(string: "https://github.com/drkameleon/complete-hsk-vocabulary")!)
             } header: {
                 Text("Acknowledgements")
             } footer: {
-                Text("Suggested pinyin and English come from CC-CEDICT, shortened to one sense per word.")
+                Text("Suggested pinyin and English come from CC-CEDICT, shortened to one sense per word. The HSK word lists come from Complete HSK Vocabulary, copyright 2026 Yanis Zafirópulos, under the MIT licence.")
             }
         }
         .navigationTitle("Settings")

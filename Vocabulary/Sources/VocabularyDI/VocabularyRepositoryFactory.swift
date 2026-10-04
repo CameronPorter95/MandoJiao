@@ -26,6 +26,18 @@ public enum VocabularyRepositoryFactory {
         Lexicon.repository
     }
 
+    public static func makeDictionaryRepository() -> any DictionaryRepository {
+        CEDICT.dictionary
+    }
+
+    public static func makeHSKRepository() -> any HSKRepository {
+        HSKSource.repository
+    }
+
+    public static func makeLibraryLayoutRepository() -> any LibraryLayoutRepository {
+        LibraryLayoutRepositoryImpl()
+    }
+
     /// The seam other packages record results through, injected by the app.
     @MainActor
     public static func makeRecordLessonResultsUseCase(dependencies: Dependencies) -> RecordLessonResultsUseCase {

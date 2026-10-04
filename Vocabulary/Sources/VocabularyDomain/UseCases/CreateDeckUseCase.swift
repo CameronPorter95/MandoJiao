@@ -8,9 +8,9 @@ public nonisolated struct CreateDeckUseCase: Sendable {
     }
 
     /// A blank name creates nothing.
-    public func callAsFunction(name: String) async throws {
+    public func callAsFunction(name: String, folderID: UUID) async throws {
         let name = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !name.isEmpty else { return }
-        try await repository.createDeck(name: name)
+        try await repository.createDeck(name: name, folderID: folderID)
     }
 }

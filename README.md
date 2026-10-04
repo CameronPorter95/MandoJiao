@@ -50,9 +50,31 @@ level; `是` and `社` merge from Standard up; `想` and `兄` merge from Relaxe
 
 ## Word list
 
-Ships with 65 starter words across six decks. Add, edit and delete your own from
-the library, and group them into decks to practise a subset. A lesson draws from
-either the whole library or one deck.
+Ships with 65 starter words across six decks, in a Starter folder, and HSK 1 from the
+2025 revision of HSK 3.0, split into decks of 50 or fewer words, most common first. The
+other levels, up to 7-9, are added or restored from the HSK levels list in My Vocabulary. Each
+HSK word takes up to four meanings from the dictionary for its reading, headed for HSK 1
+to 5 by an everyday meaning chosen by hand in `Tools/MakeHSK/headlines.tsv` where the
+dictionary's first is not. A character with two everyday readings, like 长 cháng and zhǎng,
+is two words, listed in `Tools/MakeHSK/readings.tsv`. Rebuild the list with `Tools/MakeHSK`
+after `Tools/MakeDictionary`. Add, edit and
+delete your own in My Vocabulary, and group them into decks to practise a subset.
+Every deck lives in a folder, and folders hold decks and other folders to any depth,
+arranged by dragging in the Vocabulary tab's tree as in Notes. On iPad the tree sits beside the folder or deck that is open. A lesson
+draws from all your words, one deck, or every deck beneath a folder. Each folder lists
+the words in every deck beneath it, searched and sorted as All words is.
+
+## Dictionary
+
+The whole of CC-CEDICT is bundled, and the Dictionary tab searches it by Hanzi, by pinyin
+with or without tones, or by English. Pinyin without tones finds every tone; a tone written,
+as "wéi" or "wei2", finds only that tone. The word list is searched the same way. A headword's page lists every reading with all its
+senses, and each of its characters. The dictionary is read-only and apart from your
+vocabulary: editing a word, its meanings can be chosen from the dictionary's senses, which
+copies them into the word. Each reading on a page, and each search result by swiping
+right, can be added to the vocabulary, which opens a new word filled in with its Hanzi,
+pinyin and first sense, or, once saved, opens the word in the vocabulary instead. Search
+results already in the vocabulary are ticked.
 
 ## Building
 

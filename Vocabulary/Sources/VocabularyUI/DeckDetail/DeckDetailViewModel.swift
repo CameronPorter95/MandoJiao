@@ -12,6 +12,7 @@ public final class DeckDetailViewModel {
     private let observeVocabulary: ObserveVocabularyUseCase
     private let renameDeck: RenameDeckUseCase
     private let setMembership: SetDeckMembershipUseCase
+    private let moveDeck: MoveDeckUseCase
     private let renameDelay: Duration
 
     private var observation: Task<Void, Never>?
@@ -20,18 +21,27 @@ public final class DeckDetailViewModel {
     /// Writes run one after another, so rapid toggles land in the order they were made.
     private var lastWrite: Task<Void, Never>?
 
+    /// `vocabulary` is shown until the store's own snapshot arrives.
     public init(
         deckID: UUID,
         minimumMatchingWords: Int,
+        vocabulary: Vocabulary = .empty,
         observeVocabulary: ObserveVocabularyUseCase,
         renameDeck: RenameDeckUseCase,
         setMembership: SetDeckMembershipUseCase,
+        moveDeck: MoveDeckUseCase,
         renameDelay: Duration = .milliseconds(300)
     ) {
-        state = DeckDetailState(deckID: deckID, minimumMatchingWords: minimumMatchingWords)
+        state = DeckDetailState(
+            deckID: deckID,
+            minimumMatchingWords: minimumMatchingWords,
+            vocabulary: vocabulary,
+            name: vocabulary.deck(id: deckID)?.name
+        )
         self.observeVocabulary = observeVocabulary
         self.renameDeck = renameDeck
         self.setMembership = setMembership
+        self.moveDeck = moveDeck
         self.renameDelay = renameDelay
     }
 
@@ -66,16 +76,22 @@ public final class DeckDetailViewModel {
         case .searchChanged(let text):
             state.searchText = text
 
+        case .removeTapped(let wordID):
+            guard state.isIncluded(wordID) else { return }
+            include(wordID, false)
+
+        case .addWordsTapped:
+            state.pickerSearchText = ""
+            state.isAddingWords = true
+
+        case .addWordsDismissed:
+            state.isAddingWords = false
+
+        case .pickerSearchChanged(let text):
+            state.pickerSearchText = text
+
         case .wordToggled(let wordID):
-            guard state.deck != nil else { return }
-            let isIncluded = !state.isIncluded(wordID)
-            applyMembership(of: wordID, isIncluded: isIncluded)
-            let deckID = state.deckID
-            enqueue(failure: VocabularyError.updateDeckFailed, revert: { [weak self] in
-                self?.applyMembership(of: wordID, isIncluded: !isIncluded)
-            }) { [setMembership] in
-                try await setMembership(deckID: deckID, wordID: wordID, isIncluded: isIncluded)
-            }
+            include(wordID, !state.isIncluded(wordID))
 
         case .startLessonTapped:
             guard let deck = state.deck, state.canStartLesson else { return }
@@ -85,12 +101,41 @@ public final class DeckDetailViewModel {
                 pool: state.vocabulary.words(in: deck).pairs
             )
             effectChannel.send(.startLesson(request))
+
+        case .moveTapped:
+            state.isChoosingDestination = true
+
+        case .destinationChosen(let folderID):
+            state.isChoosingDestination = false
+            guard let folderID, state.vocabulary.canMoveDeck(state.deckID, into: folderID) else { return }
+            let previous = state.vocabulary
+            state.vocabulary = previous.movingDeck(state.deckID, into: folderID, at: nil)
+            let deckID = state.deckID
+            enqueue(failure: VocabularyError.moveDeckFailed, revert: { [weak self] in
+                self?.state.vocabulary = previous
+            }) { [moveDeck] in
+                try await moveDeck(id: deckID, toFolder: folderID)
+            }
+
+        case .moveCancelled:
+            state.isChoosingDestination = false
         }
     }
 
     private func receive(_ vocabulary: Vocabulary) {
         state.vocabulary = vocabulary
         if state.name == nil { state.name = state.deck?.name }
+    }
+
+    private func include(_ wordID: UUID, _ isIncluded: Bool) {
+        guard state.deck != nil else { return }
+        applyMembership(of: wordID, isIncluded: isIncluded)
+        let deckID = state.deckID
+        enqueue(failure: VocabularyError.updateDeckFailed, revert: { [weak self] in
+            self?.applyMembership(of: wordID, isIncluded: !isIncluded)
+        }) { [setMembership] in
+            try await setMembership(deckID: deckID, wordID: wordID, isIncluded: isIncluded)
+        }
     }
 
     private func applyMembership(of wordID: UUID, isIncluded: Bool) {

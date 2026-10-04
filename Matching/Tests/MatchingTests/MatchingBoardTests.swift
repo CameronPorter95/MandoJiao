@@ -29,6 +29,15 @@ struct MatchingBoardTests {
         #expect(!board.isComplete)
     }
 
+    @Test("a tile shows the headline, and the english side holds the other meanings back")
+    func otherMeanings() {
+        let drink = WordPair(english: "to drink", hanzi: "喝", pinyin: "hē", otherMeanings: ["to shout"])
+        let board = MatchingBoard(pairs: [drink])
+        #expect(board.englishTiles.map(\.text) == ["to drink"])
+        #expect(board.otherMeanings(for: board.englishTiles[0]) == ["to shout"])
+        #expect(board.otherMeanings(for: board.hanziTiles[0]).isEmpty)
+    }
+
     @Test("english first then hanzi matches")
     func matchFromEnglish() {
         var board = makeBoard()

@@ -7,7 +7,7 @@ public enum VocabularyStore {
     /// Opens the store, migrating an older schema if there is one.
     public static func makeContainer(inMemory: Bool = false) throws -> ModelContainer {
         try ModelContainer(
-            for: Schema(versionedSchema: VocabularySchemaV2.self),
+            for: Schema(versionedSchema: VocabularySchemaV4.self),
             migrationPlan: VocabularyMigrationPlan.self,
             configurations: ModelConfiguration(isStoredInMemoryOnly: inMemory)
         )
@@ -42,14 +42,26 @@ public enum VocabularyStore {
         let existing = try? context.fetchCount(FetchDescriptor<VocabWord>())
         guard (existing ?? 0) == 0 else { return }
 
-        for plan in SampleVocabulary.deckPlan {
+        // One time for everything seeded, so a date sort falls back to names; see BuiltInInstaller.
+        let seededAt = Date.now
+        let starter = Folder(name: SampleVocabulary.folderName)
+        starter.builtInKey = SampleVocabulary.builtInKey
+        context.insert(starter)
+        for (position, plan) in SampleVocabulary.deckPlan.enumerated() {
             let words = plan.entries.map {
                 VocabWord(english: $0.english, hanzi: $0.hanzi, pinyin: $0.pinyin)
             }
             words.forEach(context.insert)
-            context.insert(Deck(name: plan.name, words: words))
+            let deck = Deck(name: plan.name, words: words, folder: starter, position: position)
+            deck.createdAt = seededAt
+            deck.editedAt = seededAt
+            context.insert(deck)
         }
-
         try? context.save()
+
+        // A fresh install starts with HSK 1; the other levels are added from the library.
+        if let words = try? BundledHSK.words() {
+            try? BuiltInInstaller.install(HSK.plan(level: 1, words: words, topLevelFolders: 1), in: context)
+        }
     }
 }

@@ -12,13 +12,20 @@ import VocabularyTestSupport
 struct DeckDetailViewModelTests {
     private let repository = FakeVocabularyRepository(Fixtures.vocabulary)
 
-    private func makeDetail(_ deck: DeckSummary = Fixtures.fullDeck) async -> (DeckDetailViewModel, EffectLog<DeckDetailEffect>) {
+    private let nestedRepository = FakeVocabularyRepository(Fixtures.nested)
+
+    private func makeDetail(
+        _ deck: DeckSummary = Fixtures.fullDeck,
+        nested: Bool = false
+    ) async -> (DeckDetailViewModel, EffectLog<DeckDetailEffect>) {
+        let repository = nested ? nestedRepository : repository
         let viewModel = DeckDetailViewModel(
             deckID: deck.id,
             minimumMatchingWords: 5,
             observeVocabulary: ObserveVocabularyUseCase(repository: repository),
             renameDeck: RenameDeckUseCase(repository: repository),
             setMembership: SetDeckMembershipUseCase(repository: repository),
+            moveDeck: MoveDeckUseCase(repository: repository),
             renameDelay: .milliseconds(30)
         )
         let log = EffectLog(viewModel.effects())
@@ -84,6 +91,64 @@ struct DeckDetailViewModelTests {
         #expect(detail.state.isIncluded(Fixtures.water.id))
     }
 
+    @Test("the deck lists only its own words, searched apart from the sheet that adds them")
+    func ownWords() async {
+        let (detail, _) = await makeDetail(Fixtures.smallDeck)
+        // Small holds water and a word with no English, which sorts first as the list of all words does.
+        #expect(detail.state.words.map(\.hanzi) == ["空", "水"])
+        #expect(detail.state.wordCount == 2)
+        #expect(detail.state.pickerWords.count == Fixtures.words.count)
+
+        detail.send(.searchChanged("shui"))
+        #expect(detail.state.words.map(\.english) == ["water"])
+        #expect(detail.state.pickerWords.count == Fixtures.words.count)
+
+        detail.send(.pickerSearchChanged("cha"))
+        #expect(detail.state.pickerWords.map(\.english) == ["tea"])
+        #expect(detail.state.words.map(\.english) == ["water"])
+    }
+
+    @Test("adding words opens a sheet with its search cleared, where a tap puts a word in the deck")
+    func addingWords() async {
+        let (detail, _) = await makeDetail(Fixtures.smallDeck)
+        detail.send(.addWordsTapped)
+        detail.send(.pickerSearchChanged("cha"))
+        detail.send(.wordToggled(Fixtures.tea.id))
+        #expect(detail.state.isIncluded(Fixtures.tea.id))
+        #expect(detail.state.words.map(\.english).contains("tea"))
+        #expect(await waitUntil { await repository.writes == ["setMembership true"] })
+
+        detail.send(.addWordsDismissed)
+        #expect(!detail.state.isAddingWords)
+        detail.send(.addWordsTapped)
+        #expect(detail.state.isAddingWords)
+        #expect(detail.state.pickerSearchText == "")
+    }
+
+    @Test("removing takes a word out of the deck, leaves it in the library, and a repeat writes nothing")
+    func removing() async {
+        let (detail, _) = await makeDetail()
+        detail.send(.removeTapped(Fixtures.water.id))
+        detail.send(.removeTapped(Fixtures.water.id))
+        #expect(!detail.state.words.contains(Fixtures.water))
+        #expect(detail.state.vocabulary.words.contains(Fixtures.water))
+        #expect(!detail.state.canStartLesson)
+
+        await settle()
+        #expect(await repository.writes == ["setMembership false"])
+    }
+
+    @Test("a failed removal puts the word back and says why")
+    func failedRemoval() async {
+        let (detail, log) = await makeDetail()
+        await repository.failWrites()
+
+        detail.send(.removeTapped(Fixtures.water.id))
+
+        #expect(await log.contains(.showError(.updateDeckFailed(FakeVocabularyRepository.failure))))
+        #expect(detail.state.words.contains(Fixtures.water))
+    }
+
     @Test("starting a lesson asks for one over the deck's words, under the typed name")
     func startingALesson() async {
         let (detail, log) = await makeDetail()
@@ -107,5 +172,40 @@ struct DeckDetailViewModelTests {
 
         await settle()
         #expect(log.effects.isEmpty)
+    }
+
+    @Test("a deck moves into any other folder, never to the top level")
+    func moving() async {
+        let (detail, _) = await makeDetail(Fixtures.part1, nested: true)
+        #expect(detail.state.destinations.map(\.title) == ["Empty", "HSK", "Starter"])
+
+        detail.send(.moveTapped)
+        #expect(detail.state.isChoosingDestination)
+        detail.send(.destinationChosen(Fixtures.hsk.id))
+
+        #expect(!detail.state.isChoosingDestination)
+        #expect(detail.state.deck?.folderID == Fixtures.hsk.id)
+        #expect(await waitUntil { await nestedRepository.writes == ["moveDeck Part 1 to HSK"] })
+    }
+
+    @Test("a failed move puts the deck back and says why")
+    func failedMove() async {
+        let (detail, log) = await makeDetail(Fixtures.part1, nested: true)
+        await nestedRepository.failWrites()
+        detail.send(.destinationChosen(Fixtures.hsk.id))
+        #expect(detail.state.deck?.folderID == Fixtures.hsk.id)
+
+        #expect(await log.contains(.showError(.moveDeckFailed(FakeVocabularyRepository.failure))))
+        #expect(detail.state.deck?.folderID == Fixtures.level1.id)
+    }
+
+    @Test("with no folder to move into, the deck says so")
+    func nowhereToMove() async {
+        let (detail, _) = await makeDetail()
+        #expect(detail.state.destinations.isEmpty)
+        #expect(detail.state.moveUnavailableReason == "Make a folder first to move this deck into.")
+
+        let (nested, _) = await makeDetail(Fixtures.fullDeck, nested: true)
+        #expect(nested.state.moveUnavailableReason == nil)
     }
 }

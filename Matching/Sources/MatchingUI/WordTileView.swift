@@ -6,6 +6,8 @@ import VocabularyDomain
 struct WordTileView: View {
     let tile: Tile
     let pinyin: String?
+    /// Shown on an English tile once solved, since the answer is already out.
+    let otherMeanings: [String]
     let isSelected: Bool
     let isMatched: Bool
     let isMissed: Bool
@@ -35,6 +37,14 @@ struct WordTileView: View {
                     Text(pinyin)
                         .font(.caption)
                         .foregroundStyle(.secondary)
+                }
+
+                if isMatched, tile.side == .english, !otherMeanings.isEmpty {
+                    Text(otherMeanings.joined(separator: "; "))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                        .lineLimit(2)
                 }
             }
             .frame(maxWidth: .infinity, minHeight: Theme.tileMinHeight)
@@ -86,11 +96,12 @@ struct WordTileView: View {
 }
 
 #Preview {
-    let pair = WordPair(english: "to drink", hanzi: "喝", pinyin: "hē")
+    let pair = WordPair(english: "to drink", hanzi: "喝", pinyin: "hē", otherMeanings: ["to shout"])
     return VStack(spacing: 12) {
         WordTileView(
             tile: Tile(pairID: pair.id, side: .english, text: pair.english),
             pinyin: pair.pinyin,
+            otherMeanings: pair.otherMeanings,
             isSelected: false,
             isMatched: false,
             isMissed: false,
@@ -99,6 +110,7 @@ struct WordTileView: View {
         WordTileView(
             tile: Tile(pairID: pair.id, side: .hanzi, text: pair.hanzi),
             pinyin: pair.pinyin,
+            otherMeanings: pair.otherMeanings,
             isSelected: true,
             isMatched: false,
             isMissed: false,
@@ -107,6 +119,7 @@ struct WordTileView: View {
         WordTileView(
             tile: Tile(pairID: pair.id, side: .hanzi, text: pair.hanzi),
             pinyin: pair.pinyin,
+            otherMeanings: pair.otherMeanings,
             isSelected: false,
             isMatched: false,
             isMissed: false,
@@ -115,6 +128,7 @@ struct WordTileView: View {
         WordTileView(
             tile: Tile(pairID: pair.id, side: .hanzi, text: pair.hanzi),
             pinyin: pair.pinyin,
+            otherMeanings: pair.otherMeanings,
             isSelected: false,
             isMatched: true,
             isMissed: false,
