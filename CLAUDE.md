@@ -27,7 +27,7 @@ holds only the entry point and the composition root. See
 - `Documentation/code-comments.md`: when a comment is warranted, and how long
 
 Packages: `Core` (`CoreDomain`, `CorePersistence`, `CoreSound`, `CoreDesignSystem`,
-`CoreUI`, `CoreDI`, `CoreTestSupport`), `Vocabulary`, `Speaking`, `Matching` and
+`CoreUI`, `CoreDI`, `CoreTestSupport`), `Vocabulary`, `Speaking`, `Matching`, `Flashcards` and
 `Settings`, each with up to four targets: `{X}Domain`, `{X}Data`, `{X}UI`, `{X}DI`.
 The rules most easily broken:
 
@@ -56,7 +56,7 @@ Moving code must not move a pinned cost out of the test suite.
 ## Build and test
 
 ```sh
-# Everything, on the simulator: all five packages' tests.
+# Everything, on the simulator: all six packages' tests.
 xcodebuild build -scheme MandoJiao -destination 'platform=iOS Simulator,id=<udid>'
 xcodebuild test  -scheme MandoJiao -destination 'platform=iOS Simulator,id=<udid>'
 
@@ -74,9 +74,9 @@ test files and reports a pass for tests that never ran. This has happened three
 times; once it reported `TEST SUCCEEDED` while eight new tests were skipped. A
 green result on its own is not evidence that anything ran.
 
-`xcodebuild test` prints one `Test run with` line per test bundle, five in all.
-Add them up. Current suite: 369 tests in 38 suites: 13 in `Core`, 215 in `Vocabulary`,
-96 in `Speaking`, 41 in `Matching`, 4 in `Settings`. The app target has no tests of
+`xcodebuild test` prints one `Test run with` line per test bundle, six in all.
+Add them up. Current suite: 391 tests in 42 suites: 13 in `Core`, 215 in `Vocabulary`,
+96 in `Speaking`, 41 in `Matching`, 22 in `Flashcards`, 4 in `Settings`. The app target has no tests of
 its own. If a bundle's line is missing, it did not run.
 
 ```sh

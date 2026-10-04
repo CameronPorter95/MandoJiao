@@ -22,4 +22,11 @@ public nonisolated struct WordPair: Identifiable, Hashable, Sendable {
     }
 
     public var meanings: [String] { [english] + otherMeanings }
+
+    /// Any meaning, not just the headline a prompt shows: 行 showing "to walk" beside 可以
+    /// showing "okay" is a board where "okay" fits both. Ignores case.
+    public func sharesMeaning(with other: WordPair) -> Bool {
+        let theirs = Set(other.meanings.map { $0.lowercased() })
+        return meanings.contains { theirs.contains($0.lowercased()) }
+    }
 }

@@ -64,7 +64,9 @@ struct FolderDetailState: Equatable {
     }
 
     var wordCount: Int { folder.map(vocabulary.usableWordCount(in:)) ?? 0 }
-    var canStartLesson: Bool { wordCount >= minimumMatchingWords }
+    func canStart(_ exercise: LessonExercise) -> Bool {
+        wordCount >= exercise.minimumWords(matching: minimumMatchingWords)
+    }
 
     private func subfolders(in parentID: UUID) -> [Subfolder] {
         vocabulary.folders(in: parentID).map { folder in
@@ -81,7 +83,7 @@ struct FolderDetailState: Equatable {
 enum FolderDetailAction: Equatable {
     case appeared
     case disappeared
-    case startLessonTapped
+    case startLessonTapped(LessonExercise)
     case searchPresentedChanged(Bool)
     case searchChanged(String)
     case namingTapped(FolderDetailState.Naming)
@@ -97,6 +99,6 @@ enum FolderDetailAction: Equatable {
 }
 
 enum FolderDetailEffect: Equatable, Sendable {
-    case startLesson(LessonRequest)
+    case startLesson(LessonRequest, LessonExercise)
     case showError(VocabularyError)
 }

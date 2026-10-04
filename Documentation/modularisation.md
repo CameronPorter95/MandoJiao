@@ -95,6 +95,7 @@ that does the injecting, not a peer.
 | `Vocabulary` | Words, decks and folders, the mistakes list, the home and library tabs, the word editor and deck detail. `WordPair`, `LessonRequest`, `VocabWord`, `Deck`, sample seeding. | all four |
 | `Matching` | The matching exercise. `MatchingPlan`, `MatchingPlanBuilder`, `MatchingBoard`, the matching view model, board and tile views, matching settings. | all four; `Data` holds only settings storage |
 | `Speaking` | The speaking lesson. `SpeakingPlan`, `SpeakingPlanBuilder`, `AnswerGrader`, `AnswerStrictness`, `Endpointing`, the `SpeechRecognising` seam and `DictationRecogniser`, `SpeechLog`, the view model and card views, speaking settings. | all four |
+| `Flashcards` | The flash card exercise. `Flashcard`, `FlashcardPlanBuilder`, which chooses each card's direction and format, `FlashcardGrader`, `FlashcardLesson`, the view model and card view. | `Domain`, `UI`, `DI`: no settings yet |
 | `Settings` | The settings screen. Edits matching and speaking settings through their domains. | `UI`, `DI` |
 
 **The home screen lives in `Vocabulary`,** because everything on it is vocabulary data:

@@ -93,14 +93,14 @@ public final class DeckDetailViewModel {
         case .wordToggled(let wordID):
             include(wordID, !state.isIncluded(wordID))
 
-        case .startLessonTapped:
-            guard let deck = state.deck, state.canStartLesson else { return }
+        case .startLessonTapped(let exercise):
+            guard let deck = state.deck, state.canStart(exercise) else { return }
             flushRename()
             let request = LessonRequest(
                 title: state.name ?? deck.name,
                 pool: state.vocabulary.words(in: deck).pairs
             )
-            effectChannel.send(.startLesson(request))
+            effectChannel.send(.startLesson(request, exercise))
 
         case .moveTapped:
             state.isChoosingDestination = true

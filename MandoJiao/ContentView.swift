@@ -1,4 +1,5 @@
 import CoreDI
+import FlashcardsDI
 import MatchingDI
 import MatchingDomain
 import SettingsDI
@@ -58,6 +59,15 @@ struct ContentView: View {
                     dependencies: dependencies,
                     navigation: navigation.speaking,
                     input: SpeakingInput(
+                        request: request,
+                        recordResults: VocabularyRepositoryFactory.makeRecordLessonResultsUseCase(dependencies: dependencies)
+                    )
+                )
+            case .flashcards(let request):
+                FlashcardsFactory.makeRoute(
+                    dependencies: dependencies,
+                    navigation: navigation.flashcards,
+                    input: FlashcardsInput(
                         request: request,
                         recordResults: VocabularyRepositoryFactory.makeRecordLessonResultsUseCase(dependencies: dependencies)
                     )

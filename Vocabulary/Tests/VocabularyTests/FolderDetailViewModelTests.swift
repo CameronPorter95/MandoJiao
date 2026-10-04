@@ -43,7 +43,7 @@ struct FolderDetailViewModelTests {
         #expect(level1.state.subfolders.isEmpty)
         #expect(level1.state.decks.map(\.name) == ["Part 1", "Part 2"])
         #expect(level1.state.summary == "2 decks")
-        #expect(level1.state.canStartLesson)
+        #expect(level1.state.canStart(.matching))
     }
 
     @Test("folders nest in the tree to any depth")
@@ -69,10 +69,10 @@ struct FolderDetailViewModelTests {
     func startingALesson() async {
         let (hsk, log) = await makeDetail(Fixtures.hsk.id)
         #expect(hsk.state.decks.isEmpty)
-        hsk.send(.startLessonTapped)
+        hsk.send(.startLessonTapped(.flashcards))
 
         #expect(await waitUntil { log.effects.count == 1 })
-        guard case .startLesson(let request) = log.effects.first else {
+        guard case .startLesson(let request, .flashcards) = log.effects.first else {
             Issue.record("expected a lesson request")
             return
         }
@@ -185,7 +185,7 @@ struct FolderDetailViewModelTests {
         hsk.send(.practiseFolderTapped(Fixtures.level1.id))
 
         #expect(await waitUntil { log.effects.count == 1 })
-        guard case .startLesson(let request) = log.effects.first else {
+        guard case .startLesson(let request, .matching) = log.effects.first else {
             Issue.record("expected a lesson request")
             return
         }

@@ -4,7 +4,7 @@ An iPhone app for practising Mandarin vocabulary, built around the idea that
 recognising a word and being able to say it are different skills, and both need
 drilling.
 
-Two exercises, one shared word list.
+Three exercises, one shared word list, each started from a deck's or folder's Start lesson menu.
 
 ## Matching
 
@@ -16,15 +16,22 @@ pair so the board sounds like it is filling up. Ten rounds to a lesson.
 It is a better tool than flashcards for words you barely know, because five at a
 time means you can work by elimination and still get something right.
 
-## Mistakes drill
+## Read aloud
 
-Every word you get wrong goes on a mistakes list. The drill takes those words one
-at a time: the English is shown, you say the Mandarin out loud, and the app tells
-you whether you got it. One card per word, so a short list makes a short lesson
-rather than padding itself out with words you already know.
+One word at a time: the Hanzi is shown, you read it out loud, and the app tells you
+whether you got it. Every word you get wrong goes on a mistakes list, and Home drills
+that list this way. One card per word, so a short list makes a short lesson rather
+than padding itself out with words you already know.
 
-Recognition runs on-device. Answers can be typed instead of spoken at any point,
-in pinyin or Hanzi.
+Recognition runs on-device. Answers can be typed instead of spoken at any point, in
+pinyin, since the Hanzi is already on the card.
+
+## Flash cards
+
+One word at a time, shown in Chinese or English, chosen by the app, and answered
+either by typing or by picking from four. A card showing Chinese takes the English,
+any of the word's meanings; one showing English takes the Hanzi only. One try per
+card, then the word in full.
 
 ## Grading
 

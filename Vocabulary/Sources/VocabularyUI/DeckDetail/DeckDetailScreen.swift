@@ -15,20 +15,12 @@ struct DeckDetailScreen: View {
                     text: Binding(get: { state.name ?? "" }, set: { onAction(.nameChanged($0)) })
                 )
 
-                Button {
-                    onAction(.startLessonTapped)
-                } label: {
-                    Text("Start lesson")
-                        .font(.headline)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 4)
-                }
-                .buttonStyle(.borderedProminent)
-                .tint(Theme.accent)
-                .disabled(!state.canStartLesson)
+                StartLessonMenu(canStart: state.canStart) { onAction(.startLessonTapped($0)) }
             } footer: {
-                if !state.canStartLesson {
-                    Text("Add at least \(state.minimumMatchingWords) words to practise this deck.")
+                if !state.canStart(.flashcards) {
+                    Text("Add words to practise this deck.")
+                } else if !state.canStart(.matching) {
+                    Text("Match pairs needs at least \(state.minimumMatchingWords) words.")
                 }
             }
 

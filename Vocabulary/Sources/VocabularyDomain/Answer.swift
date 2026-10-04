@@ -4,10 +4,14 @@ import Foundation
 /// worked out from. Kept for every exercise, so a later one adds evidence rather than
 /// replacing it.
 public nonisolated struct Answer: Hashable, Sendable {
-    /// Stored by raw value: rename a case only by keeping its raw value.
+    /// Stored by raw value: rename a case only by keeping its raw value. Each is its own
+    /// kind of evidence, so a flash card typed and one picked are kept apart: typing recalls
+    /// the answer, picking only recognises it.
     public enum Exercise: String, Hashable, Sendable, CaseIterable {
         case matching
         case speaking
+        case flashcardTyped
+        case flashcardPicked
     }
 
     /// What was shown, and what was asked for. Stored by raw value.

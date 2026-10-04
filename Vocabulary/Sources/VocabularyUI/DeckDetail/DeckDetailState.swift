@@ -31,7 +31,9 @@ struct DeckDetailState: Equatable {
     }
 
     var selectedCount: Int { deck.map(vocabulary.usableWordCount(in:)) ?? 0 }
-    var canStartLesson: Bool { selectedCount >= minimumMatchingWords }
+    func canStart(_ exercise: LessonExercise) -> Bool {
+        selectedCount >= exercise.minimumWords(matching: minimumMatchingWords)
+    }
 
     var destinations: [MoveDestination] { vocabulary.destinations(forDeck: deckID) }
     /// Shown when there is nowhere to move to, so the row does not look broken.
@@ -55,13 +57,13 @@ enum DeckDetailAction: Equatable {
     case pickerSearchChanged(String)
     /// In the sheet: in the deck if it was not, out of it if it was.
     case wordToggled(UUID)
-    case startLessonTapped
+    case startLessonTapped(LessonExercise)
     case moveTapped
     case destinationChosen(UUID?)
     case moveCancelled
 }
 
 enum DeckDetailEffect: Equatable, Sendable {
-    case startLesson(LessonRequest)
+    case startLesson(LessonRequest, LessonExercise)
     case showError(VocabularyError)
 }
