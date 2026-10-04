@@ -115,7 +115,7 @@ struct DictionarySearchViewModelTests {
         let he = try #require(await found(search, "喝").first)
         #expect(search.state.vocabulary(for: he) == .absent)
 
-        try await vocabulary.saveWord(id: nil, draft: WordDraft(english: "to drink", hanzi: "喝", pinyin: "hē"))
+        try await vocabulary.saveWord(id: nil, draft: WordDraft(english: "to drink", hanzi: "喝", pinyin: "hē"), deckID: nil)
         #expect(await waitUntil { search.state.vocabulary(for: he)?.isSaved == true })
 
         search.send(.disappeared)

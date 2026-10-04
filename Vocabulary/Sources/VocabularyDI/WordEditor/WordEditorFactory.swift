@@ -12,7 +12,8 @@ public enum WordEditorFactory: InputRouteFactory {
                 saveWord: SaveWordUseCase(repository: repository),
                 deleteWords: DeleteWordsUseCase(repository: repository),
                 suggestWord: SuggestWordUseCase(repository: VocabularyRepositoryFactory.makeLexiconRepository()),
-                lookUpDictionary: LookUpDictionaryUseCase(repository: VocabularyRepositoryFactory.makeDictionaryRepository())
+                lookUpDictionary: LookUpDictionaryUseCase(repository: VocabularyRepositoryFactory.makeDictionaryRepository()),
+                observeVocabulary: ObserveVocabularyUseCase(repository: repository)
             ),
             // Adding from the dictionary would open an editor over this one.
             makeDictionary: { DictionaryFactory.makeRoute(dependencies: dependencies, input: DictionaryInput(headword: $0, addsToVocabulary: false)) }

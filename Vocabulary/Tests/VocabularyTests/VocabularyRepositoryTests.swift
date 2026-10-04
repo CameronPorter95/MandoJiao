@@ -103,7 +103,7 @@ struct VocabularyRepositoryTests {
         let ids = try await addWaterTeaBook()
         try await repository.recordResults(LessonResults(misses: [ids.water: 1], cleanSolves: [:]))
 
-        try await repository.saveWord(id: ids.water, draft: WordDraft(english: "cold water", hanzi: "冷水", pinyin: "lěngshuǐ"))
+        try await repository.saveWord(id: ids.water, draft: WordDraft(english: "cold water", hanzi: "冷水", pinyin: "lěngshuǐ"), deckID: nil)
 
         let word = await current().words.first { $0.id == ids.water }
         #expect(word?.english == "cold water")
@@ -127,6 +127,23 @@ struct VocabularyRepositoryTests {
         #expect(deck.wordIDs == [ids.tea])
     }
 
+    @Test("a new word joins the deck it is added to, and an edit leaves its decks alone")
+    func addingIntoADeck() async throws {
+        let ids = try await addWaterTeaBook()
+        try await repository.createDeck(name: "Drinks", folderID: try await makeFolder())
+        let deckID = try #require(await current().decks.first?.id)
+        try await repository.setMembership(deckID: deckID, wordID: ids.tea, isIncluded: true)
+
+        try await repository.saveWord(id: nil, draft: WordDraft(english: "to drink", hanzi: "喝"), deckID: deckID)
+        try await repository.saveWord(id: ids.water, draft: WordDraft(english: "water", hanzi: "水"), deckID: deckID)
+        try await repository.saveWord(id: nil, draft: WordDraft(english: "milk", hanzi: "牛奶"), deckID: UUID())
+
+        let vocabulary = await current()
+        let drink = try #require(vocabulary.byEnglish["to drink"]?.id)
+        #expect(vocabulary.deck(id: deckID)?.wordIDs == [ids.tea, drink])
+        #expect(vocabulary.byEnglish["milk"] != nil)
+    }
+
     @Test("renaming a deck or changing its words marks it edited, not created")
     func editedDate() async throws {
         let ids = try await addWaterTeaBook()
@@ -147,11 +164,11 @@ struct VocabularyRepositoryTests {
 
     @Test("a word keeps every meaning in order, and one saved before meanings reads as its one")
     func meanings() async throws {
-        try await repository.saveWord(id: nil, draft: WordDraft(meanings: ["to drink", "to shout"], hanzi: "喝"))
+        try await repository.saveWord(id: nil, draft: WordDraft(meanings: ["to drink", "to shout"], hanzi: "喝"), deckID: nil)
         let saved = try #require(await current().words.first)
         #expect(saved.meanings == ["to drink", "to shout"])
 
-        try await repository.saveWord(id: saved.id, draft: WordDraft(meanings: ["to shout", "to drink"], hanzi: "喝"))
+        try await repository.saveWord(id: saved.id, draft: WordDraft(meanings: ["to shout", "to drink"], hanzi: "喝"), deckID: nil)
         #expect(await current().words.first?.meanings == ["to shout", "to drink"])
         let stored = try container.mainContext.fetch(FetchDescriptor<VocabWord>()).first
         #expect(stored?.english == "to shout")
@@ -272,7 +289,7 @@ struct VocabularyRepositoryTests {
         _ = try await addWaterTeaBook()
         try await repository.renameDeck(id: UUID(), name: "Nowhere")
         try await repository.setMembership(deckID: UUID(), wordID: UUID(), isIncluded: true)
-        try await repository.saveWord(id: UUID(), draft: WordDraft(english: "ghost", hanzi: "鬼"))
+        try await repository.saveWord(id: UUID(), draft: WordDraft(english: "ghost", hanzi: "鬼"), deckID: nil)
 
         #expect(await current().words.count == 3)
     }
@@ -282,7 +299,7 @@ struct VocabularyRepositoryTests {
         let log = SnapshotLog(repository.vocabulary())
         #expect(await waitUntil { log.snapshots.last?.words.isEmpty == true })
 
-        try await repository.saveWord(id: nil, draft: WordDraft(english: "water", hanzi: "水"))
+        try await repository.saveWord(id: nil, draft: WordDraft(english: "water", hanzi: "水"), deckID: nil)
 
         #expect(await waitUntil { log.snapshots.last?.words.map(\.english) == ["water"] })
     }
@@ -296,7 +313,7 @@ struct VocabularyRepositoryTests {
         let log = SnapshotLog(library.vocabulary())
         #expect(await waitUntil { log.snapshots.last?.words.isEmpty == true })
 
-        try await editor.saveWord(id: nil, draft: WordDraft(english: "water", hanzi: "水"))
+        try await editor.saveWord(id: nil, draft: WordDraft(english: "water", hanzi: "水"), deckID: nil)
 
         #expect(await waitUntil { log.snapshots.last?.words.map(\.english) == ["water"] })
     }
@@ -305,7 +322,7 @@ struct VocabularyRepositoryTests {
 
     private func addWaterTeaBook() async throws -> (water: UUID, tea: UUID, book: UUID) {
         for (english, hanzi) in [("water", "水"), ("tea", "茶"), ("book", "书")] {
-            try await repository.saveWord(id: nil, draft: WordDraft(english: english, hanzi: hanzi))
+            try await repository.saveWord(id: nil, draft: WordDraft(english: english, hanzi: hanzi), deckID: nil)
         }
         let words = await current().byEnglish
         return (try #require(words["water"]?.id), try #require(words["tea"]?.id), try #require(words["book"]?.id))
@@ -372,7 +389,7 @@ private struct FailingLocalSource: VocabularyLocalSource {
     let error: any Error & Sendable
 
     func snapshot() async throws -> Vocabulary { throw error }
-    func saveWord(id: UUID?, draft: WordDraft) async throws { throw error }
+    func saveWord(id: UUID?, draft: WordDraft, deckID: UUID?) async throws { throw error }
     func deleteWords(ids: [UUID]) async throws { throw error }
     func createDeck(name: String, folderID: UUID) async throws { throw error }
     func renameDeck(id: UUID, name: String) async throws { throw error }

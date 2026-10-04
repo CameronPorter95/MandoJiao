@@ -4,8 +4,9 @@ public nonisolated protocol VocabularyRepository: Sendable {
     /// The current vocabulary, then again after every change made through this repository.
     func vocabulary() -> AsyncStream<Vocabulary>
 
-    /// Nil `id` adds a new word.
-    func saveWord(id: UUID?, draft: WordDraft) async throws
+    /// Nil `id` adds a new word, which also joins the deck `deckID` names, if it exists.
+    /// `deckID` is ignored for a word already saved.
+    func saveWord(id: UUID?, draft: WordDraft, deckID: UUID?) async throws
     func deleteWords(ids: [UUID]) async throws
 
     /// A deck always lives in a folder. Ignored when the folder does not exist.

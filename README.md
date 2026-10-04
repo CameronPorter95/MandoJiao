@@ -64,7 +64,8 @@ arranged by dragging in the Vocabulary tab's tree as in Notes. On iPad the tree 
 draws from all your words, one deck, or every deck beneath a folder. My Vocabulary and
 each folder are searchable: opening the search lists every word in scope, all of them or
 those in every deck beneath the folder, sorted as chosen, and typing filters them. New words
-are added from My Vocabulary's menu or the dictionary.
+are added from My Vocabulary's menu or the dictionary, and can go straight into a deck,
+chosen by its folder's path, from the word editor.
 
 ## Dictionary
 
@@ -75,7 +76,8 @@ senses, and each of its characters. The dictionary is read-only and apart from y
 vocabulary: editing a word, its meanings can be chosen from the dictionary's senses, which
 copies them into the word. Each reading on a page, and each search result by swiping
 right, can be added to the vocabulary, which opens a new word filled in with its Hanzi,
-pinyin and first sense, or, once saved, opens the word in the vocabulary instead. Search
+pinyin and first sense, and a deck to add it to, or, once saved, opens the word in the
+vocabulary instead. Search
 results already in the vocabulary are ticked.
 
 ## Building

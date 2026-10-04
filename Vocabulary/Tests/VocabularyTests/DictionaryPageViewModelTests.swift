@@ -124,7 +124,7 @@ struct DictionaryPageViewModelTests {
         #expect(await waitUntil { page.state.words != nil })
         #expect(page.state.vocabulary(for: readings[0]) == .absent)
 
-        try await repository.saveWord(id: nil, draft: WordDraft(english: "to walk", hanzi: "行", pinyin: "xing2"))
+        try await repository.saveWord(id: nil, draft: WordDraft(english: "to walk", hanzi: "行", pinyin: "xing2"), deckID: nil)
         #expect(await waitUntil {
             if case .saved = page.state.vocabulary(for: readings[0]) { return true }
             return false

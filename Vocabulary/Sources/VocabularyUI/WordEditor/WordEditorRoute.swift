@@ -31,6 +31,7 @@ public struct WordEditorRoute: View {
                 }
             }
             .onAppear { viewModel.send(.appeared) }
+            .onDisappear { viewModel.send(.disappeared) }
             .errorAlert($error)
     }
 }

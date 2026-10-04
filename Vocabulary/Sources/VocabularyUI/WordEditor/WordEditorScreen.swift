@@ -43,6 +43,10 @@ struct WordEditorScreen: View {
                 }
                 meaningsSection
 
+                if !state.deckSections.isEmpty {
+                    deckSection
+                }
+
                 if state.dictionaryHeadword != nil {
                     dictionarySection
                 }
@@ -138,6 +142,23 @@ struct WordEditorScreen: View {
                 Text("The headline is shown on tiles and prompts, the rest once the answer is out."
                     + (state.meanings.count > 1 ? " Hold and drag to reorder, swipe to remove." : ""))
             }
+        }
+    }
+
+    /// Pushed rather than a menu, since the HSK levels alone bring dozens of decks. Not a
+    /// `Picker`, whose collapsed row would show only the deck's own name, and Part 1 is in
+    /// every HSK level.
+    private var deckSection: some View {
+        Section {
+            NavigationLink {
+                DeckPicker(state: state, onAction: onAction)
+            } label: {
+                LabeledContent("Deck", value: state.chosenDeckTitle)
+            }
+        } header: {
+            Text("Add to")
+        } footer: {
+            Text("Optional. The word joins the deck, and so every folder above it.")
         }
     }
 
@@ -285,5 +306,61 @@ private struct DictionarySensesSection: View {
                 .foregroundStyle(Color.primary)
                 .textCase(nil)
         }
+    }
+}
+
+/// The decks a new word can join, a section per folder, so decks named alike in different
+/// folders read apart. Each folds, as a folder's own sections do. Choosing one goes back to
+/// the word.
+private struct DeckPicker: View {
+    let state: WordEditorState
+    let onAction: (WordEditorAction) -> Void
+
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        List {
+            Section {
+                row("None", isChosen: state.chosenDeckID == nil) { onAction(.deckChosen(nil)) }
+            }
+            ForEach(state.deckSections) { section in
+                let isFolded = state.foldedDeckSections.contains(section.id)
+                Section {
+                    if !isFolded {
+                        ForEach(section.decks) { deck in
+                            row(deck.displayName, isChosen: state.chosenDeckID == deck.id) { onAction(.deckChosen(deck.id)) }
+                        }
+                    }
+                } header: {
+                    FoldingHeader(title: section.title, systemImage: "folder", isFolded: isFolded) {
+                        onAction(.deckSectionToggled(section.id))
+                    }
+                }
+            }
+        }
+        // The header's withAnimation does not reach a pushed screen, whose state arrives
+        // from the editor in a later update, so the fold would snap without this.
+        .animation(.default, value: state.foldedDeckSections)
+        .navigationTitle("Add to")
+        .inlineNavigationTitle()
+    }
+
+    private func row(_ title: String, isChosen: Bool, choose: @escaping () -> Void) -> some View {
+        Button {
+            choose()
+            dismiss()
+        } label: {
+            HStack {
+                Text(title)
+                    .foregroundStyle(Color.primary)
+                Spacer()
+                if isChosen {
+                    Image(systemName: "checkmark")
+                        .fontWeight(.semibold)
+                        .foregroundStyle(Theme.accent)
+                }
+            }
+        }
+        .accessibilityAddTraits(isChosen ? .isSelected : [])
     }
 }

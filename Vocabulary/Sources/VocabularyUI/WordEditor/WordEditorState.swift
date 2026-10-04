@@ -11,6 +11,15 @@ struct WordEditorState: Equatable {
         let entries: [DictionaryEntry]
     }
 
+    /// The decks in one folder, headed by the folder's path, for a new word to join.
+    struct DeckSection: Identifiable, Equatable {
+        /// Nil for decks in no folder, which only a store from before folders has.
+        let folderID: UUID?
+        let title: String
+        let decks: [DeckSummary]
+        var id: String { folderID?.uuidString ?? "none" }
+    }
+
     /// Nil for a new word.
     let wordID: UUID?
     var draft: WordDraft
@@ -20,6 +29,13 @@ struct WordEditorState: Equatable {
     var meaningsEdited: Bool
     var dictionary: DictionaryHeadword?
     var isChoosingSenses = false
+    /// For the decks a new word can join. Empty until first heard, and never heard for a
+    /// saved word.
+    var vocabulary: Vocabulary = .empty
+    /// Kept while its deck is gone, but only saved into while it exists.
+    var deckID: UUID?
+    /// By `DeckSection.id`. Only for while the editor is open.
+    var foldedDeckSections: Set<String> = []
 
     init(wordID: UUID?, draft: WordDraft, lookup: Lookup? = nil) {
         self.wordID = wordID
@@ -31,6 +47,34 @@ struct WordEditorState: Equatable {
     var title: String { wordID == nil ? "New word" : "Edit word" }
     var canSave: Bool { submission.isComplete }
     var canDelete: Bool { wordID != nil }
+
+    /// Only a new word joins a deck here. A saved one's decks are changed from each deck.
+    /// In the library tree's order, each folder before those inside it, leaving out folders
+    /// with no decks of their own.
+    var deckSections: [DeckSection] {
+        guard wordID == nil else { return [] }
+        let folderIDs: [UUID?] = [nil] + vocabulary.folders(in: nil).flatMap { top in
+            ([top] + vocabulary.folders(beneath: top.id)).map(\.id)
+        }
+        return folderIDs.compactMap { folderID in
+            let decks = vocabulary.decks(in: folderID)
+            guard !decks.isEmpty else { return nil }
+            return DeckSection(folderID: folderID, title: vocabulary.location(of: folderID), decks: decks)
+        }
+    }
+
+    /// The chosen deck with its folder's path, as the collapsed picker shows it.
+    var chosenDeckTitle: String {
+        guard let deck = chosenDeckID.flatMap(vocabulary.deck(id:)) else { return "None" }
+        guard deck.folderID != nil else { return deck.displayName }
+        return "\(vocabulary.location(of: deck.folderID)) › \(deck.displayName)"
+    }
+
+    /// The deck the word will join, nil if none was chosen or it has since been deleted.
+    var chosenDeckID: UUID? {
+        guard wordID == nil else { return nil }
+        return deckID.flatMap { vocabulary.deck(id: $0)?.id }
+    }
 
     /// Every reading of the Hanzi as typed, empty while it is being looked up.
     var entries: [DictionaryEntry] {
@@ -105,6 +149,7 @@ struct WordEditorState: Equatable {
 
 enum WordEditorAction: Equatable {
     case appeared
+    case disappeared
     case hanziChanged(String)
     case pinyinChanged(String)
     case senseToggled(String)
@@ -116,6 +161,8 @@ enum WordEditorAction: Equatable {
     case sensesDismissed
     case dictionaryTapped
     case dictionaryDismissed
+    case deckChosen(UUID?)
+    case deckSectionToggled(String)
     case saveTapped
     case deleteTapped
     case cancelTapped
