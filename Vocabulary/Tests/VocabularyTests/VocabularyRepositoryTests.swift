@@ -144,6 +144,29 @@ struct VocabularyRepositoryTests {
         #expect(vocabulary.byEnglish["milk"] != nil)
     }
 
+    @Test("a lesson with a source marks that deck or folder practised, and one without marks nothing")
+    func practised() async throws {
+        let ids = try await addWaterTeaBook()
+        let folderID = try await makeFolder()
+        try await repository.createDeck(name: "Drinks", folderID: folderID)
+        let deckID = try #require(await current().decks.first?.id)
+
+        try await repository.recordResults(LessonResults(misses: [:], cleanSolves: [ids.water: 1]))
+        #expect(await current().lastPractised == nil)
+
+        try await repository.recordResults(LessonResults(misses: [:], cleanSolves: [ids.water: 1], source: .deck(deckID)))
+        #expect(await current().lastPractised == .deck(deckID))
+        try await Task.sleep(for: .milliseconds(20))
+        try await repository.recordResults(LessonResults(misses: [ids.tea: 1], cleanSolves: [:], source: .folder(folderID)))
+        let vocabulary = await current()
+        #expect(vocabulary.lastPractised == .folder(folderID))
+        #expect(vocabulary.deck(id: deckID)?.lastPractisedAt != nil)
+
+        // A deck deleted while its lesson was open is ignored.
+        try await repository.recordResults(LessonResults(misses: [:], cleanSolves: [ids.water: 1], source: .deck(UUID())))
+        #expect(await current().lastPractised == .folder(folderID))
+    }
+
     @Test("renaming a deck or changing its words marks it edited, not created")
     func editedDate() async throws {
         let ids = try await addWaterTeaBook()

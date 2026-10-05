@@ -139,10 +139,25 @@ actor VocabularyLocalSourceImpl: VocabularyLocalSource {
 
     /// Every answer is kept with its word, all at the time the lesson is recorded, which is
     /// as fine as strength over days needs. An answer to a word since deleted is dropped.
+    /// The deck or folder the lesson came from is marked practised then too.
     func recordResults(_ results: LessonResults) throws {
         try storeWork {
             var changed = false
             let answeredAt = Date.now
+            switch results.source {
+            case .deck(let id):
+                if let deck = try deck(id: id) {
+                    deck.lastPractisedAt = answeredAt
+                    changed = true
+                }
+            case .folder(let id):
+                if let folder = try folder(id: id) {
+                    folder.lastPractisedAt = answeredAt
+                    changed = true
+                }
+            case nil:
+                break
+            }
             let answers = Dictionary(grouping: results.answers, by: \.wordID)
             for word in try modelContext.fetch(FetchDescriptor<VocabWord>()) {
                 for answer in answers[word.uuid] ?? [] {
@@ -231,13 +246,17 @@ extension Deck {
             editedAt: editedAt,
             wordIDs: words.map(\.uuid),
             folderID: folder?.uuid,
-            builtInKey: builtInKey
+            builtInKey: builtInKey,
+            lastPractisedAt: lastPractisedAt
         )
     }
 }
 
 extension Folder {
     nonisolated var summary: FolderSummary {
-        FolderSummary(id: uuid, name: name, createdAt: createdAt, parentID: parent?.uuid, builtInKey: builtInKey)
+        FolderSummary(
+            id: uuid, name: name, createdAt: createdAt, parentID: parent?.uuid,
+            builtInKey: builtInKey, lastPractisedAt: lastPractisedAt
+        )
     }
 }

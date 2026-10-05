@@ -77,6 +77,7 @@ struct FolderDetailViewModelTests {
             return
         }
         #expect(request.title == "HSK")
+        #expect(request.source == .folder(Fixtures.hsk.id))
         #expect(request.pool.map(\.english) == ["water", "tea", "book", "mobile phone", "green"])
     }
 
@@ -190,6 +191,7 @@ struct FolderDetailViewModelTests {
             return
         }
         #expect(request.title == "Level 1")
+        #expect(request.source == .folder(Fixtures.level1.id))
         #expect(request.pool.count == 5)
     }
 

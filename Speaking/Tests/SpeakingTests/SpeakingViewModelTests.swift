@@ -234,6 +234,8 @@ struct SpeakingViewModelTests {
         #expect(await waitUntil { harness.audio.events == ["enter", "exit", "fanfare"] })
         #expect(await waitUntil { await harness.recorded().count == 1 })
         #expect(await harness.recorded().first?.cleanSolves == [water.id: 1])
+        // So the deck is marked practised, for home to carry on with.
+        #expect(await harness.recorded().first?.source == .deck(testDeckID))
     }
 
     @Test("closing after finishing does not record the results twice")
@@ -363,7 +365,7 @@ private final class Harness {
     ) {
         recogniser = FakeRecogniser(preparesTo: availability, heard: heard)
         viewModel = SpeakingViewModel(
-            request: LessonRequest(title: "t", pool: cards),
+            request: LessonRequest(title: "t", pool: cards, source: .deck(testDeckID)),
             recogniser: recogniser,
             audioSession: audio,
             sounds: audio,
@@ -449,3 +451,5 @@ private struct FixedSpeakingSettings: SpeakingSettingsRepository {
     func setStrictness(_ strictness: AnswerStrictness) {}
     func setCardLimit(_ cardLimit: Int) {}
 }
+
+private let testDeckID = UUID()

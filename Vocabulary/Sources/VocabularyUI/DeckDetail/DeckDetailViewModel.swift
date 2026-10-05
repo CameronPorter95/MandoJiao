@@ -98,7 +98,8 @@ public final class DeckDetailViewModel {
             flushRename()
             let request = LessonRequest(
                 title: state.name ?? deck.name,
-                pool: state.vocabulary.words(in: deck).pairs
+                pool: state.vocabulary.words(in: deck).pairs,
+                source: .deck(deck.id)
             )
             effectChannel.send(.startLesson(request, exercise))
 

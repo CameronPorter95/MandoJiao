@@ -9,6 +9,65 @@ struct HomeState: Equatable {
     /// screen can change it while home is underneath.
     var quickPracticeRounds: Int
     var isConfirmingClear = false
+    /// Picked from Practise another deck, and shown until something is next practised.
+    var chosen: LessonSource?
+    var isChoosingSource = false
+
+    /// A folder offered to carry on with, and its decks, in the library tree's order.
+    struct SourceSection: Identifiable, Equatable {
+        let folder: FolderSummary
+        let title: String
+        let wordCount: Int
+        let decks: [DeckChoice]
+        var id: UUID { folder.id }
+    }
+
+    struct DeckChoice: Identifiable, Equatable {
+        let deck: DeckSummary
+        let wordCount: Int
+        var id: UUID { deck.id }
+    }
+
+    /// What the Continue section offers: what was picked, else what was last practised.
+    var current: LessonSource? {
+        if let chosen, vocabulary.contains(chosen) { return chosen }
+        return vocabulary.lastPractised
+    }
+
+    var currentName: String? { current.flatMap(vocabulary.name(of:)) }
+
+    /// Usable words, which is what an exercise draws.
+    var currentWordCount: Int { current.map { vocabulary.words(in: $0).filter(\.isUsable).count } ?? 0 }
+
+    /// Where it sits and how big it is: "HSK › HSK 1 · 50 words".
+    var currentSubtitle: String {
+        guard let current else { return "" }
+        let count = currentWordCount == 1 ? "1 word" : "\(currentWordCount) words"
+        let parent: UUID? = switch current {
+        case .deck(let id): vocabulary.deck(id: id)?.folderID
+        case .folder(let id): vocabulary.folder(id: id)?.parentID
+        }
+        guard let parent else { return count }
+        return "\(vocabulary.location(of: parent)) · \(count)"
+    }
+
+    func canStart(_ exercise: LessonExercise) -> Bool {
+        currentWordCount >= exercise.minimumWords(matching: minimumMatchingWords)
+    }
+
+    /// Folders with words beneath them, each with its decks that have any.
+    var sourceSections: [SourceSection] {
+        let ordered = vocabulary.folders(in: nil).flatMap { [$0] + vocabulary.folders(beneath: $0.id) }
+        return ordered.compactMap { folder in
+            let wordCount = vocabulary.usableWordCount(in: folder)
+            guard wordCount > 0 else { return nil }
+            let decks = vocabulary.decks(in: folder.id).compactMap { deck -> DeckChoice? in
+                let count = vocabulary.usableWordCount(in: deck)
+                return count > 0 ? DeckChoice(deck: deck, wordCount: count) : nil
+            }
+            return SourceSection(folder: folder, title: vocabulary.location(of: folder.id), wordCount: wordCount, decks: decks)
+        }
+    }
 
     var usableWordCount: Int { vocabulary.usableWords.count }
     var canStartQuickPractice: Bool { usableWordCount >= minimumMatchingWords }
@@ -25,6 +84,10 @@ enum HomeAction: Equatable {
     case appeared
     case disappeared
     case quickPracticeTapped
+    case continueTapped(LessonExercise)
+    case chooseSourceTapped
+    case sourceChosen(LessonSource)
+    case sourceChoiceDismissed
     case practiseMistakesTapped
     case clearMistakesTapped
     case clearMistakesConfirmed
@@ -34,5 +97,6 @@ enum HomeAction: Equatable {
 enum HomeEffect: Equatable, Sendable {
     case requestMatching(LessonRequest)
     case requestSpeaking(LessonRequest)
+    case requestFlashcards(LessonRequest)
     case showError(VocabularyError)
 }

@@ -14,13 +14,11 @@ struct DeckDetailScreen: View {
                     "Deck name",
                     text: Binding(get: { state.name ?? "" }, set: { onAction(.nameChanged($0)) })
                 )
+            }
 
-                StartLessonMenu(canStart: state.canStart) { onAction(.startLessonTapped($0)) }
-            } footer: {
-                if !state.canStart(.flashcards) {
-                    Text("Add words to practise this deck.")
-                } else if !state.canStart(.matching) {
-                    Text("Match pairs needs at least \(state.minimumMatchingWords) words.")
+            Section("Practise") {
+                PractiseRows(wordCount: state.selectedCount, minimumMatchingWords: state.minimumMatchingWords) {
+                    onAction(.startLessonTapped($0))
                 }
             }
 

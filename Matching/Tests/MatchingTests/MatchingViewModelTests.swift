@@ -92,6 +92,8 @@ struct MatchingViewModelTests {
         #expect(harness.sounds.events.last == "fanfare")
         #expect(await waitUntil { await harness.repository.recordedResults.count == 1 })
         #expect(await harness.repository.recordedResults.first?.cleanSolves.count == 5)
+        // So the deck is marked practised, for home to carry on with.
+        #expect(await harness.repository.recordedResults.first?.source == .deck(testDeckID))
 
         harness.viewModel.send(.closeTapped)
         #expect(await harness.effects.contains(.close))
@@ -177,7 +179,7 @@ private final class Harness {
     ) {
         self.settings = FakeMatchingSettings(settings)
         viewModel = MatchingViewModel(
-            request: LessonRequest(title: "t", pool: pool),
+            request: LessonRequest(title: "t", pool: pool, source: .deck(testDeckID)),
             sounds: sounds,
             getSettings: GetMatchingSettingsUseCase(repository: self.settings),
             setShowsPinyin: SetShowsPinyinUseCase(repository: self.settings),
@@ -220,3 +222,5 @@ private final class FakeMatchingSettings: MatchingSettingsRepository, @unchecked
     func setShowsPinyin(_ showsPinyin: Bool) { saved.append(showsPinyin) }
     func setRounds(_ rounds: Int) {}
 }
+
+private let testDeckID = UUID()

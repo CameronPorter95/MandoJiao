@@ -12,6 +12,8 @@ public nonisolated struct DeckSummary: Identifiable, Hashable, Sendable {
     public let folderID: UUID?
     /// Identifies a deck the app supplies, such as part of an HSK level, however it is renamed.
     public let builtInKey: String?
+    /// When a lesson from it last had anything answered. Nil if it never has.
+    public let lastPractisedAt: Date?
 
     public init(
         id: UUID,
@@ -20,7 +22,8 @@ public nonisolated struct DeckSummary: Identifiable, Hashable, Sendable {
         editedAt: Date? = nil,
         wordIDs: [UUID],
         folderID: UUID? = nil,
-        builtInKey: String? = nil
+        builtInKey: String? = nil,
+        lastPractisedAt: Date? = nil
     ) {
         self.id = id
         self.name = name
@@ -29,6 +32,7 @@ public nonisolated struct DeckSummary: Identifiable, Hashable, Sendable {
         self.wordIDs = wordIDs
         self.folderID = folderID
         self.builtInKey = builtInKey
+        self.lastPractisedAt = lastPractisedAt
     }
 
     public var displayName: String { name.isEmpty ? "Untitled deck" : name }
@@ -50,7 +54,8 @@ public nonisolated extension DeckSummary {
             editedAt: editedAt ?? self.editedAt,
             wordIDs: wordIDs ?? self.wordIDs,
             folderID: folderID ?? self.folderID,
-            builtInKey: builtInKey
+            builtInKey: builtInKey,
+            lastPractisedAt: lastPractisedAt
         )
     }
 }

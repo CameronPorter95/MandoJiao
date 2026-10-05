@@ -109,7 +109,8 @@ public final class FlashcardsViewModel {
         let results = LessonResults(
             misses: lesson.missesByPairID,
             cleanSolves: lesson.cleanSolvesByPairID,
-            answers: lesson.answers
+            answers: lesson.answers,
+            source: request.source
         )
 
         // Outlives a close on purpose: the lesson has gone, but the results still land.

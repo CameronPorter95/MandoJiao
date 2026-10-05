@@ -35,6 +35,7 @@ public struct HomeRoute: View {
         switch effect {
         case .requestMatching(let request): navigation.didRequestMatching(request)
         case .requestSpeaking(let request): navigation.didRequestSpeaking(request)
+        case .requestFlashcards(let request): navigation.didRequestFlashcards(request)
         case .showError(let error): self.error = error
         }
     }

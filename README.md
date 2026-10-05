@@ -4,7 +4,9 @@ An iPhone app for practising Mandarin vocabulary, built around the idea that
 recognising a word and being able to say it are different skills, and both need
 drilling.
 
-Three exercises, one shared word list, each started from a deck's or folder's Start lesson menu.
+Three exercises, one shared word list. A deck or folder lists them under Practise, one row
+each, and Home keeps the deck or folder practised last at the top to carry on with, or any
+other picked from a list.
 
 ## Matching
 

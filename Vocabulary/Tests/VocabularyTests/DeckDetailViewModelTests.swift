@@ -162,6 +162,7 @@ struct DeckDetailViewModelTests {
         }
         #expect(request.title == "Mixed")
         #expect(request.pool.count == 5)
+        #expect(request.source == .deck(Fixtures.fullDeck.id))
     }
 
     @Test("a deck below the matching floor cannot match, but can start flash cards or reading aloud")
