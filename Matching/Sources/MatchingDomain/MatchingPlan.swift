@@ -96,12 +96,3 @@ public enum MatchingPlanBuilder {
         }
     }
 }
-
-private extension WordPair {
-    /// Any meaning, not just the headline on the tile: 行 showing "to walk" beside 可以
-    /// showing "okay" is a board where "okay" fits both.
-    func sharesMeaning(with other: WordPair) -> Bool {
-        let theirs = Set(other.meanings.map { $0.lowercased() })
-        return meanings.contains { theirs.contains($0.lowercased()) }
-    }
-}

@@ -18,6 +18,8 @@
 		000000000000000320000012 /* MatchingUI in Frameworks */ = {isa = PBXBuildFile; productRef = 000000000000000310000012 /* MatchingUI */; };
 		000000000000000320000013 /* MatchingDI in Frameworks */ = {isa = PBXBuildFile; productRef = 000000000000000310000013 /* MatchingDI */; };
 		000000000000000320000014 /* SettingsDI in Frameworks */ = {isa = PBXBuildFile; productRef = 000000000000000310000014 /* SettingsDI */; };
+		000000000000000320000015 /* FlashcardsUI in Frameworks */ = {isa = PBXBuildFile; productRef = 000000000000000310000015 /* FlashcardsUI */; };
+		000000000000000320000016 /* FlashcardsDI in Frameworks */ = {isa = PBXBuildFile; productRef = 000000000000000310000016 /* FlashcardsDI */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -27,6 +29,7 @@
 		000000000000000300000013 /* Speaking */ = {isa = PBXFileReference; lastKnownFileType = wrapper; path = Speaking; sourceTree = "<group>"; };
 		000000000000000300000014 /* Matching */ = {isa = PBXFileReference; lastKnownFileType = wrapper; path = Matching; sourceTree = "<group>"; };
 		000000000000000300000015 /* Settings */ = {isa = PBXFileReference; lastKnownFileType = wrapper; path = Settings; sourceTree = "<group>"; };
+		000000000000000300000016 /* Flashcards */ = {isa = PBXFileReference; lastKnownFileType = wrapper; path = Flashcards; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -57,6 +60,8 @@
 				000000000000000320000012 /* MatchingUI in Frameworks */,
 				000000000000000320000013 /* MatchingDI in Frameworks */,
 				000000000000000320000014 /* SettingsDI in Frameworks */,
+				000000000000000320000015 /* FlashcardsUI in Frameworks */,
+				000000000000000320000016 /* FlashcardsDI in Frameworks */,
 			);
 		};
 /* End PBXFrameworksBuildPhase section */
@@ -71,6 +76,7 @@
 				000000000000000300000013 /* Speaking */,
 				000000000000000300000014 /* Matching */,
 				000000000000000300000015 /* Settings */,
+				000000000000000300000016 /* Flashcards */,
 				000000000000000300000011 /* Core */,
 				000000000000000000000020 /* Products */,
 			);
@@ -113,6 +119,8 @@
 				000000000000000310000012 /* MatchingUI */,
 				000000000000000310000013 /* MatchingDI */,
 				000000000000000310000014 /* SettingsDI */,
+				000000000000000310000015 /* FlashcardsUI */,
+				000000000000000310000016 /* FlashcardsDI */,
 			);
 			productName = MyApp;
 			productReference = 000000000000000000000120 /* MandoJiao.app */;
@@ -148,6 +156,7 @@
 				000000000000000300000003 /* XCLocalSwiftPackageReference "Speaking" */,
 				000000000000000300000004 /* XCLocalSwiftPackageReference "Matching" */,
 				000000000000000300000005 /* XCLocalSwiftPackageReference "Settings" */,
+				000000000000000300000006 /* XCLocalSwiftPackageReference "Flashcards" */,
 			);
 			preferredProjectObjectVersion = 90;
 			productRefGroup = 000000000000000000000020 /* Products */;
@@ -434,6 +443,10 @@
 			isa = XCLocalSwiftPackageReference;
 			relativePath = Settings;
 		};
+		000000000000000300000006 /* XCLocalSwiftPackageReference "Flashcards" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Flashcards;
+		};
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -491,6 +504,16 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 000000000000000300000005 /* XCLocalSwiftPackageReference "Settings" */;
 			productName = SettingsDI;
+		};
+		000000000000000310000015 /* FlashcardsUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 000000000000000300000006 /* XCLocalSwiftPackageReference "Flashcards" */;
+			productName = FlashcardsUI;
+		};
+		000000000000000310000016 /* FlashcardsDI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 000000000000000300000006 /* XCLocalSwiftPackageReference "Flashcards" */;
+			productName = FlashcardsDI;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

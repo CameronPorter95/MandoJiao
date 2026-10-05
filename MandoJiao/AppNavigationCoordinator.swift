@@ -9,10 +9,11 @@ final class AppNavigationCoordinator {
     enum PresentedLesson: Identifiable {
         case matching(LessonRequest)
         case speaking(LessonRequest)
+        case flashcards(LessonRequest)
 
         var id: UUID {
             switch self {
-            case .matching(let request), .speaking(let request): request.id
+            case .matching(let request), .speaking(let request), .flashcards(let request): request.id
             }
         }
     }

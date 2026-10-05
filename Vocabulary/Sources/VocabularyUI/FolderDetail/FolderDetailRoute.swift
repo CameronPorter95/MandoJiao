@@ -36,8 +36,12 @@ public struct FolderDetailRoute: View {
         .task {
             for await effect in viewModel.effects() {
                 switch effect {
-                case .startLesson(let request):
-                    navigation.didRequestMatching(request)
+                case .startLesson(let request, let exercise):
+                    switch exercise {
+                    case .matching: navigation.didRequestMatching(request)
+                    case .flashcards: navigation.didRequestFlashcards(request)
+                    case .speaking: navigation.didRequestSpeaking(request)
+                    }
                 case .showError(let error):
                     self.error = error
                 }

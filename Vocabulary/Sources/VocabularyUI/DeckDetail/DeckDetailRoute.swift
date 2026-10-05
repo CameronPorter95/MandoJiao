@@ -19,10 +19,14 @@ public struct DeckDetailRoute: View {
             .task {
                 for await effect in viewModel.effects() {
                     switch effect {
-                    case .startLesson(let request):
+                    case .startLesson(let request, let exercise):
                         // Stays pushed: the lesson is presented over the deck, and closing
                         // it comes back here rather than to home.
-                        navigation.didRequestMatching(request)
+                        switch exercise {
+                        case .matching: navigation.didRequestMatching(request)
+                        case .flashcards: navigation.didRequestFlashcards(request)
+                        case .speaking: navigation.didRequestSpeaking(request)
+                        }
                     case .showError(let error):
                         self.error = error
                     }

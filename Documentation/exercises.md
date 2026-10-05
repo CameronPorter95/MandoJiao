@@ -18,6 +18,7 @@ Core/           Shared plumbing: errors, effects, the design system, DI, ToneEng
 Vocabulary/     Words, decks, folders, the mistakes list, home and library tabs.
 Speaking/       The speaking lesson.
 Matching/       The matching lesson.
+Flashcards/     The flash card lesson.
 Settings/       The settings screen, editing what the two lessons own.
 MandoJiao/      The app: entry point and composition root.
 ```
@@ -82,6 +83,34 @@ the matching board had to pad a three-word mistakes list with unrelated words.
 
 Both sessions expose `missesByPairID` and `cleanSolvesByPairID` in the same
 shape, which is what lets one `LessonResults` and one review screen serve both.
+
+## Flash cards
+
+`FlashcardPlanBuilder` makes one card per word, in a random order, and chooses each
+card's direction and format at random: Chinese shown and English asked, or English
+shown and Hanzi asked; typed, or picked from four. A card is picked only when the lesson
+has three other words sharing neither its Hanzi nor any meaning, since a wrong option
+that also fits would mark a right pick wrong; otherwise it is typed. One word is enough
+for a lesson. Later the lesson plan will choose direction and format from word strength.
+
+`FlashcardGrader` grades typed answers. English is matched against every meaning and
+each part of one ("to tell, to inform" takes "inform"), ignoring case, punctuation,
+asides in brackets and a leading "to", "a", "an" or "the", with one letter wrong,
+missing or extra let through from five letters up. A card showing English takes the
+Hanzi only, and also any word in the lesson sharing a meaning, since the English alone
+cannot tell 看 from 见. Text a card cannot take (pinyin for Hanzi, Hanzi for English)
+is turned away without spending the try. The costs, each pinned by a test: a traditional
+form is wrong, and so is a synonym the word does not list.
+
+One try per card, then the word in full. Don't know gives the card up: it counts as a
+mistake and is recorded as wrong with no tries, so giving up reads apart from guessing
+wrong. Typed and picked answers are recorded as separate exercises, since typing recalls
+a word and picking only recognises it.
+
+A right answer plays the matching board's success tone, on the same note each time
+rather than climbing card by card as a board's does, and leaving the last card plays
+the lesson complete tune. A wrong answer and Don't know play nothing. Unlike the speaking lesson,
+flash cards never record audio, so the tones cost recognition nothing.
 
 ## The mistakes list
 

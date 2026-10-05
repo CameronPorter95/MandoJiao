@@ -4,10 +4,14 @@ import Foundation
 /// worked out from. Kept for every exercise, so a later one adds evidence rather than
 /// replacing it.
 public nonisolated struct Answer: Hashable, Sendable {
-    /// Stored by raw value: rename a case only by keeping its raw value.
+    /// Stored by raw value: rename a case only by keeping its raw value. Each is its own
+    /// kind of evidence, so a flash card typed and one picked are kept apart: typing recalls
+    /// the answer, picking only recognises it.
     public enum Exercise: String, Hashable, Sendable, CaseIterable {
         case matching
         case speaking
+        case flashcardTyped
+        case flashcardPicked
     }
 
     /// What was shown, and what was asked for. Stored by raw value.
@@ -25,7 +29,8 @@ public nonisolated struct Answer: Hashable, Sendable {
     public let direction: Direction?
     /// Whether it ended right, however many tries that took.
     public let isCorrect: Bool
-    /// Wrong tries before it came right, or before the tries ran out.
+    /// Wrong tries before it came right, or before the tries ran out. Zero on a wrong answer
+    /// is one given up without a try, as a flash card's Don't know is.
     public let wrongAttempts: Int
 
     public init(wordID: UUID, exercise: Exercise, direction: Direction?, isCorrect: Bool, wrongAttempts: Int) {

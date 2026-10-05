@@ -70,7 +70,7 @@ struct DeckDetailViewModelTests {
         let (detail, _) = await makeDetail()
         detail.send(.wordToggled(Fixtures.water.id))
         #expect(!detail.state.isIncluded(Fixtures.water.id))
-        #expect(!detail.state.canStartLesson)
+        #expect(!detail.state.canStart(.matching))
 
         detail.send(.wordToggled(Fixtures.water.id))
         detail.send(.wordToggled(Fixtures.water.id))
@@ -132,7 +132,7 @@ struct DeckDetailViewModelTests {
         detail.send(.removeTapped(Fixtures.water.id))
         #expect(!detail.state.words.contains(Fixtures.water))
         #expect(detail.state.vocabulary.words.contains(Fixtures.water))
-        #expect(!detail.state.canStartLesson)
+        #expect(!detail.state.canStart(.matching))
 
         await settle()
         #expect(await repository.writes == ["setMembership false"])
@@ -153,10 +153,10 @@ struct DeckDetailViewModelTests {
     func startingALesson() async {
         let (detail, log) = await makeDetail()
         detail.send(.nameChanged("Mixed"))
-        detail.send(.startLessonTapped)
+        detail.send(.startLessonTapped(.matching))
 
         #expect(await waitUntil { log.effects.count == 1 })
-        guard case .startLesson(let request) = log.effects.first else {
+        guard case .startLesson(let request, .matching) = log.effects.first else {
             Issue.record("expected a lesson request")
             return
         }
@@ -164,14 +164,24 @@ struct DeckDetailViewModelTests {
         #expect(request.pool.count == 5)
     }
 
-    @Test("a deck below the matching floor cannot start")
+    @Test("a deck below the matching floor cannot match, but can start flash cards or reading aloud")
     func tooSmall() async {
         let (detail, log) = await makeDetail(Fixtures.smallDeck)
         #expect(detail.state.selectedCount == 1)
-        detail.send(.startLessonTapped)
-
+        #expect(!detail.state.canStart(.matching))
+        #expect(detail.state.canStart(.flashcards))
+        #expect(detail.state.canStart(.speaking))
+        detail.send(.startLessonTapped(.matching))
         await settle()
         #expect(log.effects.isEmpty)
+
+        detail.send(.startLessonTapped(.flashcards))
+        detail.send(.startLessonTapped(.speaking))
+        #expect(await waitUntil { log.effects.count == 2 })
+        let exercises = log.effects.compactMap { effect -> LessonExercise? in
+            if case .startLesson(_, let exercise) = effect { exercise } else { nil }
+        }
+        #expect(exercises == [.flashcards, .speaking])
     }
 
     @Test("a deck moves into any other folder, never to the top level")

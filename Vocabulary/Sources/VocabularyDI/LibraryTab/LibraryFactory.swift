@@ -28,6 +28,8 @@ public enum LibraryFactory: NavigationInputRouteFactory {
                 dependencies: dependencies,
                 navigation: .library(
                     presentMatching: navigation.library.didRequestMatching,
+                    presentFlashcards: navigation.library.didRequestFlashcards,
+                    presentSpeaking: navigation.library.didRequestSpeaking,
                     openDeck: context.openDeck,
                     openFolder: context.openFolder
                 ),

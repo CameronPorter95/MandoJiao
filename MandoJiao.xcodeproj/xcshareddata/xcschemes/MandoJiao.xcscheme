@@ -78,6 +78,16 @@
                ReferencedContainer = "container:Settings">
             </BuildableReference>
          </TestableReference>
+         <TestableReference
+            skipped = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "FlashcardsTests"
+               BuildableName = "FlashcardsTests"
+               BlueprintName = "FlashcardsTests"
+               ReferencedContainer = "container:Flashcards">
+            </BuildableReference>
+         </TestableReference>
       </Testables>
    </TestAction>
    <LaunchAction

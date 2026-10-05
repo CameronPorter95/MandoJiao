@@ -58,9 +58,9 @@ public final class FolderDetailViewModel {
             observation?.cancel()
             observation = nil
 
-        case .startLessonTapped:
-            guard let folder = state.folder, state.canStartLesson else { return }
-            requestLesson(title: folder.name, pool: state.vocabulary.words(in: folder).pairs)
+        case .startLessonTapped(let exercise):
+            guard let folder = state.folder, state.canStart(exercise) else { return }
+            requestLesson(title: folder.name, pool: state.vocabulary.words(in: folder).pairs, exercise: exercise)
 
         case .searchPresentedChanged(let isPresented):
             state.isSearching = isPresented
@@ -138,9 +138,10 @@ public final class FolderDetailViewModel {
         }
     }
 
-    private func requestLesson(title: String, pool: [WordPair]) {
-        guard pool.count >= state.minimumMatchingWords else { return }
-        effectChannel.send(.startLesson(LessonRequest(title: title, pool: pool)))
+    /// A swipe to practise a folder or deck beneath starts matching.
+    private func requestLesson(title: String, pool: [WordPair], exercise: LessonExercise = .matching) {
+        guard pool.count >= exercise.minimumWords(matching: state.minimumMatchingWords) else { return }
+        effectChannel.send(.startLesson(LessonRequest(title: title, pool: pool), exercise))
     }
 
     private func enqueue(

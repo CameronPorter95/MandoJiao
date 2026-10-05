@@ -68,25 +68,17 @@ struct FolderDetailScreen: View {
     private var contents: some View {
         List {
             Section {
-                Button {
-                    onAction(.startLessonTapped)
-                } label: {
-                    Text("Start lesson")
-                        .font(.headline)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 4)
-                }
-                .buttonStyle(.borderedProminent)
-                .tint(Theme.accent)
-                .disabled(!state.canStartLesson)
+                StartLessonMenu(canStart: state.canStart) { onAction(.startLessonTapped($0)) }
             } header: {
                 Text(state.summary)
                     .textCase(nil)
             } footer: {
-                if state.canStartLesson {
-                    Text("A lesson draws from all \(state.wordCount) words in this folder, including its folders.")
+                if !state.canStart(.flashcards) {
+                    Text("The decks in this folder have no words to practise yet.")
+                } else if !state.canStart(.matching) {
+                    Text("Match pairs needs at least \(state.minimumMatchingWords) words between the decks in this folder.")
                 } else {
-                    Text("The decks in this folder need at least \(state.minimumMatchingWords) words between them.")
+                    Text("A lesson draws from all \(state.wordCount) words in this folder, including its folders.")
                 }
             }
 
