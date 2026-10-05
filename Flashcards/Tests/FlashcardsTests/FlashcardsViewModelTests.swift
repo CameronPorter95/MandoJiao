@@ -44,15 +44,15 @@ struct FlashcardsViewModelTests {
         #expect(log.effects.filter { if case .haptic = $0 { true } else { false } }.count == 2)
     }
 
-    @Test("a right answer plays the success tone, climbing through the lesson, and a wrong one plays nothing")
+    @Test("a right answer plays the success tone on the same note each time, and a wrong one plays nothing")
     func successTone() {
         let (viewModel, _) = makeViewModel()
         #expect(sounds.played == ["prepare"])
         viewModel.send(.typedAnswerSubmitted("水"))
-        #expect(sounds.played == ["prepare", "match 0 of 2"])
+        #expect(sounds.played == ["prepare", "match 0 of 1"])
         viewModel.send(.continueTapped)
         viewModel.send(.optionPicked(Words.book.id))
-        #expect(sounds.played == ["prepare", "match 0 of 2"])
+        #expect(sounds.played == ["prepare", "match 0 of 1"])
     }
 
     @Test("leaving the last card plays the lesson complete tune, once")
@@ -64,7 +64,7 @@ struct FlashcardsViewModelTests {
         viewModel.send(.optionPicked(Words.tea.id))
         viewModel.send(.continueTapped)
         viewModel.send(.continueTapped)
-        #expect(sounds.played == ["prepare", "match 0 of 2", "match 1 of 2", "complete"])
+        #expect(sounds.played == ["prepare", "match 0 of 1", "match 0 of 1", "complete"])
     }
 
     @Test("don't know shows the answer and counts as a mistake, with no tone or buzz")

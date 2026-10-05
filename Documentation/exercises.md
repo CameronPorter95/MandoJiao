@@ -107,9 +107,9 @@ mistake and is recorded as wrong with no tries, so giving up reads apart from gu
 wrong. Typed and picked answers are recorded as separate exercises, since typing recalls
 a word and picking only recognises it.
 
-A right answer plays the matching board's success tone, spread across the lesson so it
-climbs to the octave on the last card, and leaving the last card plays the lesson
-complete tune. A wrong answer and Don't know play nothing. Unlike the speaking lesson,
+A right answer plays the matching board's success tone, on the same note each time
+rather than climbing card by card as a board's does, and leaving the last card plays
+the lesson complete tune. A wrong answer and Don't know play nothing. Unlike the speaking lesson,
 flash cards never record audio, so the tones cost recognition nothing.
 
 ## The mistakes list

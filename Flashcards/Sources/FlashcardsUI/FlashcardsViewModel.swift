@@ -82,11 +82,11 @@ public final class FlashcardsViewModel {
     }
 
     /// Nil is an answer the card could not take, which gets no verdict. A right answer
-    /// plays matching's success tone, climbing through the lesson to the octave on the last
-    /// card; a wrong one only buzzes.
+    /// plays matching's success tone on one note every time: the owner did not want it to
+    /// climb card by card, as a board's does. A wrong one only buzzes.
     private func settle(_ verdict: Bool?) {
-        guard let verdict, let lesson = state.lesson else { return }
-        if verdict { sounds.playMatch(step: lesson.cardIndex, of: lesson.plan.cardCount) }
+        guard let verdict else { return }
+        if verdict { sounds.playMatch(step: 0, of: 1) }
         effectChannel.send(.haptic(verdict ? .success : .error))
     }
 
