@@ -87,20 +87,26 @@ shape, which is what lets one `LessonResults` and one review screen serve both.
 ## Flash cards
 
 `FlashcardPlanBuilder` makes one card per word, in a random order, and chooses each
-card's direction and format at random: Chinese shown and English asked, or English
-shown and Hanzi asked; typed, or picked from four. A card is picked only when the lesson
-has three other words sharing neither its Hanzi nor any meaning, since a wrong option
-that also fits would mark a right pick wrong; otherwise it is typed. One word is enough
-for a lesson. Later the lesson plan will choose direction and format from word strength.
+card's direction at random. A card showing Chinese is always picked from four English
+options. Typed, its English was marked wrong too often when it was right: "leave work"
+for 下班, a wording of 了's "completed action marker", 分's "minute", a sense the
+dictionary has and the word did not keep. Nothing short of judging the meaning fixes
+that, and picking tests understanding it as well. A card showing English is typed or
+picked at random, since Hanzi is right or it is not.
 
-`FlashcardGrader` grades typed answers. English is matched against every meaning and
-each part of one ("to tell, to inform" takes "inform"), ignoring case, punctuation,
-asides in brackets and a leading "to", "a", "an" or "the", with one letter wrong,
-missing or extra let through from five letters up. A card showing English takes the
-Hanzi only, and also any word in the lesson sharing a meaning, since the English alone
-cannot tell 看 from 见. Text a card cannot take (pinyin for Hanzi, Hanzi for English)
-is turned away without spending the try. The costs, each pinned by a test: a traditional
-form is wrong, and so is a synonym the word does not list.
+Wrong options come from the lesson and from the rest of the vocabulary, handed over in
+the request as `otherWords` but never put to the learner, and never share the word's
+Hanzi or any meaning, since one that also fits would mark a right pick wrong. With too
+few, a card that would show Chinese shows English and is typed. One word is enough for
+a lesson.
+
+`FlashcardGrader` grades typed answers. A card showing English takes the Hanzi only, and
+also any word in the vocabulary sharing a meaning, since the English alone cannot tell
+看 from 见. Text it cannot take, pinyin or English, is turned away without spending the
+one try. Costs pinned by tests: a traditional form is wrong. The English rules (every
+meaning and each part of one, case, punctuation, asides and a leading "to" ignored, one
+letter off from five letters) are kept and tested for if a typed card showing Chinese
+comes back with a way to overrule a verdict; they already reject "buy" for 卖.
 
 One try per card, then the word in full. Don't know gives the card up: it counts as a
 mistake and is recorded as wrong with no tries, so giving up reads apart from guessing

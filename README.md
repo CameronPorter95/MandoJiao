@@ -30,9 +30,9 @@ pinyin, since the Hanzi is already on the card.
 
 ## Flash cards
 
-One word at a time, shown in Chinese or English, chosen by the app, and answered
-either by typing or by picking from four. A card showing Chinese takes the English,
-any of the word's meanings; one showing English takes the Hanzi only. One try per
+One word at a time, shown in Chinese or English, chosen by the app. A card showing
+Chinese is answered by picking its meaning from four; one showing English by typing
+the Hanzi, or picking it from four. One try per
 card, or Don't know, which counts as a mistake, then the word in full. A right answer
 plays the matching board's tone, the same note each time, and the end plays its
 finishing tune.

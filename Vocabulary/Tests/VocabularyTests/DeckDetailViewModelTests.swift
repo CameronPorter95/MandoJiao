@@ -163,6 +163,8 @@ struct DeckDetailViewModelTests {
         #expect(request.title == "Mixed")
         #expect(request.pool.count == 5)
         #expect(request.source == .deck(Fixtures.fullDeck.id))
+        // The rest of the vocabulary, for a flash card's wrong options.
+        #expect(request.otherWords.count == 5)
     }
 
     @Test("a deck below the matching floor cannot match, but can start flash cards or reading aloud")

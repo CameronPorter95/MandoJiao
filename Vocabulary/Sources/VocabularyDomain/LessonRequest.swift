@@ -9,12 +9,16 @@ public nonisolated struct LessonRequest: Identifiable, Hashable, Sendable {
     /// The deck or folder the words came from, nil for words from across the vocabulary,
     /// as quick practice and the mistakes list draw them.
     public let source: LessonSource?
+    /// The rest of the vocabulary, which a lesson may draw on without putting it to the
+    /// learner: a flash card's wrong options, so a small deck still has enough.
+    public let otherWords: [WordPair]
 
-    public init(id: UUID = UUID(), title: String, pool: [WordPair], source: LessonSource? = nil) {
+    public init(id: UUID = UUID(), title: String, pool: [WordPair], source: LessonSource? = nil, otherWords: [WordPair] = []) {
         self.id = id
         self.title = title
         self.pool = pool
         self.source = source
+        self.otherWords = otherWords
     }
 }
 

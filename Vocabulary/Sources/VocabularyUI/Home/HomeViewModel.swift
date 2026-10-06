@@ -51,7 +51,10 @@ public final class HomeViewModel {
 
         case .continueTapped(let exercise):
             guard let source = state.current, let name = state.currentName, state.canStart(exercise) else { return }
-            let request = LessonRequest(title: name, pool: state.vocabulary.words(in: source).pairs, source: source)
+            let request = LessonRequest(
+                title: name, pool: state.vocabulary.words(in: source).pairs, source: source,
+                otherWords: state.vocabulary.usableWords.pairs
+            )
             switch exercise {
             case .matching: effectChannel.send(.requestMatching(request))
             case .flashcards: effectChannel.send(.requestFlashcards(request))

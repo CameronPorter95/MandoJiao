@@ -141,7 +141,8 @@ public final class FolderDetailViewModel {
     /// A swipe to practise a folder or deck beneath starts matching.
     private func requestLesson(title: String, pool: [WordPair], source: LessonSource, exercise: LessonExercise = .matching) {
         guard pool.count >= exercise.minimumWords(matching: state.minimumMatchingWords) else { return }
-        effectChannel.send(.startLesson(LessonRequest(title: title, pool: pool, source: source), exercise))
+        let request = LessonRequest(title: title, pool: pool, source: source, otherWords: state.vocabulary.usableWords.pairs)
+        effectChannel.send(.startLesson(request, exercise))
     }
 
     private func enqueue(

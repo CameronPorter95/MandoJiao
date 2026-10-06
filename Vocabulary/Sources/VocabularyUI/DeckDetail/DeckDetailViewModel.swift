@@ -99,7 +99,8 @@ public final class DeckDetailViewModel {
             let request = LessonRequest(
                 title: state.name ?? deck.name,
                 pool: state.vocabulary.words(in: deck).pairs,
-                source: .deck(deck.id)
+                source: .deck(deck.id),
+                otherWords: state.vocabulary.usableWords.pairs
             )
             effectChannel.send(.startLesson(request, exercise))
 
