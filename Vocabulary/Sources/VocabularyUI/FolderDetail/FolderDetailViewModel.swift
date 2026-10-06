@@ -60,7 +60,7 @@ public final class FolderDetailViewModel {
 
         case .startLessonTapped(let exercise):
             guard let folder = state.folder, state.canStart(exercise) else { return }
-            requestLesson(title: folder.name, pool: state.vocabulary.words(in: folder).pairs, exercise: exercise)
+            requestLesson(title: folder.name, pool: state.vocabulary.words(in: folder).pairs, source: .folder(folder.id), exercise: exercise)
 
         case .searchPresentedChanged(let isPresented):
             state.isSearching = isPresented
@@ -100,11 +100,11 @@ public final class FolderDetailViewModel {
 
         case .practiseFolderTapped(let id):
             guard let folder = state.vocabulary.folder(id: id) else { return }
-            requestLesson(title: folder.name, pool: state.vocabulary.words(in: folder).pairs)
+            requestLesson(title: folder.name, pool: state.vocabulary.words(in: folder).pairs, source: .folder(id))
 
         case .practiseDeckTapped(let id):
             guard let deck = state.vocabulary.deck(id: id) else { return }
-            requestLesson(title: deck.name, pool: state.vocabulary.words(in: deck).pairs)
+            requestLesson(title: deck.name, pool: state.vocabulary.words(in: deck).pairs, source: .deck(id))
 
         case .deleteDeckTapped(let id):
             let previous = state.vocabulary
@@ -139,9 +139,10 @@ public final class FolderDetailViewModel {
     }
 
     /// A swipe to practise a folder or deck beneath starts matching.
-    private func requestLesson(title: String, pool: [WordPair], exercise: LessonExercise = .matching) {
+    private func requestLesson(title: String, pool: [WordPair], source: LessonSource, exercise: LessonExercise = .matching) {
         guard pool.count >= exercise.minimumWords(matching: state.minimumMatchingWords) else { return }
-        effectChannel.send(.startLesson(LessonRequest(title: title, pool: pool), exercise))
+        let request = LessonRequest(title: title, pool: pool, source: source, otherWords: state.vocabulary.usableWords.pairs)
+        effectChannel.send(.startLesson(request, exercise))
     }
 
     private func enqueue(

@@ -9,13 +9,23 @@ public nonisolated struct FolderSummary: Identifiable, Hashable, Sendable {
     public let parentID: UUID?
     /// Identifies a folder the app supplies, such as an HSK level, however it is renamed.
     public let builtInKey: String?
+    /// When a lesson from it last had anything answered. Nil if it never has.
+    public let lastPractisedAt: Date?
 
-    public init(id: UUID, name: String, createdAt: Date, parentID: UUID? = nil, builtInKey: String? = nil) {
+    public init(
+        id: UUID,
+        name: String,
+        createdAt: Date,
+        parentID: UUID? = nil,
+        builtInKey: String? = nil,
+        lastPractisedAt: Date? = nil
+    ) {
         self.id = id
         self.name = name
         self.createdAt = createdAt
         self.parentID = parentID
         self.builtInKey = builtInKey
+        self.lastPractisedAt = lastPractisedAt
     }
 
     public var displayName: String { name.isEmpty ? "Untitled folder" : name }
@@ -29,7 +39,8 @@ public nonisolated extension FolderSummary {
             name: name ?? self.name,
             createdAt: createdAt,
             parentID: parentID ?? self.parentID,
-            builtInKey: builtInKey
+            builtInKey: builtInKey,
+            lastPractisedAt: lastPractisedAt
         )
     }
 }

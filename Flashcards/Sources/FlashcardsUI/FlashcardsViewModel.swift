@@ -24,7 +24,7 @@ public final class FlashcardsViewModel {
         request: LessonRequest,
         recordResults: RecordLessonResultsUseCase,
         sounds: any MatchSoundPlaying,
-        makePlan: @escaping MakePlan = { FlashcardPlanBuilder.makeLesson(title: $0.title, from: $0.pool) }
+        makePlan: @escaping MakePlan = { FlashcardPlanBuilder.makeLesson(title: $0.title, from: $0.pool, otherWords: $0.otherWords) }
     ) {
         self.request = request
         self.recordResults = recordResults
@@ -109,7 +109,8 @@ public final class FlashcardsViewModel {
         let results = LessonResults(
             misses: lesson.missesByPairID,
             cleanSolves: lesson.cleanSolvesByPairID,
-            answers: lesson.answers
+            answers: lesson.answers,
+            source: request.source
         )
 
         // Outlives a close on purpose: the lesson has gone, but the results still land.

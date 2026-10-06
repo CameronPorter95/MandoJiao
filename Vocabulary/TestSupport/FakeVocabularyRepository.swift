@@ -144,7 +144,27 @@ public actor FakeVocabularyRepository: VocabularyRepository {
     }
 
     public func recordResults(_ results: LessonResults) throws {
-        try write("recordResults") { recordedResults.append(results) }
+        try write("recordResults") {
+            recordedResults.append(results)
+            switch results.source {
+            case .deck(let id):
+                guard let index = snapshot.decks.firstIndex(where: { $0.id == id }) else { return }
+                let deck = snapshot.decks[index]
+                snapshot.decks[index] = DeckSummary(
+                    id: deck.id, name: deck.name, createdAt: deck.createdAt, editedAt: deck.editedAt,
+                    wordIDs: deck.wordIDs, folderID: deck.folderID, builtInKey: deck.builtInKey, lastPractisedAt: .now
+                )
+            case .folder(let id):
+                guard let index = snapshot.folders.firstIndex(where: { $0.id == id }) else { return }
+                let folder = snapshot.folders[index]
+                snapshot.folders[index] = FolderSummary(
+                    id: folder.id, name: folder.name, createdAt: folder.createdAt, parentID: folder.parentID,
+                    builtInKey: folder.builtInKey, lastPractisedAt: .now
+                )
+            case nil:
+                break
+            }
+        }
     }
 
     public func clearMistakes() throws {

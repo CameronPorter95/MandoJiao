@@ -13,6 +13,8 @@ public final class HomeViewModel {
     private let clearMistakes: ClearMistakesUseCase
     private let quickPracticeRounds: () -> Int
     private var observation: Task<Void, Never>?
+    /// When anything was last practised, so a pick is dropped once something newer is.
+    private var lastPractisedAt: Date?
 
     public init(
         minimumMatchingWords: Int,
@@ -36,7 +38,7 @@ public final class HomeViewModel {
             let stream = observeVocabulary()
             observation = Task { [weak self] in
                 for await vocabulary in stream {
-                    self?.state.vocabulary = vocabulary
+                    self?.receive(vocabulary)
                 }
             }
 
@@ -46,6 +48,28 @@ public final class HomeViewModel {
 
         case .quickPracticeTapped:
             requestMatching(title: "All words", pool: state.vocabulary.usableWords.pairs)
+
+        case .continueTapped(let exercise):
+            guard let source = state.current, let name = state.currentName, state.canStart(exercise) else { return }
+            let request = LessonRequest(
+                title: name, pool: state.vocabulary.words(in: source).pairs, source: source,
+                otherWords: state.vocabulary.usableWords.pairs
+            )
+            switch exercise {
+            case .matching: effectChannel.send(.requestMatching(request))
+            case .flashcards: effectChannel.send(.requestFlashcards(request))
+            case .speaking: effectChannel.send(.requestSpeaking(request))
+            }
+
+        case .chooseSourceTapped:
+            state.isChoosingSource = true
+
+        case .sourceChosen(let source):
+            state.chosen = source
+            state.isChoosingSource = false
+
+        case .sourceChoiceDismissed:
+            state.isChoosingSource = false
 
         case .practiseMistakesTapped:
             // A speaking lesson is one card per word, so any number of mistakes works. No
@@ -64,6 +88,17 @@ public final class HomeViewModel {
         case .clearMistakesCancelled:
             state.isConfirmingClear = false
         }
+    }
+
+    /// A deck or folder picked to carry on with gives way once a lesson anywhere is recorded,
+    /// since the one practised last is then what to carry on with.
+    private func receive(_ vocabulary: Vocabulary) {
+        state.vocabulary = vocabulary
+        let practisedAt = vocabulary.lastPractisedAt
+        if practisedAt != lastPractisedAt, lastPractisedAt != nil || practisedAt != nil {
+            state.chosen = nil
+        }
+        lastPractisedAt = practisedAt
     }
 
     private func requestMatching(title: String, pool: [WordPair]) {

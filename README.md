@@ -4,7 +4,9 @@ An iPhone app for practising Mandarin vocabulary, built around the idea that
 recognising a word and being able to say it are different skills, and both need
 drilling.
 
-Three exercises, one shared word list, each started from a deck's or folder's Start lesson menu.
+Three exercises, one shared word list. A deck or folder lists them under Practise, one row
+each, and Home keeps the deck or folder practised last at the top to carry on with, or any
+other picked from a list.
 
 ## Matching
 
@@ -28,9 +30,9 @@ pinyin, since the Hanzi is already on the card.
 
 ## Flash cards
 
-One word at a time, shown in Chinese or English, chosen by the app, and answered
-either by typing or by picking from four. A card showing Chinese takes the English,
-any of the word's meanings; one showing English takes the Hanzi only. One try per
+One word at a time, shown in Chinese or English, chosen by the app. A card showing
+Chinese is answered by picking its meaning from four; one showing English by typing
+the Hanzi, or picking it from four. One try per
 card, or Don't know, which counts as a mistake, then the word in full. A right answer
 plays the matching board's tone, the same note each time, and the end plays its
 finishing tune.

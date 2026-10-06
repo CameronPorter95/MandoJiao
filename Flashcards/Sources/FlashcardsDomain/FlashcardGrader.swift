@@ -3,6 +3,10 @@ import VocabularyDomain
 
 /// Whether a typed flash card answer is right. Picked answers need no grading: the option
 /// is the word or it is not.
+///
+/// Only cards showing English are typed now, so only the Hanzi rules are in use. The English
+/// rules are kept, tested, for a typed card showing Chinese should one come back with a way
+/// to overrule a wrong verdict.
 public nonisolated enum FlashcardGrader {
     /// Whether the text can be checked at all. A card showing English takes Hanzi only, so
     /// pinyin or English typed into it is turned away rather than marked wrong; a card

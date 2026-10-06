@@ -302,7 +302,10 @@ public final class SpeakingViewModel {
     private func recordResultsOnce() {
         guard let lesson = state.lesson, !didRecordResults else { return }
         didRecordResults = true
-        let results = LessonResults(misses: lesson.missesByPairID, cleanSolves: lesson.cleanSolvesByPairID, answers: lesson.answers)
+        let results = LessonResults(
+            misses: lesson.missesByPairID, cleanSolves: lesson.cleanSolvesByPairID,
+            answers: lesson.answers, source: request.source
+        )
 
         // Outlives a close on purpose: the speaking lesson has gone, but the results still land.
         Task { [recordResults] in

@@ -144,7 +144,7 @@ public final class LibraryViewModel {
             guard let folder = state.vocabulary.folder(id: id) else { return }
             guard state.canPractise(id) else { return }
             let pool = state.vocabulary.words(in: folder).pairs
-            effectChannel.send(.requestMatching(LessonRequest(title: folder.name, pool: pool)))
+            effectChannel.send(.requestMatching(LessonRequest(title: folder.name, pool: pool, source: .folder(id))))
 
         case .deleteFolderTapped(let id):
             if state.vocabulary.deletionWarning(forFolder: id) != nil {

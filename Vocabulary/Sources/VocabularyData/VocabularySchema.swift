@@ -61,6 +61,8 @@ nonisolated enum VocabularySchemaV1: VersionedSchema {
         var builtInKey: String?
         /// Order among its siblings.
         var position: Int = 0
+        /// When a lesson from it last had anything answered.
+        var lastPractisedAt: Date?
 
         @Relationship(inverse: \VocabWord.decks)
         var words: [VocabWord] = []
@@ -85,6 +87,8 @@ nonisolated enum VocabularySchemaV1: VersionedSchema {
         var builtInKey: String?
         /// Order among its siblings.
         var position: Int = 0
+        /// When a lesson from it last had anything answered.
+        var lastPractisedAt: Date?
 
         var parent: Folder?
         @Relationship(deleteRule: .cascade, inverse: \Folder.parent)

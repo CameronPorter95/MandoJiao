@@ -7,11 +7,14 @@ public nonisolated struct LessonResults: Equatable, Sendable {
     public var cleanSolves: [UUID: Int]
     /// Every word put to the learner, in the order answered, kept whether right or wrong.
     public var answers: [Answer]
+    /// The lesson's `LessonRequest.source`, marked as practised when anything was answered.
+    public var source: LessonSource?
 
-    public init(misses: [UUID: Int], cleanSolves: [UUID: Int], answers: [Answer] = []) {
+    public init(misses: [UUID: Int], cleanSolves: [UUID: Int], answers: [Answer] = [], source: LessonSource? = nil) {
         self.misses = misses
         self.cleanSolves = cleanSolves
         self.answers = answers
+        self.source = source
     }
 
     public var isEmpty: Bool { misses.isEmpty && cleanSolves.isEmpty && answers.isEmpty }

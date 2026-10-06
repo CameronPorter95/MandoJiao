@@ -9,7 +9,7 @@ public extension VocabularyNavigation {
         presentFlashcards: @escaping (LessonRequest) -> Void
     ) -> Self {
         VocabularyNavigation(
-            home: .app(presentMatching: presentMatching, presentSpeaking: presentSpeaking),
+            home: .app(presentMatching: presentMatching, presentSpeaking: presentSpeaking, presentFlashcards: presentFlashcards),
             deckDetail: .app(presentMatching: presentMatching, presentFlashcards: presentFlashcards, presentSpeaking: presentSpeaking),
             library: .app(presentMatching: presentMatching, presentFlashcards: presentFlashcards, presentSpeaking: presentSpeaking)
         )

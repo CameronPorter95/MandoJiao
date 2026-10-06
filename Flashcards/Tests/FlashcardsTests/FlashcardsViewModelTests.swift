@@ -21,7 +21,7 @@ struct FlashcardsViewModelTests {
     private func makeViewModel(cards: [Flashcard]? = nil) -> (FlashcardsViewModel, EffectLog<FlashcardsEffect>) {
         let cards = cards ?? self.cards
         let viewModel = FlashcardsViewModel(
-            request: LessonRequest(title: "t", pool: cards.map(\.word)),
+            request: LessonRequest(title: "t", pool: cards.map(\.word), source: .deck(testDeckID)),
             recordResults: RecordLessonResultsUseCase(repository: repository),
             sounds: sounds,
             makePlan: { FlashcardPlan(title: $0.title, cards: cards) }
@@ -100,6 +100,8 @@ struct FlashcardsViewModelTests {
         #expect(results?.misses == [Words.tea.id: 1])
         #expect(results?.answers.map(\.exercise) == [.flashcardTyped, .flashcardPicked])
         #expect(results?.answers.map(\.direction) == [.englishToChinese, .chineseToEnglish])
+        // So the deck is marked practised, for home to carry on with.
+        #expect(results?.source == .deck(testDeckID))
     }
 
     @Test("closing part way asks first, then records what was answered once")
@@ -150,3 +152,5 @@ private final class FakeSounds: MatchSoundPlaying {
     func playMiss() { played.append("miss") }
     func playLessonComplete() { played.append("complete") }
 }
+
+private let testDeckID = UUID()

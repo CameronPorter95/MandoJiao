@@ -71,13 +71,43 @@ struct FlashcardPlanTests {
         }
     }
 
-    @Test("with too few words to fill the options safely, every card is typed")
+    @Test("a card showing Chinese is always picked, never typed")
+    func chineseIsPicked() {
+        var random = SeededRandom(6)
+        var shown = 0
+        for _ in 0..<20 {
+            for card in FlashcardPlanBuilder.makeLesson(title: "t", from: Words.all, using: &random)?.cards ?? [] where card.showsChinese {
+                shown += 1
+                #expect(card.format != .typed)
+            }
+        }
+        #expect(shown > 0)
+    }
+
+    @Test("with too few words for safe options, every card shows English and is typed")
     func tooFewToPick() {
         var random = SeededRandom(4)
         for _ in 0..<10 {
             let plan = FlashcardPlanBuilder.makeLesson(title: "t", from: [Words.water, Words.tea, Words.book], using: &random)
-            #expect(plan?.cards.allSatisfy { $0.format == .typed } == true)
+            #expect(plan?.cards.allSatisfy { $0.format == .typed && $0.direction == .englishToChinese } == true)
         }
+    }
+
+    @Test("wrong options come from the rest of the vocabulary too, so a small deck can still be picked from, never putting those words to the learner")
+    func otherWords() {
+        var random = SeededRandom(7)
+        var picked = 0
+        for _ in 0..<10 {
+            let plan = FlashcardPlanBuilder.makeLesson(
+                title: "t", from: [Words.water], otherWords: [Words.tea, Words.book, Words.dad, Words.water], using: &random
+            )
+            #expect(plan?.cards.map(\.word) == [Words.water])
+            if case .picked(let options)? = plan?.cards.first?.format {
+                picked += 1
+                #expect(Set(options.map(\.hanzi)) == ["水", "茶", "书", "爸爸"])
+            }
+        }
+        #expect(picked > 0)
     }
 
     @Test("a word sharing a meaning in the lesson is accepted too, since the English cannot tell them apart")
@@ -140,6 +170,15 @@ struct FlashcardGraderTests {
         let look = card(Words.look, .englishToChinese, alsoAccepted: ["见"])
         #expect(FlashcardGrader.isCorrect("见", for: look))
         #expect(FlashcardGrader.isCorrect("看", for: look))
+    }
+
+    /// Kept for if typed English returns: the rules must not pass an opposite. 卖 is sell,
+    /// and buy is 买.
+    @Test("English that means something else is still wrong: buy for 卖")
+    func oppositeIsWrong() {
+        let sell = WordPair(english: "to sell", hanzi: "卖", pinyin: "mài", otherMeanings: ["to betray"])
+        #expect(!FlashcardGrader.isCorrect("buy", for: card(sell, .chineseToEnglish)))
+        #expect(FlashcardGrader.isCorrect("sell", for: card(sell, .chineseToEnglish)))
     }
 
     /// Cost: words are stored as simplified Hanzi, so the traditional form, right to a

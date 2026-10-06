@@ -34,6 +34,58 @@ struct HomeViewModelTests {
         #expect(home.state.mistakeWords.map(\.english) == ["mobile phone", "book", "tea"])
     }
 
+    @Test("with nothing practised there is nothing to carry on with, only the folders and decks to choose from")
+    func nothingPractised() async {
+        let (home, _) = await makeHome()
+        #expect(home.state.current == nil)
+        #expect(home.state.sourceSections.map(\.title) == ["Starter"])
+        #expect(home.state.sourceSections.first?.decks.map(\.deck.name) == ["Full", "Small"])
+        #expect(home.state.sourceSections.first?.wordCount == 5)
+    }
+
+    @Test("the deck or folder last practised is what to carry on with, and a lesson from it says where it came from")
+    func carryingOn() async {
+        let (home, log) = await makeHome()
+        try? await repository.recordResults(LessonResults(misses: [:], cleanSolves: [Fixtures.water.id: 1], source: .deck(Fixtures.fullDeck.id)))
+        #expect(await waitUntil { home.state.current == .deck(Fixtures.fullDeck.id) })
+        #expect(home.state.currentName == "Full")
+        #expect(home.state.currentSubtitle == "Starter · 5 words")
+
+        home.send(.continueTapped(.flashcards))
+        #expect(await waitUntil { log.effects.count == 1 })
+        guard case .requestFlashcards(let request) = log.effects.first else {
+            Issue.record("expected a flash card request")
+            return
+        }
+        #expect(request.title == "Full")
+        #expect(request.pool.count == 5)
+        #expect(request.source == .deck(Fixtures.fullDeck.id))
+    }
+
+    @Test("a deck picked from the list is shown until something is next practised, and matching needs five words")
+    func choosing() async {
+        let (home, log) = await makeHome()
+        home.send(.chooseSourceTapped)
+        #expect(home.state.isChoosingSource)
+        home.send(.sourceChosen(.deck(Fixtures.smallDeck.id)))
+        #expect(!home.state.isChoosingSource)
+        #expect(home.state.current == .deck(Fixtures.smallDeck.id))
+        #expect(!home.state.canStart(.matching))
+        #expect(home.state.canStart(.speaking))
+        home.send(.continueTapped(.matching))
+        home.send(.continueTapped(.speaking))
+        #expect(await waitUntil { log.effects.count == 1 })
+        guard case .requestSpeaking(let request) = log.effects.first else {
+            Issue.record("expected a speaking request")
+            return
+        }
+        #expect(request.source == .deck(Fixtures.smallDeck.id))
+
+        try? await repository.recordResults(LessonResults(misses: [:], cleanSolves: [Fixtures.water.id: 1], source: .folder(Fixtures.starter.id)))
+        #expect(await waitUntil { home.state.current == .folder(Fixtures.starter.id) })
+        #expect(home.state.chosen == nil)
+    }
+
     @Test("quick practice asks for a matching lesson over every usable word")
     func quickPractice() async {
         let (home, log) = await makeHome()
@@ -46,6 +98,8 @@ struct HomeViewModelTests {
         }
         #expect(request.title == "All words")
         #expect(request.pool.count == 5)
+        // From across the vocabulary, so it is no deck to carry on with.
+        #expect(request.source == nil)
     }
 
     @Test("practising mistakes asks for a speaking lesson, worst first, with no floor")
