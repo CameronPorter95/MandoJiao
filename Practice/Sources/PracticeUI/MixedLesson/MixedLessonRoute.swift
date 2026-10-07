@@ -8,16 +8,19 @@ import SwiftUI
 public struct MixedLessonRoute: View {
     @State private var viewModel: MixedLessonViewModel
     private let navigation: MixedLessonNavigation
-    private let makeStep: (MixedStep, @escaping ([Answer]) -> Void) -> AnyView
+    private let makeStep: (MixedStep, _ listensAtOnce: Bool, @escaping MixedLessonRoute.StepCompletion) -> AnyView
 
     @State private var error: MixedLessonError?
 
+    /// A step's answers, and for a read-aloud step whether a next one should listen at once.
+    public typealias StepCompletion = (_ answers: [Answer], _ carriesOn: Bool) -> Void
+
     /// `makeStep` builds a matching board, flash card or read-aloud step, calling back with
-    /// its answers.
+    /// its answers. `listensAtOnce` tells a read-aloud step to start listening by itself.
     public init(
         viewModel: MixedLessonViewModel,
         navigation: MixedLessonNavigation,
-        makeStep: @escaping (MixedStep, @escaping ([Answer]) -> Void) -> AnyView
+        makeStep: @escaping (MixedStep, _ listensAtOnce: Bool, @escaping StepCompletion) -> AnyView
     ) {
         _viewModel = State(initialValue: viewModel)
         self.navigation = navigation
@@ -28,7 +31,9 @@ public struct MixedLessonRoute: View {
         MixedLessonScreen(
             state: viewModel.state,
             onAction: { viewModel.send($0) },
-            step: { step in makeStep(step) { viewModel.send(.stepCompleted($0)) } }
+            step: { step in
+                makeStep(step, viewModel.state.lesson.listensOnArrival) { viewModel.send(.stepCompleted($0, carriesOn: $1)) }
+            }
         )
         .onDisappear { viewModel.send(.disappeared) }
         .task {

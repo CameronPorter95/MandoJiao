@@ -25,8 +25,8 @@ public enum MixedLessonFactory: NavigationInputRouteFactory {
                 audioSession: ToneEngine.shared
             ),
             navigation: navigation,
-            makeStep: { step, onComplete in
-                makeStep(step, dependencies: dependencies, recogniser: recogniser, onComplete: onComplete)
+            makeStep: { step, listensAtOnce, onComplete in
+                makeStep(step, dependencies: dependencies, recogniser: recogniser, listensAtOnce: listensAtOnce, onComplete: onComplete)
             }
         )
     }
@@ -36,15 +36,19 @@ public enum MixedLessonFactory: NavigationInputRouteFactory {
         _ step: MixedStep,
         dependencies: Dependencies,
         recogniser: DictationRecogniser,
-        onComplete: @escaping ([Answer]) -> Void
+        listensAtOnce: Bool,
+        onComplete: @escaping MixedLessonRoute.StepCompletion
     ) -> AnyView {
         switch step {
         case .readAloud(let word):
-            AnyView(SpeakingFactory.makeStepRoute(dependencies: dependencies, word: word, recogniser: recogniser, onComplete: onComplete))
+            AnyView(SpeakingFactory.makeStepRoute(
+                dependencies: dependencies, word: word, recogniser: recogniser,
+                listensAtOnce: listensAtOnce, onComplete: onComplete
+            ))
         case .match(let pairs):
-            AnyView(MatchingFactory.makeStepRoute(dependencies: dependencies, pairs: pairs, onComplete: onComplete))
+            AnyView(MatchingFactory.makeStepRoute(dependencies: dependencies, pairs: pairs) { onComplete($0, false) })
         case .flashcard(let card):
-            AnyView(FlashcardsFactory.makeStepRoute(card: card, onComplete: onComplete))
+            AnyView(FlashcardsFactory.makeStepRoute(card: card) { onComplete($0, false) })
         case .teach:
             // The mixed lesson shows a word itself; it never asks for this.
             AnyView(EmptyView())

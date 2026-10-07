@@ -145,6 +145,13 @@ completion: the same microphone rules, three tries and typed pinyin fallback, ha
 answer back once the card settles instead of recording it. One recogniser serves the
 whole lesson, so the speech model is prepared once.
 
+A run of read-aloud steps carries on as the speaking lesson does between cards: after a
+right answer, unless typing was chosen, the next read starts listening by itself, and an
+automatic listen that hears nothing is not a try. The owner found re-tapping the
+microphone for every word on the first device run. Because the steps share the
+recogniser and the next can appear before the last disappears, a step leaving cancels
+the recogniser only if it was itself listening.
+
 **The mixed lesson owns the audio session between steps,** not the step. A read-aloud step
 takes the microphone's session when it appears, as the speaking lesson does, but never
 hands it back. The lesson hands it back when the next step does not listen, when it

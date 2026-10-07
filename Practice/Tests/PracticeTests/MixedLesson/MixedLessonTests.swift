@@ -73,6 +73,24 @@ nonisolated struct MixedLessonDomainTests {
         #expect(lesson.steps.map(\.listens) == [false, false, true])
         #expect(lesson.words == [LessonWords.water, LessonWords.tea])
     }
+
+    @Test("a read aloud listens on arrival only straight after a read that carried on")
+    func listensOnArrival() {
+        var lesson = MixedLesson(plan: plan([
+            .readAloud(LessonWords.water), .readAloud(LessonWords.tea), .readAloud(LessonWords.book),
+            .recall(LessonWords.water, .recognise), .readAloud(LessonWords.car),
+        ]))
+        #expect(!lesson.listensOnArrival)
+        lesson.complete(with: [answer(LessonWords.water, right: true, exercise: .speaking)], carriesOn: true)
+        #expect(lesson.listensOnArrival)
+        lesson.complete(with: [answer(LessonWords.tea, right: false, exercise: .speaking)], carriesOn: false)
+        #expect(!lesson.listensOnArrival)
+        // Carrying on into a flash card means nothing, and the read after it waits for a tap.
+        lesson.complete(with: [answer(LessonWords.book, right: true, exercise: .speaking)], carriesOn: true)
+        #expect(!lesson.listensOnArrival)
+        lesson.complete(with: [answer(LessonWords.water, right: true)])
+        #expect(!lesson.listensOnArrival)
+    }
 }
 
 @Suite("Mixed lesson view model")

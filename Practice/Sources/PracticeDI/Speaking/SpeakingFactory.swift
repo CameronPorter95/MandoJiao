@@ -24,12 +24,14 @@ public enum SpeakingFactory: NavigationInputRouteFactory {
     }
 
     /// One word as a step of a longer lesson, handing its answer back once the card settles.
-    /// `recogniser` is the lesson's, shared by every step that listens.
+    /// `recogniser` is the lesson's, shared by every step that listens. `listensAtOnce`
+    /// carries on from a right answer in the step before, as the speaking lesson does.
     static func makeStepRoute(
         dependencies: Dependencies,
         word: WordPair,
         recogniser: DictationRecogniser,
-        onComplete: @escaping ([Answer]) -> Void
+        listensAtOnce: Bool,
+        onComplete: @escaping (_ answers: [Answer], _ carriesOn: Bool) -> Void
     ) -> SpeakingStepRoute {
         SpeakingStepRoute(viewModel: SpeakingViewModel(
             request: LessonRequest(title: "", pool: [word]),
@@ -38,7 +40,8 @@ public enum SpeakingFactory: NavigationInputRouteFactory {
             sounds: ToneEngine.shared,
             getSettings: SpeakingSettingsFactory.makeGetSettingsUseCase(dependencies: dependencies),
             completion: .step(onComplete),
-            logAttempt: SpeechLog.attempt
+            logAttempt: SpeechLog.attempt,
+            listensAtOnce: listensAtOnce
         ))
     }
 }

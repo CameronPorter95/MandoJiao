@@ -335,16 +335,18 @@ struct SpeakingViewModelTests {
 
     // MARK: - As a step of a longer lesson
 
-    @Test("as a step, a right answer hands back its one answer once, and records nothing or plays nothing itself")
+    @Test("as a step, a right answer hands back its one answer once, carrying on, and records nothing or plays nothing itself")
     func stepRight() async {
         var handed: [[Answer]] = []
-        let harness = Harness(cards: [water], step: { handed.append($0) })
+        var carriesOn: [Bool] = []
+        let harness = Harness(cards: [water], step: { handed.append($0); carriesOn.append($1) })
         await harness.appear()
 
         harness.viewModel.send(.typedAnswerSubmitted("shui"))
         #expect(await waitUntil { handed.count == 1 })
         #expect(handed.first?.map(\.direction) == [.readAloud])
         #expect(handed.first?.map(\.isCorrect) == [true])
+        #expect(carriesOn == [true])
         harness.viewModel.send(.continueTapped)
         await settle()
         #expect(handed.count == 1)
@@ -352,10 +354,11 @@ struct SpeakingViewModelTests {
         #expect(harness.audio.events == ["enter"])
     }
 
-    @Test("as a step, out of tries waits for Continue, then hands back a miss, and leaving keeps the session for the lesson")
+    @Test("as a step, out of tries waits for Continue, then hands back a miss without carrying on, and leaving keeps the session and the lesson's recogniser")
     func stepExhausted() async {
         var handed: [[Answer]] = []
-        let harness = Harness(cards: [water], step: { handed.append($0) })
+        var carriesOn: [Bool] = []
+        let harness = Harness(cards: [water], step: { handed.append($0); carriesOn.append($1) })
         await harness.appear()
 
         for _ in 0..<3 { harness.viewModel.send(.typedAnswerSubmitted("cha")) }
@@ -364,10 +367,45 @@ struct SpeakingViewModelTests {
         harness.viewModel.send(.continueTapped)
         #expect(handed.first?.map(\.isCorrect) == [false])
         #expect(handed.first?.first?.wrongAttempts == 3)
+        #expect(carriesOn == [false])
 
+        // The next step may already be listening on the same recogniser.
         harness.viewModel.send(.disappeared)
         await settle()
         #expect(harness.audio.events == ["enter"])
+        #expect(harness.recogniser.cancelCount == 0)
+    }
+
+    @Test("as a step, a right answer while typing does not carry the microphone on")
+    func stepTyping() async {
+        var carriesOn: [Bool] = []
+        let harness = Harness(cards: [water], step: { carriesOn.append($1) })
+        await harness.appear()
+        harness.viewModel.send(.typingToggled)
+        harness.viewModel.send(.typedAnswerSubmitted("shui"))
+        #expect(await waitUntil { carriesOn == [false] })
+    }
+
+    @Test("as a step carried on from a right answer, it listens as soon as the microphone is ready, and silence is not a try")
+    func stepListensAtOnce() async {
+        var handed: [[Answer]] = []
+        let harness = Harness(cards: [water], step: { answers, _ in handed.append(answers) }, listensAtOnce: true)
+        await harness.appear()
+        #expect(await waitUntil { harness.recogniser.startCount == 1 })
+        // Heard nothing before the limit: not ready yet, rather than wrong.
+        #expect(await waitUntil { harness.viewModel.state.mic == .idle })
+        #expect(harness.viewModel.state.lesson?.attemptsUsed == 0)
+        #expect(handed.isEmpty)
+    }
+
+    @Test("as a step left mid-listen, it stops its own listen")
+    func stepLeftListening() async {
+        let harness = Harness(cards: [water], waitForEnd: Harness.untilCancelled, step: { _, _ in })
+        await harness.appear()
+        harness.viewModel.send(.startListeningTapped)
+        #expect(await waitUntil { harness.viewModel.state.mic == .listening })
+        harness.viewModel.send(.disappeared)
+        #expect(harness.recogniser.cancelCount == 1)
     }
 
 }
@@ -400,7 +438,8 @@ private final class Harness {
         advanceDelay: Duration = .milliseconds(1),
         waitForEnd: @escaping SpeakingViewModel.WaitForEnd = settleOnSpeech,
         settings: SpeakingSettings = .default,
-        step: (([Answer]) -> Void)? = nil
+        step: (([Answer], Bool) -> Void)? = nil,
+        listensAtOnce: Bool = false
     ) {
         recogniser = FakeRecogniser(preparesTo: availability, heard: heard)
         viewModel = SpeakingViewModel(
@@ -411,6 +450,7 @@ private final class Harness {
             getSettings: GetSpeakingSettingsUseCase(repository: FixedSpeakingSettings(value: settings)),
             completion: step.map(SpeakingViewModel.Completion.step) ?? .lesson(RecordLessonResultsUseCase(repository: repository)),
             logAttempt: { _ in },
+            listensAtOnce: listensAtOnce,
             advanceDelay: advanceDelay,
             waitForEnd: waitForEnd
         )
@@ -441,6 +481,7 @@ private final class FakeRecogniser: SpeechRecognising {
     private var heard: [String]
     private(set) var startCount = 0
     private(set) var stopCount = 0
+    private(set) var cancelCount = 0
     private(set) var lastHints: [String] = []
 
     init(preparesTo: SpeechAvailability, heard: [String]) {
@@ -468,6 +509,7 @@ private final class FakeRecogniser: SpeechRecognising {
     }
 
     func cancel() {
+        cancelCount += 1
         partialText = ""
     }
 }

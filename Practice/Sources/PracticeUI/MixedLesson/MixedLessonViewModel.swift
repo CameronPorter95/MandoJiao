@@ -34,9 +34,9 @@ public final class MixedLessonViewModel {
 
     func send(_ action: MixedLessonAction) {
         switch action {
-        case .stepCompleted(let answers):
+        case .stepCompleted(let answers, let carriesOn):
             guard !state.lesson.isFinished else { return }
-            state.lesson.complete(with: answers)
+            state.lesson.complete(with: answers, carriesOn: carriesOn)
             guard state.lesson.isFinished else {
                 if state.lesson.step?.listens != true { leaveRecordingMode() }
                 return
