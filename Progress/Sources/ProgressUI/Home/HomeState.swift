@@ -1,4 +1,6 @@
+import CoreUI
 import Foundation
+import ProgressDomain
 import VocabularyDomain
 
 struct HomeState: Equatable {
@@ -119,5 +121,5 @@ enum HomeEffect: Equatable, Sendable {
     case requestSpeaking(LessonRequest)
     case requestFlashcards(LessonRequest)
     case requestTodayPlan(TodayPlan)
-    case showError(VocabularyError)
+    case showError(ProgressError)
 }

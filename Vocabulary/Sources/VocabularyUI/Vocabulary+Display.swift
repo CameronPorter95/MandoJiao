@@ -16,12 +16,6 @@ extension Vocabulary {
         return count < minimumMatchingWords ? "\(count) words, needs \(minimumMatchingWords)" : "\(count) words"
     }
 
-    /// Where a deck or folder sits, as a path.
-    func location(of folderID: UUID?) -> String {
-        guard let folderID else { return "Top level" }
-        return path(to: folderID).map(\.displayName).joined(separator: " › ")
-    }
-
     /// Everywhere but where it already is.
     func destinations(forDeck deckID: UUID) -> [MoveDestination] {
         let current = deck(id: deckID)?.folderID

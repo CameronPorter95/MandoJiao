@@ -4,12 +4,10 @@
 /// dismisses, and the library is left with the back button.
 @MainActor
 public struct VocabularyNavigation {
-    public var home: HomeNavigation
     public var deckDetail: DeckDetailNavigation
     public var library: LibraryNavigation
 
-    public init(home: HomeNavigation, deckDetail: DeckDetailNavigation, library: LibraryNavigation) {
-        self.home = home
+    public init(deckDetail: DeckDetailNavigation, library: LibraryNavigation) {
         self.deckDetail = deckDetail
         self.library = library
     }

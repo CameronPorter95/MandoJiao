@@ -19,7 +19,6 @@ nonisolated enum VocabularyError: LoggedError, Equatable, Sendable {
     case deleteFolderFailed(VocabularyDomainError)
     case loadHSKFailed(VocabularyDomainError)
     case installHSKFailed(VocabularyDomainError)
-    case clearMistakesFailed(VocabularyDomainError)
     case suggestWordFailed(VocabularyDomainError)
     case lookUpDictionaryFailed(VocabularyDomainError)
 
@@ -39,7 +38,6 @@ nonisolated enum VocabularyError: LoggedError, Equatable, Sendable {
         case .deleteFolderFailed: "The folder could not be deleted."
         case .loadHSKFailed: "The HSK word list could not be read."
         case .installHSKFailed: "The HSK decks could not be added."
-        case .clearMistakesFailed: "The mistakes list could not be cleared."
         case .suggestWordFailed: "No pinyin could be suggested."
         case .lookUpDictionaryFailed: "The dictionary could not be read."
         }
@@ -51,7 +49,7 @@ nonisolated enum VocabularyError: LoggedError, Equatable, Sendable {
              .renameDeckFailed(let error), .updateDeckFailed(let error), .deleteDeckFailed(let error),
              .moveDeckFailed(let error), .createFolderFailed(let error), .renameFolderFailed(let error),
              .moveFolderFailed(let error), .deleteFolderFailed(let error), .loadHSKFailed(let error),
-             .installHSKFailed(let error), .clearMistakesFailed(let error),
+             .installHSKFailed(let error),
              .suggestWordFailed(let error), .lookUpDictionaryFailed(let error):
             error
         }
@@ -75,7 +73,6 @@ nonisolated enum VocabularyError: LoggedError, Equatable, Sendable {
         case .deleteFolderFailed: "deleteFolder"
         case .loadHSKFailed: "loadHSK"
         case .installHSKFailed: "installHSK"
-        case .clearMistakesFailed: "clearMistakes"
         case .suggestWordFailed: "suggestWord"
         case .lookUpDictionaryFailed: "lookUpDictionary"
         }

@@ -19,6 +19,7 @@ let package = Package(
         .package(path: "../Core"),
         .package(path: "../Vocabulary"),
         .package(path: "../Dictionary"),
+        .package(path: "../Progress"),
     ],
     targets: [
         .target(
@@ -27,6 +28,8 @@ let package = Package(
                 .product(name: "VocabularyDomain", package: "Vocabulary"),
                 // Gloss, to read a typed answer as a meaning is written.
                 .product(name: "DictionaryDomain", package: "Dictionary"),
+                // TodayPlan, which the mixed lesson runs.
+                .product(name: "ProgressDomain", package: "Progress"),
             ]
         ),
         .target(
@@ -51,6 +54,7 @@ let package = Package(
         .target(
             name: "PracticeDI",
             dependencies: [
+                .product(name: "ProgressDomain", package: "Progress"),
                 "PracticeDomain", "PracticeData", "PracticeUI",
                 .product(name: "VocabularyDomain", package: "Vocabulary"),
                 .product(name: "CoreSound", package: "Core"),
@@ -67,6 +71,7 @@ let package = Package(
         .testTarget(
             name: "PracticeTests",
             dependencies: [
+                .product(name: "ProgressDomain", package: "Progress"),
                 "PracticeDomain", "PracticeData", "PracticeUI", "PracticeTestSupport",
                 .product(name: "VocabularyDomain", package: "Vocabulary"),
                 .product(name: "VocabularyTestSupport", package: "Vocabulary"),

@@ -2,10 +2,10 @@ import Foundation
 import Testing
 import CoreDomain
 import CoreTestSupport
+import VocabularyDomain
 import VocabularyTestSupport
-@testable import VocabularyDomain
-@testable import VocabularyData
-@testable import VocabularyUI
+@testable import ProgressDomain
+@testable import ProgressUI
 
 @Suite("Home")
 @MainActor

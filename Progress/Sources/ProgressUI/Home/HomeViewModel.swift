@@ -94,7 +94,7 @@ public final class HomeViewModel {
 
         case .clearMistakesConfirmed:
             state.isConfirmingClear = false
-            write(failure: VocabularyError.clearMistakesFailed) { [clearMistakes] in
+            write(failure: ProgressError.clearMistakesFailed) { [clearMistakes] in
                 try await clearMistakes()
             }
 
@@ -122,11 +122,11 @@ public final class HomeViewModel {
 
     private func write(
         revertingTo previous: Vocabulary? = nil,
-        failure: @escaping (VocabularyDomainError) -> VocabularyError,
+        failure: @escaping (VocabularyDomainError) -> ProgressError,
         _ work: @escaping () async throws -> Void
     ) {
         Task {
-            let outcome = await VocabularyError.performing(work, failure: failure) {
+            let outcome = await ProgressError.performing(work, failure: failure) {
                 effectChannel.send(.showError($0))
             }
             if outcome == .failed, let previous {

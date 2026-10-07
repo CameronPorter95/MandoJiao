@@ -69,7 +69,7 @@ struct FolderDetailScreen: View {
         List {
             Section {
                 if !state.folderWords.isEmpty {
-                    BandBreakdown(counts: state.folderWords.bandCounts(at: .now))
+                    BandBreakdown(bandCounts: state.folderWords.bandCounts(at: .now))
                         .padding(.vertical, 4)
                 }
                 PractiseRows(wordCount: state.wordCount, minimumMatchingWords: state.minimumMatchingWords) {

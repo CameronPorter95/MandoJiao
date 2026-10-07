@@ -1,5 +1,7 @@
 import PracticeDI
 import PracticeUI
+import ProgressDI
+import ProgressUI
 import VocabularyDI
 import VocabularyUI
 
@@ -10,6 +12,7 @@ import VocabularyUI
 /// is where one package's screen leading to another's is decided.
 @MainActor
 struct AppNavigation {
+    var home: HomeNavigation
     var vocabulary: VocabularyNavigation
     var matching: MatchingNavigation
     var speaking: SpeakingNavigation
@@ -21,11 +24,16 @@ extension AppNavigation {
     /// Home at the root, with lessons presented over it.
     static func main(coordinator: AppNavigationCoordinator) -> Self {
         AppNavigation(
-            vocabulary: .app(
+            home: .app(
                 presentMatching: { coordinator.present(.matching($0)) },
                 presentSpeaking: { coordinator.present(.speaking($0)) },
                 presentFlashcards: { coordinator.present(.flashcards($0)) },
                 presentTodayPlan: { coordinator.present(.todayPlan($0)) }
+            ),
+            vocabulary: .app(
+                presentMatching: { coordinator.present(.matching($0)) },
+                presentSpeaking: { coordinator.present(.speaking($0)) },
+                presentFlashcards: { coordinator.present(.flashcards($0)) }
             ),
             matching: .app(dismiss: { coordinator.dismissLesson() }),
             speaking: .app(dismiss: { coordinator.dismissLesson() }),

@@ -2,6 +2,7 @@ import CoreDI
 import CoreSound
 import PracticeDomain
 import PracticeUI
+import ProgressDomain
 import SwiftUI
 import VocabularyDomain
 

@@ -35,6 +35,17 @@ public enum VocabularyRepositoryFactory {
         LibraryLayoutRepositoryImpl()
     }
 
+    /// For Home, in another package, which reads the library and clears its mistakes.
+    @MainActor
+    public static func makeObserveVocabularyUseCase(dependencies: Dependencies) -> ObserveVocabularyUseCase {
+        ObserveVocabularyUseCase(repository: makeRepository(dependencies: dependencies))
+    }
+
+    @MainActor
+    public static func makeClearMistakesUseCase(dependencies: Dependencies) -> ClearMistakesUseCase {
+        ClearMistakesUseCase(repository: makeRepository(dependencies: dependencies))
+    }
+
     /// The seam other packages record results through, injected by the app.
     @MainActor
     public static func makeRecordLessonResultsUseCase(dependencies: Dependencies) -> RecordLessonResultsUseCase {

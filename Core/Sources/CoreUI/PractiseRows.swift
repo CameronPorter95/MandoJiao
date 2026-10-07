@@ -5,12 +5,18 @@ import SwiftUI
 /// in view and one tap away, where a single Start lesson button that opened a menu hid them
 /// behind what looked like the action itself. A row there are too few words for is disabled
 /// and says how many it needs.
-struct PractiseRows: View {
+public struct PractiseRows: View {
     let wordCount: Int
     let minimumMatchingWords: Int
     let onStart: (LessonExercise) -> Void
 
-    var body: some View {
+    public init(wordCount: Int, minimumMatchingWords: Int, onStart: @escaping (LessonExercise) -> Void) {
+        self.wordCount = wordCount
+        self.minimumMatchingWords = minimumMatchingWords
+        self.onStart = onStart
+    }
+
+    public var body: some View {
         ForEach(LessonExercise.allCases, id: \.self) { exercise in
             let needed = exercise.minimumWords(matching: minimumMatchingWords)
             let isAvailable = wordCount >= needed

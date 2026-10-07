@@ -1,7 +1,8 @@
-import Foundation
-import Testing
 import CoreDomain
 import CoreTestSupport
+import CoreUI
+import Foundation
+import Testing
 import VocabularyTestSupport
 @testable import VocabularyDomain
 @testable import VocabularyData

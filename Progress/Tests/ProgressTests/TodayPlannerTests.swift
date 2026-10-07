@@ -1,6 +1,7 @@
 import Foundation
 import Testing
-@testable import VocabularyDomain
+import VocabularyDomain
+@testable import ProgressDomain
 
 @Suite("Today's plan")
 nonisolated struct TodayPlannerTests {

@@ -1,4 +1,5 @@
 import Foundation
+import VocabularyDomain
 
 /// The lesson Home suggests for today: a theme, a line saying what it will do, and its steps
 /// in order, drawing on several exercises. The mixed lesson turns each step into the real

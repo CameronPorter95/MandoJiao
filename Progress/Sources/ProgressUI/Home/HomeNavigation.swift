@@ -1,3 +1,4 @@
+import ProgressDomain
 import VocabularyDomain
 
 @MainActor

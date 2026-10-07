@@ -110,3 +110,11 @@ public nonisolated extension Vocabulary {
         return items
     }
 }
+
+public nonisolated extension Vocabulary {
+    /// Where a deck or folder sits, as a path.
+    func location(of folderID: UUID?) -> String {
+        guard let folderID else { return "Top level" }
+        return path(to: folderID).map(\.displayName).joined(separator: " › ")
+    }
+}

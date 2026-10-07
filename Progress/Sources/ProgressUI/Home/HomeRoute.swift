@@ -6,7 +6,7 @@ public struct HomeRoute: View {
     private let navigation: HomeNavigation
     private let destination: (HomeDestination) -> AnyView
 
-    @State private var error: VocabularyError?
+    @State private var error: ProgressError?
 
     public init(
         viewModel: HomeViewModel,

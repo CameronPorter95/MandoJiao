@@ -1,3 +1,4 @@
+import ProgressDomain
 import CoreDomain
 import CoreTestSupport
 import Foundation

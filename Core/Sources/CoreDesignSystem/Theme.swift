@@ -6,6 +6,17 @@ public enum Theme {
     public static let success = Color(red: 0.34, green: 0.78, blue: 0.33)
     public static let miss = Color(red: 0.91, green: 0.33, blue: 0.33)
 
+    /// A word's strength from weakest, 0, to strongest, 3: grey to green. A level, not the
+    /// library's band type, so Core never learns what a band is.
+    public static func strength(_ level: Int) -> Color {
+        switch level {
+        case ..<1: .secondary
+        case 1: accent
+        case 2: .blue
+        default: success
+        }
+    }
+
     public static let tileCorner: CGFloat = 16
     public static let tileMinHeight: CGFloat = 68
 }

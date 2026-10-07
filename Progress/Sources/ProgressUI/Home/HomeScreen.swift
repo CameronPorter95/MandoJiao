@@ -1,4 +1,5 @@
 import CoreDesignSystem
+import CoreUI
 import SwiftUI
 import VocabularyDomain
 
@@ -97,7 +98,12 @@ struct HomeScreen: View {
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                     if let current = state.current {
-                        BandBreakdown(counts: state.vocabulary.words(in: current).bandCounts(at: .now))
+                        BandBreakdown(
+                            counts: state.vocabulary.words(in: current).bandCounts(at: .now),
+                            order: StrengthBand.allCases.reversed(),
+                            title: \.title,
+                            level: \.rawValue
+                        )
                             .padding(.top, 6)
                     }
                 }
