@@ -12,7 +12,8 @@ public struct MixedLessonRoute: View {
 
     @State private var error: MixedLessonError?
 
-    /// `makeStep` builds a matching board or flash card step, calling back with its answers.
+    /// `makeStep` builds a matching board, flash card or read-aloud step, calling back with
+    /// its answers.
     public init(
         viewModel: MixedLessonViewModel,
         navigation: MixedLessonNavigation,
@@ -29,6 +30,7 @@ public struct MixedLessonRoute: View {
             onAction: { viewModel.send($0) },
             step: { step in makeStep(step) { viewModel.send(.stepCompleted($0)) } }
         )
+        .onDisappear { viewModel.send(.disappeared) }
         .task {
             for await effect in viewModel.effects() {
                 switch effect {

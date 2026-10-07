@@ -115,6 +115,11 @@ The session is only taken over when the microphone is actually usable, so a
 typed-only speaking lesson leaves it alone. Practising again after finishing reclaims it,
 since finishing hands it back.
 
+In today's plan a read-aloud step takes the session the same way but leaves handing it
+back to the mixed lesson, which does so before any step that does not listen and before
+its fanfare. The rule above holds there too: nothing that plays a tone runs under
+`.measurement`. See [exercises.md](exercises.md#todays-plan).
+
 Session configuration runs off the main thread. `setActive` can block long enough
 to stall the UI and AVAudioSession warns about it at runtime; the async
 `activate(options:completionHandler:)` it suggests is iOS 27, above this app's

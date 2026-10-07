@@ -332,6 +332,44 @@ struct SpeakingViewModelTests {
         #expect(!harness.effects.effects.contains(.close))
         #expect(await harness.recorded().isEmpty)
     }
+
+    // MARK: - As a step of a longer lesson
+
+    @Test("as a step, a right answer hands back its one answer once, and records nothing or plays nothing itself")
+    func stepRight() async {
+        var handed: [[Answer]] = []
+        let harness = Harness(cards: [water], step: { handed.append($0) })
+        await harness.appear()
+
+        harness.viewModel.send(.typedAnswerSubmitted("shui"))
+        #expect(await waitUntil { handed.count == 1 })
+        #expect(handed.first?.map(\.direction) == [.readAloud])
+        #expect(handed.first?.map(\.isCorrect) == [true])
+        harness.viewModel.send(.continueTapped)
+        await settle()
+        #expect(handed.count == 1)
+        #expect(await harness.recorded().isEmpty)
+        #expect(harness.audio.events == ["enter"])
+    }
+
+    @Test("as a step, out of tries waits for Continue, then hands back a miss, and leaving keeps the session for the lesson")
+    func stepExhausted() async {
+        var handed: [[Answer]] = []
+        let harness = Harness(cards: [water], step: { handed.append($0) })
+        await harness.appear()
+
+        for _ in 0..<3 { harness.viewModel.send(.typedAnswerSubmitted("cha")) }
+        await settle()
+        #expect(handed.isEmpty)
+        harness.viewModel.send(.continueTapped)
+        #expect(handed.first?.map(\.isCorrect) == [false])
+        #expect(handed.first?.first?.wrongAttempts == 3)
+
+        harness.viewModel.send(.disappeared)
+        await settle()
+        #expect(harness.audio.events == ["enter"])
+    }
+
 }
 
 // MARK: - Harness
@@ -361,7 +399,8 @@ private final class Harness {
         heard: [String] = [],
         advanceDelay: Duration = .milliseconds(1),
         waitForEnd: @escaping SpeakingViewModel.WaitForEnd = settleOnSpeech,
-        settings: SpeakingSettings = .default
+        settings: SpeakingSettings = .default,
+        step: (([Answer]) -> Void)? = nil
     ) {
         recogniser = FakeRecogniser(preparesTo: availability, heard: heard)
         viewModel = SpeakingViewModel(
@@ -370,7 +409,7 @@ private final class Harness {
             audioSession: audio,
             sounds: audio,
             getSettings: GetSpeakingSettingsUseCase(repository: FixedSpeakingSettings(value: settings)),
-            recordResults: RecordLessonResultsUseCase(repository: repository),
+            completion: step.map(SpeakingViewModel.Completion.step) ?? .lesson(RecordLessonResultsUseCase(repository: repository)),
             logAttempt: { _ in },
             advanceDelay: advanceDelay,
             waitForEnd: waitForEnd

@@ -10,7 +10,7 @@ import SwiftUI
 struct MixedLessonScreen: View {
     let state: MixedLessonState
     let onAction: (MixedLessonAction) -> Void
-    /// A matching board or flash card step, from the package that owns it.
+    /// A matching board, flash card or read-aloud step, built by the exercise that owns it.
     let step: (MixedStep) -> AnyView
 
     var body: some View {
@@ -29,7 +29,7 @@ struct MixedLessonScreen: View {
                     switch current {
                     case .teach(let word):
                         TeachWordView(word: word) { onAction(.stepCompleted([])) }
-                    case .match, .flashcard:
+                    case .match, .flashcard, .readAloud:
                         step(current)
                     }
                 }

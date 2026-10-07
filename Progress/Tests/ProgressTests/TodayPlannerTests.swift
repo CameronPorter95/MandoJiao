@@ -22,7 +22,7 @@ nonisolated struct TodayPlannerTests {
 
     private let fresh = ["water 水", "tea 茶", "book 书", "car 车", "big 大", "small 小", "dog 狗"].map { $0.split(separator: " ") }
 
-    @Test("with nothing answered, it teaches five new words, matches them, then recognises each")
+    @Test("with nothing answered, it teaches five new words, matches them, recognises each, then reads each aloud")
     func newWords() throws {
         let words = fresh.map { word(String($0[0]), String($0[1])) }
         let plan = try #require(plan(words))
@@ -35,7 +35,9 @@ nonisolated struct TodayPlannerTests {
             return
         }
         #expect(board == taught)
-        #expect(plan.steps.dropFirst(6).allSatisfy { if case .recall(_, .recognise) = $0 { true } else { false } })
+        #expect(plan.steps[6..<11].allSatisfy { if case .recall(_, .recognise) = $0 { true } else { false } })
+        // Speaking comes last, once each word has been met and recognised.
+        #expect(Array(plan.steps.dropFirst(11)) == taught.map(TodayPlan.Step.readAloud))
     }
 
     @Test("new words come from the current deck first, which it then marks practised, and the board is padded from elsewhere")

@@ -15,6 +15,7 @@ struct MixedLessonState: Equatable {
 
 enum MixedLessonAction: Equatable {
     case stepCompleted([Answer])
+    case disappeared
     case practiseAgainTapped
     case closeTapped
     case quitConfirmed

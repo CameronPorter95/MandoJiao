@@ -1,5 +1,6 @@
 import CoreDI
 import CoreSound
+import LibraryDomain
 import PracticeData
 import PracticeUI
 
@@ -20,5 +21,24 @@ public enum SpeakingFactory: NavigationInputRouteFactory {
             logAttempt: SpeechLog.attempt
         )
         return SpeakingRoute(viewModel: viewModel, navigation: navigation)
+    }
+
+    /// One word as a step of a longer lesson, handing its answer back once the card settles.
+    /// `recogniser` is the lesson's, shared by every step that listens.
+    static func makeStepRoute(
+        dependencies: Dependencies,
+        word: WordPair,
+        recogniser: DictationRecogniser,
+        onComplete: @escaping ([Answer]) -> Void
+    ) -> SpeakingStepRoute {
+        SpeakingStepRoute(viewModel: SpeakingViewModel(
+            request: LessonRequest(title: "", pool: [word]),
+            recogniser: recogniser,
+            audioSession: ToneEngine.shared,
+            sounds: ToneEngine.shared,
+            getSettings: SpeakingSettingsFactory.makeGetSettingsUseCase(dependencies: dependencies),
+            completion: .step(onComplete),
+            logAttempt: SpeechLog.attempt
+        ))
     }
 }

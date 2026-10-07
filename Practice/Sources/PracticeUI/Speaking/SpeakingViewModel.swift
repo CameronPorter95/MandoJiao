@@ -15,6 +15,15 @@ public final class SpeakingViewModel {
     public typealias WaitForEnd = @MainActor (_ transcript: () -> String) async -> Endpointing.Ending
     public typealias LogAttempt = @MainActor (SpeechAttempt) -> Void
 
+    /// What happens once the last card is done.
+    public enum Completion {
+        /// A lesson of its own: results recorded, the audio session handed back, the fanfare.
+        case lesson(RecordLessonResultsUseCase)
+        /// One step of a longer lesson, handed its answers once. That lesson records them,
+        /// owns the audio session between steps, and plays any fanfare.
+        case step(([Answer]) -> Void)
+    }
+
     private(set) var state = SpeakingState()
 
     private let effectChannel = EffectChannel<SpeakingEffect>()
@@ -24,7 +33,7 @@ public final class SpeakingViewModel {
     private let audioSession: any AudioSessionSwitching
     private let sounds: any MatchSoundPlaying
     private let getSettings: GetSpeakingSettingsUseCase
-    private let recordResults: RecordLessonResultsUseCase
+    private let completion: Completion
     private let logAttempt: LogAttempt
     private let advanceDelay: Duration
     private let waitForEnd: WaitForEnd
@@ -35,7 +44,8 @@ public final class SpeakingViewModel {
     private var stopTask: Task<Void, Never>?
     private var advanceTask: Task<Void, Never>?
 
-    public init(
+    /// A lesson of its own, recording through `recordResults`.
+    public convenience init(
         request: LessonRequest,
         recogniser: any SpeechRecognising,
         audioSession: any AudioSessionSwitching,
@@ -46,12 +56,30 @@ public final class SpeakingViewModel {
         advanceDelay: Duration = .milliseconds(850),
         waitForEnd: @escaping WaitForEnd = { await Endpointing.waitForEnd(transcript: $0) }
     ) {
+        self.init(
+            request: request, recogniser: recogniser, audioSession: audioSession, sounds: sounds,
+            getSettings: getSettings, completion: .lesson(recordResults), logAttempt: logAttempt,
+            advanceDelay: advanceDelay, waitForEnd: waitForEnd
+        )
+    }
+
+    public init(
+        request: LessonRequest,
+        recogniser: any SpeechRecognising,
+        audioSession: any AudioSessionSwitching,
+        sounds: any MatchSoundPlaying,
+        getSettings: GetSpeakingSettingsUseCase,
+        completion: Completion,
+        logAttempt: @escaping LogAttempt,
+        advanceDelay: Duration = .milliseconds(850),
+        waitForEnd: @escaping WaitForEnd = { await Endpointing.waitForEnd(transcript: $0) }
+    ) {
         self.request = request
         self.recogniser = recogniser
         self.audioSession = audioSession
         self.sounds = sounds
         self.getSettings = getSettings
-        self.recordResults = recordResults
+        self.completion = completion
         self.logAttempt = logAttempt
         self.advanceDelay = advanceDelay
         self.waitForEnd = waitForEnd
@@ -69,7 +97,10 @@ public final class SpeakingViewModel {
             listeningTask?.cancel()
             advanceTask?.cancel()
             recogniser.cancel()
-            Task { await audioSession.exitRecordingMode() }
+            // A step leaves the session to its lesson, which may have another step listening.
+            if case .lesson = completion {
+                Task { await audioSession.exitRecordingMode() }
+            }
 
         case .sceneLeftForeground:
             // Losing the foreground mid-answer would otherwise leave the tap installed.
@@ -257,6 +288,12 @@ public final class SpeakingViewModel {
     }
 
     private func finish() {
+        if case .step(let onComplete) = completion {
+            guard !didRecordResults, let lesson = state.lesson else { return }
+            didRecordResults = true
+            onComplete(lesson.answers)
+            return
+        }
         recordResultsOnce()
 
         // Nothing else needs the microphone now. Handing the session back before the
@@ -300,7 +337,7 @@ public final class SpeakingViewModel {
     }
 
     private func recordResultsOnce() {
-        guard let lesson = state.lesson, !didRecordResults else { return }
+        guard case .lesson(let recordResults) = completion, let lesson = state.lesson, !didRecordResults else { return }
         didRecordResults = true
         let results = LessonResults(
             misses: lesson.missesByPairID, cleanSolves: lesson.cleanSolvesByPairID,
