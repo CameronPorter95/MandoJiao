@@ -1,6 +1,6 @@
 import Foundation
+import LibraryDomain
 import ProgressDomain
-import VocabularyDomain
 
 /// One step of a mixed lesson, as the exercise that runs it.
 public nonisolated enum MixedStep: Hashable, Sendable {

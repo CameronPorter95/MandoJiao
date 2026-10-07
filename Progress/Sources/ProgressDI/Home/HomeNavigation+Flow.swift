@@ -1,6 +1,6 @@
+import LibraryDomain
 import ProgressDomain
 import ProgressUI
-import VocabularyDomain
 
 public extension HomeNavigation {
     /// Home as the app's root. Every kind of lesson is presented over the home stack.

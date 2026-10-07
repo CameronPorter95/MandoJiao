@@ -1,14 +1,14 @@
 import CoreDI
 import DictionaryDI
 import DictionaryDomain
+import LibraryDI
+import LibraryDomain
+import LibraryUI
 import PracticeDI
 import PracticeDomain
 import ProgressDI
 import SettingsDI
 import SwiftUI
-import VocabularyDI
-import VocabularyDomain
-import VocabularyUI
 
 /// The app's root: the home, vocabulary and dictionary tabs, and the lessons presented over all three.
 struct ContentView: View {

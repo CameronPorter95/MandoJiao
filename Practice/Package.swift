@@ -17,7 +17,7 @@ let package = Package(
     ],
     dependencies: [
         .package(path: "../Core"),
-        .package(path: "../Vocabulary"),
+        .package(path: "../Library"),
         .package(path: "../Dictionary"),
         .package(path: "../Progress"),
     ],
@@ -25,7 +25,7 @@ let package = Package(
         .target(
             name: "PracticeDomain",
             dependencies: [
-                .product(name: "VocabularyDomain", package: "Vocabulary"),
+                .product(name: "LibraryDomain", package: "Library"),
                 // Gloss, to read a typed answer as a meaning is written.
                 .product(name: "DictionaryDomain", package: "Dictionary"),
                 // TodayPlan, which the mixed lesson runs.
@@ -36,7 +36,7 @@ let package = Package(
             name: "PracticeData",
             dependencies: [
                 "PracticeDomain",
-                .product(name: "VocabularyDomain", package: "Vocabulary"),
+                .product(name: "LibraryDomain", package: "Library"),
                 .product(name: "CoreDomain", package: "Core"),
             ]
         ),
@@ -44,7 +44,7 @@ let package = Package(
             name: "PracticeUI",
             dependencies: [
                 "PracticeDomain",
-                .product(name: "VocabularyDomain", package: "Vocabulary"),
+                .product(name: "LibraryDomain", package: "Library"),
                 .product(name: "CoreDomain", package: "Core"),
                 .product(name: "CoreUI", package: "Core"),
                 .product(name: "CoreDesignSystem", package: "Core"),
@@ -56,7 +56,7 @@ let package = Package(
             dependencies: [
                 .product(name: "ProgressDomain", package: "Progress"),
                 "PracticeDomain", "PracticeData", "PracticeUI",
-                .product(name: "VocabularyDomain", package: "Vocabulary"),
+                .product(name: "LibraryDomain", package: "Library"),
                 .product(name: "CoreSound", package: "Core"),
                 .product(name: "CoreDI", package: "Core"),
             ],
@@ -73,8 +73,8 @@ let package = Package(
             dependencies: [
                 .product(name: "ProgressDomain", package: "Progress"),
                 "PracticeDomain", "PracticeData", "PracticeUI", "PracticeTestSupport",
-                .product(name: "VocabularyDomain", package: "Vocabulary"),
-                .product(name: "VocabularyTestSupport", package: "Vocabulary"),
+                .product(name: "LibraryDomain", package: "Library"),
+                .product(name: "LibraryTestSupport", package: "Library"),
                 .product(name: "CoreDomain", package: "Core"),
                 .product(name: "CoreTestSupport", package: "Core"),
             ],

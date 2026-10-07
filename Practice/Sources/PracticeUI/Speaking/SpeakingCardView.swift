@@ -1,7 +1,7 @@
 import CoreDesignSystem
+import LibraryDomain
 import PracticeDomain
 import SwiftUI
-import VocabularyDomain
 
 /// One speech card: the Hanzi to read aloud, the answer control, and the verdict.
 ///

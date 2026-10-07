@@ -1,6 +1,6 @@
 import Foundation
+import LibraryDomain
 import PracticeDomain
-import VocabularyDomain
 
 /// Everything the mixed lesson's screen renders.
 struct MixedLessonState: Equatable {

@@ -1,7 +1,7 @@
 import CoreUI
 import Foundation
+import LibraryDomain
 import ProgressDomain
-import VocabularyDomain
 
 struct HomeState: Equatable {
     var vocabulary: Vocabulary = .empty

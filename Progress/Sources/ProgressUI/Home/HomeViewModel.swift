@@ -1,7 +1,7 @@
 import CoreUI
 import Foundation
+import LibraryDomain
 import Observation
-import VocabularyDomain
 
 @MainActor
 @Observable

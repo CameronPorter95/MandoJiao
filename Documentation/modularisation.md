@@ -76,7 +76,7 @@ internal, so every `public` is a decision.
 
 - `{X}Data` exposes one entry point and keeps its concrete types internal.
   `VocabularyStore` opens the container, seeds it and builds the repository; nothing
-  outside `VocabularyData` names `VocabularyRepositoryImpl` or an entity.
+  outside `LibraryData` names `VocabularyRepositoryImpl` or an entity.
 - `{X}DI` factories are stateless enums, one per screen, conforming to a `CoreDI` route
   factory protocol. `Application` builds each screen's navigation value, so `{X}UI` is
   also a product, for `Application` only. A screen from another package is an input
@@ -105,9 +105,7 @@ One package per business area. The target shape, decided on 2026-10-07:
 | `Progress` | What to do next and how it is going: Home, `TodayPlanner` and `TodayPlan`, later streaks, goals and rewards. | all four as needed |
 | `Settings` | The settings screen. Edits each setting through the domain of the package that owns it. | `UI`, `DI` |
 
-**Where it stands.** `Practice` and `Dictionary` exist. `Progress` and the rename of
-`Vocabulary` to `Library` are still to come, so today `Vocabulary` holds what will be
-`Library` and `Progress`. See
+**Where it stands.** All six packages exist. See
 [modularisation-migration.md](modularisation-migration.md#option-a-one-package-per-business-area).
 
 **Why business areas, not one package per screen.** `Matching`, `Speaking` and
@@ -144,6 +142,19 @@ domains. The alternative, `Settings` owning every preference, forces
 `Practice → Settings → Practice`, which SPM rejects. Storage keys are unchanged from
 `Preferences.Key`, and strictness raw values remain storage (see
 [CLAUDE.md](../CLAUDE.md#decisions-already-settled)).
+
+**The package is `Library`; its aggregate is still the vocabulary.** The rename moved the
+package, its targets and products. Types keep their names (`Vocabulary`,
+`VocabularyRepository`, `VocabularyNavigation`, `VocabularyError`, `VocabularySchemaV1`),
+because they name the learner's word collection, not the package, and
+`LibraryNavigation` already names the library tab's navigation.
+
+**A view two packages show goes in `CoreUI`, never in a peer's UI.** Home and the library
+both offer `PractiseRows` and a `BandBreakdown`. A shared view names no feature type: the
+breakdown takes any band with a title and a level, and colours come from
+`Theme.strength(_:)`, as `LessonCompleteView` takes its own `Row`. OrbitRemit documents
+the same rule and breaks it in its manifests by importing peers' UI umbrellas; this
+project follows the document.
 
 **Starting a lesson is a navigation event.** Home and deck detail say
 `didRequestMatching` or `didRequestSpeaking`, and `Application` turns that into a
@@ -240,7 +251,7 @@ Two kinds of seam, in different places:
 
 | Seam | Example | Declared in | Implemented in |
 | --- | --- | --- | --- |
-| **Behaviour** | Matching needs to record which words were missed | `{owner}Domain` (`VocabularyDomain`) | `{owner}Data`, injected in `Application` |
+| **Behaviour** | Matching needs to record which words were missed | `{owner}Domain` (`LibraryDomain`) | `{owner}Data`, injected in `Application` |
 | **Screen** | Home needs to open a matching lesson | a navigation closure in `{consumer}UI` | `Application` |
 
 A view factory protocol must name a `View`, so it cannot live in `Domain` without
@@ -261,8 +272,7 @@ Dependencies point down towards `Library` and `Dictionary`. Nothing points back 
 `Library` never imports `Practice` or `Progress`, so a lesson's numbers that Library
 screens need (a board's size, the word floor) are handed in by the app as values.
 
-Today, before step 3, the graph is `Dictionary <- Vocabulary, Practice`,
-`Vocabulary <- Practice, Settings` and `Practice <- Settings`.
+This is the graph as built.
 
 ---
 
@@ -290,8 +300,10 @@ are all of this shape.
 
 **One bundle per package.** `{X}Navigation` holds one member per screen, so a factory
 signature stays at a single navigation parameter however many screens the package
-gains. `VocabularyNavigation` holds `home`, `deckDetail` and `library`, and `HomeFactory`
-and `LibraryFactory` take the whole bundle because each roots a tab. A folder in the
+gains. `VocabularyNavigation` holds `deckDetail` and `library`, and `LibraryFactory` takes
+the whole bundle because it roots a tab. A package with one screen that has a way out,
+like `Progress`, uses that screen's navigation as its bundle: `AppNavigation.home` is a
+`HomeNavigation`. A folder in the
 library gets its `FolderDetailNavigation` from `LibraryFactory`, since "a deck or folder
 was opened" pushes onto the library's own stack rather than leaving the package.
 
@@ -339,11 +351,11 @@ Mechanism sits at the target root; resource-shaped code goes in a folder named f
 resource.
 
 ```
-VocabularyUI/
+LibraryUI/
   VocabularyNavigation.swift         <- the target's own mechanism
-  Home/HomeRoute.swift
-  Home/HomeScreen.swift
-  Home/HomeViewModel.swift
+  DeckDetail/DeckDetailRoute.swift
+  DeckDetail/DeckDetailScreen.swift
+  DeckDetail/DeckDetailViewModel.swift
   Library/WordLibraryRoute.swift
   WordEditor/WordEditorScreen.swift
 ```
@@ -425,9 +437,9 @@ source layout. Not one per layer.
 with `path: "TestSupport"`, because it is neither shipping code nor a test. It holds
 shared test doubles and fixtures, depends on `{X}Domain`, and
 is depended on by `{X}Tests` and peers' tests. `ScriptedRecogniser` belongs in
-`PracticeTestSupport`; a fake `VocabularyRepository` belongs in `VocabularyTestSupport`.
+`PracticeTestSupport`; a fake `VocabularyRepository` belongs in `LibraryTestSupport`.
 A peer's test target may also use a peer's `DI` product to reach real bundled data, as
-`VocabularyTests` does for the HSK list it installs into a real store. Source targets
+`LibraryTests` does for the HSK list it installs into a real store. Source targets
 never may. A fake
 used by exactly one test file stays private to that file; hoist when a second consumer
 appears.

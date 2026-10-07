@@ -15,14 +15,14 @@ let package = Package(
     dependencies: [
         .package(path: "../Core"),
         .package(path: "../Practice"),
-        .package(path: "../Vocabulary"),
+        .package(path: "../Library"),
     ],
     targets: [
         .target(
             name: "SettingsUI",
             dependencies: [
                 .product(name: "PracticeDomain", package: "Practice"),
-                .product(name: "VocabularyDomain", package: "Vocabulary"),
+                .product(name: "LibraryDomain", package: "Library"),
                 .product(name: "CoreDesignSystem", package: "Core"),
             ],
             swiftSettings: mainActorByDefault
@@ -32,7 +32,7 @@ let package = Package(
             dependencies: [
                 "SettingsUI",
                 .product(name: "PracticeDomain", package: "Practice"),
-                .product(name: "VocabularyDomain", package: "Vocabulary"),
+                .product(name: "LibraryDomain", package: "Library"),
                 .product(name: "CoreDI", package: "Core"),
             ],
             swiftSettings: mainActorByDefault
@@ -42,7 +42,7 @@ let package = Package(
             dependencies: [
                 "SettingsUI",
                 .product(name: "PracticeDomain", package: "Practice"),
-                .product(name: "VocabularyDomain", package: "Vocabulary"),
+                .product(name: "LibraryDomain", package: "Library"),
             ],
             swiftSettings: mainActorByDefault
         ),

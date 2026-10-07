@@ -1,7 +1,7 @@
 import CoreUI
+import LibraryDomain
 import PracticeDomain
 import SwiftUI
-import VocabularyDomain
 
 /// Owns the mixed lesson's view model, carries out its effects, and shows each exercise step
 /// as its factory builds it.

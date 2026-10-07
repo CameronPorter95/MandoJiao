@@ -3,7 +3,7 @@ import ProgressDI
 import ProgressDomain
 import ProgressUI
 import Testing
-import VocabularyDomain
+import LibraryDomain
 
 @Suite("Home navigation in the app")
 @MainActor

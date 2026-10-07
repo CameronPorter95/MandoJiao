@@ -6,7 +6,7 @@ walks per change, so every item is a single assertion that is either true or fal
 the diff in front of you.
 
 Rules are stated here and justified there. Where an item links a decision, the
-reasoning lives in that decision and is not repeated. `MandoJiao/Vocabulary/` is the
+reasoning lives in that decision and is not repeated. `Library/` is the
 reference implementation for every layer, and `Practice/`'s speaking folders for a view model
 driving platform seams; copying them is the fastest way to pass this list.
 

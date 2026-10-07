@@ -1,6 +1,6 @@
 import Testing
 @testable import PracticeDomain
-import VocabularyDomain
+import LibraryDomain
 
 @Suite("Matching lesson building")
 struct MatchingPlanBuilderTests {

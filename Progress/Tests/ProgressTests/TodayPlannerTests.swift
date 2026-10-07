@@ -1,6 +1,6 @@
 import Foundation
 import Testing
-import VocabularyDomain
+import LibraryDomain
 @testable import ProgressDomain
 
 @Suite("Today's plan")

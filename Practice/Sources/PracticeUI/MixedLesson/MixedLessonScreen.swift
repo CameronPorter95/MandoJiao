@@ -1,8 +1,8 @@
 import CoreDesignSystem
 import CoreUI
+import LibraryDomain
 import PracticeDomain
 import SwiftUI
-import VocabularyDomain
 
 /// Today's plan: progress through its steps, the step showing, and the review once it ends.
 ///

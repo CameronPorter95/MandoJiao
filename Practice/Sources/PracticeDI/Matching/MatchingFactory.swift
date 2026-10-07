@@ -1,7 +1,7 @@
 import CoreDI
 import CoreSound
+import LibraryDomain
 import PracticeUI
-import VocabularyDomain
 
 /// The only place that names the matching lesson's concrete dependencies.
 public enum MatchingFactory: NavigationInputRouteFactory {

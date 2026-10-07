@@ -1,7 +1,7 @@
 import CoreDesignSystem
+import LibraryDomain
 import PracticeDomain
 import SwiftUI
-import VocabularyDomain
 
 struct WordTileView: View {
     let tile: Tile

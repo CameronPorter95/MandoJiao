@@ -1,5 +1,5 @@
 import Foundation
-import VocabularyDomain
+import LibraryDomain
 
 /// A whole lesson, fully decided up front: a fixed list of exercises, each one
 /// a set of pairs to match.

@@ -1,9 +1,9 @@
 import CoreDomain
 import CoreUI
 import Foundation
-import PracticeDomain
+import LibraryDomain
 import Observation
-import VocabularyDomain
+import PracticeDomain
 
 /// Runs a matching lesson: the boards, the tones, the pause between boards, and writing
 /// results back.

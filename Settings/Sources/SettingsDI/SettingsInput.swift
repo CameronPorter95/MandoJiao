@@ -1,5 +1,5 @@
+import LibraryDomain
 import PracticeDomain
-import VocabularyDomain
 
 /// The settings belong to the speaking and matching lessons, which this package cannot
 /// reach past their domains, so the app hands their use cases in.

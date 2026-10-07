@@ -372,7 +372,7 @@ a feature entity.
 Why: SwiftData has no single model file, so unlike Core Data there is no readability
 reason to co-locate entities in Core. Entities live with the feature that owns them.
 
-Today `Vocabulary` is the only package that persists, so
+Today `Library` is the only package that persists, so
 `VocabularyRepositoryFactory.openStore` builds the container on its own. Composition becomes real when a second package
 stores something.
 
@@ -406,7 +406,8 @@ leave the library deaf to the word editor's saves. A test pins that.
 
 A cross-package use case arrives as input. `SpeakingFactory` takes
 `RecordLessonResultsUseCase` in `SpeakingInput`, because `Practice` may not import
-`VocabularyDI`; the app, which sees both, builds it and hands it over.
+`LibraryDI`; the app, which sees both, builds it and hands it over. Home, in `Progress`,
+gets its library use cases in `HomeInput` the same way.
 
 No lesson reaches a global: `SpeakingFactory` and `MatchingFactory` hand their view
 models the recogniser, audio session and sounds. `MatchSounds.shared` is gone.
@@ -474,7 +475,7 @@ module boundary.
 
 > [!NOTE]
 > Two worked examples, still in folders laid out like the targets to come.
-> `MandoJiao/Vocabulary/` is the full vertical: domain models, use cases and a
+> `Library/` is the full vertical: domain models, use cases and a
 > repository protocol in `Domain/`, the `@ModelActor` local source, repository and
 > versioned schema in `Data/`, four screens in `UI/`, and a stateless factory per screen
 > in `DI/`.

@@ -1,7 +1,7 @@
 import CoreDomain
 import CoreUI
 import Foundation
-import VocabularyDomain
+import LibraryDomain
 
 /// What the user is told when a change made from Home fails, and what gets logged.
 nonisolated enum ProgressError: LoggedError, Equatable, Sendable {

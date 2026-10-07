@@ -1,7 +1,7 @@
 import CoreDesignSystem
 import CoreUI
+import LibraryDomain
 import SwiftUI
-import VocabularyDomain
 
 struct HomeScreen: View {
     let state: HomeState

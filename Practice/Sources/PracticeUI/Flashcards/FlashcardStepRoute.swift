@@ -1,8 +1,8 @@
 import CoreDomain
-import PracticeDomain
+import LibraryDomain
 import Observation
+import PracticeDomain
 import SwiftUI
-import VocabularyDomain
 
 /// One flash card as a step of a longer lesson: the card, its verdict and tone, and its
 /// answer handed back on Continue. The lesson around it records and summarises.

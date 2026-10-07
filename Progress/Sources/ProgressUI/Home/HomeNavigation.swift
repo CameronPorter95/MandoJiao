@@ -1,5 +1,5 @@
+import LibraryDomain
 import ProgressDomain
-import VocabularyDomain
 
 @MainActor
 public struct HomeNavigation {

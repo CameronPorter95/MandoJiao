@@ -8,8 +8,8 @@
 
 /* Begin PBXBuildFile section */
 		000000000000000320000000 /* CoreDomain in Frameworks */ = {isa = PBXBuildFile; productRef = 000000000000000310000000 /* CoreDomain */; };
-		000000000000000320000004 /* VocabularyDomain in Frameworks */ = {isa = PBXBuildFile; productRef = 000000000000000310000004 /* VocabularyDomain */; };
-		000000000000000320000005 /* VocabularyDI in Frameworks */ = {isa = PBXBuildFile; productRef = 000000000000000310000005 /* VocabularyDI */; };
+		000000000000000320000004 /* LibraryDomain in Frameworks */ = {isa = PBXBuildFile; productRef = 000000000000000310000004 /* LibraryDomain */; };
+		000000000000000320000005 /* LibraryDI in Frameworks */ = {isa = PBXBuildFile; productRef = 000000000000000310000005 /* LibraryDI */; };
 		000000000000000320000001 /* DictionaryDomain in Frameworks */ = {isa = PBXBuildFile; productRef = 000000000000000310000001 /* DictionaryDomain */; };
 		000000000000000320000002 /* DictionaryDI in Frameworks */ = {isa = PBXBuildFile; productRef = 000000000000000310000002 /* DictionaryDI */; };
 		000000000000000320000003 /* DictionaryUI in Frameworks */ = {isa = PBXBuildFile; productRef = 000000000000000310000003 /* DictionaryUI */; };
@@ -18,7 +18,7 @@
 		000000000000000320000013 /* ProgressUI in Frameworks */ = {isa = PBXBuildFile; productRef = 000000000000000310000013 /* ProgressUI */; };
 		000000000000000320000007 /* PracticeDI in Frameworks */ = {isa = PBXBuildFile; productRef = 000000000000000310000007 /* PracticeDI */; };
 		000000000000000320000008 /* CoreDI in Frameworks */ = {isa = PBXBuildFile; productRef = 000000000000000310000008 /* CoreDI */; };
-		000000000000000320000009 /* VocabularyUI in Frameworks */ = {isa = PBXBuildFile; productRef = 000000000000000310000009 /* VocabularyUI */; };
+		000000000000000320000009 /* LibraryUI in Frameworks */ = {isa = PBXBuildFile; productRef = 000000000000000310000009 /* LibraryUI */; };
 		000000000000000320000010 /* PracticeUI in Frameworks */ = {isa = PBXBuildFile; productRef = 000000000000000310000010 /* PracticeUI */; };
 		000000000000000320000011 /* PracticeDomain in Frameworks */ = {isa = PBXBuildFile; productRef = 000000000000000310000011 /* PracticeDomain */; };
 		000000000000000320000014 /* SettingsDI in Frameworks */ = {isa = PBXBuildFile; productRef = 000000000000000310000014 /* SettingsDI */; };
@@ -27,7 +27,7 @@
 /* Begin PBXFileReference section */
 		000000000000000000000120 /* MandoJiao.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MandoJiao.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		000000000000000300000011 /* Core */ = {isa = PBXFileReference; lastKnownFileType = wrapper; path = Core; sourceTree = "<group>"; };
-		000000000000000300000012 /* Vocabulary */ = {isa = PBXFileReference; lastKnownFileType = wrapper; path = Vocabulary; sourceTree = "<group>"; };
+		000000000000000300000012 /* Library */ = {isa = PBXFileReference; lastKnownFileType = wrapper; path = Library; sourceTree = "<group>"; };
 		000000000000000300000014 /* Dictionary */ = {isa = PBXFileReference; lastKnownFileType = wrapper; path = Dictionary; sourceTree = "<group>"; };
 		000000000000000300000016 /* Progress */ = {isa = PBXFileReference; lastKnownFileType = wrapper; path = Progress; sourceTree = "<group>"; };
 		000000000000000300000013 /* Practice */ = {isa = PBXFileReference; lastKnownFileType = wrapper; path = Practice; sourceTree = "<group>"; };
@@ -52,11 +52,11 @@
 			isa = PBXFrameworksBuildPhase;
 			files = (
 				000000000000000320000000 /* CoreDomain in Frameworks */,
-				000000000000000320000004 /* VocabularyDomain in Frameworks */,
-				000000000000000320000005 /* VocabularyDI in Frameworks */,
+				000000000000000320000004 /* LibraryDomain in Frameworks */,
+				000000000000000320000005 /* LibraryDI in Frameworks */,
 				000000000000000320000007 /* PracticeDI in Frameworks */,
 				000000000000000320000010 /* PracticeUI in Frameworks */,
-				000000000000000320000009 /* VocabularyUI in Frameworks */,
+				000000000000000320000009 /* LibraryUI in Frameworks */,
 				000000000000000320000008 /* CoreDI in Frameworks */,
 				000000000000000320000011 /* PracticeDomain in Frameworks */,
 				000000000000000320000014 /* SettingsDI in Frameworks */,
@@ -76,7 +76,7 @@
 			children = (
 				7E9B8BB43065DA1400230403 /* Documentation */,
 				000000000000000000000010 /* MandoJiao */,
-				000000000000000300000012 /* Vocabulary */,
+				000000000000000300000012 /* Library */,
 				000000000000000300000014 /* Dictionary */,
 				000000000000000300000013 /* Practice */,
 				000000000000000300000016 /* Progress */,
@@ -113,11 +113,11 @@
 			name = MandoJiao;
 			packageProductDependencies = (
 				000000000000000310000000 /* CoreDomain */,
-				000000000000000310000004 /* VocabularyDomain */,
-				000000000000000310000005 /* VocabularyDI */,
+				000000000000000310000004 /* LibraryDomain */,
+				000000000000000310000005 /* LibraryDI */,
 				000000000000000310000007 /* PracticeDI */,
 				000000000000000310000010 /* PracticeUI */,
-				000000000000000310000009 /* VocabularyUI */,
+				000000000000000310000009 /* LibraryUI */,
 				000000000000000310000008 /* CoreDI */,
 				000000000000000310000011 /* PracticeDomain */,
 				000000000000000310000014 /* SettingsDI */,
@@ -158,7 +158,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				000000000000000300000001 /* XCLocalSwiftPackageReference "Core" */,
-				000000000000000300000002 /* XCLocalSwiftPackageReference "Vocabulary" */,
+				000000000000000300000002 /* XCLocalSwiftPackageReference "Library" */,
 				000000000000000300000004 /* XCLocalSwiftPackageReference "Dictionary" */,
 				000000000000000300000003 /* XCLocalSwiftPackageReference "Practice" */,
 				000000000000000300000006 /* XCLocalSwiftPackageReference "Progress" */,
@@ -433,9 +433,9 @@
 			isa = XCLocalSwiftPackageReference;
 			relativePath = Core;
 		};
-		000000000000000300000002 /* XCLocalSwiftPackageReference "Vocabulary" */ = {
+		000000000000000300000002 /* XCLocalSwiftPackageReference "Library" */ = {
 			isa = XCLocalSwiftPackageReference;
-			relativePath = Vocabulary;
+			relativePath = Library;
 		};
 		000000000000000300000003 /* XCLocalSwiftPackageReference "Practice" */ = {
 			isa = XCLocalSwiftPackageReference;
@@ -491,15 +491,15 @@
 			package = 000000000000000300000001 /* XCLocalSwiftPackageReference "Core" */;
 			productName = CoreDomain;
 		};
-		000000000000000310000004 /* VocabularyDomain */ = {
+		000000000000000310000004 /* LibraryDomain */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 000000000000000300000002 /* XCLocalSwiftPackageReference "Vocabulary" */;
-			productName = VocabularyDomain;
+			package = 000000000000000300000002 /* XCLocalSwiftPackageReference "Library" */;
+			productName = LibraryDomain;
 		};
-		000000000000000310000005 /* VocabularyDI */ = {
+		000000000000000310000005 /* LibraryDI */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 000000000000000300000002 /* XCLocalSwiftPackageReference "Vocabulary" */;
-			productName = VocabularyDI;
+			package = 000000000000000300000002 /* XCLocalSwiftPackageReference "Library" */;
+			productName = LibraryDI;
 		};
 		000000000000000310000007 /* PracticeDI */ = {
 			isa = XCSwiftPackageProductDependency;
@@ -511,10 +511,10 @@
 			package = 000000000000000300000001 /* XCLocalSwiftPackageReference "Core" */;
 			productName = CoreDI;
 		};
-		000000000000000310000009 /* VocabularyUI */ = {
+		000000000000000310000009 /* LibraryUI */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 000000000000000300000002 /* XCLocalSwiftPackageReference "Vocabulary" */;
-			productName = VocabularyUI;
+			package = 000000000000000300000002 /* XCLocalSwiftPackageReference "Library" */;
+			productName = LibraryUI;
 		};
 		000000000000000310000010 /* PracticeUI */ = {
 			isa = XCSwiftPackageProductDependency;

@@ -1,5 +1,5 @@
 import Foundation
-import VocabularyDomain
+import LibraryDomain
 
 /// Decides whether a spoken or typed answer matches the word being asked for.
 ///

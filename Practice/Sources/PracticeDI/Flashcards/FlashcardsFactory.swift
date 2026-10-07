@@ -1,7 +1,7 @@
 import CoreDI
 import CoreSound
+import LibraryDomain
 import PracticeDomain
-import VocabularyDomain
 import PracticeUI
 
 /// The only place that builds the flash card lesson.

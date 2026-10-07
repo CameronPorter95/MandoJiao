@@ -1,9 +1,9 @@
 import CoreDomain
 import CoreUI
 import Foundation
+import LibraryDomain
 import Observation
 import PracticeDomain
-import VocabularyDomain
 
 /// Runs a speaking lesson: the cards, the microphone, and writing results back.
 ///

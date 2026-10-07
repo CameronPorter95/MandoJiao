@@ -1,5 +1,5 @@
 import Foundation
-import VocabularyDomain
+import LibraryDomain
 
 /// A speaking lesson's progress, one card at a time.
 ///

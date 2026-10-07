@@ -8,18 +8,19 @@ is the part that changes.
 
 ## Status
 
-**The MVI migration is done, and the business-area restructure is at step 2 of 3.**
+**The MVI migration and the business-area restructure are both done.**
 Every feature is an SPM package at the repo root, and the app target is the composition
 root only: `MandoJiaoApp`, `ContentView` and `LiveDependencies`, with `AppNavigation`
-and its coordinator. 432 tests in 49 suites: 13 in `Core`, 192 in `Vocabulary`, 51 in
-`Dictionary`, 171 in `Practice`, 5 in `Settings`, all runnable headlessly with
+and its coordinator. 433 tests in 50 suites: 13 in `Core`, 175 in `Library`, 51 in
+`Dictionary`, 171 in `Practice`, 18 in `Progress`, 5 in `Settings`, all runnable headlessly with
 `swift test` as well as through the scheme.
 
 ```
 Core/        CoreDomain  CorePersistence  CoreDesignSystem  CoreUI  CoreSound  CoreDI  CoreTestSupport
-Vocabulary/  VocabularyDomain  VocabularyData  VocabularyUI  VocabularyDI  VocabularyTestSupport
+Library/     LibraryDomain  LibraryData  LibraryUI  LibraryDI  LibraryTestSupport
 Dictionary/  DictionaryDomain  DictionaryData  DictionaryUI  DictionaryDI  DictionaryTestSupport
 Practice/    PracticeDomain  PracticeData  PracticeUI  PracticeDI  PracticeTestSupport
+Progress/    ProgressDomain  ProgressUI  ProgressDI
 Settings/    SettingsUI  SettingsDI
 MandoJiao/   the app: MandoJiaoApp, ContentView, LiveDependencies, AppNavigation
 ```
@@ -46,11 +47,14 @@ record the earlier MVI migration and are history.
    plus four new ones for opening a saved word by id and the saved-readings stream: 432
    in all. The built app's `Dictionary_DictionaryData.bundle` was checked for both
    files.
-3. **To do. `Progress` out of `Vocabulary`, then rename `Vocabulary` to `Library`.** Home,
-   `TodayPlanner` and `TodayPlan` move to `Progress`; `Practice` then imports
-   `ProgressDomain` for the plan. Word strength stays behind in `Library`. The rename
-   touches every import and the store's schema name, so check the simulator store still
-   opens.
+3. **Done. `Progress` out of `Vocabulary`, then `Vocabulary` renamed `Library`.** Home,
+   `TodayPlanner` and `TodayPlan` moved to `Progress`, and `Practice` imports
+   `ProgressDomain` for the plan. Word strength stayed in `Library`. Home's library UI
+   went to `CoreUI` (`PractiseRows`, `LessonExercise`, a band-agnostic `BandBreakdown`,
+   and `Theme.strength(_:)`), `location(of:)` to the library's domain, and its use cases
+   arrive in `HomeInput`. One test was added, Home's navigation, split from the library's:
+   433. The rename moved the package, targets and products; types kept their names. The
+   renamed build opened the simulator's existing store, written by an earlier build.
 
 Each step is one PR. After each, clean, run, and check the count is unchanged.
 

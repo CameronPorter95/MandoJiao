@@ -1,5 +1,5 @@
 import Foundation
-import VocabularyDomain
+import LibraryDomain
 
 /// One word, shown one way and answered one way. The app chooses both, not the learner.
 public nonisolated struct Flashcard: Identifiable, Hashable, Sendable {

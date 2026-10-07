@@ -1,5 +1,5 @@
+import LibraryDomain
 import SwiftUI
-import VocabularyDomain
 
 /// What the home screen needs from outside its package.
 @MainActor

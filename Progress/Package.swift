@@ -18,18 +18,18 @@ let package = Package(
     ],
     dependencies: [
         .package(path: "../Core"),
-        .package(path: "../Vocabulary"),
+        .package(path: "../Library"),
     ],
     targets: [
         .target(
             name: "ProgressDomain",
-            dependencies: [.product(name: "VocabularyDomain", package: "Vocabulary")]
+            dependencies: [.product(name: "LibraryDomain", package: "Library")]
         ),
         .target(
             name: "ProgressUI",
             dependencies: [
                 "ProgressDomain",
-                .product(name: "VocabularyDomain", package: "Vocabulary"),
+                .product(name: "LibraryDomain", package: "Library"),
                 .product(name: "CoreDomain", package: "Core"),
                 .product(name: "CoreUI", package: "Core"),
                 .product(name: "CoreDesignSystem", package: "Core"),
@@ -40,7 +40,7 @@ let package = Package(
             name: "ProgressDI",
             dependencies: [
                 "ProgressDomain", "ProgressUI",
-                .product(name: "VocabularyDomain", package: "Vocabulary"),
+                .product(name: "LibraryDomain", package: "Library"),
                 .product(name: "CoreDI", package: "Core"),
             ],
             swiftSettings: mainActorByDefault
@@ -49,8 +49,8 @@ let package = Package(
             name: "ProgressTests",
             dependencies: [
                 "ProgressDomain", "ProgressUI", "ProgressDI",
-                .product(name: "VocabularyDomain", package: "Vocabulary"),
-                .product(name: "VocabularyTestSupport", package: "Vocabulary"),
+                .product(name: "LibraryDomain", package: "Library"),
+                .product(name: "LibraryTestSupport", package: "Library"),
                 .product(name: "CoreDomain", package: "Core"),
                 .product(name: "CoreUI", package: "Core"),
                 .product(name: "CoreTestSupport", package: "Core"),

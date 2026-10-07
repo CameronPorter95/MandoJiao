@@ -1,9 +1,9 @@
+import LibraryDI
+import LibraryUI
 import PracticeDI
 import PracticeUI
 import ProgressDI
 import ProgressUI
-import VocabularyDI
-import VocabularyUI
 
 /// Every package's navigation, built once at the composition root.
 ///

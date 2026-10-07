@@ -1,7 +1,7 @@
 import CoreDomain
 import CoreUI
 import Foundation
-import VocabularyDomain
+import LibraryDomain
 
 nonisolated enum MixedLessonError: LoggedError, Equatable, Sendable {
     case recordResultsFailed(VocabularyDomainError)

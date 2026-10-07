@@ -2,8 +2,8 @@ import Foundation
 import Testing
 import CoreDomain
 import CoreTestSupport
-import VocabularyDomain
-import VocabularyTestSupport
+import LibraryDomain
+import LibraryTestSupport
 @testable import ProgressDomain
 @testable import ProgressUI
 

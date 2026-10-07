@@ -1,5 +1,5 @@
 import Foundation
-import VocabularyDomain
+import LibraryDomain
 
 /// A matching lesson's progress: the current board, the tallies, and the move to the
 /// next board once one is cleared.

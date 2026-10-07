@@ -2,10 +2,10 @@ import Foundation
 import Testing
 import CoreDomain
 import CoreTestSupport
-import VocabularyTestSupport
+import LibraryTestSupport
 @testable import PracticeDomain
 @testable import PracticeUI
-import VocabularyDomain
+import LibraryDomain
 
 @Suite("Flash cards view model")
 @MainActor

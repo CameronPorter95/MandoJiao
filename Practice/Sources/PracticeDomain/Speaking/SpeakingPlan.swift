@@ -1,5 +1,5 @@
 import Foundation
-import VocabularyDomain
+import LibraryDomain
 
 /// A speaking lesson: one card per word, in the order given.
 public struct SpeakingPlan: Identifiable, Hashable, Sendable {

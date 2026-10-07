@@ -1,4 +1,4 @@
-import VocabularyDomain
+import LibraryDomain
 
 public struct FlashcardsInput {
     public let request: LessonRequest

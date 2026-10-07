@@ -1,5 +1,5 @@
 import Foundation
-import VocabularyDomain
+import LibraryDomain
 
 /// One graded answer, as the attempt log records it.
 public struct SpeechAttempt: Sendable {

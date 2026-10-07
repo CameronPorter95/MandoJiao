@@ -1,7 +1,7 @@
 import Foundation
 import Testing
 @testable import PracticeDomain
-import VocabularyDomain
+import LibraryDomain
 
 /// Deterministic, so the random choices of a plan can be pinned.
 nonisolated struct SeededRandom: RandomNumberGenerator {
