@@ -14,6 +14,7 @@ public enum VocabularyRepositoryFactory {
     public static func openStore(inMemory: Bool = false) throws -> ModelContainer {
         let container = try VocabularyStore.makeContainer(inMemory: inMemory)
         VocabularyStore.seedIfNeeded(container)
+        VocabularyStore.rememberPastAnswers(container)
         return container
     }
 

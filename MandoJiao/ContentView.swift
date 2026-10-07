@@ -89,7 +89,9 @@ private func settings(dependencies: Dependencies) -> some View {
             setSpeakingCardLimit: SpeakingSettingsFactory.makeSetCardLimitUseCase(dependencies: dependencies),
             getMatchingSettings: MatchingSettingsFactory.makeGetSettingsUseCase(dependencies: dependencies),
             setShowsPinyin: MatchingSettingsFactory.makeSetShowsPinyinUseCase(dependencies: dependencies),
-            setMatchingRounds: MatchingSettingsFactory.makeSetRoundsUseCase(dependencies: dependencies)
+            setMatchingRounds: MatchingSettingsFactory.makeSetRoundsUseCase(dependencies: dependencies),
+            getLessonSettings: LessonSettingsFactory.makeGetSettingsUseCase(dependencies: dependencies),
+            setSkipsLearntWords: LessonSettingsFactory.makeSetSkipsLearntWordsUseCase(dependencies: dependencies)
         )
     )
 }

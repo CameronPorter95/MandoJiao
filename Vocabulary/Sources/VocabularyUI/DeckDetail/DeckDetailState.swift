@@ -15,11 +15,17 @@ struct DeckDetailState: Equatable {
     /// Searches the library's words in the sheet that adds them.
     var pickerSearchText = ""
 
+    /// Read on every appearance.
+    var lessonSettings: LessonSettings = .default
+
     var deck: DeckSummary? { vocabulary.deck(id: deckID) }
     var title: String { (name ?? "").isEmpty ? "Deck" : name ?? "" }
 
     /// Before any search, usable or not.
     var wordCount: Int { deck.map { vocabulary.words(in: $0).count } ?? 0 }
+
+    /// Every word in it, before any search, for how their strengths are spread.
+    var deckWords: [Word] { deck.map { vocabulary.words(in: $0) } ?? [] }
 
     var words: [Word] {
         guard let deck else { return [] }
@@ -30,7 +36,9 @@ struct DeckDetailState: Equatable {
         vocabulary.words(sortedBy: .default).filter { $0.matches(pickerSearchText) }
     }
 
-    var selectedCount: Int { deck.map(vocabulary.usableWordCount(in:)) ?? 0 }
+    /// What a lesson from it draws, which leaves out learnt words when the settings say to.
+    var lessonWords: [Word] { (deck.map { vocabulary.words(in: $0) } ?? []).forLessons(lessonSettings).filter(\.isUsable) }
+    var selectedCount: Int { lessonWords.count }
     func canStart(_ exercise: LessonExercise) -> Bool {
         selectedCount >= exercise.minimumWords(matching: minimumMatchingWords)
     }

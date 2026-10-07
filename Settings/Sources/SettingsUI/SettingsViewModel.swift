@@ -1,6 +1,7 @@
 import MatchingDomain
 import Observation
 import SpeakingDomain
+import VocabularyDomain
 
 /// Every setting is owned by the lesson that reads it; this screen only edits them.
 @MainActor
@@ -14,6 +15,8 @@ public final class SettingsViewModel {
     private let getMatchingSettings: GetMatchingSettingsUseCase
     private let setShowsPinyin: SetShowsPinyinUseCase
     private let setMatchingRounds: SetMatchingRoundsUseCase
+    private let getLessonSettings: GetLessonSettingsUseCase
+    private let setSkipsLearntWords: SetSkipsLearntWordsUseCase
 
     public init(
         getSpeakingSettings: GetSpeakingSettingsUseCase,
@@ -21,7 +24,9 @@ public final class SettingsViewModel {
         setSpeakingCardLimit: SetSpeakingCardLimitUseCase,
         getMatchingSettings: GetMatchingSettingsUseCase,
         setShowsPinyin: SetShowsPinyinUseCase,
-        setMatchingRounds: SetMatchingRoundsUseCase
+        setMatchingRounds: SetMatchingRoundsUseCase,
+        getLessonSettings: GetLessonSettingsUseCase,
+        setSkipsLearntWords: SetSkipsLearntWordsUseCase
     ) {
         self.getSpeakingSettings = getSpeakingSettings
         self.setStrictness = setStrictness
@@ -29,6 +34,8 @@ public final class SettingsViewModel {
         self.getMatchingSettings = getMatchingSettings
         self.setShowsPinyin = setShowsPinyin
         self.setMatchingRounds = setMatchingRounds
+        self.getLessonSettings = getLessonSettings
+        self.setSkipsLearntWords = setSkipsLearntWords
     }
 
     func send(_ action: SettingsAction) {
@@ -41,7 +48,8 @@ public final class SettingsViewModel {
                 strictness: speaking.strictness,
                 showsPinyin: matching.showsPinyin,
                 matchingRounds: matching.rounds,
-                speakingCardLimit: speaking.cardLimit
+                speakingCardLimit: speaking.cardLimit,
+                skipsLearntWords: getLessonSettings().skipsLearntWords
             )
 
         case .strictnessChanged(let strictness):
@@ -59,6 +67,10 @@ public final class SettingsViewModel {
         case .speakingCardLimitChanged(let cardLimit):
             setSpeakingCardLimit(cardLimit)
             state.speakingCardLimit = getSpeakingSettings().cardLimit
+
+        case .skipsLearntWordsChanged(let skips):
+            state.skipsLearntWords = skips
+            setSkipsLearntWords(skips)
         }
     }
 }

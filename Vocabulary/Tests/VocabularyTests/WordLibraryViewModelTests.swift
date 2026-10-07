@@ -19,7 +19,8 @@ struct WordLibraryViewModelTests {
             sort: .default,
             searchText: "",
             observeVocabulary: ObserveVocabularyUseCase(repository: repository),
-            deleteWords: DeleteWordsUseCase(repository: repository)
+            deleteWords: DeleteWordsUseCase(repository: repository),
+            setLearnt: SetWordLearntUseCase(repository: repository)
         )
         let log = EffectLog(viewModel.effects())
         viewModel.send(.appeared)
@@ -88,7 +89,8 @@ struct WordLibraryViewModelTests {
             sort: .default,
             searchText: "",
             observeVocabulary: ObserveVocabularyUseCase(repository: repository),
-            deleteWords: DeleteWordsUseCase(repository: repository)
+            deleteWords: DeleteWordsUseCase(repository: repository),
+            setLearnt: SetWordLearntUseCase(repository: repository)
         )
     }
 
@@ -148,6 +150,16 @@ struct WordLibraryViewModelTests {
 
         library.send(.editorDismissed)
         #expect(library.state.editor == nil)
+    }
+
+    @Test("a word is marked learnt and unmarked from the list")
+    func learnt() async {
+        let (library, _) = await makeLibrary()
+        library.send(.learntToggled(Fixtures.tea.id))
+        #expect(await waitUntil { library.state.vocabulary.words.first { $0.id == Fixtures.tea.id }?.isLearnt == true })
+        library.send(.learntToggled(Fixtures.tea.id))
+        #expect(await waitUntil { library.state.vocabulary.words.first { $0.id == Fixtures.tea.id }?.isLearnt == false })
+        #expect(await repository.writes == ["setLearnt true", "setLearnt false"])
     }
 
     @Test("the dictionary opens on a word's Hanzi and its reading")

@@ -17,6 +17,10 @@ struct DeckDetailScreen: View {
             }
 
             Section("Practise") {
+                if !state.deckWords.isEmpty {
+                    BandBreakdown(counts: state.deckWords.bandCounts(at: .now))
+                        .padding(.vertical, 4)
+                }
                 PractiseRows(wordCount: state.selectedCount, minimumMatchingWords: state.minimumMatchingWords) {
                     onAction(.startLessonTapped($0))
                 }

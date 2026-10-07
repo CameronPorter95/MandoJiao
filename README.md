@@ -37,6 +37,17 @@ card, or Don't know, which counts as a mistake, then the word in full. A right a
 plays the matching board's tone, the same note each time, and the end plays its
 finishing tune.
 
+## Strength
+
+Every answer is kept, and each word has a strength worked out from them: New, Learning,
+Familiar or Known, shown beside the word and as a bar for a deck, a folder and what Home
+carries on with. Answering a word right grows its strength, by more the longer since it
+was last seen; a wrong answer cuts it back, and a word left too long slips back a band.
+Typing the Hanzi counts most, reading aloud next, and picking from options or matching
+least, since they only recognise the word. A word can be marked learnt, which makes it
+Known at once, and Settings can leave learnt words out of lessons. The model is a
+simplified FSRS with judged constants, to be tuned once there are enough answers.
+
 ## Grading
 
 Tones are never graded. A recogniser's idea of which tone you used is its own

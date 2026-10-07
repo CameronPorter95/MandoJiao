@@ -35,6 +35,12 @@ nonisolated enum VocabularySchemaV1: VersionedSchema {
         var missCount: Int = 0
         var lastMissedAt: Date?
 
+        /// `WordMemory`, kept up to date as each lesson is recorded rather than replayed from
+        /// the answers on every read.
+        var stability: Double = 0
+        var lastAnsweredAt: Date?
+        var learntAt: Date?
+
         @Relationship(deleteRule: .cascade, inverse: \AnswerRecord.word)
         var answers: [AnswerRecord] = []
 
@@ -48,6 +54,15 @@ nonisolated enum VocabularySchemaV1: VersionedSchema {
 
         convenience init(english: String, hanzi: String, pinyin: String = "") {
             self.init(meanings: english.isEmpty ? [] : [english], hanzi: hanzi, pinyin: pinyin)
+        }
+
+        var memory: WordMemory {
+            get { WordMemory(stability: stability, lastAnsweredAt: lastAnsweredAt, learntAt: learntAt) }
+            set {
+                stability = newValue.stability
+                lastAnsweredAt = newValue.lastAnsweredAt
+                learntAt = newValue.learntAt
+            }
         }
     }
 
@@ -116,6 +131,15 @@ nonisolated enum VocabularySchemaV1: VersionedSchema {
         var isCorrect: Bool = false
         var wrongAttempts: Int = 0
         var answeredAt: Date = Date.now
+
+        /// Nil if its exercise is not one this build knows.
+        var answer: Answer? {
+            guard let word, let exercise = Answer.Exercise(rawValue: exercise) else { return nil }
+            return Answer(
+                wordID: word.uuid, exercise: exercise, direction: direction.flatMap(Answer.Direction.init(rawValue:)),
+                isCorrect: isCorrect, wrongAttempts: wrongAttempts
+            )
+        }
 
         init(_ answer: Answer, word: VocabWord, at answeredAt: Date) {
             self.word = word

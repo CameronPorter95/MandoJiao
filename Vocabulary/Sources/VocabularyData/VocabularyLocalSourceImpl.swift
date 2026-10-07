@@ -162,6 +162,7 @@ actor VocabularyLocalSourceImpl: VocabularyLocalSource {
             for word in try modelContext.fetch(FetchDescriptor<VocabWord>()) {
                 for answer in answers[word.uuid] ?? [] {
                     modelContext.insert(AnswerRecord(answer, word: word, at: answeredAt))
+                    word.memory = word.memory.answered(answer, at: answeredAt)
                     changed = true
                 }
                 switch MistakeUpdate.applying(results, to: word.uuid, missCount: word.missCount) {
@@ -177,6 +178,14 @@ actor VocabularyLocalSourceImpl: VocabularyLocalSource {
                 }
             }
             if changed { try modelContext.save() }
+        }
+    }
+
+    func setLearnt(wordID: UUID, isLearnt: Bool) throws {
+        try storeWork {
+            guard let word = try word(id: wordID), word.memory.isLearnt != isLearnt else { return }
+            word.memory = isLearnt ? word.memory.markedLearnt(at: .now) : word.memory.unmarkedLearnt()
+            try modelContext.save()
         }
     }
 
@@ -232,7 +241,8 @@ extension VocabWord {
             pinyin: pinyin,
             missCount: missCount,
             lastMissedAt: lastMissedAt,
-            createdAt: createdAt
+            createdAt: createdAt,
+            memory: memory
         )
     }
 }

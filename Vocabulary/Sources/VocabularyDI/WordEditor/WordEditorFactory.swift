@@ -11,6 +11,7 @@ public enum WordEditorFactory: InputRouteFactory {
                 target: target,
                 saveWord: SaveWordUseCase(repository: repository),
                 deleteWords: DeleteWordsUseCase(repository: repository),
+                setLearnt: SetWordLearntUseCase(repository: repository),
                 suggestWord: SuggestWordUseCase(repository: VocabularyRepositoryFactory.makeLexiconRepository()),
                 lookUpDictionary: LookUpDictionaryUseCase(repository: VocabularyRepositoryFactory.makeDictionaryRepository()),
                 observeVocabulary: ObserveVocabularyUseCase(repository: repository)

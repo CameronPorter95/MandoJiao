@@ -10,6 +10,7 @@ public final class LibraryViewModel {
 
     private let effectChannel = EffectChannel<LibraryEffect>()
     private let observeVocabulary: ObserveVocabularyUseCase
+    private let getLessonSettings: GetLessonSettingsUseCase
     private let createFolder: CreateFolderUseCase
     private let renameFolder: RenameFolderUseCase
     private let moveFolder: MoveFolderUseCase
@@ -23,6 +24,7 @@ public final class LibraryViewModel {
     public init(
         minimumMatchingWords: Int,
         observeVocabulary: ObserveVocabularyUseCase,
+        getLessonSettings: GetLessonSettingsUseCase,
         createFolder: CreateFolderUseCase,
         renameFolder: RenameFolderUseCase,
         moveFolder: MoveFolderUseCase,
@@ -32,6 +34,7 @@ public final class LibraryViewModel {
     ) {
         state = LibraryState(minimumMatchingWords: minimumMatchingWords, layout: getLayout())
         self.observeVocabulary = observeVocabulary
+        self.getLessonSettings = getLessonSettings
         self.createFolder = createFolder
         self.renameFolder = renameFolder
         self.moveFolder = moveFolder
@@ -44,6 +47,8 @@ public final class LibraryViewModel {
     func send(_ action: LibraryAction) {
         switch action {
         case .appeared:
+            // On every appearance, since the setting can change while this is underneath.
+            state.lessonSettings = getLessonSettings()
             guard observation == nil else { return }
             let stream = observeVocabulary()
             observation = Task { [weak self] in
@@ -143,7 +148,7 @@ public final class LibraryViewModel {
         case .practiseFolderTapped(let id):
             guard let folder = state.vocabulary.folder(id: id) else { return }
             guard state.canPractise(id) else { return }
-            let pool = state.vocabulary.words(in: folder).pairs
+            let pool = state.lessonWords(in: id).pairs
             effectChannel.send(.requestMatching(LessonRequest(title: folder.name, pool: pool, source: .folder(id))))
 
         case .deleteFolderTapped(let id):

@@ -9,6 +9,7 @@ import VocabularyTestSupport
 @Suite("Folder detail")
 @MainActor
 struct FolderDetailViewModelTests {
+    private let lessonSettings = FakeLessonSettings()
     private let repository = FakeVocabularyRepository(Fixtures.nested)
 
     private func makeDetail(_ folderID: UUID) async -> (FolderDetailViewModel, EffectLog<FolderDetailEffect>) {
@@ -16,6 +17,7 @@ struct FolderDetailViewModelTests {
             folderID: folderID,
             minimumMatchingWords: 5,
             observeVocabulary: ObserveVocabularyUseCase(repository: repository),
+            getLessonSettings: GetLessonSettingsUseCase(repository: lessonSettings),
             createDeck: CreateDeckUseCase(repository: repository),
             createFolder: CreateFolderUseCase(repository: repository),
             renameFolder: RenameFolderUseCase(repository: repository),
@@ -109,6 +111,7 @@ struct FolderDetailViewModelTests {
             minimumMatchingWords: 5,
             vocabulary: Fixtures.nested,
             observeVocabulary: ObserveVocabularyUseCase(repository: repository),
+            getLessonSettings: GetLessonSettingsUseCase(repository: lessonSettings),
             createDeck: CreateDeckUseCase(repository: repository),
             createFolder: CreateFolderUseCase(repository: repository),
             renameFolder: RenameFolderUseCase(repository: repository),

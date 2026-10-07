@@ -167,6 +167,53 @@ struct VocabularyRepositoryTests {
         #expect(await current().lastPractised == .folder(folderID))
     }
 
+    @Test("recording answers updates each word's memory, and learnt is set and cleared, keeping strength")
+    func memory() async throws {
+        let ids = try await addWaterTeaBook()
+        try await repository.recordResults(LessonResults(misses: [:], cleanSolves: [ids.water: 1], answers: [
+            Answer(wordID: ids.water, exercise: .flashcardTyped, direction: .englishToChinese, isCorrect: true, wrongAttempts: 0),
+        ]))
+        let answered = try #require(await current().words.first { $0.id == ids.water })
+        #expect(answered.band(at: .now) == .learning)
+        #expect(answered.memory.stability == WordMemory.firstStability)
+        #expect(await current().words.first { $0.id == ids.tea }?.band(at: .now) == .new)
+
+        try await repository.setLearnt(wordID: ids.tea, isLearnt: true)
+        let learnt = try #require(await current().words.first { $0.id == ids.tea })
+        #expect(learnt.isLearnt)
+        #expect(learnt.band(at: .now) == .known)
+
+        try await repository.setLearnt(wordID: ids.tea, isLearnt: false)
+        let unmarked = try #require(await current().words.first { $0.id == ids.tea })
+        #expect(!unmarked.isLearnt)
+        #expect(unmarked.memory.stability == learnt.memory.stability)
+    }
+
+    @Test("a word answered before strength was kept has it worked out from its answers once, and a scored word is left alone")
+    func pastAnswers() async throws {
+        let ids = try await addWaterTeaBook()
+        let context = container.mainContext
+        let words = try context.fetch(FetchDescriptor<VocabWord>())
+        let water = try #require(words.first { $0.uuid == ids.water })
+        let tea = try #require(words.first { $0.uuid == ids.tea })
+        let typed = Answer(wordID: ids.water, exercise: .flashcardTyped, direction: .englishToChinese, isCorrect: true, wrongAttempts: 0)
+        for days in [0.0, 1, 4] {
+            context.insert(AnswerRecord(typed, word: water, at: Date(timeIntervalSince1970: days * 86_400)))
+        }
+        tea.memory = WordMemory(stability: 50, lastAnsweredAt: .now)
+        context.insert(AnswerRecord(typed, word: tea, at: .now))
+        try context.save()
+
+        VocabularyStore.rememberPastAnswers(container)
+
+        let expected = [0.0, 1, 4].reduce(WordMemory.new) { $0.answered(typed, at: Date(timeIntervalSince1970: $1 * 86_400)) }
+        #expect(water.memory == expected)
+        #expect(tea.memory.stability == 50)
+        // Once is enough: a second run changes nothing.
+        VocabularyStore.rememberPastAnswers(container)
+        #expect(water.memory == expected)
+    }
+
     @Test("renaming a deck or changing its words marks it edited, not created")
     func editedDate() async throws {
         let ids = try await addWaterTeaBook()
@@ -450,6 +497,7 @@ private struct FailingLocalSource: VocabularyLocalSource {
     func deleteFolder(id: UUID) async throws { throw error }
     func install(_ plan: BuiltInPlan) async throws { throw error }
     func recordResults(_ results: LessonResults) async throws { throw error }
+    func setLearnt(wordID: UUID, isLearnt: Bool) async throws { throw error }
     func clearMistakes() async throws { throw error }
 }
 

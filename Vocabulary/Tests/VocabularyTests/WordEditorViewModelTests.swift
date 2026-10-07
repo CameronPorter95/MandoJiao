@@ -25,6 +25,7 @@ struct WordEditorViewModelTests {
             target: word.map(WordEditorTarget.edit) ?? .new(draft),
             saveWord: SaveWordUseCase(repository: repository),
             deleteWords: DeleteWordsUseCase(repository: repository),
+            setLearnt: SetWordLearntUseCase(repository: repository),
             suggestWord: SuggestWordUseCase(repository: lexicon ?? self.lexicon),
             lookUpDictionary: LookUpDictionaryUseCase(repository: dictionary ?? self.dictionary),
             observeVocabulary: ObserveVocabularyUseCase(repository: repository),
@@ -164,6 +165,21 @@ struct WordEditorViewModelTests {
         editor.send(.saveTapped)
         #expect(await log.contains(.dismiss))
         #expect(await repository.writes == ["saveWord existing water|水|shuǐ"])
+    }
+
+    @Test("a saved word's learnt mark is set on Save, with the rest, and left alone if it did not change")
+    func learnt() async {
+        let (editor, log) = makeEditor(Fixtures.water)
+        #expect(!editor.state.isLearnt)
+        editor.send(.learntToggled(true))
+        editor.send(.saveTapped)
+        #expect(await log.contains(.dismiss))
+        #expect(await repository.writes == ["saveWord existing water|水|shuǐ", "setLearnt true"])
+
+        let (unchanged, unchangedLog) = makeEditor(Fixtures.tea)
+        unchanged.send(.saveTapped)
+        #expect(await unchangedLog.contains(.dismiss))
+        #expect(await repository.writes.last == "saveWord existing tea|茶|chá")
     }
 
     @Test("deleting removes the word and closes")

@@ -49,6 +49,11 @@ struct WordLibraryScreen: View {
                                 Label("View in dictionary", systemImage: "character.book.closed")
                             }
                         }
+                        Button {
+                            onAction(.learntToggled(word.id))
+                        } label: {
+                            Label(word.isLearnt ? "Unmark learnt" : "Mark as learnt", systemImage: "checkmark.seal")
+                        }
                     }
                     .swipeActions(edge: .trailing) {
                         Button(role: .destructive) {

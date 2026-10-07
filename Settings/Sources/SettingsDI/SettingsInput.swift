@@ -1,5 +1,6 @@
 import MatchingDomain
 import SpeakingDomain
+import VocabularyDomain
 
 /// The settings belong to the speaking and matching lessons, which this package cannot
 /// reach past their domains, so the app hands their use cases in.
@@ -10,6 +11,8 @@ public struct SettingsInput {
     public let getMatchingSettings: GetMatchingSettingsUseCase
     public let setShowsPinyin: SetShowsPinyinUseCase
     public let setMatchingRounds: SetMatchingRoundsUseCase
+    public let getLessonSettings: GetLessonSettingsUseCase
+    public let setSkipsLearntWords: SetSkipsLearntWordsUseCase
 
     public init(
         getSpeakingSettings: GetSpeakingSettingsUseCase,
@@ -17,7 +20,9 @@ public struct SettingsInput {
         setSpeakingCardLimit: SetSpeakingCardLimitUseCase,
         getMatchingSettings: GetMatchingSettingsUseCase,
         setShowsPinyin: SetShowsPinyinUseCase,
-        setMatchingRounds: SetMatchingRoundsUseCase
+        setMatchingRounds: SetMatchingRoundsUseCase,
+        getLessonSettings: GetLessonSettingsUseCase,
+        setSkipsLearntWords: SetSkipsLearntWordsUseCase
     ) {
         self.getSpeakingSettings = getSpeakingSettings
         self.setStrictness = setStrictness
@@ -25,5 +30,7 @@ public struct SettingsInput {
         self.getMatchingSettings = getMatchingSettings
         self.setShowsPinyin = setShowsPinyin
         self.setMatchingRounds = setMatchingRounds
+        self.getLessonSettings = getLessonSettings
+        self.setSkipsLearntWords = setSkipsLearntWords
     }
 }

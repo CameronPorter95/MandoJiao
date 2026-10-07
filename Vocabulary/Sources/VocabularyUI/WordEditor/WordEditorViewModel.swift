@@ -12,6 +12,7 @@ public final class WordEditorViewModel {
     private let effectChannel = EffectChannel<WordEditorEffect>()
     private let saveWord: SaveWordUseCase
     private let deleteWords: DeleteWordsUseCase
+    private let setLearnt: SetWordLearntUseCase
     private let suggestWord: SuggestWordUseCase
     private let lookUpDictionary: LookUpDictionaryUseCase
     private let observeVocabulary: ObserveVocabularyUseCase
@@ -24,6 +25,7 @@ public final class WordEditorViewModel {
         target: WordEditorTarget,
         saveWord: SaveWordUseCase,
         deleteWords: DeleteWordsUseCase,
+        setLearnt: SetWordLearntUseCase,
         suggestWord: SuggestWordUseCase,
         lookUpDictionary: LookUpDictionaryUseCase,
         observeVocabulary: ObserveVocabularyUseCase,
@@ -33,10 +35,15 @@ public final class WordEditorViewModel {
         case .new(let draft):
             WordEditorState(wordID: nil, draft: draft)
         case .edit(let word):
-            WordEditorState(wordID: word.id, draft: WordDraft(meanings: word.meanings, hanzi: word.hanzi, pinyin: word.pinyin))
+            WordEditorState(
+                wordID: word.id,
+                draft: WordDraft(meanings: word.meanings, hanzi: word.hanzi, pinyin: word.pinyin),
+                isLearnt: word.isLearnt
+            )
         }
         self.saveWord = saveWord
         self.deleteWords = deleteWords
+        self.setLearnt = setLearnt
         self.suggestWord = suggestWord
         self.lookUpDictionary = lookUpDictionary
         self.observeVocabulary = observeVocabulary
@@ -122,9 +129,14 @@ public final class WordEditorViewModel {
             let id = state.wordID
             let draft = state.submission
             let deckID = state.chosenDeckID
-            write(failure: VocabularyError.saveWordFailed) { [saveWord] in
+            let learnt: Bool? = state.isLearnt == state.wasLearnt ? nil : state.isLearnt
+            write(failure: VocabularyError.saveWordFailed) { [saveWord, setLearnt] in
                 try await saveWord(id: id, draft: draft, deckID: deckID)
+                if let id, let learnt { try await setLearnt(wordID: id, isLearnt: learnt) }
             }
+
+        case .learntToggled(let isLearnt):
+            state.isLearnt = isLearnt
 
         case .deleteTapped:
             guard let id = state.wordID else { return }

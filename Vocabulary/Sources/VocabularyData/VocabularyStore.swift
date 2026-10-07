@@ -35,6 +35,24 @@ public enum VocabularyStore {
         let repository: any VocabularyRepository
     }
 
+    /// Works out the strength of any word answered before strength was kept, by replaying its
+    /// answers in order. A word with a strength already is left alone, so this runs once.
+    @MainActor
+    public static func rememberPastAnswers(_ container: ModelContainer) {
+        let context = container.mainContext
+        let unscored = #Predicate<VocabWord> { $0.lastAnsweredAt == nil }
+        guard let words = try? context.fetch(FetchDescriptor(predicate: unscored)) else { return }
+        var changed = false
+        for word in words where !word.answers.isEmpty {
+            for record in word.answers.sorted(by: { $0.answeredAt < $1.answeredAt }) {
+                guard let answer = record.answer else { continue }
+                word.memory = word.memory.answered(answer, at: record.answeredAt)
+                changed = true
+            }
+        }
+        if changed { try? context.save() }
+    }
+
     /// Only touches an empty store, so it never fights the user's own edits.
     @MainActor
     public static func seedIfNeeded(_ container: ModelContainer) {

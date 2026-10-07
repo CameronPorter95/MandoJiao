@@ -1,5 +1,6 @@
 import Foundation
 import MatchingDomain
+import VocabularyDomain
 @testable import SettingsUI
 import SpeakingDomain
 import Testing
@@ -9,6 +10,7 @@ import Testing
 struct SettingsViewModelTests {
     private let speaking = InMemorySpeakingSettings(SpeakingSettings(strictness: .strict, cardLimit: 12))
     private let matching = InMemoryMatchingSettings(MatchingSettings(showsPinyin: true, rounds: 7))
+    private let lessons = InMemoryLessonSettings(LessonSettings(skipsLearntWords: true))
 
     private func makeSettings() -> SettingsViewModel {
         SettingsViewModel(
@@ -17,16 +19,18 @@ struct SettingsViewModelTests {
             setSpeakingCardLimit: SetSpeakingCardLimitUseCase(repository: speaking),
             getMatchingSettings: GetMatchingSettingsUseCase(repository: matching),
             setShowsPinyin: SetShowsPinyinUseCase(repository: matching),
-            setMatchingRounds: SetMatchingRoundsUseCase(repository: matching)
+            setMatchingRounds: SetMatchingRoundsUseCase(repository: matching),
+            getLessonSettings: GetLessonSettingsUseCase(repository: lessons),
+            setSkipsLearntWords: SetSkipsLearntWordsUseCase(repository: lessons)
         )
     }
 
-    @Test("appearing shows what both lessons have saved")
+    @Test("appearing shows what the lessons have saved")
     func loading() {
         let settings = makeSettings()
         settings.send(.appeared)
 
-        #expect(settings.state == SettingsState(strictness: .strict, showsPinyin: true, matchingRounds: 7, speakingCardLimit: 12))
+        #expect(settings.state == SettingsState(strictness: .strict, showsPinyin: true, matchingRounds: 7, speakingCardLimit: 12, skipsLearntWords: true))
     }
 
     @Test("each change is saved to the lesson that owns it")
@@ -41,7 +45,7 @@ struct SettingsViewModelTests {
 
         #expect(speaking.value == SpeakingSettings(strictness: .lenient, cardLimit: 30))
         #expect(matching.value == MatchingSettings(showsPinyin: false, rounds: 15))
-        #expect(settings.state == SettingsState(strictness: .lenient, showsPinyin: false, matchingRounds: 15, speakingCardLimit: 30))
+        #expect(settings.state == SettingsState(strictness: .lenient, showsPinyin: false, matchingRounds: 15, speakingCardLimit: 30, skipsLearntWords: true))
     }
 
     @Test("a value outside its range shows as the value actually saved")
@@ -65,6 +69,24 @@ struct SettingsViewModelTests {
 
         #expect(!settings.state.showsPinyin)
     }
+
+    @Test("skip learnt words shows what is saved, and saves a change at once")
+    func skipsLearntWords() {
+        let settings = makeSettings()
+        settings.send(.appeared)
+        #expect(settings.state.skipsLearntWords)
+        settings.send(.skipsLearntWordsChanged(false))
+        #expect(!settings.state.skipsLearntWords)
+        #expect(!lessons.value.skipsLearntWords)
+    }
+}
+
+private final class InMemoryLessonSettings: LessonSettingsRepository, @unchecked Sendable {
+    var value: LessonSettings
+    init(_ value: LessonSettings) { self.value = value }
+
+    func settings() -> LessonSettings { value }
+    func setSkipsLearntWords(_ skips: Bool) { value.skipsLearntWords = skips }
 }
 
 private final class InMemorySpeakingSettings: SpeakingSettingsRepository, @unchecked Sendable {

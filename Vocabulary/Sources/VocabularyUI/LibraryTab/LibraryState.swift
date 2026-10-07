@@ -72,6 +72,8 @@ struct LibraryState: Equatable {
     /// A folder with something inside, waiting on confirmation before it goes.
     var pendingFolderDeletion: UUID?
     var isShowingHSKLevels = false
+    /// Read on every appearance.
+    var lessonSettings: LessonSettings = .default
     /// While open, every word in the library shows in place of the tree, filtered as typed.
     var isSearching = false
     var searchText = ""
@@ -81,9 +83,12 @@ struct LibraryState: Equatable {
     var deletionWarning: String? { pendingFolderDeletion.flatMap(vocabulary.deletionWarning(forFolder:)) }
 
     func canPractise(_ folderID: UUID) -> Bool {
-        vocabulary.folder(id: folderID).map {
-            vocabulary.canStartLesson(with: $0, minimumMatchingWords: minimumMatchingWords)
-        } ?? false
+        lessonWords(in: folderID).count >= minimumMatchingWords
+    }
+
+    /// What a folder's lesson draws, which leaves out learnt words when the settings say to.
+    func lessonWords(in folderID: UUID) -> [Word] {
+        (vocabulary.folder(id: folderID).map { vocabulary.words(in: $0) } ?? []).forLessons(lessonSettings).filter(\.isUsable)
     }
 
     var namingTitle: String {

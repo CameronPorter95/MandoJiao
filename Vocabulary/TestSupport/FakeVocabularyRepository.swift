@@ -167,6 +167,18 @@ public actor FakeVocabularyRepository: VocabularyRepository {
         }
     }
 
+    public func setLearnt(wordID: UUID, isLearnt: Bool) throws {
+        try write("setLearnt \(isLearnt)") {
+            guard let index = snapshot.words.firstIndex(where: { $0.id == wordID }) else { return }
+            let word = snapshot.words[index]
+            snapshot.words[index] = Word(
+                id: word.id, meanings: word.meanings, hanzi: word.hanzi, pinyin: word.pinyin,
+                missCount: word.missCount, lastMissedAt: word.lastMissedAt, createdAt: word.createdAt,
+                memory: isLearnt ? word.memory.markedLearnt(at: .now) : word.memory.unmarkedLearnt()
+            )
+        }
+    }
+
     public func clearMistakes() throws {
         try write("clearMistakes") {
             snapshot.words = snapshot.words.map {
@@ -247,4 +259,16 @@ public nonisolated enum Fixtures {
         decks: [fullDeck, part1, part2],
         folders: [starter, hsk, level1, emptyFolder]
     )
+}
+
+/// Lesson settings held in memory, skipping learnt words or not as told.
+public final class FakeLessonSettings: LessonSettingsRepository, @unchecked Sendable {
+    public var value: LessonSettings
+
+    public init(_ value: LessonSettings = .default) {
+        self.value = value
+    }
+
+    public func settings() -> LessonSettings { value }
+    public func setSkipsLearntWords(_ skips: Bool) { value.skipsLearntWords = skips }
 }

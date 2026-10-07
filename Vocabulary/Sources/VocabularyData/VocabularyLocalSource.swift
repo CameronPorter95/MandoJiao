@@ -20,5 +20,6 @@ nonisolated protocol VocabularyLocalSource: Sendable {
     func deleteFolder(id: UUID) async throws
     func install(_ plan: BuiltInPlan) async throws
     func recordResults(_ results: LessonResults) async throws
+    func setLearnt(wordID: UUID, isLearnt: Bool) async throws
     func clearMistakes() async throws
 }
