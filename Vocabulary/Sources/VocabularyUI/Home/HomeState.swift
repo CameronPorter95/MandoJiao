@@ -11,6 +11,16 @@ struct HomeState: Equatable {
     var isConfirmingClear = false
     /// Read on every appearance, since the settings screen is pushed over home.
     var lessonSettings: LessonSettings = .default
+    /// When strengths are read, renewed as home appears and as the vocabulary changes.
+    var now: Date = .now
+
+    /// What today's plan would be, nil with nothing new or fading.
+    var todayPlan: TodayPlan? {
+        TodayPlanner.suggest(
+            vocabulary: vocabulary, current: current, settings: lessonSettings,
+            boardSize: minimumMatchingWords, now: now
+        )
+    }
     /// Picked from Practise another deck, and shown until something is next practised.
     var chosen: LessonSource?
     var isChoosingSource = false
@@ -93,6 +103,7 @@ enum HomeAction: Equatable {
     case appeared
     case disappeared
     case quickPracticeTapped
+    case todayPlanTapped
     case continueTapped(LessonExercise)
     case chooseSourceTapped
     case sourceChosen(LessonSource)
@@ -107,5 +118,6 @@ enum HomeEffect: Equatable, Sendable {
     case requestMatching(LessonRequest)
     case requestSpeaking(LessonRequest)
     case requestFlashcards(LessonRequest)
+    case requestTodayPlan(TodayPlan)
     case showError(VocabularyError)
 }

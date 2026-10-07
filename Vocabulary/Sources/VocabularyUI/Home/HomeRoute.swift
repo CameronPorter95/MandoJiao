@@ -36,6 +36,7 @@ public struct HomeRoute: View {
         case .requestMatching(let request): navigation.didRequestMatching(request)
         case .requestSpeaking(let request): navigation.didRequestSpeaking(request)
         case .requestFlashcards(let request): navigation.didRequestFlashcards(request)
+        case .requestTodayPlan(let plan): navigation.didRequestTodayPlan(plan)
         case .showError(let error): self.error = error
         }
     }

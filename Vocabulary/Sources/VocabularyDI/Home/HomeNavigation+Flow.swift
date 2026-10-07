@@ -6,12 +6,14 @@ public extension HomeNavigation {
     static func app(
         presentMatching: @escaping (LessonRequest) -> Void,
         presentSpeaking: @escaping (LessonRequest) -> Void,
-        presentFlashcards: @escaping (LessonRequest) -> Void
+        presentFlashcards: @escaping (LessonRequest) -> Void,
+        presentTodayPlan: @escaping (TodayPlan) -> Void
     ) -> Self {
         HomeNavigation(
             didRequestMatching: presentMatching,
             didRequestSpeaking: presentSpeaking,
-            didRequestFlashcards: presentFlashcards
+            didRequestFlashcards: presentFlashcards,
+            didRequestTodayPlan: presentTodayPlan
         )
     }
 }

@@ -1,6 +1,8 @@
 import FlashcardsDI
 import FlashcardsUI
 import MatchingDI
+import MixedLessonDI
+import MixedLessonUI
 import MatchingUI
 import SpeakingDI
 import SpeakingUI
@@ -18,6 +20,7 @@ struct AppNavigation {
     var matching: MatchingNavigation
     var speaking: SpeakingNavigation
     var flashcards: FlashcardsNavigation
+    var mixedLesson: MixedLessonNavigation
 }
 
 extension AppNavigation {
@@ -27,11 +30,13 @@ extension AppNavigation {
             vocabulary: .app(
                 presentMatching: { coordinator.present(.matching($0)) },
                 presentSpeaking: { coordinator.present(.speaking($0)) },
-                presentFlashcards: { coordinator.present(.flashcards($0)) }
+                presentFlashcards: { coordinator.present(.flashcards($0)) },
+                presentTodayPlan: { coordinator.present(.todayPlan($0)) }
             ),
             matching: .app(dismiss: { coordinator.dismissLesson() }),
             speaking: .app(dismiss: { coordinator.dismissLesson() }),
-            flashcards: .app(dismiss: { coordinator.dismissLesson() })
+            flashcards: .app(dismiss: { coordinator.dismissLesson() }),
+            mixedLesson: .app(dismiss: { coordinator.dismissLesson() })
         )
     }
 }
