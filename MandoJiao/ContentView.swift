@@ -1,13 +1,14 @@
 import CoreDI
 import DictionaryDI
 import DictionaryDomain
+import LibraryDI
+import LibraryDomain
+import LibraryUI
 import PracticeDI
 import PracticeDomain
+import ProgressDI
 import SettingsDI
 import SwiftUI
-import VocabularyDI
-import VocabularyDomain
-import VocabularyUI
 
 /// The app's root: the home, vocabulary and dictionary tabs, and the lessons presented over all three.
 struct ContentView: View {
@@ -23,12 +24,15 @@ struct ContentView: View {
                 NavigationStack {
                     HomeFactory.makeRoute(
                         dependencies: dependencies,
-                        navigation: navigation.vocabulary,
+                        navigation: navigation.home,
                         input: HomeInput(
                             minimumMatchingWords: MatchingPlanBuilder.pairsPerExercise,
                             quickPracticeRounds: { [dependencies] in
                                 MatchingSettingsFactory.makeGetSettingsUseCase(dependencies: dependencies)().rounds
                             },
+                            observeVocabulary: VocabularyRepositoryFactory.makeObserveVocabularyUseCase(dependencies: dependencies),
+                            getLessonSettings: LessonSettingsFactory.makeGetSettingsUseCase(dependencies: dependencies),
+                            clearMistakes: VocabularyRepositoryFactory.makeClearMistakesUseCase(dependencies: dependencies),
                             settings: { [dependencies] in AnyView(settings(dependencies: dependencies)) }
                         )
                     )

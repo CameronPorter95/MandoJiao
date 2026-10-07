@@ -1,5 +1,5 @@
 import CoreUI
-import VocabularyDomain
+import LibraryDomain
 
 extension WordPair {
     /// How every exercise's review lists a word: its Hanzi, pinyin and every meaning.

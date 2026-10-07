@@ -1,7 +1,7 @@
 import Foundation
 import Testing
 @testable import PracticeDomain
-import VocabularyDomain
+import LibraryDomain
 
 @Suite("Matching lesson tallies")
 struct MatchingLessonTests {

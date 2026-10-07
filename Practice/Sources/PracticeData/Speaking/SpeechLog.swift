@@ -1,7 +1,7 @@
 import Foundation
+import LibraryDomain
 import OSLog
 import PracticeDomain
-import VocabularyDomain
 
 /// Prints what the recogniser heard, and what grading made of it, for every answer in a
 /// speaking lesson.

@@ -1,5 +1,5 @@
 import Foundation
-import VocabularyDomain
+import LibraryDomain
 
 /// A flash card lesson's progress: the card showing, one try at it, then the answer.
 ///

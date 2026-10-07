@@ -1,8 +1,8 @@
 import CoreDesignSystem
 import CoreUI
+import LibraryDomain
 import PracticeDomain
 import SwiftUI
-import VocabularyDomain
 
 /// The speaking lesson: progress, the current card, and the review once it ends.
 ///

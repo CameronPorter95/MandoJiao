@@ -4,8 +4,8 @@ import Foundation
 import Testing
 @testable import PracticeDomain
 @testable import PracticeUI
-import VocabularyDomain
-import VocabularyTestSupport
+import LibraryDomain
+import LibraryTestSupport
 
 @Suite("Matching lesson screen")
 @MainActor

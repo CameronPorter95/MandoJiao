@@ -1,11 +1,12 @@
+import ProgressDomain
 import CoreDomain
 import CoreTestSupport
 import Foundation
 import Testing
-import VocabularyTestSupport
+import LibraryTestSupport
 @testable import PracticeDomain
 @testable import PracticeUI
-import VocabularyDomain
+import LibraryDomain
 
 nonisolated enum LessonWords {
     static let water = WordPair(english: "water", hanzi: "水", pinyin: "shuǐ")

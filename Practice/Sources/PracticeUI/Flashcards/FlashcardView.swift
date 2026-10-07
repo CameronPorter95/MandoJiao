@@ -1,7 +1,7 @@
 import CoreDesignSystem
+import LibraryDomain
 import PracticeDomain
 import SwiftUI
-import VocabularyDomain
 
 /// One flash card: the prompt, the answer control, and once answered, the word in full.
 ///

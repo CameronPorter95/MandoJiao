@@ -42,10 +42,10 @@
             skipped = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "VocabularyTests"
-               BuildableName = "VocabularyTests"
-               BlueprintName = "VocabularyTests"
-               ReferencedContainer = "container:Vocabulary">
+               BlueprintIdentifier = "LibraryTests"
+               BuildableName = "LibraryTests"
+               BlueprintName = "LibraryTests"
+               ReferencedContainer = "container:Library">
             </BuildableReference>
          </TestableReference>
          <TestableReference
@@ -66,6 +66,16 @@
                BuildableName = "PracticeTests"
                BlueprintName = "PracticeTests"
                ReferencedContainer = "container:Practice">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "ProgressTests"
+               BuildableName = "ProgressTests"
+               BlueprintName = "ProgressTests"
+               ReferencedContainer = "container:Progress">
             </BuildableReference>
          </TestableReference>
          <TestableReference

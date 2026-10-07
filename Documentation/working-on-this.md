@@ -15,8 +15,8 @@ cd Practice && swift test --filter StrictnessTests
 Get `<udid>` from `xcrun simctl list devices available`. Xcode 27 did not resolve
 `name=iPhone 17 Pro` here.
 
-The scheme's test action lists five test bundles, one per package: `CoreTests`,
-`VocabularyTests`, `DictionaryTests`, `PracticeTests` and `SettingsTests`. The app has
+The scheme's test action lists six test bundles, one per package: `CoreTests`,
+`LibraryTests`, `DictionaryTests`, `PracticeTests`, `ProgressTests` and `SettingsTests`. The app has
 no test target. Each prints its own `Test run with` line; CLAUDE.md has the one-liner
 that adds them up.
 

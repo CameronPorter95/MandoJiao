@@ -1,6 +1,6 @@
-import PracticeDomain
+import LibraryDomain
 import Observation
-import VocabularyDomain
+import PracticeDomain
 
 /// Every setting is owned by the lesson that reads it; this screen only edits them.
 @MainActor

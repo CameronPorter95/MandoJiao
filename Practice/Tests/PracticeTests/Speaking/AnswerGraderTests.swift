@@ -2,11 +2,11 @@ import Testing
 import CoreDomain
 import CoreTestSupport
 import PracticeTestSupport
-import VocabularyTestSupport
+import LibraryTestSupport
 @testable import PracticeDomain
 @testable import PracticeData
 @testable import PracticeUI
-import VocabularyDomain
+import LibraryDomain
 
 @Suite("Answer grading")
 struct AnswerGraderTests {

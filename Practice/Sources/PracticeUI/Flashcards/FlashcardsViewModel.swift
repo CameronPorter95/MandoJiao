@@ -1,9 +1,9 @@
 import CoreDomain
 import CoreUI
-import PracticeDomain
 import Foundation
+import LibraryDomain
 import Observation
-import VocabularyDomain
+import PracticeDomain
 
 @MainActor
 @Observable

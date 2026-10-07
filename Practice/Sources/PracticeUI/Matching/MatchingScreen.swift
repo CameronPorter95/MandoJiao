@@ -1,8 +1,8 @@
 import CoreDesignSystem
 import CoreUI
+import LibraryDomain
 import PracticeDomain
 import SwiftUI
-import VocabularyDomain
 
 /// The matching lesson: progress, the current board, and the review once it ends.
 ///

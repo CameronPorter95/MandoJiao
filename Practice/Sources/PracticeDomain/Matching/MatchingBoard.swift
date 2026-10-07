@@ -1,5 +1,5 @@
 import Foundation
-import VocabularyDomain
+import LibraryDomain
 
 public enum TileSide: String, Hashable, Sendable {
     case english

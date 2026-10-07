@@ -1,8 +1,8 @@
 import CoreDomain
-import PracticeDomain
+import LibraryDomain
 import Observation
+import PracticeDomain
 import SwiftUI
-import VocabularyDomain
 
 /// One matching board as a step of a longer lesson: the board, its tones and haptics, and its
 /// answers handed back a moment after it is cleared. The lesson around it records and

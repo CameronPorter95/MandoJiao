@@ -15,7 +15,8 @@ the interesting parts be tested without a simulator, a store or a microphone.
 
 ```
 Core/           Shared plumbing: errors, effects, the design system, DI, ToneEngine.
-Vocabulary/     Words, decks, folders, the mistakes list, home and library tabs.
+Library/        Words, decks, folders, the mistakes list, word strength, the library tab.
+Progress/       Home and today's plan.
 Dictionary/     CC-CEDICT, the HSK list and the lexicon, with the dictionary tab.
 Practice/       Every exercise, one folder each: Matching, Speaking, Flashcards, and
                 MixedLesson, which runs today's plan as one lesson.
@@ -120,7 +121,7 @@ flash cards never record audio, so the tones cost recognition nothing.
 
 ## Today's plan
 
-`TodayPlanner`, in `VocabularyDomain`, suggests one plan for Home from how the
+`TodayPlanner`, in `ProgressDomain`, suggests one plan for Home from how the
 vocabulary's strengths stand, with a theme and a line saying what it will do. Its
 steps are plain: teach a word, a matching board, recognise a word, produce one.
 

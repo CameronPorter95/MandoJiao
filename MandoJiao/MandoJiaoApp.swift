@@ -1,9 +1,9 @@
 import CoreDomain
 import DictionaryDI
+import LibraryDI
 import OSLog
 import SwiftData
 import SwiftUI
-import VocabularyDI
 
 @main
 struct MandoJiaoApp: App {

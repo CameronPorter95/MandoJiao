@@ -15,10 +15,10 @@ repeating mistakes already made.
 ## Architecture
 
 MVI + Clean Architecture in SPM packages, with a domain layer shaped for possible KMP
-sharing. One package per business area: `Core/`, `Vocabulary/`, `Dictionary/`,
-`Practice/` and `Settings/` are SPM packages at the repo root, and `Vocabulary` is the
-reference vertical. The target shape is Library, Dictionary, Practice, Progress, Settings
-and Core; `Progress` is still inside `Vocabulary`, which becomes `Library`. A new exercise is a folder in `Practice`, never a new package. The app target
+sharing. One package per business area: `Core/`, `Library/`, `Dictionary/`, `Practice/`,
+`Progress/` and `Settings/` are SPM packages at the repo root, and `Library` is the
+reference vertical. A new exercise is a folder in `Practice`, never a new package; a view
+two packages show goes in `CoreUI`, never imported from a peer's UI. The app target
 holds only the entry point and the composition root. See
 `Documentation/modularisation-migration.md` for the state and what is left.
 
@@ -29,7 +29,7 @@ holds only the entry point and the composition root. See
 - `Documentation/code-comments.md`: when a comment is warranted, and how long
 
 Packages: `Core` (`CoreDomain`, `CorePersistence`, `CoreSound`, `CoreDesignSystem`,
-`CoreUI`, `CoreDI`, `CoreTestSupport`), `Vocabulary`, `Dictionary`, `Practice` and `Settings`, each with up to four targets: `{X}Domain`, `{X}Data`, `{X}UI`, `{X}DI`.
+`CoreUI`, `CoreDI`, `CoreTestSupport`), `Library`, `Dictionary`, `Practice`, `Progress` and `Settings`, each with up to four targets: `{X}Domain`, `{X}Data`, `{X}UI`, `{X}DI`.
 The rules most easily broken:
 
 - A feature package may depend only on another package's `Domain` product.
@@ -57,7 +57,7 @@ Moving code must not move a pinned cost out of the test suite.
 ## Build and test
 
 ```sh
-# Everything, on the simulator: all five packages' tests.
+# Everything, on the simulator: all six packages' tests.
 xcodebuild build -scheme MandoJiao -destination 'platform=iOS Simulator,id=<udid>'
 xcodebuild test  -scheme MandoJiao -destination 'platform=iOS Simulator,id=<udid>'
 
@@ -75,9 +75,9 @@ test files and reports a pass for tests that never ran. This has happened three
 times; once it reported `TEST SUCCEEDED` while eight new tests were skipped. A
 green result on its own is not evidence that anything ran.
 
-`xcodebuild test` prints one `Test run with` line per test bundle, five in all.
-Add them up. Current suite: 432 tests in 49 suites: 13 in `Core`, 192 in `Vocabulary`,
-51 in `Dictionary`, 171 in `Practice`, 5 in `Settings`. The app target has no tests of
+`xcodebuild test` prints one `Test run with` line per test bundle, six in all.
+Add them up. Current suite: 433 tests in 50 suites: 13 in `Core`, 175 in `Library`,
+51 in `Dictionary`, 171 in `Practice`, 18 in `Progress`, 5 in `Settings`. The app target has no tests of
 its own. If a bundle's line is missing, it did not run.
 
 ```sh

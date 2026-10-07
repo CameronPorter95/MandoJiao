@@ -1,6 +1,6 @@
 import DictionaryDomain
 import Foundation
-import VocabularyDomain
+import LibraryDomain
 
 /// Whether a typed flash card answer is right. Picked answers need no grading: the option
 /// is the word or it is not.

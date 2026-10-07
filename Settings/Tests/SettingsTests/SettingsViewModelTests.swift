@@ -1,6 +1,6 @@
 import Foundation
 import PracticeDomain
-import VocabularyDomain
+import LibraryDomain
 @testable import SettingsUI
 import Testing
 

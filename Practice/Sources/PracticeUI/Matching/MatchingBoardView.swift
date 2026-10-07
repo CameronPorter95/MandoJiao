@@ -1,6 +1,6 @@
+import LibraryDomain
 import PracticeDomain
 import SwiftUI
-import VocabularyDomain
 
 struct MatchingBoardView: View {
     let board: MatchingBoard

@@ -1,9 +1,10 @@
 import CoreDI
 import CoreSound
+import LibraryDomain
 import PracticeDomain
 import PracticeUI
+import ProgressDomain
 import SwiftUI
-import VocabularyDomain
 
 /// The only place that names the mixed lesson's concrete dependencies.
 public enum MixedLessonFactory: NavigationInputRouteFactory {

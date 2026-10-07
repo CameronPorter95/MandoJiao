@@ -1,6 +1,7 @@
 import Foundation
+import LibraryDomain
 import Observation
-import VocabularyDomain
+import ProgressDomain
 
 /// App-level presentation state: which lesson, if any, is over the home stack.
 @MainActor
