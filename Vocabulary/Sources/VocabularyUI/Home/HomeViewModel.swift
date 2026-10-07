@@ -13,6 +13,7 @@ public final class HomeViewModel {
     private let getLessonSettings: GetLessonSettingsUseCase
     private let clearMistakes: ClearMistakesUseCase
     private let quickPracticeRounds: () -> Int
+    private let now: () -> Date
     private var observation: Task<Void, Never>?
     /// When anything was last practised, so a pick is dropped once something newer is.
     private var lastPractisedAt: Date?
@@ -22,13 +23,15 @@ public final class HomeViewModel {
         quickPracticeRounds: @escaping () -> Int,
         observeVocabulary: ObserveVocabularyUseCase,
         getLessonSettings: GetLessonSettingsUseCase,
-        clearMistakes: ClearMistakesUseCase
+        clearMistakes: ClearMistakesUseCase,
+        now: @escaping () -> Date = { .now }
     ) {
         state = HomeState(minimumMatchingWords: minimumMatchingWords, quickPracticeRounds: quickPracticeRounds())
         self.quickPracticeRounds = quickPracticeRounds
         self.observeVocabulary = observeVocabulary
         self.getLessonSettings = getLessonSettings
         self.clearMistakes = clearMistakes
+        self.now = now
     }
 
     func effects() -> AsyncStream<HomeEffect> { effectChannel.stream() }
@@ -38,6 +41,7 @@ public final class HomeViewModel {
         case .appeared:
             // On every appearance, since the setting can change while this is underneath.
             state.lessonSettings = getLessonSettings()
+            state.now = now()
             state.quickPracticeRounds = quickPracticeRounds()
             guard observation == nil else { return }
             let stream = observeVocabulary()
@@ -53,6 +57,10 @@ public final class HomeViewModel {
 
         case .quickPracticeTapped:
             requestMatching(title: "All words", pool: state.quickPracticeWords.pairs)
+
+        case .todayPlanTapped:
+            guard let plan = state.todayPlan else { return }
+            effectChannel.send(.requestTodayPlan(plan))
 
         case .continueTapped(let exercise):
             guard let source = state.current, let name = state.currentName, state.canStart(exercise) else { return }
@@ -99,6 +107,7 @@ public final class HomeViewModel {
     /// since the one practised last is then what to carry on with.
     private func receive(_ vocabulary: Vocabulary) {
         state.vocabulary = vocabulary
+        state.now = now()
         let practisedAt = vocabulary.lastPractisedAt
         if practisedAt != lastPractisedAt, lastPractisedAt != nil || practisedAt != nil {
             state.chosen = nil

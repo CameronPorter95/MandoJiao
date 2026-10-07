@@ -19,6 +19,7 @@ Vocabulary/     Words, decks, folders, the mistakes list, home and library tabs.
 Speaking/       The speaking lesson.
 Matching/       The matching lesson.
 Flashcards/     The flash card lesson.
+MixedLesson/    Today's plan, as one lesson mixing the exercises.
 Settings/       The settings screen, editing what the two lessons own.
 MandoJiao/      The app: entry point and composition root.
 ```
@@ -117,6 +118,29 @@ A right answer plays the matching board's success tone, on the same note each ti
 rather than climbing card by card as a board's does, and leaving the last card plays
 the lesson complete tune. A wrong answer and Don't know play nothing. Unlike the speaking lesson,
 flash cards never record audio, so the tones cost recognition nothing.
+
+## Today's plan
+
+`TodayPlanner`, in `VocabularyDomain`, suggests one plan for Home from how the
+vocabulary's strengths stand, with a theme and a line saying what it will do. Its
+steps are plain: teach a word, a matching board, recognise a word, produce one.
+
+- **Review**, when eight or more words are fading (recall below 90%), or when nothing is
+  new: up to twelve, weakest first. A Learning word is recognised from its Chinese; a
+  Familiar or Known one has its Hanzi typed.
+- **New words** otherwise: up to five unstarted words from the deck or folder Home carries
+  on with, else from anywhere. Each is taught, then all are matched on one board, padded
+  with other words that share no Hanzi or meaning, then each is recognised, then any
+  fading words are reviewed.
+
+`MixedLesson` runs a plan: it turns recognise and produce into flash cards, shows the
+teach view itself, and takes a matching board or flash card step from those packages,
+built by the app since a feature package may not reach another's screens. Each step
+hands back its answers; the lesson records them once, with the plan's deck, and plays
+the lesson complete tune at the end.
+
+Reading aloud joins the steps next, and example sentences in the teach view after that,
+from Tatoeba. Tracing and translation will bring themes of their own.
 
 ## The mistakes list
 

@@ -94,20 +94,36 @@ public nonisolated enum FlashcardPlanBuilder {
         }
         let chosen = words.shuffled(using: &random).prefix(max(1, maxCards))
         let cards = chosen.map { word in
-            let distractors = everyWord.filter { $0.hanzi != word.hanzi && !$0.sharesMeaning(with: word) }
-            let canPick = distractors.count >= optionCount - 1
-            let direction: Answer.Direction = canPick && Bool.random(using: &random) ? .chineseToEnglish : .englishToChinese
-            let format: Flashcard.Format
-            if canPick, direction == .chineseToEnglish || Bool.random(using: &random) {
-                let options = Array(distractors.shuffled(using: &random).prefix(optionCount - 1)) + [word]
-                format = .picked(options: options.shuffled(using: &random))
-            } else {
-                format = .typed
-            }
-            let alsoAccepted = everyWord.filter { $0.hanzi != word.hanzi && $0.sharesMeaning(with: word) }.map(\.hanzi)
-            return Flashcard(word: word, direction: direction, format: format, alsoAccepted: alsoAccepted)
+            card(
+                for: word, showingChinese: Bool.random(using: &random), picked: Bool.random(using: &random),
+                choosingFrom: everyWord, using: &random
+            )
         }
         return FlashcardPlan(title: title, cards: cards)
+    }
+
+    /// One card for a word. A card showing Chinese is always picked; one showing English is
+    /// picked or typed as asked. Without three safe wrong options in `words`, it shows English
+    /// and is typed. Words sharing a meaning with it are accepted for its Hanzi.
+    public static func card(
+        for word: WordPair,
+        showingChinese: Bool,
+        picked: Bool,
+        choosingFrom words: [WordPair],
+        using random: inout some RandomNumberGenerator
+    ) -> Flashcard {
+        let distractors = words.filter { $0.hanzi != word.hanzi && !$0.sharesMeaning(with: word) }
+        let canPick = distractors.count >= optionCount - 1
+        let direction: Answer.Direction = canPick && showingChinese ? .chineseToEnglish : .englishToChinese
+        let format: Flashcard.Format
+        if canPick, direction == .chineseToEnglish || picked {
+            let options = Array(distractors.shuffled(using: &random).prefix(optionCount - 1)) + [word]
+            format = .picked(options: options.shuffled(using: &random))
+        } else {
+            format = .typed
+        }
+        let alsoAccepted = words.filter { $0.hanzi != word.hanzi && $0.sharesMeaning(with: word) }.map(\.hanzi)
+        return Flashcard(word: word, direction: direction, format: format, alsoAccepted: alsoAccepted)
     }
 
     public static func makeLesson(title: String, from pool: [WordPair], otherWords: [WordPair] = [], maxCards: Int = maxCards) -> FlashcardPlan? {

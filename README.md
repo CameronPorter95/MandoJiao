@@ -37,6 +37,12 @@ card, or Don't know, which counts as a mistake, then the word in full. A right a
 plays the matching board's tone, the same note each time, and the end plays its
 finishing tune.
 
+## Today's plan
+
+Home suggests one lesson for the day, chosen from how your words' strengths stand: new
+words from the deck you're working through, taught, matched, then recognised; or a review
+of words that are fading. It mixes the exercises in one lesson with one progress bar.
+
 ## Strength
 
 Every answer is kept, and each word has a strength worked out from them: New, Learning,

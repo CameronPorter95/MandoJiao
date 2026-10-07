@@ -10,10 +10,12 @@ final class AppNavigationCoordinator {
         case matching(LessonRequest)
         case speaking(LessonRequest)
         case flashcards(LessonRequest)
+        case todayPlan(TodayPlan)
 
         var id: UUID {
             switch self {
             case .matching(let request), .speaking(let request), .flashcards(let request): request.id
+            case .todayPlan(let plan): plan.id
             }
         }
     }

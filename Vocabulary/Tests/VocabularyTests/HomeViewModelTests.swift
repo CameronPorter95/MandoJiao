@@ -112,6 +112,20 @@ struct HomeViewModelTests {
         #expect(home.state.mistakeWords.count == 3)
     }
 
+    @Test("today's plan suggests new words when nothing is fading, and starting it asks for that plan")
+    func todayPlan() async throws {
+        let (home, log) = await makeHome()
+        let plan = try #require(home.state.todayPlan)
+        #expect(plan.theme == .newWords)
+        home.send(.todayPlanTapped)
+        #expect(await waitUntil { log.effects.count == 1 })
+        guard case .requestTodayPlan(let requested) = log.effects.first else {
+            Issue.record("expected today's plan")
+            return
+        }
+        #expect(requested.steps == plan.steps)
+    }
+
     @Test("quick practice asks for a matching lesson over every usable word")
     func quickPractice() async {
         let (home, log) = await makeHome()

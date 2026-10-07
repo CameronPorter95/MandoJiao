@@ -8,6 +8,7 @@ struct HomeScreen: View {
 
     var body: some View {
         List {
+            todayPlanSection
             continueSection
 
             Section {
@@ -50,6 +51,38 @@ struct HomeScreen: View {
     }
 
     // MARK: - Pieces
+
+    /// Today's plan, chosen for how the vocabulary's strengths stand: one call to action,
+    /// since there is one thing to do.
+    @ViewBuilder
+    private var todayPlanSection: some View {
+        if let plan = state.todayPlan {
+            Section {
+                VStack(alignment: .leading, spacing: 12) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(plan.title)
+                            .font(.title3.bold())
+                        Text(plan.synopsis)
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+                    Button {
+                        onAction(.todayPlanTapped)
+                    } label: {
+                        Text("Start")
+                            .font(.headline)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 6)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(Theme.accent)
+                }
+                .padding(.vertical, 6)
+            } header: {
+                Text("Today's plan")
+            }
+        }
+    }
 
     /// The deck or folder last practised, with an exercise to carry on with, or a way to
     /// choose one before anything has been practised.

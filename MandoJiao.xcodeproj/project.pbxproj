@@ -20,6 +20,9 @@
 		000000000000000320000014 /* SettingsDI in Frameworks */ = {isa = PBXBuildFile; productRef = 000000000000000310000014 /* SettingsDI */; };
 		000000000000000320000015 /* FlashcardsUI in Frameworks */ = {isa = PBXBuildFile; productRef = 000000000000000310000015 /* FlashcardsUI */; };
 		000000000000000320000016 /* FlashcardsDI in Frameworks */ = {isa = PBXBuildFile; productRef = 000000000000000310000016 /* FlashcardsDI */; };
+		000000000000000320000017 /* MixedLessonDomain in Frameworks */ = {isa = PBXBuildFile; productRef = 000000000000000310000017 /* MixedLessonDomain */; };
+		000000000000000320000018 /* MixedLessonUI in Frameworks */ = {isa = PBXBuildFile; productRef = 000000000000000310000018 /* MixedLessonUI */; };
+		000000000000000320000019 /* MixedLessonDI in Frameworks */ = {isa = PBXBuildFile; productRef = 000000000000000310000019 /* MixedLessonDI */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -30,6 +33,7 @@
 		000000000000000300000014 /* Matching */ = {isa = PBXFileReference; lastKnownFileType = wrapper; path = Matching; sourceTree = "<group>"; };
 		000000000000000300000015 /* Settings */ = {isa = PBXFileReference; lastKnownFileType = wrapper; path = Settings; sourceTree = "<group>"; };
 		000000000000000300000016 /* Flashcards */ = {isa = PBXFileReference; lastKnownFileType = wrapper; path = Flashcards; sourceTree = "<group>"; };
+		000000000000000300000017 /* MixedLesson */ = {isa = PBXFileReference; lastKnownFileType = wrapper; path = MixedLesson; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -62,6 +66,9 @@
 				000000000000000320000014 /* SettingsDI in Frameworks */,
 				000000000000000320000015 /* FlashcardsUI in Frameworks */,
 				000000000000000320000016 /* FlashcardsDI in Frameworks */,
+				000000000000000320000017 /* MixedLessonDomain in Frameworks */,
+				000000000000000320000018 /* MixedLessonUI in Frameworks */,
+				000000000000000320000019 /* MixedLessonDI in Frameworks */,
 			);
 		};
 /* End PBXFrameworksBuildPhase section */
@@ -77,6 +84,7 @@
 				000000000000000300000014 /* Matching */,
 				000000000000000300000015 /* Settings */,
 				000000000000000300000016 /* Flashcards */,
+				000000000000000300000017 /* MixedLesson */,
 				000000000000000300000011 /* Core */,
 				000000000000000000000020 /* Products */,
 			);
@@ -121,6 +129,9 @@
 				000000000000000310000014 /* SettingsDI */,
 				000000000000000310000015 /* FlashcardsUI */,
 				000000000000000310000016 /* FlashcardsDI */,
+				000000000000000310000017 /* MixedLessonDomain */,
+				000000000000000310000018 /* MixedLessonUI */,
+				000000000000000310000019 /* MixedLessonDI */,
 			);
 			productName = MyApp;
 			productReference = 000000000000000000000120 /* MandoJiao.app */;
@@ -157,6 +168,7 @@
 				000000000000000300000004 /* XCLocalSwiftPackageReference "Matching" */,
 				000000000000000300000005 /* XCLocalSwiftPackageReference "Settings" */,
 				000000000000000300000006 /* XCLocalSwiftPackageReference "Flashcards" */,
+				000000000000000300000007 /* XCLocalSwiftPackageReference "MixedLesson" */,
 			);
 			preferredProjectObjectVersion = 90;
 			productRefGroup = 000000000000000000000020 /* Products */;
@@ -447,6 +459,10 @@
 			isa = XCLocalSwiftPackageReference;
 			relativePath = Flashcards;
 		};
+		000000000000000300000007 /* XCLocalSwiftPackageReference "MixedLesson" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = MixedLesson;
+		};
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -514,6 +530,21 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 000000000000000300000006 /* XCLocalSwiftPackageReference "Flashcards" */;
 			productName = FlashcardsDI;
+		};
+		000000000000000310000017 /* MixedLessonDomain */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 000000000000000300000007 /* XCLocalSwiftPackageReference "MixedLesson" */;
+			productName = MixedLessonDomain;
+		};
+		000000000000000310000018 /* MixedLessonUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 000000000000000300000007 /* XCLocalSwiftPackageReference "MixedLesson" */;
+			productName = MixedLessonUI;
+		};
+		000000000000000310000019 /* MixedLessonDI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 000000000000000300000007 /* XCLocalSwiftPackageReference "MixedLesson" */;
+			productName = MixedLessonDI;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

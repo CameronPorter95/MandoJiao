@@ -15,7 +15,8 @@ struct VocabularyNavigationTests {
         let navigation = VocabularyNavigation.app(
             presentMatching: { presented.append("matching \($0.id == request.id)") },
             presentSpeaking: { presented.append("speaking \($0.id == request.id)") },
-            presentFlashcards: { presented.append("flashcards \($0.id == request.id)") }
+            presentFlashcards: { presented.append("flashcards \($0.id == request.id)") },
+            presentTodayPlan: { _ in presented.append("today") }
         )
 
         navigation.home.didRequestMatching(request)

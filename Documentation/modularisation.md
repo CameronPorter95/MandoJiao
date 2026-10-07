@@ -96,6 +96,7 @@ that does the injecting, not a peer.
 | `Matching` | The matching exercise. `MatchingPlan`, `MatchingPlanBuilder`, `MatchingBoard`, the matching view model, board and tile views, matching settings. | all four; `Data` holds only settings storage |
 | `Speaking` | The speaking lesson. `SpeakingPlan`, `SpeakingPlanBuilder`, `AnswerGrader`, `AnswerStrictness`, `Endpointing`, the `SpeechRecognising` seam and `DictationRecogniser`, `SpeechLog`, the view model and card views, speaking settings. | all four |
 | `Flashcards` | The flash card exercise. `Flashcard`, `FlashcardPlanBuilder`, which chooses each card's direction and format, `FlashcardGrader`, `FlashcardLesson`, the view model and card view. | `Domain`, `UI`, `DI`: no settings yet |
+| `MixedLesson` | Today's plan as one lesson. `MixedLesson`, which turns a `TodayPlan`'s steps into exercises and keeps every answer, the teach view and the screen. The matching and flash card steps come from their packages, built by the app and handed in. | `Domain`, `UI`, `DI` |
 | `Settings` | The settings screen. Edits matching and speaking settings through their domains. | `UI`, `DI` |
 
 **The home screen lives in `Vocabulary`,** because everything on it is vocabulary data:
