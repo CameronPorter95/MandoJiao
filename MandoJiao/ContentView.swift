@@ -1,10 +1,13 @@
 import CoreDI
+import DictionaryDI
+import DictionaryDomain
 import PracticeDI
 import PracticeDomain
 import SettingsDI
 import SwiftUI
 import VocabularyDI
 import VocabularyDomain
+import VocabularyUI
 
 /// The app's root: the home, vocabulary and dictionary tabs, and the lessons presented over all three.
 struct ContentView: View {
@@ -35,11 +38,14 @@ struct ContentView: View {
                 LibraryFactory.makeRoute(
                     dependencies: dependencies,
                     navigation: navigation.vocabulary,
-                    input: LibraryInput(minimumMatchingWords: MatchingPlanBuilder.pairsPerExercise)
+                    input: LibraryInput(
+                        minimumMatchingWords: MatchingPlanBuilder.pairsPerExercise,
+                        dictionary: dictionaryAccess(dependencies: dependencies)
+                    )
                 )
             }
             Tab("Dictionary", systemImage: "character.book.closed") {
-                DictionaryTabFactory.makeRoute(dependencies: dependencies)
+                DictionaryTabFactory.makeRoute(dependencies: dependencies, input: dictionaryVocabulary(dependencies: dependencies))
             }
         }
         .fullScreenCover(item: $coordinator.presentedLesson) { lesson in
@@ -104,6 +110,42 @@ private func settings(dependencies: Dependencies) -> some View {
     )
 }
 
+/// What the library uses of the dictionary: its data, and its page over the library's own
+/// screens. Adding from that page opens the library's editor.
+@MainActor
+private func dictionaryAccess(dependencies: Dependencies) -> DictionaryAccess {
+    DictionaryAccess(
+        dictionary: DictionaryRepositoryFactory.makeDictionaryRepository(),
+        lexicon: DictionaryRepositoryFactory.makeLexiconRepository(),
+        hsk: DictionaryRepositoryFactory.makeHSKRepository(),
+        page: { headword, addsToVocabulary in
+            AnyView(DictionaryFactory.makeRoute(
+                dependencies: dependencies,
+                input: DictionaryInput(
+                    headword: headword,
+                    vocabulary: addsToVocabulary ? dictionaryVocabulary(dependencies: dependencies) : nil
+                )
+            ))
+        }
+    )
+}
+
+/// What the dictionary uses of the library: which readings are saved, and the editor that
+/// adds one or opens it.
+@MainActor
+private func dictionaryVocabulary(dependencies: Dependencies) -> DictionaryVocabulary {
+    DictionaryVocabulary(
+        savedReadings: VocabularyRepositoryFactory.makeSavedReadingsRepository(dependencies: dependencies),
+        editor: { edit in
+            AnyView(WordEditorFactory.makeRoute(
+                dependencies: dependencies,
+                input: WordEditorInput(target: WordEditorTarget(edit), dictionary: dictionaryAccess(dependencies: dependencies))
+            ))
+        }
+    )
+}
+
 #Preview {
-    ContentView(dependencies: LiveDependencies(modelContainer: try! VocabularyRepositoryFactory.openStore(inMemory: true)))
+    let store = try! VocabularyRepositoryFactory.openStore(inMemory: true, hskWords: { (try? DictionaryRepositoryFactory.bundledHSKWords()) ?? [] })
+    ContentView(dependencies: LiveDependencies(modelContainer: store))
 }

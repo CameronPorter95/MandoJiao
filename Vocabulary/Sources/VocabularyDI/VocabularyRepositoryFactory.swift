@@ -1,4 +1,5 @@
 import CoreDI
+import DictionaryDomain
 import SwiftData
 import VocabularyData
 import VocabularyDomain
@@ -9,11 +10,12 @@ import VocabularyDomain
 /// is what lets a caller outside the package, such as a lesson recording its results,
 /// obtain a use case without ever seeing the store.
 public enum VocabularyRepositoryFactory {
-    /// Opens the store, migrating an older schema, and fills an empty one with starter words.
+    /// Opens the store, migrating an older schema, and fills an empty one with starter words
+    /// and HSK 1. `hskWords` is the dictionary's syllabus, read only when the store is empty.
     @MainActor
-    public static func openStore(inMemory: Bool = false) throws -> ModelContainer {
+    public static func openStore(inMemory: Bool = false, hskWords: () -> [HSKWord]) throws -> ModelContainer {
         let container = try VocabularyStore.makeContainer(inMemory: inMemory)
-        VocabularyStore.seedIfNeeded(container)
+        VocabularyStore.seedIfNeeded(container, hskWords: hskWords)
         VocabularyStore.rememberPastAnswers(container)
         return container
     }
@@ -23,16 +25,10 @@ public enum VocabularyRepositoryFactory {
         VocabularyStore.repository(for: dependencies.modelContainer)
     }
 
-    public static func makeLexiconRepository() -> any LexiconRepository {
-        Lexicon.repository
-    }
-
-    public static func makeDictionaryRepository() -> any DictionaryRepository {
-        CEDICT.dictionary
-    }
-
-    public static func makeHSKRepository() -> any HSKRepository {
-        HSKSource.repository
+    /// The library's words as the dictionary sees them, injected by the app.
+    @MainActor
+    public static func makeSavedReadingsRepository(dependencies: Dependencies) -> any SavedReadingsRepository {
+        VocabularySavedReadings(repository: makeRepository(dependencies: dependencies))
     }
 
     public static func makeLibraryLayoutRepository() -> any LibraryLayoutRepository {

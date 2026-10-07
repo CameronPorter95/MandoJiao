@@ -1,3 +1,4 @@
+import DictionaryDomain
 import Foundation
 
 public nonisolated struct InstallHSKLevelUseCase: Sendable {

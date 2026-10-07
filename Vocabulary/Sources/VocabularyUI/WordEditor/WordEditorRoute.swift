@@ -1,13 +1,14 @@
 import CoreUI
+import DictionaryDomain
 import SwiftUI
 
 public struct WordEditorRoute: View {
     @State private var viewModel: WordEditorViewModel
-    private let makeDictionary: (DictionaryHeadword) -> DictionaryRoute
+    private let makeDictionary: (DictionaryHeadword) -> AnyView
     @Environment(\.dismiss) private var dismiss
     @State private var error: VocabularyError?
 
-    public init(viewModel: WordEditorViewModel, makeDictionary: @escaping (DictionaryHeadword) -> DictionaryRoute) {
+    public init(viewModel: WordEditorViewModel, makeDictionary: @escaping (DictionaryHeadword) -> AnyView) {
         _viewModel = State(initialValue: viewModel)
         self.makeDictionary = makeDictionary
     }

@@ -105,9 +105,9 @@ One package per business area. The target shape, decided on 2026-10-07:
 | `Progress` | What to do next and how it is going: Home, `TodayPlanner` and `TodayPlan`, later streaks, goals and rewards. | all four as needed |
 | `Settings` | The settings screen. Edits each setting through the domain of the package that owns it. | `UI`, `DI` |
 
-**Where it stands.** `Practice` exists. `Dictionary`, `Progress` and the rename of
+**Where it stands.** `Practice` and `Dictionary` exist. `Progress` and the rename of
 `Vocabulary` to `Library` are still to come, so today `Vocabulary` holds what will be
-`Library`, `Dictionary` and `Progress`. See
+`Library` and `Progress`. See
 [modularisation-migration.md](modularisation-migration.md#option-a-one-package-per-business-area).
 
 **Why business areas, not one package per screen.** `Matching`, `Speaking` and
@@ -121,10 +121,21 @@ reach into another's internals, and nothing but review stops it.
 If strength moved to `Progress`, `Library` would need `ProgressDomain` and `Progress`
 would need `LibraryDomain`, a cycle SPM rejects.
 
-**`Dictionary` does not know about the library.** Whether a dictionary word is saved,
-and the "add to vocabulary" action, reach the dictionary page as input from the app,
-so `Dictionary` never imports `LibraryDomain` and `Library` can use `DictionaryDomain`
-for lookups.
+**`Dictionary` does not know about the library.** It never imports the library, so the
+library can use `DictionaryDomain`. The two meet only through the app:
+
+- **The dictionary's view of saved words** is `SavedReading`, an id with Hanzi and
+  pinyin, streamed by a `SavedReadingsRepository` the library implements
+  (`VocabularySavedReadings`). The page never sees a library word.
+- **Adding or opening a reading** is a `ReadingEdit` (`.add(entry)` or `.open(saved)`)
+  handed to an editor closure in `DictionaryVocabulary`. The app answers with the
+  library's word editor, which opens a saved word by its id and reads it in itself.
+- **What the library uses of the dictionary** arrives as one `DictionaryAccess` in
+  `LibraryInput`: the dictionary, lexicon and HSK repositories, and the dictionary page as
+  a screen closure. The library's DI cannot see `DictionaryData` or `DictionaryDI`, so the
+  app builds it from `DictionaryRepositoryFactory`.
+- **Seeding a fresh store with HSK 1** takes the syllabus as an argument to
+  `openStore(hskWords:)`, read only when the store is empty.
 
 **Settings are owned by the package that reads them.** Strictness and the card limit
 belong to speaking, and rounds and pinyin visibility to matching, both in `Practice`;
@@ -239,7 +250,7 @@ Package graph, target shape. Every arrow is to the peer's `Domain` product only:
 
 ```
 Core        <- everyone
-Dictionary  <- Library
+Dictionary  <- Library, Practice   (Practice for Gloss, reading a typed meaning)
 Library     <- Practice, Progress, Settings
 Progress    <- Practice      (the TodayPlan the mixed lesson runs)
 Practice    <- Settings
@@ -250,8 +261,8 @@ Dependencies point down towards `Library` and `Dictionary`. Nothing points back 
 `Library` never imports `Practice` or `Progress`, so a lesson's numbers that Library
 screens need (a board's size, the word floor) are handed in by the app as values.
 
-Today, before steps 2 and 3, the graph is `Vocabulary <- Practice, Settings` and
-`Practice <- Settings`.
+Today, before step 3, the graph is `Dictionary <- Vocabulary, Practice`,
+`Vocabulary <- Practice, Settings` and `Practice <- Settings`.
 
 ---
 
@@ -414,7 +425,10 @@ source layout. Not one per layer.
 with `path: "TestSupport"`, because it is neither shipping code nor a test. It holds
 shared test doubles and fixtures, depends on `{X}Domain`, and
 is depended on by `{X}Tests` and peers' tests. `ScriptedRecogniser` belongs in
-`PracticeTestSupport`; a fake `VocabularyRepository` belongs in `VocabularyTestSupport`. A fake
+`PracticeTestSupport`; a fake `VocabularyRepository` belongs in `VocabularyTestSupport`.
+A peer's test target may also use a peer's `DI` product to reach real bundled data, as
+`VocabularyTests` does for the HSK list it installs into a real store. Source targets
+never may. A fake
 used by exactly one test file stays private to that file; hoist when a second consumer
 appears.
 

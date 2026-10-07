@@ -1,5 +1,6 @@
 import CoreDomain
 import CoreUI
+import DictionaryDomain
 import Foundation
 import Observation
 import VocabularyDomain
@@ -35,11 +36,9 @@ public final class WordEditorViewModel {
         case .new(let draft):
             WordEditorState(wordID: nil, draft: draft)
         case .edit(let word):
-            WordEditorState(
-                wordID: word.id,
-                draft: WordDraft(meanings: word.meanings, hanzi: word.hanzi, pinyin: word.pinyin),
-                isLearnt: word.isLearnt
-            )
+            WordEditorState(word: word)
+        case .saved(let id):
+            WordEditorState(loading: id)
         }
         self.saveWord = saveWord
         self.deleteWords = deleteWords
@@ -154,13 +153,25 @@ public final class WordEditorViewModel {
     }
 
     /// Live, so a deck made or deleted while the editor is open is offered or taken away.
-    /// A saved word is offered no decks, so has nothing to hear.
+    /// A saved word is offered no decks, so has nothing to hear once it is read in.
     private func observe() {
-        guard state.wordID == nil, observation == nil else { return }
+        guard state.wordID == nil || state.isLoading, observation == nil else { return }
         let stream = observeVocabulary()
         observation = Task { [weak self] in
             for await vocabulary in stream {
-                self?.state.vocabulary = vocabulary
+                guard let self else { return }
+                guard state.isLoading else {
+                    state.vocabulary = vocabulary
+                    continue
+                }
+                if let word = vocabulary.words.first(where: { $0.id == self.state.wordID }) {
+                    state.load(word)
+                    suggest()
+                } else {
+                    // Deleted since the dictionary listed it, so there is nothing to edit.
+                    effectChannel.send(.dismiss)
+                }
+                return
             }
         }
     }
@@ -199,8 +210,7 @@ public final class WordEditorViewModel {
         } catch is CancellationError {
             return nil
         } catch {
-            let domainError = error as? VocabularyDomainError ?? .unexpected(model: DomainErrorModel(error))
-            makeError(domainError).log()
+            makeError(VocabularyDomainError(error)).log()
             return nil
         }
     }

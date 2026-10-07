@@ -1,6 +1,7 @@
 import Foundation
 import SwiftData
 import Testing
+import DictionaryDI
 import CoreDomain
 import CorePersistence
 import CoreTestSupport
@@ -354,7 +355,7 @@ struct VocabularyRepositoryTests {
 
     @Test("a fresh store has the starter decks inside a built-in Starter folder")
     func seeding() async throws {
-        VocabularyStore.seedIfNeeded(container)
+        VocabularyStore.seedIfNeeded(container, hskWords: { (try? DictionaryRepositoryFactory.bundledHSKWords()) ?? [] })
         let vocabulary = await current()
 
         let starter = try #require(vocabulary.folders.first { $0.builtInKey == SampleVocabulary.builtInKey })

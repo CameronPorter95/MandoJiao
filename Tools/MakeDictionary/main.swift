@@ -5,7 +5,7 @@ import Foundation
 //
 // Download CC-CEDICT from https://www.mdbg.net/chinese/dictionary?page=cc-cedict, then
 // run from the repository root:
-//   swift Tools/MakeDictionary/main.swift cedict_ts.u8 Vocabulary/Sources/VocabularyData/Resources/Dictionary.tsv
+//   swift Tools/MakeDictionary/main.swift cedict_ts.u8 Dictionary/Sources/DictionaryData/Resources/Dictionary.tsv
 //
 // One line per entry: simplified, traditional, pinyin with tone marks, 1 if it is the
 // headword's preferred entry, and its senses, tab separated, senses split by U+001F.

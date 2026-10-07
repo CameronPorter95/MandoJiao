@@ -1,4 +1,5 @@
 import CoreDomain
+import DictionaryDI
 import OSLog
 import SwiftData
 import SwiftUI
@@ -17,7 +18,8 @@ struct MandoJiaoApp: App {
         }
 
         do {
-            dependencies = LiveDependencies(modelContainer: try VocabularyRepositoryFactory.openStore())
+            let store = try VocabularyRepositoryFactory.openStore(hskWords: { (try? DictionaryRepositoryFactory.bundledHSKWords()) ?? [] })
+            dependencies = LiveDependencies(modelContainer: store)
         } catch {
             fatalError("Could not open the vocabulary store: \(error)")
         }

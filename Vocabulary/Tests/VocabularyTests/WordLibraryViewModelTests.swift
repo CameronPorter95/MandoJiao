@@ -1,3 +1,4 @@
+import DictionaryDomain
 import Foundation
 import Testing
 import CoreDomain

@@ -1,7 +1,9 @@
+import DictionaryDomain
 import Foundation
 import Testing
 import CoreDomain
 import CoreTestSupport
+import DictionaryTestSupport
 import VocabularyTestSupport
 @testable import VocabularyDomain
 @testable import VocabularyData
@@ -17,12 +19,13 @@ struct WordEditorViewModelTests {
     private func makeEditor(
         _ word: Word?,
         draft: WordDraft = WordDraft(),
+        target: WordEditorTarget? = nil,
         lexicon: FakeLexiconRepository? = nil,
         dictionary: FakeDictionaryRepository? = nil,
         suggestionDelay: Duration = .zero
     ) -> (WordEditorViewModel, EffectLog<WordEditorEffect>) {
         let viewModel = WordEditorViewModel(
-            target: word.map(WordEditorTarget.edit) ?? .new(draft),
+            target: target ?? word.map(WordEditorTarget.edit) ?? .new(draft),
             saveWord: SaveWordUseCase(repository: repository),
             deleteWords: DeleteWordsUseCase(repository: repository),
             setLearnt: SetWordLearntUseCase(repository: repository),
@@ -446,5 +449,42 @@ struct WordEditorViewModelTests {
         editor.send(.sensesDismissed)
         #expect(!editor.state.isChoosingSenses)
         #expect(editor.state.meanings == ["to drink", "to shout (of approval)"])
+    }
+
+    @Test("a saved word opened from the dictionary by its id is read in, then edits as any saved word")
+    func savedByID() async throws {
+        let word = try #require(Fixtures.vocabulary.words.first)
+        let (editor, log) = makeEditor(nil, target: .saved(word.id))
+        #expect(editor.state.isLoading)
+        #expect(!editor.state.canSave)
+
+        editor.send(.appeared)
+        #expect(await waitUntil { !editor.state.isLoading })
+        #expect(editor.state.title == "Edit word")
+        #expect(editor.state.draft.hanzi == word.hanzi)
+        #expect(editor.state.meanings == word.meanings)
+        #expect(editor.state.canDelete)
+        #expect(editor.state.deckSections.isEmpty)
+
+        editor.send(.saveTapped)
+        #expect(await log.contains(.dismiss))
+        #expect(await repository.writes.first?.hasPrefix("saveWord existing") == true)
+    }
+
+    @Test("a saved word deleted before its editor opened closes the editor")
+    func savedByIDDeleted() async {
+        let (editor, log) = makeEditor(nil, target: .saved(UUID()))
+        editor.send(.appeared)
+        #expect(await log.contains(.dismiss))
+    }
+
+    @Test("a dictionary reading not saved becomes a new word with its first sense, or none, and a saved one opens by id")
+    func targetFromReading() {
+        let walk = FakeDictionaryRepository.entry("行", "xíng", preferred: true, "to walk", "okay")
+        #expect(WordEditorTarget(.add(walk)) == .new(WordDraft(meanings: ["to walk"], hanzi: "行", pinyin: "xíng")))
+        let yu = FakeDictionaryRepository.entry("于", "Yú", preferred: true)
+        #expect(WordEditorTarget(.add(yu)) == .new(WordDraft(meanings: [], hanzi: "于", pinyin: "Yú")))
+        let saved = SavedReading(id: UUID(), hanzi: "行", pinyin: "háng")
+        #expect(WordEditorTarget(.open(saved)) == .saved(saved.id))
     }
 }

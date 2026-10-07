@@ -1,4 +1,5 @@
 import CoreUI
+import DictionaryDomain
 import SwiftUI
 import VocabularyDomain
 
@@ -6,7 +7,7 @@ import VocabularyDomain
 public struct WordLibraryRoute: View {
     @State private var viewModel: WordLibraryViewModel
     private let makeEditor: (WordEditorTarget) -> WordEditorRoute
-    private let makeDictionary: (DictionaryHeadword) -> DictionaryRoute
+    private let makeDictionary: (DictionaryHeadword) -> AnyView
     private let layout: WordListLayout
     private let searchText: String
 
@@ -18,7 +19,7 @@ public struct WordLibraryRoute: View {
         layout: WordListLayout,
         searchText: String,
         makeEditor: @escaping (WordEditorTarget) -> WordEditorRoute,
-        makeDictionary: @escaping (DictionaryHeadword) -> DictionaryRoute
+        makeDictionary: @escaping (DictionaryHeadword) -> AnyView
     ) {
         _viewModel = State(initialValue: viewModel)
         self.layout = layout

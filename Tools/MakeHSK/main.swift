@@ -4,7 +4,7 @@ import Foundation
 //
 // Download complete.json from https://github.com/drkameleon/complete-hsk-vocabulary, then
 // run from the repository root, after MakeDictionary:
-//   swift Tools/MakeHSK/main.swift complete.json Vocabulary/Sources/VocabularyData/Resources/Dictionary.tsv Tools/MakeHSK/headlines.tsv Tools/MakeHSK/readings.tsv Vocabulary/Sources/VocabularyData/Resources/HSK.tsv
+//   swift Tools/MakeHSK/main.swift complete.json Dictionary/Sources/DictionaryData/Resources/Dictionary.tsv Tools/MakeHSK/headlines.tsv Tools/MakeHSK/readings.tsv Dictionary/Sources/DictionaryData/Resources/HSK.tsv
 //
 // Output is one line per word of the 2025 revision of HSK 3.0 ("newest" in the source):
 // level, frequency rank, Hanzi, pinyin, then meanings joined by U+001F, tab separated,

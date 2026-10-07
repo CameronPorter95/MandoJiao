@@ -1,3 +1,4 @@
+import DictionaryDomain
 import Foundation
 import Testing
 import CoreDomain
@@ -166,5 +167,22 @@ struct VocabularyDomainTests {
         #expect(draft.trimmed.meanings == ["to drink", "to shout"])
         #expect(draft.isComplete)
         #expect(!WordDraft(meanings: ["  "], hanzi: "喝").isComplete)
+    }
+}
+
+@Suite("Saved readings")
+@MainActor
+struct VocabularySavedReadingsTests {
+    @Test("the dictionary sees each saved word's id, Hanzi and pinyin, live")
+    func savedReadings() async throws {
+        let repository = FakeVocabularyRepository(Vocabulary(words: [Word(english: "row", hanzi: "行", pinyin: "háng")], decks: [], folders: []))
+        var stream = VocabularySavedReadings(repository: repository).savedReadings().makeAsyncIterator()
+        let first = try #require(await stream.next())
+        #expect(first.map(\.hanzi) == ["行"])
+        #expect(first.map(\.pinyin) == ["háng"])
+
+        try await repository.saveWord(id: nil, draft: WordDraft(english: "to drink", hanzi: "喝", pinyin: "hē"), deckID: nil)
+        let second = try #require(await stream.next())
+        #expect(Set(second.map(\.hanzi)) == ["行", "喝"])
     }
 }

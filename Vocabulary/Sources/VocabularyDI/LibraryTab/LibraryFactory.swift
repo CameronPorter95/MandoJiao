@@ -39,7 +39,8 @@ public enum LibraryFactory: NavigationInputRouteFactory {
                     minimumMatchingWords: input.minimumMatchingWords,
                     layout: context.layout(folderID),
                     wordList: context.wordList,
-                    vocabulary: context.vocabulary
+                    vocabulary: context.vocabulary,
+                    dictionary: input.dictionary
                 )
             ))
         }
@@ -70,11 +71,17 @@ public enum LibraryFactory: NavigationInputRouteFactory {
             results: { searchText, context in
                 AnyView(WordLibraryFactory.makeRoute(
                     dependencies: dependencies,
-                    input: WordLibraryInput(folderID: nil, layout: context.wordList, searchText: searchText, vocabulary: context.vocabulary)
+                    input: WordLibraryInput(
+                        folderID: nil,
+                        layout: context.wordList,
+                        searchText: searchText,
+                        vocabulary: context.vocabulary,
+                        dictionary: input.dictionary
+                    )
                 ))
             },
-            makeEditor: { WordEditorFactory.makeRoute(dependencies: dependencies, input: $0) },
-            hskLevels: { AnyView(HSKLevelsFactory.makeRoute(dependencies: dependencies)) }
+            makeEditor: { WordEditorFactory.makeRoute(dependencies: dependencies, input: WordEditorInput(target: $0, dictionary: input.dictionary)) },
+            hskLevels: { AnyView(HSKLevelsFactory.makeRoute(dependencies: dependencies, input: input.dictionary)) }
         )
     }
 }

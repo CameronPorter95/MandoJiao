@@ -22,7 +22,6 @@ nonisolated enum VocabularyError: LoggedError, Equatable, Sendable {
     case clearMistakesFailed(VocabularyDomainError)
     case suggestWordFailed(VocabularyDomainError)
     case lookUpDictionaryFailed(VocabularyDomainError)
-    case searchDictionaryFailed(VocabularyDomainError)
 
     var errorDescription: String? {
         switch self {
@@ -43,7 +42,6 @@ nonisolated enum VocabularyError: LoggedError, Equatable, Sendable {
         case .clearMistakesFailed: "The mistakes list could not be cleared."
         case .suggestWordFailed: "No pinyin could be suggested."
         case .lookUpDictionaryFailed: "The dictionary could not be read."
-        case .searchDictionaryFailed: "The dictionary could not be searched."
         }
     }
 
@@ -54,8 +52,7 @@ nonisolated enum VocabularyError: LoggedError, Equatable, Sendable {
              .moveDeckFailed(let error), .createFolderFailed(let error), .renameFolderFailed(let error),
              .moveFolderFailed(let error), .deleteFolderFailed(let error), .loadHSKFailed(let error),
              .installHSKFailed(let error), .clearMistakesFailed(let error),
-             .suggestWordFailed(let error), .lookUpDictionaryFailed(let error),
-             .searchDictionaryFailed(let error):
+             .suggestWordFailed(let error), .lookUpDictionaryFailed(let error):
             error
         }
     }
@@ -81,7 +78,6 @@ nonisolated enum VocabularyError: LoggedError, Equatable, Sendable {
         case .clearMistakesFailed: "clearMistakes"
         case .suggestWordFailed: "suggestWord"
         case .lookUpDictionaryFailed: "lookUpDictionary"
-        case .searchDictionaryFailed: "searchDictionary"
         }
     }
 
@@ -99,7 +95,7 @@ nonisolated enum VocabularyError: LoggedError, Equatable, Sendable {
         } catch is CancellationError {
             return .cancelled
         } catch {
-            let domainError = error as? VocabularyDomainError ?? .unexpected(model: DomainErrorModel(error))
+            let domainError = VocabularyDomainError(error)
             let displayError = makeError(domainError)
             displayError.log()
             show(displayError)

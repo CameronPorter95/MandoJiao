@@ -1,3 +1,4 @@
+import DictionaryDomain
 import Foundation
 import VocabularyDomain
 
@@ -38,7 +39,32 @@ struct WordEditorState: Equatable {
     var foldedDeckSections: Set<String> = []
     /// A saved word's learnt mark, applied with the rest on Save.
     var isLearnt: Bool
-    let wasLearnt: Bool
+    private(set) var wasLearnt: Bool
+    /// A saved word opened by its id, until the store says what it holds.
+    private(set) var isLoading = false
+
+    /// A saved word known only by its id, read in by `load(_:)`.
+    init(loading wordID: UUID) {
+        self.init(wordID: wordID, draft: WordDraft(meanings: [], hanzi: "", pinyin: ""))
+        isLoading = true
+    }
+
+    init(word: Word) {
+        self.init(
+            wordID: word.id,
+            draft: WordDraft(meanings: word.meanings, hanzi: word.hanzi, pinyin: word.pinyin),
+            isLearnt: word.isLearnt
+        )
+    }
+
+    mutating func load(_ word: Word) {
+        let loaded = WordEditorState(word: word)
+        draft = loaded.draft
+        meaningsEdited = loaded.meaningsEdited
+        isLearnt = loaded.isLearnt
+        wasLearnt = loaded.wasLearnt
+        isLoading = false
+    }
 
     init(wordID: UUID?, draft: WordDraft, lookup: Lookup? = nil, isLearnt: Bool = false) {
         self.wordID = wordID

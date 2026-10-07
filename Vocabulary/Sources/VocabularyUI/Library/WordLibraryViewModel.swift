@@ -1,4 +1,5 @@
 import CoreUI
+import DictionaryDomain
 import Foundation
 import Observation
 import VocabularyDomain

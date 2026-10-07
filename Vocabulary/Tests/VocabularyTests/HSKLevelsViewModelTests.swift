@@ -1,7 +1,9 @@
+import DictionaryDomain
 import Foundation
 import Testing
 import CoreDomain
 import CoreTestSupport
+import DictionaryTestSupport
 import VocabularyTestSupport
 @testable import VocabularyDomain
 @testable import VocabularyUI
@@ -81,7 +83,7 @@ struct HSKLevelsViewModelTests {
         let log = EffectLog(viewModel.effects())
         viewModel.send(.appeared)
 
-        #expect(await log.contains(.showError(.loadHSKFailed(FakeVocabularyRepository.failure))))
+        #expect(await log.contains(.showError(.loadHSKFailed(.unexpected(model: FakeHSKRepository.failure.model)))))
         #expect(viewModel.state.levels.isEmpty)
     }
 }

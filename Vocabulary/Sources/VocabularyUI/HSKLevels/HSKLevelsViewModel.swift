@@ -1,5 +1,6 @@
 import CoreDomain
 import CoreUI
+import DictionaryDomain
 import Foundation
 import Observation
 import VocabularyDomain
@@ -69,7 +70,7 @@ public final class HSKLevelsViewModel {
                 // Closed before the list was read, not a failure.
             } catch {
                 let displayError = VocabularyError.loadHSKFailed(
-                    error as? VocabularyDomainError ?? .unexpected(model: DomainErrorModel(error))
+                    VocabularyDomainError(error)
                 )
                 displayError.log()
                 effectChannel.send(.showError(displayError))
