@@ -18,8 +18,8 @@ public enum WordLibraryFactory: InputRouteFactory {
             viewModel: viewModel,
             layout: input.layout,
             searchText: input.searchText,
-            makeEditor: { WordEditorFactory.makeRoute(dependencies: dependencies, input: $0) },
-            makeDictionary: { DictionaryFactory.makeRoute(dependencies: dependencies, input: DictionaryInput(headword: $0, addsToVocabulary: true)) }
+            makeEditor: { WordEditorFactory.makeRoute(dependencies: dependencies, input: WordEditorInput(target: $0, dictionary: input.dictionary)) },
+            makeDictionary: { input.dictionary.page($0, true) }
         )
     }
 }

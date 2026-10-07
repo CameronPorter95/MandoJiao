@@ -1,3 +1,4 @@
+import DictionaryDomain
 import Foundation
 import SwiftData
 import VocabularyDomain
@@ -55,7 +56,8 @@ public enum VocabularyStore {
 
     /// Only touches an empty store, so it never fights the user's own edits.
     @MainActor
-    public static func seedIfNeeded(_ container: ModelContainer) {
+    /// `hskWords` is read only when the store is empty.
+    public static func seedIfNeeded(_ container: ModelContainer, hskWords: () -> [HSKWord]) {
         let context = container.mainContext
         let existing = try? context.fetchCount(FetchDescriptor<VocabWord>())
         guard (existing ?? 0) == 0 else { return }
@@ -78,7 +80,8 @@ public enum VocabularyStore {
         try? context.save()
 
         // A fresh install starts with HSK 1; the other levels are added from the library.
-        if let words = try? BundledHSK.words() {
+        let words = hskWords()
+        if !words.isEmpty {
             try? BuiltInInstaller.install(HSK.plan(level: 1, words: words, topLevelFolders: 1), in: context)
         }
     }

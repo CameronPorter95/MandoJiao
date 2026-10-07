@@ -52,6 +52,16 @@
             skipped = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
+               BlueprintIdentifier = "DictionaryTests"
+               BuildableName = "DictionaryTests"
+               BlueprintName = "DictionaryTests"
+               ReferencedContainer = "container:Dictionary">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
                BlueprintIdentifier = "PracticeTests"
                BuildableName = "PracticeTests"
                BlueprintName = "PracticeTests"

@@ -8,16 +8,17 @@ is the part that changes.
 
 ## Status
 
-**The MVI migration is done, and the business-area restructure is at step 1 of 3.**
+**The MVI migration is done, and the business-area restructure is at step 2 of 3.**
 Every feature is an SPM package at the repo root, and the app target is the composition
 root only: `MandoJiaoApp`, `ContentView` and `LiveDependencies`, with `AppNavigation`
-and its coordinator. 428 tests in 46 suites: 13 in `Core`, 239 in `Vocabulary`, 171 in
-`Practice`, 5 in `Settings`, all runnable headlessly with `swift test` as well as
-through the scheme.
+and its coordinator. 432 tests in 49 suites: 13 in `Core`, 192 in `Vocabulary`, 51 in
+`Dictionary`, 171 in `Practice`, 5 in `Settings`, all runnable headlessly with
+`swift test` as well as through the scheme.
 
 ```
 Core/        CoreDomain  CorePersistence  CoreDesignSystem  CoreUI  CoreSound  CoreDI  CoreTestSupport
 Vocabulary/  VocabularyDomain  VocabularyData  VocabularyUI  VocabularyDI  VocabularyTestSupport
+Dictionary/  DictionaryDomain  DictionaryData  DictionaryUI  DictionaryDI  DictionaryTestSupport
 Practice/    PracticeDomain  PracticeData  PracticeUI  PracticeDI  PracticeTestSupport
 Settings/    SettingsUI  SettingsDI
 MandoJiao/   the app: MandoJiaoApp, ContentView, LiveDependencies, AppNavigation
@@ -35,11 +36,16 @@ record the earlier MVI migration and are history.
    now builds matching and flash card steps itself, so `ContentView.mixedStep` and
    `MixedLessonInput.makeStep` are gone. The three copies of `WordPair.reviewRow` became
    one, `PracticeUI/WordPair+Review.swift`.
-2. **To do. `Dictionary` out of `Vocabulary`.** CC-CEDICT, HSK, the lexicon, the
-   Dictionary tab and word page, their resources and tests. The page's saved state and
-   "add to vocabulary" become input from the app, so `Dictionary` never imports the
-   library. `HSK.tsv` and the dictionary data move with it: clean-build the app and
-   check the new package's resource bundle, per the trap in CLAUDE.md.
+2. **Done. `Dictionary` out of `Vocabulary`.** CC-CEDICT, the HSK list, the lexicon,
+   `Gloss`, `PinyinSpelling` and `SearchQuery`, the Dictionary tab and word page, both
+   `.tsv` resources and their tests. The seams are described in
+   [modularisation.md](modularisation.md#feature-packages). What stayed in the library:
+   `HSK.plan` and the HSK levels screen, which install decks; the word editor; and the
+   starter-word lexicon cost, which is about the library's starter words. The HSK
+   list's own contents are pinned in `DictionaryTests`. 239 + 51 tests became 192 + 51,
+   plus four new ones for opening a saved word by id and the saved-readings stream: 432
+   in all. The built app's `Dictionary_DictionaryData.bundle` was checked for both
+   files.
 3. **To do. `Progress` out of `Vocabulary`, then rename `Vocabulary` to `Library`.** Home,
    `TodayPlanner` and `TodayPlan` move to `Progress`; `Practice` then imports
    `ProgressDomain` for the plan. Word strength stays behind in `Library`. The rename

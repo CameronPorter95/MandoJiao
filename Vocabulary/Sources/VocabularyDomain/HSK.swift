@@ -1,34 +1,9 @@
+import DictionaryDomain
 import Foundation
-
-/// One word of the HSK 3.0 syllabus, 2025 revision.
-public nonisolated struct HSKWord: Equatable, Sendable {
-    /// 1 to 6, and 7 for levels 7 to 9, which the syllabus lists together.
-    public let level: Int
-    /// Lower is more common.
-    public let rank: Int
-    public let hanzi: String
-    public let pinyin: String
-    /// The dictionary's senses for this reading, as a word's meanings are: the first is the
-    /// headline.
-    public let meanings: [String]
-    /// True when every meaning was chosen by hand, so they stand in for the dictionary's
-    /// senses of this reading rather than heading them: 最 is "(the) most ..." and "best or
-    /// most extreme example", without CC-CEDICT's longer sense that repeats the first.
-    public let replacesSenses: Bool
-
-    public init(level: Int, rank: Int, hanzi: String, pinyin: String, meanings: [String], replacesSenses: Bool = false) {
-        self.level = level
-        self.rank = rank
-        self.hanzi = hanzi
-        self.pinyin = pinyin
-        self.meanings = meanings
-        self.replacesSenses = replacesSenses
-    }
-}
 
 /// How HSK words become folders and decks: HSK › HSK 1 › HSK 1 · 1, most common words first.
 public nonisolated enum HSK {
-    public static let levels = 1...7
+    public static let levels = HSKLevel.all
     /// The most a deck holds. A level is split evenly, so no deck is left with a few words.
     public static let deckSize = 50
 
@@ -36,7 +11,7 @@ public nonisolated enum HSK {
     public static func levelKey(_ level: Int) -> String { "hsk/\(level)" }
     public static func deckKey(_ level: Int, _ number: Int) -> String { "hsk/\(level)/\(number)" }
 
-    public static func levelName(_ level: Int) -> String { level == 7 ? "HSK 7-9" : "HSK \(level)" }
+    public static func levelName(_ level: Int) -> String { HSKLevel.name(level) }
     public static func deckName(_ level: Int, _ number: Int) -> String { "\(levelName(level)) · \(number)" }
 
     public static func deckCount(forWords count: Int) -> Int {
@@ -72,9 +47,4 @@ public nonisolated enum HSK {
             decks: decks
         )
     }
-}
-
-/// The bundled syllabus.
-public nonisolated protocol HSKRepository: Sendable {
-    func words() async throws -> [HSKWord]
 }

@@ -28,7 +28,8 @@ public enum FolderDetailFactory: NavigationInputRouteFactory {
                     folderID: input.folderID,
                     layout: input.wordList,
                     searchText: searchText,
-                    vocabulary: input.vocabulary
+                    vocabulary: input.vocabulary,
+                    dictionary: input.dictionary
                 )
             )
         }

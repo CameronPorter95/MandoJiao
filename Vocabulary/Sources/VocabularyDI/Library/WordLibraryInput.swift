@@ -12,11 +12,13 @@ public struct WordLibraryInput {
     public let searchText: String
     /// Shown until the list's own subscription delivers.
     public let vocabulary: Vocabulary
+    public let dictionary: DictionaryAccess
 
-    public init(folderID: UUID?, layout: WordListLayout, searchText: String, vocabulary: Vocabulary) {
+    public init(folderID: UUID?, layout: WordListLayout, searchText: String, vocabulary: Vocabulary, dictionary: DictionaryAccess) {
         self.folderID = folderID
         self.layout = layout
         self.searchText = searchText
         self.vocabulary = vocabulary
+        self.dictionary = dictionary
     }
 }

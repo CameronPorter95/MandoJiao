@@ -1,4 +1,5 @@
 import CoreDesignSystem
+import DictionaryDomain
 import SwiftUI
 import VocabularyDomain
 
@@ -62,6 +63,10 @@ struct WordEditorScreen: View {
                         Button("Delete word", role: .destructive) { onAction(.deleteTapped) }
                     }
                 }
+            }
+            .opacity(state.isLoading ? 0 : 1)
+            .overlay {
+                if state.isLoading { ProgressView() }
             }
             .scrollDismissesKeyboard(.interactively)
             .navigationTitle(state.title)

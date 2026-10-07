@@ -16,6 +16,7 @@ the interesting parts be tested without a simulator, a store or a microphone.
 ```
 Core/           Shared plumbing: errors, effects, the design system, DI, ToneEngine.
 Vocabulary/     Words, decks, folders, the mistakes list, home and library tabs.
+Dictionary/     CC-CEDICT, the HSK list and the lexicon, with the dictionary tab.
 Practice/       Every exercise, one folder each: Matching, Speaking, Flashcards, and
                 MixedLesson, which runs today's plan as one lesson.
 Settings/       The settings screen, editing what the lessons own.

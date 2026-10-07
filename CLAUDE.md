@@ -15,11 +15,10 @@ repeating mistakes already made.
 ## Architecture
 
 MVI + Clean Architecture in SPM packages, with a domain layer shaped for possible KMP
-sharing. One package per business area: `Core/`, `Vocabulary/`, `Practice/` and
-`Settings/` are SPM packages at the repo root, and `Vocabulary` is the reference
-vertical. The target shape is Library, Dictionary, Practice, Progress, Settings and
-Core; `Dictionary` and `Progress` are still inside `Vocabulary`, which becomes
-`Library`. A new exercise is a folder in `Practice`, never a new package. The app target
+sharing. One package per business area: `Core/`, `Vocabulary/`, `Dictionary/`,
+`Practice/` and `Settings/` are SPM packages at the repo root, and `Vocabulary` is the
+reference vertical. The target shape is Library, Dictionary, Practice, Progress, Settings
+and Core; `Progress` is still inside `Vocabulary`, which becomes `Library`. A new exercise is a folder in `Practice`, never a new package. The app target
 holds only the entry point and the composition root. See
 `Documentation/modularisation-migration.md` for the state and what is left.
 
@@ -30,7 +29,7 @@ holds only the entry point and the composition root. See
 - `Documentation/code-comments.md`: when a comment is warranted, and how long
 
 Packages: `Core` (`CoreDomain`, `CorePersistence`, `CoreSound`, `CoreDesignSystem`,
-`CoreUI`, `CoreDI`, `CoreTestSupport`), `Vocabulary`, `Practice` and `Settings`, each with up to four targets: `{X}Domain`, `{X}Data`, `{X}UI`, `{X}DI`.
+`CoreUI`, `CoreDI`, `CoreTestSupport`), `Vocabulary`, `Dictionary`, `Practice` and `Settings`, each with up to four targets: `{X}Domain`, `{X}Data`, `{X}UI`, `{X}DI`.
 The rules most easily broken:
 
 - A feature package may depend only on another package's `Domain` product.
@@ -58,7 +57,7 @@ Moving code must not move a pinned cost out of the test suite.
 ## Build and test
 
 ```sh
-# Everything, on the simulator: all four packages' tests.
+# Everything, on the simulator: all five packages' tests.
 xcodebuild build -scheme MandoJiao -destination 'platform=iOS Simulator,id=<udid>'
 xcodebuild test  -scheme MandoJiao -destination 'platform=iOS Simulator,id=<udid>'
 
@@ -76,9 +75,9 @@ test files and reports a pass for tests that never ran. This has happened three
 times; once it reported `TEST SUCCEEDED` while eight new tests were skipped. A
 green result on its own is not evidence that anything ran.
 
-`xcodebuild test` prints one `Test run with` line per test bundle, four in all.
-Add them up. Current suite: 428 tests in 46 suites: 13 in `Core`, 239 in `Vocabulary`,
-171 in `Practice`, 5 in `Settings`. The app target has no tests of
+`xcodebuild test` prints one `Test run with` line per test bundle, five in all.
+Add them up. Current suite: 432 tests in 49 suites: 13 in `Core`, 192 in `Vocabulary`,
+51 in `Dictionary`, 171 in `Practice`, 5 in `Settings`. The app target has no tests of
 its own. If a bundle's line is missing, it did not run.
 
 ```sh
@@ -157,7 +156,8 @@ not enough; if the behaviour reverses, a test should say so.
 - **Adding a resource to a package's manifest needs a clean app build.** The incremental
   Xcode build kept the old manifest and shipped `VocabularyData`'s bundle without the new
   `HSK.tsv`, so the app reported the list unreadable while `swift test` passed. Check the
-  built app's `Vocabulary_VocabularyData.bundle` when a resource is new.
+  built app's `Dictionary_DictionaryData.bundle`, where the `.tsv` files now live, when a
+  resource is new or moves.
 - **A local package's test target needs a file reference in the project.** Without
   one the scheme lists it and xcodebuild skips it silently, reporting a pass for the
   app's tests alone.

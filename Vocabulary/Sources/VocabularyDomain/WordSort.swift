@@ -1,3 +1,4 @@
+import DictionaryDomain
 import Foundation
 
 /// How the library's lists of words are ordered: all of them, a folder's, or a deck's.

@@ -16,11 +16,15 @@ let package = Package(
     ],
     dependencies: [
         .package(path: "../Core"),
+        .package(path: "../Dictionary"),
     ],
     targets: [
         .target(
             name: "VocabularyDomain",
-            dependencies: [.product(name: "CoreDomain", package: "Core")]
+            dependencies: [
+                .product(name: "CoreDomain", package: "Core"),
+                .product(name: "DictionaryDomain", package: "Dictionary"),
+            ]
         ),
         .target(
             name: "VocabularyData",
@@ -28,13 +32,14 @@ let package = Package(
                 "VocabularyDomain",
                 .product(name: "CoreDomain", package: "Core"),
                 .product(name: "CorePersistence", package: "Core"),
-            ],
-            resources: [.copy("Resources/Dictionary.tsv"), .copy("Resources/HSK.tsv")]
+                .product(name: "DictionaryDomain", package: "Dictionary"),
+            ]
         ),
         .target(
             name: "VocabularyUI",
             dependencies: [
                 "VocabularyDomain",
+                .product(name: "DictionaryDomain", package: "Dictionary"),
                 .product(name: "CoreDomain", package: "Core"),
                 .product(name: "CoreUI", package: "Core"),
                 .product(name: "CoreDesignSystem", package: "Core"),
@@ -45,19 +50,24 @@ let package = Package(
             name: "VocabularyDI",
             dependencies: [
                 "VocabularyDomain", "VocabularyData", "VocabularyUI",
+                .product(name: "DictionaryDomain", package: "Dictionary"),
                 .product(name: "CoreDI", package: "Core"),
             ],
             swiftSettings: mainActorByDefault
         ),
         .target(
             name: "VocabularyTestSupport",
-            dependencies: ["VocabularyDomain", .product(name: "CoreDomain", package: "Core")],
+            dependencies: ["VocabularyDomain", .product(name: "DictionaryDomain", package: "Dictionary"), .product(name: "CoreDomain", package: "Core")],
             path: "TestSupport"
         ),
         .testTarget(
             name: "VocabularyTests",
             dependencies: [
                 "VocabularyDomain", "VocabularyData", "VocabularyUI", "VocabularyDI", "VocabularyTestSupport",
+                .product(name: "DictionaryDomain", package: "Dictionary"),
+                .product(name: "DictionaryTestSupport", package: "Dictionary"),
+                // The bundled HSK list, for the tests that install it into a real store.
+                .product(name: "DictionaryDI", package: "Dictionary"),
                 .product(name: "CoreDomain", package: "Core"),
                 .product(name: "CorePersistence", package: "Core"),
                 .product(name: "CoreUI", package: "Core"),

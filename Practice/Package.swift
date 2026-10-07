@@ -18,11 +18,16 @@ let package = Package(
     dependencies: [
         .package(path: "../Core"),
         .package(path: "../Vocabulary"),
+        .package(path: "../Dictionary"),
     ],
     targets: [
         .target(
             name: "PracticeDomain",
-            dependencies: [.product(name: "VocabularyDomain", package: "Vocabulary")]
+            dependencies: [
+                .product(name: "VocabularyDomain", package: "Vocabulary"),
+                // Gloss, to read a typed answer as a meaning is written.
+                .product(name: "DictionaryDomain", package: "Dictionary"),
+            ]
         ),
         .target(
             name: "PracticeData",
