@@ -1,11 +1,7 @@
 import CoreDI
-import FlashcardsDI
-import MatchingDI
-import MatchingDomain
-import MixedLessonDI
-import MixedLessonDomain
+import PracticeDI
+import PracticeDomain
 import SettingsDI
-import SpeakingDI
 import SwiftUI
 import VocabularyDI
 import VocabularyDomain
@@ -81,27 +77,11 @@ struct ContentView: View {
                     navigation: navigation.mixedLesson,
                     input: MixedLessonInput(
                         plan: plan,
-                        recordResults: VocabularyRepositoryFactory.makeRecordLessonResultsUseCase(dependencies: dependencies),
-                        makeStep: { [dependencies] step, onComplete in mixedStep(step, dependencies: dependencies, onComplete: onComplete) }
+                        recordResults: VocabularyRepositoryFactory.makeRecordLessonResultsUseCase(dependencies: dependencies)
                     )
                 )
             }
         }
-    }
-}
-
-/// A mixed lesson's exercise steps belong to the exercise packages, which the mixed lesson
-/// cannot reach, so the app builds each from its own package.
-@MainActor
-private func mixedStep(_ step: MixedStep, dependencies: Dependencies, onComplete: @escaping ([Answer]) -> Void) -> AnyView {
-    switch step {
-    case .match(let pairs):
-        AnyView(MatchingFactory.makeStepRoute(dependencies: dependencies, pairs: pairs, onComplete: onComplete))
-    case .flashcard(let card):
-        AnyView(FlashcardsFactory.makeStepRoute(card: card, onComplete: onComplete))
-    case .teach:
-        // The mixed lesson shows a word itself; it never asks for this.
-        AnyView(EmptyView())
     }
 }
 

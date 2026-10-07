@@ -44,9 +44,14 @@ flowchart TD
 ```
 
 **Take only the targets you need.** A package with no persistence and no platform
-service has no `{X}Data`. `Matching` is the example: it reads words and records
-results through `VocabularyDomain` use cases, and owns nothing that touches a
-framework except its settings.
+service has no `{X}Data`. `Settings` is the example: every setting it edits is owned by
+the package that reads it, so it has only `UI` and `DI`.
+
+**A package is a business area, not a screen.** It holds every screen, rule and store
+of one part of the product, the way a team would own it. Inside a target, each
+resource or exercise is a folder (`PracticeUI/Matching/`, `PracticeUI/Speaking/`), and
+the folder boundary is a convention, not a compiler check. That trade is deliberate:
+see [Feature packages](#feature-packages).
 
 **Products.** `{X}Domain` is the only one peers may depend on. `{X}DI` is a product for
 `Application` only. `{X}Data` is **never** a product.
@@ -90,25 +95,48 @@ that does the injecting, not a peer.
 
 ## Feature packages
 
+One package per business area. The target shape, decided on 2026-10-07:
+
 | Package | Owns | Targets |
 | --- | --- | --- |
-| `Vocabulary` | Words, decks and folders, the mistakes list, the home and library tabs, the word editor and deck detail. `WordPair`, `LessonRequest`, `VocabWord`, `Deck`, sample seeding. | all four |
-| `Matching` | The matching exercise. `MatchingPlan`, `MatchingPlanBuilder`, `MatchingBoard`, the matching view model, board and tile views, matching settings. | all four; `Data` holds only settings storage |
-| `Speaking` | The speaking lesson. `SpeakingPlan`, `SpeakingPlanBuilder`, `AnswerGrader`, `AnswerStrictness`, `Endpointing`, the `SpeechRecognising` seam and `DictationRecogniser`, `SpeechLog`, the view model and card views, speaking settings. | all four |
-| `Flashcards` | The flash card exercise. `Flashcard`, `FlashcardPlanBuilder`, which chooses each card's direction and format, `FlashcardGrader`, `FlashcardLesson`, the view model and card view. | `Domain`, `UI`, `DI`: no settings yet |
-| `MixedLesson` | Today's plan as one lesson. `MixedLesson`, which turns a `TodayPlan`'s steps into exercises and keeps every answer, the teach view and the screen. The matching and flash card steps come from their packages, built by the app and handed in. | `Domain`, `UI`, `DI` |
-| `Settings` | The settings screen. Edits matching and speaking settings through their domains. | `UI`, `DI` |
+| `Library` | The learner's own words, decks and folders: the library tab, deck and folder detail, the word editor, the mistakes list, the store, the answer record, and each word's strength (`WordMemory`, bands, Mark as learnt). `WordPair`, `LessonRequest`, `LessonResults`, `Answer`. | all four |
+| `Dictionary` | Reference data the learner did not write: CC-CEDICT, the HSK lists, the lexicon, the Dictionary tab and word page, and later Tatoeba sentences. Knows nothing of `Library`. | all four |
+| `Practice` | Every exercise and the lesson that mixes them: matching, speaking (read aloud), flash cards, later tracing and translation. Grading, plan builders, the recogniser, each exercise's settings, and `MixedLesson`, which builds its own steps. | all four |
+| `Progress` | What to do next and how it is going: Home, `TodayPlanner` and `TodayPlan`, later streaks, goals and rewards. | all four as needed |
+| `Settings` | The settings screen. Edits each setting through the domain of the package that owns it. | `UI`, `DI` |
 
-**The home screen lives in `Vocabulary`,** because everything on it is vocabulary data:
-the word count, the mistakes list, the decks. Starting a lesson is a navigation event
-(`didRequestMatching`, `didRequestSpeaking`) that `Application` turns into a presentation.
+**Where it stands.** `Practice` exists. `Dictionary`, `Progress` and the rename of
+`Vocabulary` to `Library` are still to come, so today `Vocabulary` holds what will be
+`Library`, `Dictionary` and `Progress`. See
+[modularisation-migration.md](modularisation-migration.md#option-a-one-package-per-business-area).
 
-**Settings are owned by the feature that reads them.** Strictness and the card limit
-belong to `Speaking`; rounds and pinyin visibility belong to `Matching`. The settings
-screen is a composition over both domains. The alternative, `Settings` owning every
-preference, forces `Speaking → Settings → Speaking`, which SPM rejects. Storage keys are
-unchanged from `Preferences.Key`, and strictness raw values remain storage (see
+**Why business areas, not one package per screen.** `Matching`, `Speaking` and
+`Flashcards` were each a one-screen package, so the mixed lesson, which needs all three,
+became a fourth package whose steps had to be built by the app and handed back in. Every
+new exercise would have added a package plus app wiring. In one `Practice` package the
+mixed lesson names the exercises directly. The cost: one exercise's folder can now
+reach into another's internals, and nothing but review stops it.
+
+**Word strength stays in `Library`.** Word rows show bands, and Home needs them too.
+If strength moved to `Progress`, `Library` would need `ProgressDomain` and `Progress`
+would need `LibraryDomain`, a cycle SPM rejects.
+
+**`Dictionary` does not know about the library.** Whether a dictionary word is saved,
+and the "add to vocabulary" action, reach the dictionary page as input from the app,
+so `Dictionary` never imports `LibraryDomain` and `Library` can use `DictionaryDomain`
+for lookups.
+
+**Settings are owned by the package that reads them.** Strictness and the card limit
+belong to speaking, and rounds and pinyin visibility to matching, both in `Practice`;
+lesson word filters belong to `Library`. The settings screen is a composition over those
+domains. The alternative, `Settings` owning every preference, forces
+`Practice → Settings → Practice`, which SPM rejects. Storage keys are unchanged from
+`Preferences.Key`, and strictness raw values remain storage (see
 [CLAUDE.md](../CLAUDE.md#decisions-already-settled)).
+
+**Starting a lesson is a navigation event.** Home and deck detail say
+`didRequestMatching` or `didRequestSpeaking`, and `Application` turns that into a
+presentation of a `Practice` screen.
 
 ---
 
@@ -169,7 +197,7 @@ floor the app already has. It changes nothing about the iOS build.
 **Build for macOS with `xcodebuild`:**
 
 ```
-xcodebuild -scheme SpeakingDomain -destination 'platform=macOS' build
+xcodebuild -scheme PracticeDomain -destination 'platform=macOS' build
 ```
 
 **A seam is what keeps a platform service out of a target.** `MatchSoundPlaying` and
@@ -207,17 +235,23 @@ Two kinds of seam, in different places:
 A view factory protocol must name a `View`, so it cannot live in `Domain` without
 destroying its portability.
 
-Package graph (target):
+Package graph, target shape. Every arrow is to the peer's `Domain` product only:
 
 ```
 Core        <- everyone
-Vocabulary  <- Matching, Speaking
-Matching    <- Settings
-Speaking    <- Settings
+Dictionary  <- Library
+Library     <- Practice, Progress, Settings
+Progress    <- Practice      (the TodayPlan the mixed lesson runs)
+Practice    <- Settings
 Settings    (no inbound edges)
 ```
 
-Only `Vocabulary`, `Matching` and `Speaking` need a `Domain` seam for peers.
+Dependencies point down towards `Library` and `Dictionary`. Nothing points back up:
+`Library` never imports `Practice` or `Progress`, so a lesson's numbers that Library
+screens need (a board's size, the word floor) are handed in by the app as values.
+
+Today, before steps 2 and 3, the graph is `Vocabulary <- Practice, Settings` and
+`Practice <- Settings`.
 
 ---
 
@@ -253,8 +287,12 @@ was opened" pushes onto the library's own stack rather than leaving the package.
 The library is two columns, the tree beside a `NavigationStack`, not three. With a middle
 column, re-entering it on iPhone sent its screen a disappear while it was still showing,
 which ended the route's effects loop and live data; a lesson request then waited until
-the screen next appeared. A package with one screen that has a way
-out, like `Speaking` or `Matching`, uses that screen's navigation as its bundle.
+the screen next appeared.
+
+`Practice` has no bundle yet: each exercise's screen has its own navigation
+(`MatchingNavigation`, `SpeakingNavigation`, `FlashcardsNavigation`,
+`MixedLessonNavigation`), each a field of `AppNavigation`. A `PracticeNavigation`
+bundle is the obvious tidy-up once a fifth screen arrives.
 
 **Flow constructors live in `{X}DI`,** named for the flow (`.app(...)`): the bundle's
 `VocabularyNavigation+Flows.swift` at the target root composes each screen's
@@ -345,7 +383,11 @@ folder is `+Flow`.
 2. **Is the second consumer real?** A preview or a test is not a consumer.
 3. **Would deleting the feature delete this code?** If yes it belongs to the feature,
    however generic it looks. Deleting the speaking lesson would delete `AnswerGrader`, so it
-   lives in `Speaking` even though it is the most reusable code in the app.
+   lives in `Practice` even though it is the most reusable code in the app.
+4. **Which business area would own it?** A new exercise goes in `Practice`, a new
+   reference source in `Dictionary`, a new goal or streak in `Progress`, anything the
+   learner writes or that describes their words in `Library`. A new package is only for
+   a new area of the product, never for a new screen.
 
 ### Share domain models, not entities
 
@@ -372,7 +414,7 @@ source layout. Not one per layer.
 with `path: "TestSupport"`, because it is neither shipping code nor a test. It holds
 shared test doubles and fixtures, depends on `{X}Domain`, and
 is depended on by `{X}Tests` and peers' tests. `ScriptedRecogniser` belongs in
-`SpeakingTestSupport`; a fake `VocabularyRepository` belongs in `VocabularyTestSupport`. A fake
+`PracticeTestSupport`; a fake `VocabularyRepository` belongs in `VocabularyTestSupport`. A fake
 used by exactly one test file stays private to that file; hoist when a second consumer
 appears.
 

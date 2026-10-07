@@ -15,8 +15,11 @@ repeating mistakes already made.
 ## Architecture
 
 MVI + Clean Architecture in SPM packages, with a domain layer shaped for possible KMP
-sharing. `Core/`, `Vocabulary/`, `Speaking/`, `Matching/` and `Settings/` are SPM
-packages at the repo root, and `Vocabulary` is the reference vertical. The app target
+sharing. One package per business area: `Core/`, `Vocabulary/`, `Practice/` and
+`Settings/` are SPM packages at the repo root, and `Vocabulary` is the reference
+vertical. The target shape is Library, Dictionary, Practice, Progress, Settings and
+Core; `Dictionary` and `Progress` are still inside `Vocabulary`, which becomes
+`Library`. A new exercise is a folder in `Practice`, never a new package. The app target
 holds only the entry point and the composition root. See
 `Documentation/modularisation-migration.md` for the state and what is left.
 
@@ -27,8 +30,7 @@ holds only the entry point and the composition root. See
 - `Documentation/code-comments.md`: when a comment is warranted, and how long
 
 Packages: `Core` (`CoreDomain`, `CorePersistence`, `CoreSound`, `CoreDesignSystem`,
-`CoreUI`, `CoreDI`, `CoreTestSupport`), `Vocabulary`, `Speaking`, `Matching`, `Flashcards`, `MixedLesson` and
-`Settings`, each with up to four targets: `{X}Domain`, `{X}Data`, `{X}UI`, `{X}DI`.
+`CoreUI`, `CoreDI`, `CoreTestSupport`), `Vocabulary`, `Practice` and `Settings`, each with up to four targets: `{X}Domain`, `{X}Data`, `{X}UI`, `{X}DI`.
 The rules most easily broken:
 
 - A feature package may depend only on another package's `Domain` product.
@@ -56,13 +58,13 @@ Moving code must not move a pinned cost out of the test suite.
 ## Build and test
 
 ```sh
-# Everything, on the simulator: all seven packages' tests.
+# Everything, on the simulator: all four packages' tests.
 xcodebuild build -scheme MandoJiao -destination 'platform=iOS Simulator,id=<udid>'
 xcodebuild test  -scheme MandoJiao -destination 'platform=iOS Simulator,id=<udid>'
 
 # One package, headless on the Mac, in seconds.
-cd Speaking && swift test
-cd Speaking && swift test --filter StrictnessTests
+cd Practice && swift test
+cd Practice && swift test --filter StrictnessTests
 ```
 
 Get `<udid>` from `xcrun simctl list devices available`. Xcode 27 did not resolve
@@ -74,9 +76,9 @@ test files and reports a pass for tests that never ran. This has happened three
 times; once it reported `TEST SUCCEEDED` while eight new tests were skipped. A
 green result on its own is not evidence that anything ran.
 
-`xcodebuild test` prints one `Test run with` line per test bundle, seven in all.
+`xcodebuild test` prints one `Test run with` line per test bundle, four in all.
 Add them up. Current suite: 428 tests in 46 suites: 13 in `Core`, 239 in `Vocabulary`,
-96 in `Speaking`, 41 in `Matching`, 29 in `Flashcards`, 5 in `Settings`, 5 in `MixedLesson`. The app target has no tests of
+171 in `Practice`, 5 in `Settings`. The app target has no tests of
 its own. If a bundle's line is missing, it did not run.
 
 ```sh

@@ -1,5 +1,4 @@
-import MatchingDomain
-import SpeakingDomain
+import PracticeDomain
 import VocabularyDomain
 
 /// The settings belong to the speaking and matching lessons, which this package cannot

@@ -1,6 +1,5 @@
 import CoreDesignSystem
-import MatchingDomain
-import SpeakingDomain
+import PracticeDomain
 import SwiftUI
 
 struct SettingsScreen: View {

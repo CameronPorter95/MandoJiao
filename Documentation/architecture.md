@@ -405,7 +405,7 @@ because each subscription belongs to the repository it came through: two instanc
 leave the library deaf to the word editor's saves. A test pins that.
 
 A cross-package use case arrives as input. `SpeakingFactory` takes
-`RecordLessonResultsUseCase` in `SpeakingInput`, because `Speaking` may not import
+`RecordLessonResultsUseCase` in `SpeakingInput`, because `Practice` may not import
 `VocabularyDI`; the app, which sees both, builds it and hands it over.
 
 No lesson reaches a global: `SpeakingFactory` and `MatchingFactory` hand their view
@@ -458,7 +458,7 @@ packages may depend on.
 **Core owns mechanism, not features.** The audio engine, the SwiftData container
 plumbing, design tokens. Core owns a *resource* only when it is genuinely app-level.
 A resource with one real consumer belongs to that consumer, however generic it looks.
-The recogniser has one consumer, the speaking lesson, so it lives in `Speaking`, not Core.
+The recogniser has one consumer, the speaking lesson, so it lives in `Practice`, not Core.
 
 **Share domain models, never entities.** An entity is the data layer's private
 vocabulary for the current store schema; making it public turns that schema into a
@@ -478,7 +478,7 @@ module boundary.
 > repository protocol in `Domain/`, the `@ModelActor` local source, repository and
 > versioned schema in `Data/`, four screens in `UI/`, and a stateless factory per screen
 > in `DI/`.
-> `MandoJiao/Speaking/` shows a view model driving platform seams (the recogniser, the
+> `Practice/`'s speaking folders show a view model driving platform seams (the recogniser, the
 > audio session) and a settings repository. See
 > [modularisation-migration.md](modularisation-migration.md#sequencing).
 >

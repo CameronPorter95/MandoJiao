@@ -1,8 +1,7 @@
 import Foundation
-import MatchingDomain
+import PracticeDomain
 import VocabularyDomain
 @testable import SettingsUI
-import SpeakingDomain
 import Testing
 
 @Suite("Settings screen")

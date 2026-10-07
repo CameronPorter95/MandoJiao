@@ -7,7 +7,7 @@ the diff in front of you.
 
 Rules are stated here and justified there. Where an item links a decision, the
 reasoning lives in that decision and is not repeated. `MandoJiao/Vocabulary/` is the
-reference implementation for every layer, and `MandoJiao/Speaking/` for a view model
+reference implementation for every layer, and `Practice/`'s speaking folders for a view model
 driving platform seams; copying them is the fastest way to pass this list.
 
 Module and target dependency rules are not repeated here either; they are in
