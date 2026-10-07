@@ -53,6 +53,12 @@ struct WordEditorScreen: View {
 
                 if state.canDelete {
                     Section {
+                        Toggle("Learnt", isOn: Binding(get: { state.isLearnt }, set: { onAction(.learntToggled($0)) }))
+                    } footer: {
+                        Text("A learnt word counts as known at once, then fades like any other if it isn't practised. Settings can leave learnt words out of lessons.")
+                    }
+
+                    Section {
                         Button("Delete word", role: .destructive) { onAction(.deleteTapped) }
                     }
                 }

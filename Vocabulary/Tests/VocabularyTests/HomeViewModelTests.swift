@@ -10,6 +10,7 @@ import VocabularyTestSupport
 @Suite("Home")
 @MainActor
 struct HomeViewModelTests {
+    private let lessonSettings = FakeLessonSettings()
     private let repository = FakeVocabularyRepository(Fixtures.vocabulary)
     private let rounds = Box(10)
 
@@ -18,6 +19,7 @@ struct HomeViewModelTests {
             minimumMatchingWords: 5,
             quickPracticeRounds: { rounds.value },
             observeVocabulary: ObserveVocabularyUseCase(repository: repository),
+            getLessonSettings: GetLessonSettingsUseCase(repository: lessonSettings),
             clearMistakes: ClearMistakesUseCase(repository: repository)
         )
         let log = EffectLog(viewModel.effects())
@@ -84,6 +86,30 @@ struct HomeViewModelTests {
         try? await repository.recordResults(LessonResults(misses: [:], cleanSolves: [Fixtures.water.id: 1], source: .folder(Fixtures.starter.id)))
         #expect(await waitUntil { home.state.current == .folder(Fixtures.starter.id) })
         #expect(home.state.chosen == nil)
+    }
+
+    @Test("with skip learnt words on, quick practice and carrying on leave learnt words out, read afresh on each appearance")
+    func skippingLearnt() async throws {
+        try await repository.setLearnt(wordID: Fixtures.water.id, isLearnt: true)
+        let (home, log) = await makeHome()
+        #expect(await waitUntil { home.state.vocabulary.words.contains { $0.isLearnt } })
+        #expect(home.state.usableWordCount == 5)
+
+        lessonSettings.setSkipsLearntWords(true)
+        home.send(.appeared)
+        #expect(home.state.usableWordCount == 4)
+        #expect(!home.state.canStartQuickPractice)
+        home.send(.sourceChosen(.deck(Fixtures.fullDeck.id)))
+        #expect(home.state.currentWordCount == 4)
+        home.send(.continueTapped(.flashcards))
+        #expect(await waitUntil { log.effects.count == 1 })
+        guard case .requestFlashcards(let request) = log.effects.first else {
+            Issue.record("expected a flash card request")
+            return
+        }
+        #expect(!request.pool.contains { $0.id == Fixtures.water.id })
+        // The mistakes list still drills a learnt word.
+        #expect(home.state.mistakeWords.count == 3)
     }
 
     @Test("quick practice asks for a matching lesson over every usable word")

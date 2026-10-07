@@ -10,6 +10,7 @@ public final class HomeViewModel {
 
     private let effectChannel = EffectChannel<HomeEffect>()
     private let observeVocabulary: ObserveVocabularyUseCase
+    private let getLessonSettings: GetLessonSettingsUseCase
     private let clearMistakes: ClearMistakesUseCase
     private let quickPracticeRounds: () -> Int
     private var observation: Task<Void, Never>?
@@ -20,11 +21,13 @@ public final class HomeViewModel {
         minimumMatchingWords: Int,
         quickPracticeRounds: @escaping () -> Int,
         observeVocabulary: ObserveVocabularyUseCase,
+        getLessonSettings: GetLessonSettingsUseCase,
         clearMistakes: ClearMistakesUseCase
     ) {
         state = HomeState(minimumMatchingWords: minimumMatchingWords, quickPracticeRounds: quickPracticeRounds())
         self.quickPracticeRounds = quickPracticeRounds
         self.observeVocabulary = observeVocabulary
+        self.getLessonSettings = getLessonSettings
         self.clearMistakes = clearMistakes
     }
 
@@ -33,6 +36,8 @@ public final class HomeViewModel {
     func send(_ action: HomeAction) {
         switch action {
         case .appeared:
+            // On every appearance, since the setting can change while this is underneath.
+            state.lessonSettings = getLessonSettings()
             state.quickPracticeRounds = quickPracticeRounds()
             guard observation == nil else { return }
             let stream = observeVocabulary()
@@ -47,12 +52,12 @@ public final class HomeViewModel {
             observation = nil
 
         case .quickPracticeTapped:
-            requestMatching(title: "All words", pool: state.vocabulary.usableWords.pairs)
+            requestMatching(title: "All words", pool: state.quickPracticeWords.pairs)
 
         case .continueTapped(let exercise):
             guard let source = state.current, let name = state.currentName, state.canStart(exercise) else { return }
             let request = LessonRequest(
-                title: name, pool: state.vocabulary.words(in: source).pairs, source: source,
+                title: name, pool: state.currentLessonWords.pairs, source: source,
                 otherWords: state.vocabulary.usableWords.pairs
             )
             switch exercise {

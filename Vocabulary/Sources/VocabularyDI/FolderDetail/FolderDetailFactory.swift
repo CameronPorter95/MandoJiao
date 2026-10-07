@@ -14,6 +14,7 @@ public enum FolderDetailFactory: NavigationInputRouteFactory {
             minimumMatchingWords: input.minimumMatchingWords,
             vocabulary: input.vocabulary,
             observeVocabulary: ObserveVocabularyUseCase(repository: repository),
+            getLessonSettings: LessonSettingsFactory.makeGetSettingsUseCase(dependencies: dependencies),
             createDeck: CreateDeckUseCase(repository: repository),
             createFolder: CreateFolderUseCase(repository: repository),
             renameFolder: RenameFolderUseCase(repository: repository),

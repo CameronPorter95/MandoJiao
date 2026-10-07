@@ -58,6 +58,17 @@ struct SettingsScreen: View {
             }
 
             Section {
+                Toggle(
+                    "Skip learnt words",
+                    isOn: Binding(get: { state.skipsLearntWords }, set: { onAction(.skipsLearntWordsChanged($0)) })
+                )
+            } header: {
+                Text("Words")
+            } footer: {
+                Text("Leaves words you have marked learnt out of lessons from a deck, a folder and quick practice. The mistakes list still includes them.")
+            }
+
+            Section {
                 Link("CC-CEDICT", destination: URL(string: "https://cc-cedict.org/wiki/")!)
                 Link("CC BY-SA 4.0 licence", destination: URL(string: "https://creativecommons.org/licenses/by-sa/4.0/")!)
                 Link("Complete HSK Vocabulary", destination: URL(string: "https://github.com/drkameleon/complete-hsk-vocabulary")!)

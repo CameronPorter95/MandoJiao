@@ -6,6 +6,7 @@ import VocabularyDomain
 /// What the user is told when a library change fails, and what gets logged.
 nonisolated enum VocabularyError: LoggedError, Equatable, Sendable {
     case saveWordFailed(VocabularyDomainError)
+    case setLearntFailed(VocabularyDomainError)
     case deleteWordsFailed(VocabularyDomainError)
     case createDeckFailed(VocabularyDomainError)
     case renameDeckFailed(VocabularyDomainError)
@@ -26,6 +27,7 @@ nonisolated enum VocabularyError: LoggedError, Equatable, Sendable {
     var errorDescription: String? {
         switch self {
         case .saveWordFailed: "The word could not be saved."
+        case .setLearntFailed: "The word could not be marked."
         case .deleteWordsFailed: "The words could not be deleted."
         case .createDeckFailed: "The deck could not be created."
         case .renameDeckFailed: "The deck could not be renamed."
@@ -47,7 +49,7 @@ nonisolated enum VocabularyError: LoggedError, Equatable, Sendable {
 
     var domainError: VocabularyDomainError {
         switch self {
-        case .saveWordFailed(let error), .deleteWordsFailed(let error), .createDeckFailed(let error),
+        case .saveWordFailed(let error), .setLearntFailed(let error), .deleteWordsFailed(let error), .createDeckFailed(let error),
              .renameDeckFailed(let error), .updateDeckFailed(let error), .deleteDeckFailed(let error),
              .moveDeckFailed(let error), .createFolderFailed(let error), .renameFolderFailed(let error),
              .moveFolderFailed(let error), .deleteFolderFailed(let error), .loadHSKFailed(let error),
@@ -63,6 +65,7 @@ nonisolated enum VocabularyError: LoggedError, Equatable, Sendable {
     var logContext: String {
         switch self {
         case .saveWordFailed: "saveWord"
+        case .setLearntFailed: "setLearnt"
         case .deleteWordsFailed: "deleteWords"
         case .createDeckFailed: "createDeck"
         case .renameDeckFailed: "renameDeck"

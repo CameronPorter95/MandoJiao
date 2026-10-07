@@ -36,12 +36,17 @@ struct WordEditorState: Equatable {
     var deckID: UUID?
     /// By `DeckSection.id`. Only for while the editor is open.
     var foldedDeckSections: Set<String> = []
+    /// A saved word's learnt mark, applied with the rest on Save.
+    var isLearnt: Bool
+    let wasLearnt: Bool
 
-    init(wordID: UUID?, draft: WordDraft, lookup: Lookup? = nil) {
+    init(wordID: UUID?, draft: WordDraft, lookup: Lookup? = nil, isLearnt: Bool = false) {
         self.wordID = wordID
         self.draft = draft
         self.lookup = lookup
         self.meaningsEdited = !draft.meanings.isEmpty
+        self.isLearnt = isLearnt
+        self.wasLearnt = isLearnt
     }
 
     var title: String { wordID == nil ? "New word" : "Edit word" }
@@ -164,6 +169,7 @@ enum WordEditorAction: Equatable {
     case deckChosen(UUID?)
     case deckSectionToggled(String)
     case saveTapped
+    case learntToggled(Bool)
     case deleteTapped
     case cancelTapped
 }

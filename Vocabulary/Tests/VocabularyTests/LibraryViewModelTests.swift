@@ -9,6 +9,7 @@ import VocabularyTestSupport
 @Suite("Library")
 @MainActor
 struct LibraryViewModelTests {
+    private let lessonSettings = FakeLessonSettings()
     private let repository = FakeVocabularyRepository(Fixtures.nested)
     private let layout = FakeLibraryLayoutRepository()
 
@@ -16,6 +17,7 @@ struct LibraryViewModelTests {
         let viewModel = LibraryViewModel(
             minimumMatchingWords: 5,
             observeVocabulary: ObserveVocabularyUseCase(repository: repository),
+            getLessonSettings: GetLessonSettingsUseCase(repository: lessonSettings),
             createFolder: CreateFolderUseCase(repository: repository),
             renameFolder: RenameFolderUseCase(repository: repository),
             moveFolder: MoveFolderUseCase(repository: repository),

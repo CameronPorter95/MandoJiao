@@ -20,6 +20,13 @@ public nonisolated enum StrengthBand: Int, Comparable, CaseIterable, Sendable {
     }
 }
 
+public nonisolated extension Array where Element == Word {
+    /// How many are in each band now. Bands with none are left out.
+    func bandCounts(at now: Date) -> [StrengthBand: Int] {
+        reduce(into: [:]) { counts, word in counts[word.band(at: now), default: 0] += 1 }
+    }
+}
+
 /// What the app believes about remembering one word, worked out from its answers.
 ///
 /// A simplified FSRS, the model modern spaced repetition uses. `stability` is how many days

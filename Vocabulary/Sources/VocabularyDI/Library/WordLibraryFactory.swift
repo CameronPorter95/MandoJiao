@@ -11,7 +11,8 @@ public enum WordLibraryFactory: InputRouteFactory {
             sort: input.layout.sort,
             searchText: input.searchText,
             observeVocabulary: ObserveVocabularyUseCase(repository: repository),
-            deleteWords: DeleteWordsUseCase(repository: repository)
+            deleteWords: DeleteWordsUseCase(repository: repository),
+            setLearnt: SetWordLearntUseCase(repository: repository)
         )
         return WordLibraryRoute(
             viewModel: viewModel,

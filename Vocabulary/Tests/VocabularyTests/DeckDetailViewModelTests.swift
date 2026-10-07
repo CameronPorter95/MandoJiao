@@ -10,6 +10,7 @@ import VocabularyTestSupport
 @Suite("Deck detail")
 @MainActor
 struct DeckDetailViewModelTests {
+    private let lessonSettings = FakeLessonSettings()
     private let repository = FakeVocabularyRepository(Fixtures.vocabulary)
 
     private let nestedRepository = FakeVocabularyRepository(Fixtures.nested)
@@ -23,6 +24,7 @@ struct DeckDetailViewModelTests {
             deckID: deck.id,
             minimumMatchingWords: 5,
             observeVocabulary: ObserveVocabularyUseCase(repository: repository),
+            getLessonSettings: GetLessonSettingsUseCase(repository: lessonSettings),
             renameDeck: RenameDeckUseCase(repository: repository),
             setMembership: SetDeckMembershipUseCase(repository: repository),
             moveDeck: MoveDeckUseCase(repository: repository),

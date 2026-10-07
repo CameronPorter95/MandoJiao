@@ -11,6 +11,7 @@ public final class WordLibraryViewModel {
     private let effectChannel = EffectChannel<WordLibraryEffect>()
     private let observeVocabulary: ObserveVocabularyUseCase
     private let deleteWords: DeleteWordsUseCase
+    private let setLearnt: SetWordLearntUseCase
     private var observation: Task<Void, Never>?
 
     /// All words without a `folderID`, or the words in the decks beneath that folder.
@@ -22,11 +23,13 @@ public final class WordLibraryViewModel {
         sort: WordSort,
         searchText: String,
         observeVocabulary: ObserveVocabularyUseCase,
-        deleteWords: DeleteWordsUseCase
+        deleteWords: DeleteWordsUseCase,
+        setLearnt: SetWordLearntUseCase
     ) {
         state = WordLibraryState(folderID: folderID, vocabulary: vocabulary, sort: sort, searchText: searchText)
         self.observeVocabulary = observeVocabulary
         self.deleteWords = deleteWords
+        self.setLearnt = setLearnt
     }
 
     func effects() -> AsyncStream<WordLibraryEffect> { effectChannel.stream() }
@@ -67,6 +70,17 @@ public final class WordLibraryViewModel {
 
         case .dictionaryDismissed:
             state.dictionary = nil
+
+        case .learntToggled(let id):
+            guard let word = state.vocabulary.words.first(where: { $0.id == id }) else { return }
+            let isLearnt = !word.isLearnt
+            Task {
+                _ = await VocabularyError.performing(
+                    { [setLearnt] in try await setLearnt(wordID: id, isLearnt: isLearnt) },
+                    failure: VocabularyError.setLearntFailed,
+                    show: { effectChannel.send(.showError($0)) }
+                )
+            }
 
         case .deleteTapped(let ids):
             let previous = state.vocabulary

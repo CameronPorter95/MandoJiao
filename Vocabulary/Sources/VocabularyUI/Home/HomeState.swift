@@ -9,6 +9,8 @@ struct HomeState: Equatable {
     /// screen can change it while home is underneath.
     var quickPracticeRounds: Int
     var isConfirmingClear = false
+    /// Read on every appearance, since the settings screen is pushed over home.
+    var lessonSettings: LessonSettings = .default
     /// Picked from Practise another deck, and shown until something is next practised.
     var chosen: LessonSource?
     var isChoosingSource = false
@@ -37,7 +39,12 @@ struct HomeState: Equatable {
     var currentName: String? { current.flatMap(vocabulary.name(of:)) }
 
     /// Usable words, which is what an exercise draws.
-    var currentWordCount: Int { current.map { vocabulary.words(in: $0).filter(\.isUsable).count } ?? 0 }
+    var currentWordCount: Int { currentLessonWords.count }
+
+    /// What a lesson from it draws, which leaves out learnt words when the settings say to.
+    var currentLessonWords: [Word] {
+        (current.map { vocabulary.words(in: $0) } ?? []).forLessons(lessonSettings).filter(\.isUsable)
+    }
 
     /// Where it sits and how big it is: "HSK › HSK 1 · 50 words".
     var currentSubtitle: String {
@@ -69,7 +76,9 @@ struct HomeState: Equatable {
         }
     }
 
-    var usableWordCount: Int { vocabulary.usableWords.count }
+    /// What quick practice draws.
+    var quickPracticeWords: [Word] { vocabulary.usableWords.forLessons(lessonSettings) }
+    var usableWordCount: Int { quickPracticeWords.count }
     var canStartQuickPractice: Bool { usableWordCount >= minimumMatchingWords }
     var mistakeWords: [Word] { vocabulary.mistakeWords }
 

@@ -14,6 +14,7 @@ public enum DeckDetailFactory: NavigationInputRouteFactory {
             minimumMatchingWords: input.minimumMatchingWords,
             vocabulary: input.vocabulary,
             observeVocabulary: ObserveVocabularyUseCase(repository: repository),
+            getLessonSettings: LessonSettingsFactory.makeGetSettingsUseCase(dependencies: dependencies),
             renameDeck: RenameDeckUseCase(repository: repository),
             setMembership: SetDeckMembershipUseCase(repository: repository),
             moveDeck: MoveDeckUseCase(repository: repository)

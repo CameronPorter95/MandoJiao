@@ -63,6 +63,10 @@ struct HomeScreen: View {
                     Text(state.currentSubtitle)
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
+                    if let current = state.current {
+                        BandBreakdown(counts: state.vocabulary.words(in: current).bandCounts(at: .now))
+                            .padding(.top, 6)
+                    }
                 }
                 .padding(.vertical, 4)
 

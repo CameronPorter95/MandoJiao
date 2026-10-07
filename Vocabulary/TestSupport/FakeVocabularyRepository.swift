@@ -260,3 +260,15 @@ public nonisolated enum Fixtures {
         folders: [starter, hsk, level1, emptyFolder]
     )
 }
+
+/// Lesson settings held in memory, skipping learnt words or not as told.
+public final class FakeLessonSettings: LessonSettingsRepository, @unchecked Sendable {
+    public var value: LessonSettings
+
+    public init(_ value: LessonSettings = .default) {
+        self.value = value
+    }
+
+    public func settings() -> LessonSettings { value }
+    public func setSkipsLearntWords(_ skips: Bool) { value.skipsLearntWords = skips }
+}

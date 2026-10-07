@@ -15,6 +15,7 @@ public enum HomeFactory: NavigationInputRouteFactory {
             minimumMatchingWords: input.minimumMatchingWords,
             quickPracticeRounds: input.quickPracticeRounds,
             observeVocabulary: ObserveVocabularyUseCase(repository: repository),
+            getLessonSettings: LessonSettingsFactory.makeGetSettingsUseCase(dependencies: dependencies),
             clearMistakes: ClearMistakesUseCase(repository: repository)
         )
         return HomeRoute(viewModel: viewModel, navigation: navigation.home) { destination in

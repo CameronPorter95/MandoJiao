@@ -10,6 +10,7 @@ public final class DeckDetailViewModel {
 
     private let effectChannel = EffectChannel<DeckDetailEffect>()
     private let observeVocabulary: ObserveVocabularyUseCase
+    private let getLessonSettings: GetLessonSettingsUseCase
     private let renameDeck: RenameDeckUseCase
     private let setMembership: SetDeckMembershipUseCase
     private let moveDeck: MoveDeckUseCase
@@ -27,6 +28,7 @@ public final class DeckDetailViewModel {
         minimumMatchingWords: Int,
         vocabulary: Vocabulary = .empty,
         observeVocabulary: ObserveVocabularyUseCase,
+        getLessonSettings: GetLessonSettingsUseCase,
         renameDeck: RenameDeckUseCase,
         setMembership: SetDeckMembershipUseCase,
         moveDeck: MoveDeckUseCase,
@@ -39,6 +41,7 @@ public final class DeckDetailViewModel {
             name: vocabulary.deck(id: deckID)?.name
         )
         self.observeVocabulary = observeVocabulary
+        self.getLessonSettings = getLessonSettings
         self.renameDeck = renameDeck
         self.setMembership = setMembership
         self.moveDeck = moveDeck
@@ -50,6 +53,8 @@ public final class DeckDetailViewModel {
     func send(_ action: DeckDetailAction) {
         switch action {
         case .appeared:
+            // On every appearance, since the setting can change while this is underneath.
+            state.lessonSettings = getLessonSettings()
             guard observation == nil else { return }
             let stream = observeVocabulary()
             observation = Task { [weak self] in
@@ -98,7 +103,7 @@ public final class DeckDetailViewModel {
             flushRename()
             let request = LessonRequest(
                 title: state.name ?? deck.name,
-                pool: state.vocabulary.words(in: deck).pairs,
+                pool: state.lessonWords.pairs,
                 source: .deck(deck.id),
                 otherWords: state.vocabulary.usableWords.pairs
             )

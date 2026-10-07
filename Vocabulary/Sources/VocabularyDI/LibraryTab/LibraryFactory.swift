@@ -16,6 +16,7 @@ public enum LibraryFactory: NavigationInputRouteFactory {
         let viewModel = LibraryViewModel(
             minimumMatchingWords: input.minimumMatchingWords,
             observeVocabulary: ObserveVocabularyUseCase(repository: repository),
+            getLessonSettings: LessonSettingsFactory.makeGetSettingsUseCase(dependencies: dependencies),
             createFolder: CreateFolderUseCase(repository: repository),
             renameFolder: RenameFolderUseCase(repository: repository),
             moveFolder: MoveFolderUseCase(repository: repository),

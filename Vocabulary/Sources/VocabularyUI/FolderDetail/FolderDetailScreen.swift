@@ -68,6 +68,10 @@ struct FolderDetailScreen: View {
     private var contents: some View {
         List {
             Section {
+                if !state.folderWords.isEmpty {
+                    BandBreakdown(counts: state.folderWords.bandCounts(at: .now))
+                        .padding(.vertical, 4)
+                }
                 PractiseRows(wordCount: state.wordCount, minimumMatchingWords: state.minimumMatchingWords) {
                     onAction(.startLessonTapped($0))
                 }

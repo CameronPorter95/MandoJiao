@@ -10,6 +10,7 @@ public final class FolderDetailViewModel {
 
     private let effectChannel = EffectChannel<FolderDetailEffect>()
     private let observeVocabulary: ObserveVocabularyUseCase
+    private let getLessonSettings: GetLessonSettingsUseCase
     private let createDeck: CreateDeckUseCase
     private let createFolder: CreateFolderUseCase
     private let renameFolder: RenameFolderUseCase
@@ -26,6 +27,7 @@ public final class FolderDetailViewModel {
         minimumMatchingWords: Int,
         vocabulary: Vocabulary = .empty,
         observeVocabulary: ObserveVocabularyUseCase,
+        getLessonSettings: GetLessonSettingsUseCase,
         createDeck: CreateDeckUseCase,
         createFolder: CreateFolderUseCase,
         renameFolder: RenameFolderUseCase,
@@ -34,6 +36,7 @@ public final class FolderDetailViewModel {
     ) {
         state = FolderDetailState(folderID: folderID, minimumMatchingWords: minimumMatchingWords, vocabulary: vocabulary)
         self.observeVocabulary = observeVocabulary
+        self.getLessonSettings = getLessonSettings
         self.createDeck = createDeck
         self.createFolder = createFolder
         self.renameFolder = renameFolder
@@ -46,6 +49,8 @@ public final class FolderDetailViewModel {
     func send(_ action: FolderDetailAction) {
         switch action {
         case .appeared:
+            // On every appearance, since the setting can change while this is underneath.
+            state.lessonSettings = getLessonSettings()
             guard observation == nil else { return }
             let stream = observeVocabulary()
             observation = Task { [weak self] in
@@ -60,7 +65,7 @@ public final class FolderDetailViewModel {
 
         case .startLessonTapped(let exercise):
             guard let folder = state.folder, state.canStart(exercise) else { return }
-            requestLesson(title: folder.name, pool: state.vocabulary.words(in: folder).pairs, source: .folder(folder.id), exercise: exercise)
+            requestLesson(title: folder.name, pool: state.lessonWords(state.vocabulary.words(in: folder)).pairs, source: .folder(folder.id), exercise: exercise)
 
         case .searchPresentedChanged(let isPresented):
             state.isSearching = isPresented
@@ -100,11 +105,11 @@ public final class FolderDetailViewModel {
 
         case .practiseFolderTapped(let id):
             guard let folder = state.vocabulary.folder(id: id) else { return }
-            requestLesson(title: folder.name, pool: state.vocabulary.words(in: folder).pairs, source: .folder(id))
+            requestLesson(title: folder.name, pool: state.lessonWords(state.vocabulary.words(in: folder)).pairs, source: .folder(id))
 
         case .practiseDeckTapped(let id):
             guard let deck = state.vocabulary.deck(id: id) else { return }
-            requestLesson(title: deck.name, pool: state.vocabulary.words(in: deck).pairs, source: .deck(id))
+            requestLesson(title: deck.name, pool: state.lessonWords(state.vocabulary.words(in: deck)).pairs, source: .deck(id))
 
         case .deleteDeckTapped(let id):
             let previous = state.vocabulary

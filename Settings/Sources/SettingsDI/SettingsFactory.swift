@@ -11,7 +11,9 @@ public enum SettingsFactory: InputRouteFactory {
                 setSpeakingCardLimit: input.setSpeakingCardLimit,
                 getMatchingSettings: input.getMatchingSettings,
                 setShowsPinyin: input.setShowsPinyin,
-                setMatchingRounds: input.setMatchingRounds
+                setMatchingRounds: input.setMatchingRounds,
+                getLessonSettings: input.getLessonSettings,
+                setSkipsLearntWords: input.setSkipsLearntWords
             )
         )
     }

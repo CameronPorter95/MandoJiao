@@ -32,6 +32,9 @@ struct FolderDetailState: Equatable {
         var id: UUID { folder.id }
     }
 
+    /// Read on every appearance.
+    var lessonSettings: LessonSettings = .default
+
     var folder: FolderSummary? { vocabulary.folder(id: folderID) }
     var title: String { folder?.displayName ?? "Folder" }
     var decks: [DeckSummary] { vocabulary.decks(in: folderID) }
@@ -56,14 +59,21 @@ struct FolderDetailState: Equatable {
 
     /// Only offered where a lesson would start, for a folder or deck in this one.
     func canPractise(folder id: UUID) -> Bool {
-        vocabulary.folder(id: id).map { vocabulary.canStartLesson(with: $0, minimumMatchingWords: minimumMatchingWords) } ?? false
+        (vocabulary.folder(id: id).map { lessonWords(vocabulary.words(in: $0)) } ?? []).count >= minimumMatchingWords
     }
 
     func canPractise(_ deck: DeckSummary) -> Bool {
-        vocabulary.canStartLesson(with: deck, minimumMatchingWords: minimumMatchingWords)
+        lessonWords(vocabulary.words(in: deck)).count >= minimumMatchingWords
     }
 
-    var wordCount: Int { folder.map(vocabulary.usableWordCount(in:)) ?? 0 }
+    /// What a lesson draws from these, which leaves out learnt words when the settings say to.
+    func lessonWords(_ words: [Word]) -> [Word] {
+        words.forLessons(lessonSettings).filter(\.isUsable)
+    }
+
+    var wordCount: Int { lessonWords(folderWords).count }
+    /// Every word beneath it, for how their strengths are spread.
+    var folderWords: [Word] { folder.map { vocabulary.words(in: $0) } ?? [] }
     func canStart(_ exercise: LessonExercise) -> Bool {
         wordCount >= exercise.minimumWords(matching: minimumMatchingWords)
     }

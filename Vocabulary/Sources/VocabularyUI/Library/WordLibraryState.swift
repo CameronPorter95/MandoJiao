@@ -68,6 +68,7 @@ enum WordLibraryAction: Equatable {
     case dictionaryTapped(UUID)
     case dictionaryDismissed
     case deleteTapped([UUID])
+    case learntToggled(UUID)
 }
 
 enum WordLibraryEffect: Equatable, Sendable {

@@ -31,6 +31,16 @@ struct WordRow: View {
                     .background(Capsule().fill(Theme.miss))
                     .accessibilityLabel("\(word.missCount) outstanding mistakes")
             }
+
+            Spacer(minLength: 8)
+
+            if word.isLearnt {
+                Image(systemName: "checkmark.seal.fill")
+                    .font(.caption)
+                    .foregroundStyle(Theme.success)
+                    .accessibilityLabel("Marked learnt")
+            }
+            StrengthBadge(band: word.band(at: .now))
         }
     }
 }
