@@ -75,6 +75,10 @@ actor VocabularyRepositoryImpl: VocabularyRepository {
         try await write { try await $0.recordResults(results) }
     }
 
+    func setLearnt(wordID: UUID, isLearnt: Bool) async throws {
+        try await write { try await $0.setLearnt(wordID: wordID, isLearnt: isLearnt) }
+    }
+
     func clearMistakes() async throws {
         try await write { try await $0.clearMistakes() }
     }

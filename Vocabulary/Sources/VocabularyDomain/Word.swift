@@ -10,6 +10,7 @@ public nonisolated struct Word: Identifiable, Hashable, Sendable {
     public let missCount: Int
     public let lastMissedAt: Date?
     public let createdAt: Date
+    public let memory: WordMemory
 
     public init(
         id: UUID = UUID(),
@@ -18,7 +19,8 @@ public nonisolated struct Word: Identifiable, Hashable, Sendable {
         pinyin: String = "",
         missCount: Int = 0,
         lastMissedAt: Date? = nil,
-        createdAt: Date = .now
+        createdAt: Date = .now,
+        memory: WordMemory = .new
     ) {
         self.id = id
         self.meanings = meanings
@@ -27,6 +29,7 @@ public nonisolated struct Word: Identifiable, Hashable, Sendable {
         self.missCount = missCount
         self.lastMissedAt = lastMissedAt
         self.createdAt = createdAt
+        self.memory = memory
     }
 
     /// One meaning, for a word that has only the one.
@@ -37,13 +40,18 @@ public nonisolated struct Word: Identifiable, Hashable, Sendable {
         pinyin: String = "",
         missCount: Int = 0,
         lastMissedAt: Date? = nil,
-        createdAt: Date = .now
+        createdAt: Date = .now,
+        memory: WordMemory = .new
     ) {
         self.init(
             id: id, meanings: english.isEmpty ? [] : [english], hanzi: hanzi, pinyin: pinyin,
-            missCount: missCount, lastMissedAt: lastMissedAt, createdAt: createdAt
+            missCount: missCount, lastMissedAt: lastMissedAt, createdAt: createdAt, memory: memory
         )
     }
+
+    public var isLearnt: Bool { memory.isLearnt }
+
+    public func band(at now: Date) -> StrengthBand { memory.band(at: now) }
 
     /// The headline, as saved.
     public var english: String { meanings.first ?? "" }

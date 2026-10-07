@@ -30,5 +30,8 @@ public nonisolated protocol VocabularyRepository: Sendable {
     func install(_ plan: BuiltInPlan) async throws
 
     func recordResults(_ results: LessonResults) async throws
+    /// Learnt makes it known at once, as `WordMemory.markedLearnt` describes; not learnt
+    /// keeps its strength.
+    func setLearnt(wordID: UUID, isLearnt: Bool) async throws
     func clearMistakes() async throws
 }
