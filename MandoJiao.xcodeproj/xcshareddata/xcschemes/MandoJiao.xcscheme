@@ -52,20 +52,10 @@
             skipped = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "SpeakingTests"
-               BuildableName = "SpeakingTests"
-               BlueprintName = "SpeakingTests"
-               ReferencedContainer = "container:Speaking">
-            </BuildableReference>
-         </TestableReference>
-         <TestableReference
-            skipped = "NO">
-            <BuildableReference
-               BuildableIdentifier = "primary"
-               BlueprintIdentifier = "MatchingTests"
-               BuildableName = "MatchingTests"
-               BlueprintName = "MatchingTests"
-               ReferencedContainer = "container:Matching">
+               BlueprintIdentifier = "PracticeTests"
+               BuildableName = "PracticeTests"
+               BlueprintName = "PracticeTests"
+               ReferencedContainer = "container:Practice">
             </BuildableReference>
          </TestableReference>
          <TestableReference
@@ -76,26 +66,6 @@
                BuildableName = "SettingsTests"
                BlueprintName = "SettingsTests"
                ReferencedContainer = "container:Settings">
-            </BuildableReference>
-         </TestableReference>
-         <TestableReference
-            skipped = "NO">
-            <BuildableReference
-               BuildableIdentifier = "primary"
-               BlueprintIdentifier = "FlashcardsTests"
-               BuildableName = "FlashcardsTests"
-               BlueprintName = "FlashcardsTests"
-               ReferencedContainer = "container:Flashcards">
-            </BuildableReference>
-         </TestableReference>
-         <TestableReference
-            skipped = "NO">
-            <BuildableReference
-               BuildableIdentifier = "primary"
-               BlueprintIdentifier = "MixedLessonTests"
-               BuildableName = "MixedLessonTests"
-               BlueprintName = "MixedLessonTests"
-               ReferencedContainer = "container:MixedLesson">
             </BuildableReference>
          </TestableReference>
       </Testables>

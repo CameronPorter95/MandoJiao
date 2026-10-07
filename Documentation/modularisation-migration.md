@@ -8,21 +8,45 @@ is the part that changes.
 
 ## Status
 
-**All five steps are done.** Every feature is an SPM package at the repo root, and the
-app target is the composition root only: `MandoJiaoApp`, `ContentView` and
-`LiveDependencies`, with `AppNavigation` and its coordinator. 191 tests in 24 suites:
-8 in `Core`, 50 in `Vocabulary`, 92 in
-`Speaking`, 37 in `Matching`, 4 in `Settings`, all runnable headlessly with
-`swift test` as well as through the scheme. Work happens on `refactor/mvi`.
+**The MVI migration is done, and the business-area restructure is at step 1 of 3.**
+Every feature is an SPM package at the repo root, and the app target is the composition
+root only: `MandoJiaoApp`, `ContentView` and `LiveDependencies`, with `AppNavigation`
+and its coordinator. 428 tests in 46 suites: 13 in `Core`, 239 in `Vocabulary`, 171 in
+`Practice`, 5 in `Settings`, all runnable headlessly with `swift test` as well as
+through the scheme.
 
 ```
 Core/        CoreDomain  CorePersistence  CoreDesignSystem  CoreUI  CoreSound  CoreDI  CoreTestSupport
 Vocabulary/  VocabularyDomain  VocabularyData  VocabularyUI  VocabularyDI  VocabularyTestSupport
-Speaking/    SpeakingDomain  SpeakingData  SpeakingUI  SpeakingDI  SpeakingTestSupport
-Matching/    MatchingDomain  MatchingData  MatchingUI  MatchingDI
+Practice/    PracticeDomain  PracticeData  PracticeUI  PracticeDI  PracticeTestSupport
 Settings/    SettingsUI  SettingsDI
 MandoJiao/   the app: MandoJiaoApp, ContentView, LiveDependencies, AppNavigation
 ```
+
+## Option A: one package per business area
+
+Decided on 2026-10-07. The target shape and its reasons are in
+[modularisation.md](modularisation.md#feature-packages). The sections below this one
+record the earlier MVI migration and are history.
+
+1. **Done. `Practice`.** `Matching`, `Speaking`, `Flashcards` and `MixedLesson` merged into
+   one package by `git mv`, each exercise a folder in each target. Every test moved with
+   it: 171 before, 171 after, and 428 in all both sides of the move. `MixedLessonFactory`
+   now builds matching and flash card steps itself, so `ContentView.mixedStep` and
+   `MixedLessonInput.makeStep` are gone. The three copies of `WordPair.reviewRow` became
+   one, `PracticeUI/WordPair+Review.swift`.
+2. **To do. `Dictionary` out of `Vocabulary`.** CC-CEDICT, HSK, the lexicon, the
+   Dictionary tab and word page, their resources and tests. The page's saved state and
+   "add to vocabulary" become input from the app, so `Dictionary` never imports the
+   library. `HSK.tsv` and the dictionary data move with it: clean-build the app and
+   check the new package's resource bundle, per the trap in CLAUDE.md.
+3. **To do. `Progress` out of `Vocabulary`, then rename `Vocabulary` to `Library`.** Home,
+   `TodayPlanner` and `TodayPlan` move to `Progress`; `Practice` then imports
+   `ProgressDomain` for the plan. Word strength stays behind in `Library`. The rename
+   touches every import and the store's schema name, so check the simulator store still
+   opens.
+
+Each step is one PR. After each, clean, run, and check the count is unchanged.
 
 Every package lists `.iOS(.v26)` and `.macOS(.v26)`, and everything, packages and app,
 builds in the Swift 6 language mode. Domain and data targets are nonisolated by default; UI, DI and
@@ -169,9 +193,12 @@ in the results fixes it when it matters.
 `AsyncStream`, which cannot carry an error, so a read failure after a write is not
 shown. The write itself did succeed. Worth revisiting if reads ever fail in practice.
 
-**Vocabulary is handed Matching's numbers.** The five-word floor and the round count
-reach Home and deck detail as plain integers from `MandoJiaoApp`, so `Vocabulary`
-never imports Matching and step 4 cannot create a package cycle.
+**Vocabulary is handed Practice's numbers.** The five-word floor and the round count
+reach Home and deck detail as plain integers from the app, so `Vocabulary` never imports
+`Practice` and no package cycle can form.
+
+**Exercise folders are a convention.** Inside `Practice`, nothing stops a flash card
+type reaching into matching's internals. Review is the check.
 
 **The audio session switch now lives in `SpeakingViewModel`,** through
 `AudioSessionSwitching`, rather than in the recogniser implementation. It stays there

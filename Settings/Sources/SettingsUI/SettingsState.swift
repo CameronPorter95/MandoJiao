@@ -1,5 +1,4 @@
-import MatchingDomain
-import SpeakingDomain
+import PracticeDomain
 
 struct SettingsState: Equatable {
     var strictness: AnswerStrictness = .default

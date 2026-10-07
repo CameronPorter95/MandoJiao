@@ -16,11 +16,9 @@ the interesting parts be tested without a simulator, a store or a microphone.
 ```
 Core/           Shared plumbing: errors, effects, the design system, DI, ToneEngine.
 Vocabulary/     Words, decks, folders, the mistakes list, home and library tabs.
-Speaking/       The speaking lesson.
-Matching/       The matching lesson.
-Flashcards/     The flash card lesson.
-MixedLesson/    Today's plan, as one lesson mixing the exercises.
-Settings/       The settings screen, editing what the two lessons own.
+Practice/       Every exercise, one folder each: Matching, Speaking, Flashcards, and
+                MixedLesson, which runs today's plan as one lesson.
+Settings/       The settings screen, editing what the lessons own.
 MandoJiao/      The app: entry point and composition root.
 ```
 

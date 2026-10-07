@@ -1,11 +1,5 @@
-import FlashcardsDI
-import FlashcardsUI
-import MatchingDI
-import MixedLessonDI
-import MixedLessonUI
-import MatchingUI
-import SpeakingDI
-import SpeakingUI
+import PracticeDI
+import PracticeUI
 import VocabularyDI
 import VocabularyUI
 

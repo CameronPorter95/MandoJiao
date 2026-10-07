@@ -14,16 +14,14 @@ let package = Package(
     ],
     dependencies: [
         .package(path: "../Core"),
-        .package(path: "../Speaking"),
-        .package(path: "../Matching"),
+        .package(path: "../Practice"),
         .package(path: "../Vocabulary"),
     ],
     targets: [
         .target(
             name: "SettingsUI",
             dependencies: [
-                .product(name: "SpeakingDomain", package: "Speaking"),
-                .product(name: "MatchingDomain", package: "Matching"),
+                .product(name: "PracticeDomain", package: "Practice"),
                 .product(name: "VocabularyDomain", package: "Vocabulary"),
                 .product(name: "CoreDesignSystem", package: "Core"),
             ],
@@ -33,8 +31,7 @@ let package = Package(
             name: "SettingsDI",
             dependencies: [
                 "SettingsUI",
-                .product(name: "SpeakingDomain", package: "Speaking"),
-                .product(name: "MatchingDomain", package: "Matching"),
+                .product(name: "PracticeDomain", package: "Practice"),
                 .product(name: "VocabularyDomain", package: "Vocabulary"),
                 .product(name: "CoreDI", package: "Core"),
             ],
@@ -44,8 +41,7 @@ let package = Package(
             name: "SettingsTests",
             dependencies: [
                 "SettingsUI",
-                .product(name: "SpeakingDomain", package: "Speaking"),
-                .product(name: "MatchingDomain", package: "Matching"),
+                .product(name: "PracticeDomain", package: "Practice"),
                 .product(name: "VocabularyDomain", package: "Vocabulary"),
             ],
             swiftSettings: mainActorByDefault

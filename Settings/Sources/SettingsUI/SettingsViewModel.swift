@@ -1,6 +1,5 @@
-import MatchingDomain
+import PracticeDomain
 import Observation
-import SpeakingDomain
 import VocabularyDomain
 
 /// Every setting is owned by the lesson that reads it; this screen only edits them.
