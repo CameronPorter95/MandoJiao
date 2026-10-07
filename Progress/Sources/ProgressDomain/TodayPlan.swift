@@ -19,6 +19,9 @@ public nonisolated struct TodayPlan: Identifiable, Hashable, Sendable {
         case match([WordPair])
         /// One flash card.
         case recall(WordPair, Recall)
+        /// Its Hanzi read aloud: speaking, towards the end of a plan, once the word has been
+        /// met and recognised.
+        case readAloud(WordPair)
     }
 
     /// What a flash card asks of a word.
@@ -111,6 +114,7 @@ public nonisolated enum TodayPlanner {
             steps.append(.match(board))
         }
         steps += pairs.map { .recall($0, .recognise) }
+        steps += pairs.map(TodayPlan.Step.readAloud)
         let reviewed = Array(due.prefix(reviewLimit - newWords.count))
         steps += reviewed.map { review($0, at: now) }
 

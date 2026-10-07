@@ -10,6 +10,14 @@ public nonisolated enum MixedStep: Hashable, Sendable {
     case match([WordPair])
     /// One flash card.
     case flashcard(Flashcard)
+    /// One word's Hanzi read aloud.
+    case readAloud(WordPair)
+
+    /// Whether the step listens, so the microphone's session is wanted.
+    public var listens: Bool {
+        if case .readAloud = self { return true }
+        return false
+    }
 }
 
 /// Today's plan underway: the step showing, every answer so far, and the move to the next
@@ -24,6 +32,9 @@ public nonisolated struct MixedLesson: Equatable, Sendable {
     public private(set) var isFinished = false
     /// Every answer, in the order given.
     public private(set) var answers: [Answer] = []
+    /// Whether the step showing should start listening by itself: it reads aloud, straight
+    /// after a step that read aloud and handed back that it carries on.
+    public private(set) var listensOnArrival = false
 
     /// A plan's steps made into exercises. A word to recognise is a flash card showing its
     /// Chinese with English to pick, one to produce shows its English for the Hanzi to be
@@ -41,6 +52,8 @@ public nonisolated struct MixedLesson: Equatable, Sendable {
                     for: word, showingChinese: recall == .recognise, picked: false,
                     choosingFrom: plan.otherWords, using: &random
                 ))
+            case .readAloud(let word):
+                return .readAloud(word)
             }
         }
         isFinished = steps.isEmpty
@@ -60,11 +73,13 @@ public nonisolated struct MixedLesson: Equatable, Sendable {
     }
 
     /// Records what the step showing answered and moves on, finishing after the last.
-    public mutating func complete(with stepAnswers: [Answer]) {
+    /// `carriesOn` is a read-aloud step's say on whether a next read should listen at once.
+    public mutating func complete(with stepAnswers: [Answer], carriesOn: Bool = false) {
         guard !isFinished else { return }
         answers += stepAnswers
         stepIndex += 1
         if stepIndex >= steps.count { isFinished = true }
+        listensOnArrival = carriesOn && step?.listens == true
     }
 
     /// Wrong answers, for the mistakes list, as the other lessons count them.
@@ -82,7 +97,7 @@ public nonisolated struct MixedLesson: Equatable, Sendable {
         var seen = Set<UUID>()
         return steps.flatMap { step -> [WordPair] in
             switch step {
-            case .teach(let word): [word]
+            case .teach(let word), .readAloud(let word): [word]
             case .match(let board): board
             case .flashcard(let card): [card.word]
             }

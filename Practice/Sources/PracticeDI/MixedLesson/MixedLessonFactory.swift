@@ -1,6 +1,7 @@
 import CoreDI
 import CoreSound
 import LibraryDomain
+import PracticeData
 import PracticeDomain
 import PracticeUI
 import ProgressDomain
@@ -13,24 +14,41 @@ public enum MixedLessonFactory: NavigationInputRouteFactory {
         navigation: MixedLessonNavigation,
         input: MixedLessonInput
     ) -> MixedLessonRoute {
-        MixedLessonRoute(
+        // One for the whole lesson, so the speech model is prepared once however many words
+        // are read aloud.
+        let recogniser = DictationRecogniser()
+        return MixedLessonRoute(
             viewModel: MixedLessonViewModel(
                 lesson: MixedLesson(plan: input.plan),
                 recordResults: input.recordResults,
-                sounds: ToneEngine.shared
+                sounds: ToneEngine.shared,
+                audioSession: ToneEngine.shared
             ),
             navigation: navigation,
-            makeStep: { step, onComplete in makeStep(step, dependencies: dependencies, onComplete: onComplete) }
+            makeStep: { step, listensAtOnce, onComplete in
+                makeStep(step, dependencies: dependencies, recogniser: recogniser, listensAtOnce: listensAtOnce, onComplete: onComplete)
+            }
         )
     }
 
     /// Each exercise's own single-step route, from the same package.
-    private static func makeStep(_ step: MixedStep, dependencies: Dependencies, onComplete: @escaping ([Answer]) -> Void) -> AnyView {
+    private static func makeStep(
+        _ step: MixedStep,
+        dependencies: Dependencies,
+        recogniser: DictationRecogniser,
+        listensAtOnce: Bool,
+        onComplete: @escaping MixedLessonRoute.StepCompletion
+    ) -> AnyView {
         switch step {
+        case .readAloud(let word):
+            AnyView(SpeakingFactory.makeStepRoute(
+                dependencies: dependencies, word: word, recogniser: recogniser,
+                listensAtOnce: listensAtOnce, onComplete: onComplete
+            ))
         case .match(let pairs):
-            AnyView(MatchingFactory.makeStepRoute(dependencies: dependencies, pairs: pairs, onComplete: onComplete))
+            AnyView(MatchingFactory.makeStepRoute(dependencies: dependencies, pairs: pairs) { onComplete($0, false) })
         case .flashcard(let card):
-            AnyView(FlashcardsFactory.makeStepRoute(card: card, onComplete: onComplete))
+            AnyView(FlashcardsFactory.makeStepRoute(card: card) { onComplete($0, false) })
         case .teach:
             // The mixed lesson shows a word itself; it never asks for this.
             AnyView(EmptyView())

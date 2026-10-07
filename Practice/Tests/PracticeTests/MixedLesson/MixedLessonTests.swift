@@ -65,6 +65,32 @@ nonisolated struct MixedLessonDomainTests {
         lesson.complete(with: [answer(LessonWords.book, right: true)])
         #expect(lesson.answers.count == 2)
     }
+
+    @Test("a word to read aloud is a step that listens, and the only kind that does")
+    func readAloud() {
+        let lesson = MixedLesson(plan: plan([.teach(LessonWords.water), .recall(LessonWords.water, .recognise), .readAloud(LessonWords.tea)]))
+        #expect(lesson.steps[2] == .readAloud(LessonWords.tea))
+        #expect(lesson.steps.map(\.listens) == [false, false, true])
+        #expect(lesson.words == [LessonWords.water, LessonWords.tea])
+    }
+
+    @Test("a read aloud listens on arrival only straight after a read that carried on")
+    func listensOnArrival() {
+        var lesson = MixedLesson(plan: plan([
+            .readAloud(LessonWords.water), .readAloud(LessonWords.tea), .readAloud(LessonWords.book),
+            .recall(LessonWords.water, .recognise), .readAloud(LessonWords.car),
+        ]))
+        #expect(!lesson.listensOnArrival)
+        lesson.complete(with: [answer(LessonWords.water, right: true, exercise: .speaking)], carriesOn: true)
+        #expect(lesson.listensOnArrival)
+        lesson.complete(with: [answer(LessonWords.tea, right: false, exercise: .speaking)], carriesOn: false)
+        #expect(!lesson.listensOnArrival)
+        // Carrying on into a flash card means nothing, and the read after it waits for a tap.
+        lesson.complete(with: [answer(LessonWords.book, right: true, exercise: .speaking)], carriesOn: true)
+        #expect(!lesson.listensOnArrival)
+        lesson.complete(with: [answer(LessonWords.water, right: true)])
+        #expect(!lesson.listensOnArrival)
+    }
 }
 
 @Suite("Mixed lesson view model")
@@ -73,11 +99,14 @@ struct MixedLessonViewModelTests {
     private let repository = FakeVocabularyRepository()
     private let sounds = FakeSounds()
 
-    private func makeViewModel() -> (MixedLessonViewModel, EffectLog<MixedLessonEffect>) {
+    private func makeViewModel(
+        _ steps: [TodayPlan.Step] = [.teach(LessonWords.water), .recall(LessonWords.water, .recognise)]
+    ) -> (MixedLessonViewModel, EffectLog<MixedLessonEffect>) {
         let viewModel = MixedLessonViewModel(
-            lesson: MixedLesson(plan: plan([.teach(LessonWords.water), .recall(LessonWords.water, .recognise)])),
+            lesson: MixedLesson(plan: plan(steps)),
             recordResults: RecordLessonResultsUseCase(repository: repository),
-            sounds: sounds
+            sounds: sounds,
+            audioSession: sounds
         )
         return (viewModel, EffectLog(viewModel.effects()))
     }
@@ -89,7 +118,7 @@ struct MixedLessonViewModelTests {
         #expect(sounds.played.isEmpty)
         viewModel.send(.stepCompleted([answer(LessonWords.water, right: true)]))
         viewModel.send(.stepCompleted([answer(LessonWords.water, right: true)]))
-        #expect(sounds.played == ["complete"])
+        #expect(await waitUntil { sounds.played.contains("complete") })
         #expect(await waitUntil { await repository.recordedResults.count == 1 })
         #expect(await repository.recordedResults.first?.source == .deck(deckID))
         viewModel.send(.closeTapped)
@@ -110,6 +139,33 @@ struct MixedLessonViewModelTests {
         #expect(await repository.recordedResults.isEmpty)
     }
 
+    @Test("the microphone's session is kept through a run of read-aloud steps, handed back before anything else, and before the fanfare")
+    func audioSession() async {
+        let (viewModel, _) = makeViewModel([
+            .readAloud(LessonWords.water), .readAloud(LessonWords.tea), .recall(LessonWords.water, .recognise), .readAloud(LessonWords.book),
+        ])
+        viewModel.send(.stepCompleted([answer(LessonWords.water, right: true, exercise: .speaking)]))
+        await settle()
+        #expect(sounds.played.isEmpty)
+
+        viewModel.send(.stepCompleted([answer(LessonWords.tea, right: true, exercise: .speaking)]))
+        #expect(await waitUntil { sounds.played == ["exit"] })
+
+        viewModel.send(.stepCompleted([answer(LessonWords.water, right: true)]))
+        viewModel.send(.stepCompleted([answer(LessonWords.book, right: true, exercise: .speaking)]))
+        #expect(await waitUntil { sounds.played == ["exit", "exit", "complete"] })
+    }
+
+    @Test("closing, or the lesson going away, hands the microphone's session back")
+    func audioSessionOnLeaving() async {
+        let (viewModel, log) = makeViewModel([.readAloud(LessonWords.water), .readAloud(LessonWords.tea)])
+        viewModel.send(.closeTapped)
+        #expect(await log.contains(.close))
+        #expect(await waitUntil { sounds.played == ["exit"] })
+        viewModel.send(.disappeared)
+        #expect(await waitUntil { sounds.played == ["exit", "exit"] })
+    }
+
     @Test("a failed save says why")
     func failedSave() async {
         await repository.failWrites()
@@ -120,9 +176,12 @@ struct MixedLessonViewModelTests {
     }
 }
 
+/// Sounds and the audio session in one log, so their order shows.
 @MainActor
-private final class FakeSounds: MatchSoundPlaying {
+private final class FakeSounds: MatchSoundPlaying, AudioSessionSwitching {
     private(set) var played: [String] = []
+    func enterRecordingMode() { played.append("enter") }
+    func exitRecordingMode() async { played.append("exit") }
     func prepare() {}
     func playMatch(step: Int, of total: Int) { played.append("match") }
     func playMiss() { played.append("miss") }

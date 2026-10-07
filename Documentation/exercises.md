@@ -123,24 +123,45 @@ flash cards never record audio, so the tones cost recognition nothing.
 
 `TodayPlanner`, in `ProgressDomain`, suggests one plan for Home from how the
 vocabulary's strengths stand, with a theme and a line saying what it will do. Its
-steps are plain: teach a word, a matching board, recognise a word, produce one.
+steps are plain: teach a word, a matching board, recognise a word, produce one, read one
+aloud.
 
 - **Review**, when eight or more words are fading (recall below 90%), or when nothing is
   new: up to twelve, weakest first. A Learning word is recognised from its Chinese; a
   Familiar or Known one has its Hanzi typed.
 - **New words** otherwise: up to five unstarted words from the deck or folder Home carries
   on with, else from anywhere. Each is taught, then all are matched on one board, padded
-  with other words that share no Hanzi or meaning, then each is recognised, then any
-  fading words are reviewed.
+  with other words that share no Hanzi or meaning, then each is recognised, then each is
+  read aloud, then any fading words are reviewed. Speaking comes once a word has been met
+  and recognised, as the owner asked.
 
 `MixedLesson` runs a plan: it turns recognise and produce into flash cards, shows the
-teach view itself, and takes a matching board or flash card step from those packages,
-built by the app since a feature package may not reach another's screens. Each step
-hands back its answers; the lesson records them once, with the plan's deck, and plays
-the lesson complete tune at the end.
+teach view itself, and builds each other step from the exercise that owns it, all in
+`Practice`. Each step hands back its answers; the lesson records them once, with the
+plan's deck, and plays the lesson complete tune at the end.
 
-Reading aloud joins the steps next, and example sentences in the teach view after that,
-from Tatoeba. Tracing and translation will bring themes of their own.
+A read-aloud step is the speaking lesson's view model for one card, made with `.step`
+completion: the same microphone rules, three tries and typed pinyin fallback, handing its
+answer back once the card settles instead of recording it. One recogniser serves the
+whole lesson, so the speech model is prepared once.
+
+A run of read-aloud steps carries on as the speaking lesson does between cards: after a
+right answer, unless typing was chosen, the next read starts listening by itself, and an
+automatic listen that hears nothing is not a try. The owner found re-tapping the
+microphone for every word on the first device run. Because the steps share the
+recogniser and the next can appear before the last disappears, a step leaving cancels
+the recogniser only if it was itself listening.
+
+**The mixed lesson owns the audio session between steps,** not the step. A read-aloud step
+takes the microphone's session when it appears, as the speaking lesson does, but never
+hands it back. The lesson hands it back when the next step does not listen, when it
+closes or goes away, and before the fanfare. A run of read-aloud steps therefore keeps
+the session, and a matching or flash card tone after one plays at the usual level.
+Whether switching between steps costs recognition anything is only measurable on a
+device.
+
+Example sentences in the teach view come next, from Tatoeba. Tracing and translation will
+bring themes of their own.
 
 ## The mistakes list
 

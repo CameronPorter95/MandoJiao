@@ -15,6 +15,17 @@ public final class SpeakingViewModel {
     public typealias WaitForEnd = @MainActor (_ transcript: () -> String) async -> Endpointing.Ending
     public typealias LogAttempt = @MainActor (SpeechAttempt) -> Void
 
+    /// What happens once the last card is done.
+    public enum Completion {
+        /// A lesson of its own: results recorded, the audio session handed back, the fanfare.
+        case lesson(RecordLessonResultsUseCase)
+        /// One step of a longer lesson, handed its answers once, and whether a next word read
+        /// aloud should start listening by itself, as the speaking lesson does after a right
+        /// answer unless typing was chosen. That lesson records the answers, owns the audio
+        /// session between steps, and plays any fanfare.
+        case step((_ answers: [Answer], _ carriesOn: Bool) -> Void)
+    }
+
     private(set) var state = SpeakingState()
 
     private let effectChannel = EffectChannel<SpeakingEffect>()
@@ -24,7 +35,10 @@ public final class SpeakingViewModel {
     private let audioSession: any AudioSessionSwitching
     private let sounds: any MatchSoundPlaying
     private let getSettings: GetSpeakingSettingsUseCase
-    private let recordResults: RecordLessonResultsUseCase
+    private let completion: Completion
+    /// Starts listening as soon as the microphone is ready, carrying on from a right answer
+    /// in the step before.
+    private let listensAtOnce: Bool
     private let logAttempt: LogAttempt
     private let advanceDelay: Duration
     private let waitForEnd: WaitForEnd
@@ -35,7 +49,8 @@ public final class SpeakingViewModel {
     private var stopTask: Task<Void, Never>?
     private var advanceTask: Task<Void, Never>?
 
-    public init(
+    /// A lesson of its own, recording through `recordResults`.
+    public convenience init(
         request: LessonRequest,
         recogniser: any SpeechRecognising,
         audioSession: any AudioSessionSwitching,
@@ -46,12 +61,32 @@ public final class SpeakingViewModel {
         advanceDelay: Duration = .milliseconds(850),
         waitForEnd: @escaping WaitForEnd = { await Endpointing.waitForEnd(transcript: $0) }
     ) {
+        self.init(
+            request: request, recogniser: recogniser, audioSession: audioSession, sounds: sounds,
+            getSettings: getSettings, completion: .lesson(recordResults), logAttempt: logAttempt,
+            advanceDelay: advanceDelay, waitForEnd: waitForEnd
+        )
+    }
+
+    public init(
+        request: LessonRequest,
+        recogniser: any SpeechRecognising,
+        audioSession: any AudioSessionSwitching,
+        sounds: any MatchSoundPlaying,
+        getSettings: GetSpeakingSettingsUseCase,
+        completion: Completion,
+        logAttempt: @escaping LogAttempt,
+        listensAtOnce: Bool = false,
+        advanceDelay: Duration = .milliseconds(850),
+        waitForEnd: @escaping WaitForEnd = { await Endpointing.waitForEnd(transcript: $0) }
+    ) {
         self.request = request
         self.recogniser = recogniser
         self.audioSession = audioSession
         self.sounds = sounds
         self.getSettings = getSettings
-        self.recordResults = recordResults
+        self.completion = completion
+        self.listensAtOnce = listensAtOnce
         self.logAttempt = logAttempt
         self.advanceDelay = advanceDelay
         self.waitForEnd = waitForEnd
@@ -68,8 +103,16 @@ public final class SpeakingViewModel {
             prepareTask?.cancel()
             listeningTask?.cancel()
             advanceTask?.cancel()
-            recogniser.cancel()
-            Task { await audioSession.exitRecordingMode() }
+            switch completion {
+            case .lesson:
+                recogniser.cancel()
+                Task { await audioSession.exitRecordingMode() }
+            case .step:
+                // The recogniser and session are the lesson's. The next step can appear before
+                // this one disappears and already be listening, so only a listen of this
+                // step's own is cancelled, and the session is left to the lesson.
+                if state.mic != .idle { recogniser.cancel() }
+            }
 
         case .sceneLeftForeground:
             // Losing the foreground mid-answer would otherwise leave the tap installed.
@@ -119,6 +162,7 @@ public final class SpeakingViewModel {
         let availability = await recogniser.prepare()
         if availability.canListen {
             audioSession.enterRecordingMode()
+            if listensAtOnce { startListening(automatic: true) }
         } else {
             // Fall straight into typing rather than showing a mic that cannot work.
             state.prefersTyping = true
@@ -257,6 +301,12 @@ public final class SpeakingViewModel {
     }
 
     private func finish() {
+        if case .step(let onComplete) = completion {
+            guard !didRecordResults, let lesson = state.lesson else { return }
+            didRecordResults = true
+            onComplete(lesson.answers, lesson.advancedAfterCorrect && !state.prefersTyping)
+            return
+        }
         recordResultsOnce()
 
         // Nothing else needs the microphone now. Handing the session back before the
@@ -300,7 +350,7 @@ public final class SpeakingViewModel {
     }
 
     private func recordResultsOnce() {
-        guard let lesson = state.lesson, !didRecordResults else { return }
+        guard case .lesson(let recordResults) = completion, let lesson = state.lesson, !didRecordResults else { return }
         didRecordResults = true
         let results = LessonResults(
             misses: lesson.missesByPairID, cleanSolves: lesson.cleanSolvesByPairID,
