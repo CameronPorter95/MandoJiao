@@ -60,10 +60,21 @@ public nonisolated struct ExampleRequest: Hashable, Sendable {
     }
 }
 
-/// Writes an example sentence on the device. Nil where it cannot, as on a device without the
-/// model; a sentence it writes is checked by `GenerateExampleUseCase` before it is shown.
+/// What one attempt to write a sentence came to.
+public nonisolated enum ExampleWriting: Hashable, Sendable {
+    /// No model to write with: an older device, Apple Intelligence off, the model not ready,
+    /// or no Chinese. Asking again will not help.
+    case unavailable
+    /// The model declined, as its safety filter did for 小学生, "primary school student". Asking
+    /// again may.
+    case refused
+    case written(ExampleSentence)
+}
+
+/// Writes an example sentence on the device. A sentence it writes is checked by
+/// `GenerateExampleUseCase` before it is shown.
 public nonisolated protocol ExampleGenerating: Sendable {
-    func example(for request: ExampleRequest) async throws -> ExampleSentence?
+    func example(for request: ExampleRequest) async throws -> ExampleWriting
 }
 
 /// The bundled example sentences.

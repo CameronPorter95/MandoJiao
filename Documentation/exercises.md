@@ -195,8 +195,22 @@ sentence that leaves the word out, has another script or digits, runs past 16 ch
 has no translation. Nothing is generated without the model: an older device, Apple
 Intelligence off, the model not ready, or no Chinese. **Then the card shows no example,**
 decided by the owner: never a sentence in another sense in its place. Generated sentences are not marked
-for now; marking them is for later, if device testing finds enough of them wrong. Their
-quality is only judgeable on a device.
+for now; marking them is for later, if review finds enough of them wrong.
+
+A refusal (the safety filter declined 小学生 two times in three), an answer that runs on, or
+a sentence the checks drop is tried again, three tries in all. The prompt says the sentence
+must contain the word as written: asked only to use 看病, the model wrote 看医生 every time.
+Answers are capped at 120 tokens; uncapped, one ran on until it filled the model's context.
+
+**Testing it.** The model runs on a Mac with Apple Intelligence as on a phone, and the
+generator's code builds for macOS, so `Tools/ExampleReview` (`swift run review-examples`)
+runs the app's own generator over every starter and HSK 1-3 word that would ask it, several
+times each, and writes the results for a native speaker's review page. On 2026-10-08, 137
+words would ask. Keeping to the starter's words, 87% of runs gave a usable sentence, after
+220 of 626 tries were dropped; with no word list, 93%, after 84 of 537. Some were plainly
+wrong either way (们 alone at a sentence's start, "bought yuan"), and the word list made the
+model lean on 买书 and 今天. The review's verdicts decide whether generated sentences ship,
+marked or not, and whether to keep the word list.
 
 **Then the sentence is chosen for the learner,** as the owner asked: the one with the fewest
 words outside those they have started (answered at least once, or marked learnt;

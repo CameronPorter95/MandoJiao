@@ -3,7 +3,7 @@ import Foundation
 import FoundationModels
 
 /// Writes an example sentence with Apple's on-device model, for a word none of Tatoeba's
-/// sentences use in the card's sense. Nil on a device without the model, with Apple
+/// sentences use in the card's sense. Unavailable on a device without the model, with Apple
 /// Intelligence off, while the model is not ready, or where it does not write Chinese.
 ///
 /// Only the Hanzi and the English are the model's. The pinyin is built from the card and the
@@ -15,32 +15,55 @@ actor ModelExampleGenerator: ExampleGenerating {
         self.lexicon = lexicon
     }
 
-    func example(for request: ExampleRequest) async throws -> ExampleSentence? {
+    func example(for request: ExampleRequest) async throws -> ExampleWriting {
         let model = SystemLanguageModel.default
-        guard case .available = model.availability, model.supportsLocale(Locale(identifier: "zh-Hans")) else { return nil }
+        guard case .available = model.availability, model.supportsLocale(Locale(identifier: "zh-Hans")) else { return .unavailable }
 
         let session = LanguageModelSession(model: model, instructions: Self.instructions)
-        let written = try await session.respond(to: Self.prompt(for: request), generating: WrittenExample.self).content
-        let hanzi = written.chinese.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard let pinyin = try await SentencePinyin.spell(hanzi, word: request.hanzi, wordPinyin: request.pinyin, lexicon: lexicon) else {
-            return nil
+        let written: WrittenExample
+        do {
+            written = try await session.respond(to: Self.prompt(for: request), generating: WrittenExample.self, options: Self.options).content
+        } catch let error as LanguageModelSession.GenerationError {
+            switch error {
+            case .assetsUnavailable, .unsupportedLanguageOrLocale:
+                return .unavailable
+            // An answer that runs on past its limit, as one did on the Mac, is as unusable as a
+            // refusal, and another try may be short.
+            case .guardrailViolation, .refusal, .decodingFailure, .rateLimited, .concurrentRequests, .exceededContextWindowSize:
+                return .refused
+            default:
+                throw error
+            }
         }
-        return ExampleSentence(hanzi: hanzi, pinyin: pinyin, english: written.english.trimmingCharacters(in: .whitespacesAndNewlines))
+        let hanzi = written.chinese.trimmingCharacters(in: .whitespacesAndNewlines)
+        // Characters the lexicon cannot read have no pinyin to show, so this one is not usable;
+        // another may be.
+        guard let pinyin = try await SentencePinyin.spell(hanzi, word: request.hanzi, wordPinyin: request.pinyin, lexicon: lexicon) else {
+            return .refused
+        }
+        return .written(ExampleSentence(hanzi: hanzi, pinyin: pinyin, english: written.english.trimmingCharacters(in: .whitespacesAndNewlines)))
     }
 
-    private static let instructions = """
+    static let instructions = """
         You write example sentences for someone learning Mandarin Chinese. Write natural, \
         everyday Mandarin in simplified Chinese characters only: no pinyin, no Latin letters, \
-        no digits. Keep each sentence short and simple, the kind a beginner's textbook uses.
+        no digits, and Chinese punctuation such as 。，？！. Keep each sentence short and simple, \
+        the kind a beginner's textbook uses.
         """
+
+    /// One short sentence and its translation need far less; uncapped, an answer on the Mac
+    /// ran on until it filled the model's whole 4,096-token context.
+    private static let options = GenerationOptions(maximumResponseTokens: 120)
 
     /// The learner's own words, up to a number that keeps the prompt small.
     private static let knownLimit = 150
 
     static func prompt(for request: ExampleRequest) -> String {
         let reading = request.pinyin.isEmpty ? "" : " (\(request.pinyin))"
+        // "Exactly as written": asked only to use 看病, it wrote 看医生 three times in three.
         var prompt = """
             Write one sentence that uses \(request.hanzi)\(reading) to mean "\(request.meaning)". \
+            The sentence must contain \(request.hanzi) exactly as written, not a synonym. \
             Use it in that sense only. Keep the sentence under twelve characters.
             """
         let known = request.known.subtracting([request.hanzi]).sorted().prefix(knownLimit)

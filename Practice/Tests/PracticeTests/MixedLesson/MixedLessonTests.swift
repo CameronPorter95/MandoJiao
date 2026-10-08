@@ -281,7 +281,8 @@ private actor FakeExamples: ExampleRepository {
     }
 }
 
-/// Writes the one sentence it is given, recording each request; can be told to fail.
+/// Writes the one sentence it is given, or has no model when given none, recording each
+/// request; can be told to fail.
 private actor FakeGenerator: ExampleGenerating {
     private let sentence: ExampleSentence?
     private let fails: Bool
@@ -292,10 +293,10 @@ private actor FakeGenerator: ExampleGenerating {
         self.fails = fails
     }
 
-    func example(for request: ExampleRequest) throws -> ExampleSentence? {
+    func example(for request: ExampleRequest) throws -> ExampleWriting {
         requests.append(request)
         if fails { throw DictionaryDomainError.unexpected(model: DomainErrorModel(domain: "test", code: 6, description: "no model")) }
-        return sentence
+        return sentence.map(ExampleWriting.written) ?? .unavailable
     }
 }
 

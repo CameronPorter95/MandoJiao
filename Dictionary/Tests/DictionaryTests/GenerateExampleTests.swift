@@ -5,25 +5,46 @@ import Testing
 
 @Suite("Writing an example on the device")
 nonisolated struct GenerateExampleTests {
+    /// Answers each attempt in turn, repeating the last.
     private actor ScriptedGenerator: ExampleGenerating {
-        private let sentence: ExampleSentence?
+        private let answers: [ExampleWriting]
         private(set) var requests: [ExampleRequest] = []
 
-        init(_ sentence: ExampleSentence?) {
-            self.sentence = sentence
+        init(_ answers: ExampleWriting...) {
+            self.answers = answers
         }
 
-        func example(for request: ExampleRequest) -> ExampleSentence? {
+        func example(for request: ExampleRequest) -> ExampleWriting {
             requests.append(request)
-            return sentence
+            return answers[min(requests.count, answers.count) - 1]
         }
     }
 
     private let hit = ExampleRequest(hanzi: "打", pinyin: "dǎ", meaning: "to hit, to strike", known: ["我", "你"])
+    private let good = ExampleSentence(hanzi: "你别打我。", pinyin: "", english: "Don't hit me.")
 
     private func generated(_ hanzi: String, english: String = "Don't hit me.") async throws -> ExampleSentence? {
-        let use = GenerateExampleUseCase(generator: ScriptedGenerator(ExampleSentence(hanzi: hanzi, pinyin: "", english: english)))
+        let use = GenerateExampleUseCase(generator: ScriptedGenerator(.written(ExampleSentence(hanzi: hanzi, pinyin: "", english: english))))
         return try await use(hit)
+    }
+
+    @Test("a refusal or an unfit sentence is tried again, up to three times in all")
+    func retries() async throws {
+        let refusedOnce = ScriptedGenerator(.refused, .written(good))
+        #expect(try await GenerateExampleUseCase(generator: refusedOnce)(hit) == good)
+        let unfitTwice = ScriptedGenerator(.written(ExampleSentence(hanzi: "你别碰我。", pinyin: "", english: "Don't touch me.")), .refused, .written(good))
+        #expect(try await GenerateExampleUseCase(generator: unfitTwice)(hit) == good)
+
+        let neverFit = ScriptedGenerator(.refused)
+        #expect(try await GenerateExampleUseCase(generator: neverFit)(hit) == nil)
+        #expect(await neverFit.requests.count == GenerateExampleUseCase.attempts)
+    }
+
+    @Test("no model is not asked again")
+    func unavailable() async throws {
+        let generator = ScriptedGenerator(.unavailable, .written(good))
+        #expect(try await GenerateExampleUseCase(generator: generator)(hit) == nil)
+        #expect(await generator.requests.count == 1)
     }
 
     @Test("a short sentence in Hanzi that uses the word is kept")
@@ -44,7 +65,7 @@ nonisolated struct GenerateExampleTests {
 
     @Test("nothing is asked of the model for a meaning with nothing to check")
     func grammar() async throws {
-        let generator = ScriptedGenerator(ExampleSentence(hanzi: "我吃了。", pinyin: "", english: "I ate."))
+        let generator = ScriptedGenerator(.written(ExampleSentence(hanzi: "我吃了。", pinyin: "", english: "I ate.")))
         let request = ExampleRequest(hanzi: "了", pinyin: "le", meaning: "(completed action marker)", known: [])
         #expect(try await GenerateExampleUseCase(generator: generator)(request) == nil)
         #expect(await generator.requests.isEmpty)
