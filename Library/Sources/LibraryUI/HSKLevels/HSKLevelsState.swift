@@ -37,14 +37,21 @@ struct HSKLevelsState: Equatable {
     }
 }
 
-enum HSKLevelsAction: Equatable {
+enum HSKLevelsAction: Equatable, Decodable {
     case appeared
     case disappeared
-    case installTapped(Int)
+    case installTapped(level: Int)
     case doneTapped
 }
 
 enum HSKLevelsEffect: Equatable, Sendable {
     case dismiss
     case showError(VocabularyError)
+
+    /// Carries out a dismissal, which the presenter owns, and returns any other effect.
+    func followed(dismiss: () -> Void) -> HSKLevelsEffect? {
+        guard self == .dismiss else { return self }
+        dismiss()
+        return nil
+    }
 }

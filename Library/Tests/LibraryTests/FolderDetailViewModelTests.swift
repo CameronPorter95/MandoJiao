@@ -49,6 +49,36 @@ struct FolderDetailViewModelTests {
         #expect(opened == [Fixtures.part1.id, Fixtures.level1.id])
     }
 
+    @Test("driven, the folder's search results come to the front with its text, and back closes the search")
+    func driverResults() async throws {
+        let (hsk, _) = await makeDetail(Fixtures.hsk.id)
+        var built: [String] = []
+        let driver = hsk.driver(
+            navigation: FolderDetailNavigation(
+                didRequestMatching: { _ in }, didRequestFlashcards: { _ in }, didRequestSpeaking: { _ in },
+                didOpenDeck: { _ in }, didOpenFolder: { _ in }
+            ),
+            results: { text in
+                built.append(text)
+                return ScreenDriver(
+                    name: "results", actions: ["appeared", "disappeared", "searchChanged"], state: { 0 }, summary: { _ in "" },
+                    send: { (_: FolderProbe) in }, effects: { AsyncStream<Int> { $0.finish() } }, follow: { $0 }
+                )
+            }
+        )
+        #expect(driver.front() == nil)
+        #expect(!driver.back())
+
+        try driver.send("searchChanged", Data(#"{"_0":"wa"}"#.utf8))
+        try driver.send("searchPresentedChanged", Data(#"{"_0":true}"#.utf8))
+        #expect(driver.front()?.name == "results")
+        #expect(built == ["wa"])
+
+        #expect(driver.back())
+        #expect(!hsk.state.isSearching)
+        #expect(driver.front() == nil)
+    }
+
     @Test("driven by name, every listed action is accepted")
     func driverAcceptsEveryAction() async {
         // Unknown ids, so nothing is really deleted from the shared fixture.
@@ -244,4 +274,9 @@ struct FolderDetailViewModelTests {
         #expect(!hsk.state.canPractise(Fixtures.part2))
         #expect(hsk.state.canPractise(Fixtures.fullDeck))
     }
+}
+
+private enum FolderProbe: Decodable {
+    case appeared, disappeared
+    case searchChanged(text: String)
 }

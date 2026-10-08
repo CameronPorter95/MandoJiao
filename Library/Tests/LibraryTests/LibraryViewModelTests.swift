@@ -80,6 +80,57 @@ struct LibraryViewModelTests {
         #expect(driver.front() == nil)
     }
 
+    @Test("driven, a search's results, the word editor and the HSK levels come to the front, and close")
+    func driverSheetsAndResults() async throws {
+        let (library, _) = await makeLibrary()
+        let handedOn = Box<[String]>([])
+        var dismissEditor: (() -> Void)?
+        var dismissLevels: (() -> Void)?
+        let driver = library.driver(
+            navigation: LibraryTabNavigation(didRequestMatching: { _ in }, didRequestFlashcards: { _ in }, didRequestSpeaking: { _ in }),
+            root: { _, _ in probe("root") },
+            page: { _, _ in probe("page") },
+            results: { text, _ in
+                handedOn.value.append("built with \(text)")
+                return recordingProbe("results", into: handedOn)
+            },
+            editor: { _, dismissed in
+                dismissEditor = dismissed
+                return probe("editor")
+            },
+            hskLevels: { dismissed in
+                dismissLevels = dismissed
+                return probe("hsk levels")
+            }
+        )
+
+        try driver.send("searchPresentedChanged", Data(#"{"_0":true}"#.utf8))
+        #expect(driver.front()?.name == "results")
+        try driver.send("searchChanged", Data(#"{"_0":"wa"}"#.utf8))
+        _ = driver.front()
+        _ = driver.front()
+        // Built with the text so far, then handed each change once.
+        #expect(handedOn.value == ["built with ", "searchChanged wa"])
+
+        try driver.send("newWordTapped", nil)
+        #expect(driver.front()?.name == "editor")
+        dismissEditor?()
+        #expect(library.state.editor == nil)
+        #expect(driver.front()?.name == "results")
+
+        try driver.send("hskLevelsTapped", nil)
+        #expect(driver.front()?.name == "hsk levels")
+        dismissLevels?()
+        #expect(!library.state.isShowingHSKLevels)
+
+        // Back closes the search before anything else.
+        try driver.send("selected", Data(#"{"_0":{"folder":{"_0":"\#(Fixtures.hsk.id)"}}}"#.utf8))
+        try driver.send("searchPresentedChanged", Data(#"{"_0":true}"#.utf8))
+        #expect(driver.back())
+        #expect(!library.state.isSearching)
+        #expect(driver.front()?.name == "root")
+    }
+
     @Test("driven by name, every listed action is accepted")
     func driverAcceptsEveryAction() async {
         // Unknown ids, so nothing is really changed in the shared fixture.
@@ -326,4 +377,27 @@ private func probe(_ name: String) -> ScreenDriver {
 
 private enum ProbeLifecycle: Decodable {
     case appeared, disappeared
+}
+
+@MainActor
+private final class Box<Value> {
+    var value: Value
+    init(_ value: Value) { self.value = value }
+}
+
+/// A results screen that records the search text handed on to it.
+@MainActor
+private func recordingProbe(_ name: String, into log: Box<[String]>) -> ScreenDriver {
+    ScreenDriver(
+        name: name, actions: ["appeared", "disappeared", "searchChanged"], state: { name }, summary: { $0 },
+        send: { (action: ProbeSearch) in
+            if case .searchChanged(let text) = action { log.value.append("searchChanged \(text)") }
+        },
+        effects: { AsyncStream<Int> { $0.finish() } }, follow: { $0 }
+    )
+}
+
+private enum ProbeSearch: Decodable {
+    case appeared, disappeared
+    case searchChanged(text: String)
 }

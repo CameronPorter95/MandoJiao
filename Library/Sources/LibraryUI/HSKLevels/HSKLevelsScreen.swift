@@ -53,10 +53,10 @@ struct HSKLevelsScreen: View {
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             case .missing(let count):
-                Button(count == 1 ? "Restore 1 deck" : "Restore \(count) decks") { onAction(.installTapped(level.level)) }
+                Button(count == 1 ? "Restore 1 deck" : "Restore \(count) decks") { onAction(.installTapped(level: level.level)) }
                     .buttonStyle(.bordered)
             case .notAdded:
-                Button("Add") { onAction(.installTapped(level.level)) }
+                Button("Add") { onAction(.installTapped(level: level.level)) }
                     .buttonStyle(.borderedProminent)
             }
         }

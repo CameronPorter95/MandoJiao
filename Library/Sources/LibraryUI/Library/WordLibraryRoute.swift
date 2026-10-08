@@ -48,6 +48,7 @@ public struct WordLibraryRoute: View {
             }
             .onChange(of: layout.sort) { _, sort in viewModel.send(.sortChanged(sort)) }
             .onChange(of: searchText) { _, text in viewModel.send(.searchChanged(text)) }
+            .drivable { viewModel.driver(layout: layout) }
             .onAppear { viewModel.send(.appeared) }
             .onDisappear { viewModel.send(.disappeared) }
             .task {
