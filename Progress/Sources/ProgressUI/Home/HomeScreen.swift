@@ -110,7 +110,7 @@ struct HomeScreen: View {
                 .padding(.vertical, 4)
 
                 PractiseRows(wordCount: state.currentWordCount, minimumMatchingWords: state.minimumMatchingWords) {
-                    onAction(.continueTapped($0))
+                    onAction(.continueTapped(exercise: $0))
                 }
 
                 Button("Practise another deck…") { onAction(.chooseSourceTapped) }
@@ -240,7 +240,7 @@ private struct SourcePicker: View {
     }
 
     private func row(_ title: String, systemImage: String, wordCount: Int, source: LessonSource) -> some View {
-        Button { onAction(.sourceChosen(source)) } label: {
+        Button { onAction(.sourceChosen(source: source)) } label: {
             HStack {
                 Label(title, systemImage: systemImage)
                     .foregroundStyle(Color.primary)

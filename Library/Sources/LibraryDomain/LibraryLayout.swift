@@ -7,7 +7,7 @@ import Foundation
 /// The tree and each folder's screen keep their own record, so unfolding a folder in one
 /// never unfolds it in another.
 public nonisolated struct LibraryLayout: Equatable, Sendable, Codable {
-    public enum Scope: Hashable, Sendable {
+    public enum Scope: Hashable, Sendable, Decodable {
         case tree
         /// The subfolders shown on this folder's screen.
         case folder(UUID)

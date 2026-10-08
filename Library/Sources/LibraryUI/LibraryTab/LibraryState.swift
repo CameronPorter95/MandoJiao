@@ -2,12 +2,12 @@ import Foundation
 import LibraryDomain
 
 /// What the library's sidebar has open. Words are found by searching, not opened.
-public enum LibrarySelection: Hashable, Sendable {
+public enum LibrarySelection: Hashable, Sendable, Decodable {
     case folder(UUID)
 }
 
 /// A screen pushed over the selection: a folder opened from inside another, or a deck.
-public enum LibraryPage: Hashable, Sendable {
+public enum LibraryPage: Hashable, Sendable, Decodable {
     case folder(UUID)
     case deck(UUID)
 }
@@ -107,7 +107,7 @@ struct LibraryState: Equatable {
     }
 }
 
-enum LibraryAction: Equatable {
+enum LibraryAction: Equatable, Decodable {
     case appeared
     case disappeared
     /// Nil when going back to the sidebar on iPhone.

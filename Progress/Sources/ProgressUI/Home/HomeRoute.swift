@@ -32,12 +32,6 @@ public struct HomeRoute: View {
     }
 
     private func handle(_ effect: HomeEffect) {
-        switch effect {
-        case .requestMatching(let request): navigation.didRequestMatching(request)
-        case .requestSpeaking(let request): navigation.didRequestSpeaking(request)
-        case .requestFlashcards(let request): navigation.didRequestFlashcards(request)
-        case .requestTodayPlan(let plan): navigation.didRequestTodayPlan(plan)
-        case .showError(let error): self.error = error
-        }
+        if case .showError(let error) = navigation.follow(effect) { self.error = error }
     }
 }

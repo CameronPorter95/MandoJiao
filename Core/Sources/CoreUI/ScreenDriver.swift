@@ -14,6 +14,12 @@ public struct ScreenDriver {
     public let dump: () -> String
     /// The effects left over once navigation has been followed, described.
     public let effects: () -> AsyncStream<String>
+    /// The screen this one shows in front of itself, such as a page pushed onto its stack.
+    public let front: () -> ScreenDriver?
+    /// Pops its own stack by one, as the back button does. False when it has nothing to pop.
+    public let back: () -> Bool
+    /// Working on something that will change what it shows, such as a search under way.
+    public let isBusy: () -> Bool
 
     /// `follow` carries out an effect that navigates and returns the rest, as the screen's Route does.
     public init<State, Action: Decodable, Effect: Sendable>(
@@ -23,8 +29,15 @@ public struct ScreenDriver {
         summary: @escaping (State) -> String,
         send: @escaping (Action) -> Void,
         effects: @escaping () -> AsyncStream<Effect>,
-        follow: @escaping (Effect) -> Effect?
+        follow: @escaping (Effect) -> Effect?,
+        front: @escaping () -> ScreenDriver? = { nil },
+        back: @escaping () -> Bool = { false },
+        relay: EffectRelay? = nil,
+        isBusy: @escaping (State) -> Bool = { _ in false }
     ) {
+        self.front = front
+        self.back = back
+        self.isBusy = { isBusy(state()) }
         self.name = name
         self.actions = actions
         self.send = { action, arguments in
@@ -40,6 +53,7 @@ public struct ScreenDriver {
         self.effects = {
             let source = effects()
             let (described, continuation) = AsyncStream.makeStream(of: String.self)
+            relay?.sink = { continuation.yield($0) }
             let task = Task {
                 for await effect in source {
                     if let left = follow(effect) { continuation.yield(String(describing: left)) }
@@ -61,6 +75,15 @@ public struct ScreenDriver {
             throw ScreenDriverError.badArguments(name)
         }
     }
+}
+
+/// Carries what a screen in front leaves over into the effects of the screen behind it, as an
+/// alert shown by a pushed screen still shows in the app.
+@MainActor
+public final class EffectRelay {
+    var sink: ((String) -> Void)?
+
+    public init() {}
 }
 
 public nonisolated enum ScreenDriverError: Error, Equatable, CustomStringConvertible {

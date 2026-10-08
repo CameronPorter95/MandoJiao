@@ -17,4 +17,11 @@ public struct LibraryTabNavigation {
         self.didRequestFlashcards = didRequestFlashcards
         self.didRequestSpeaking = didRequestSpeaking
     }
+
+    /// Carries out an effect that starts a lesson, and returns any other for the presenter.
+    func follow(_ effect: LibraryEffect) -> LibraryEffect? {
+        guard case .requestMatching(let request) = effect else { return effect }
+        didRequestMatching(request)
+        return nil
+    }
 }

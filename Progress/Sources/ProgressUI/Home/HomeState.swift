@@ -101,14 +101,14 @@ struct HomeState: Equatable {
     }
 }
 
-enum HomeAction: Equatable {
+enum HomeAction: Equatable, Decodable {
     case appeared
     case disappeared
     case quickPracticeTapped
     case todayPlanTapped
-    case continueTapped(LessonExercise)
+    case continueTapped(exercise: LessonExercise)
     case chooseSourceTapped
-    case sourceChosen(LessonSource)
+    case sourceChosen(source: LessonSource)
     case sourceChoiceDismissed
     case practiseMistakesTapped
     case clearMistakesTapped

@@ -169,12 +169,45 @@ CLI's vocabulary cannot drift from the code's.
 
 ## After the spike
 
-- Drivers for the remaining screens.
+- Drivers for the remaining screens. The tabs are done, below.
 - One composition shared by the app and the CLI. The duplicated composition root is the
   spike's known cost; the `Application` module [modularisation.md](modularisation.md)
   sketches is the fix.
 - A line in [feature-checklist.md](feature-checklist.md): a new screen ships a driver.
 - Remote mode, below.
+
+## Tabs
+
+`mando` starts on home, as the app does, and `tab home|library|dictionary` switches. `open
+deck` and `open folder` go through the library tab: a top-level folder is selected in its
+sidebar and anything else pushed onto its stack, as tapping would. `ls` prints one line
+per open screen, the tab first and the front last.
+
+- **A screen in front of another.** `ScreenDriver` has `front`, the screen pushed or shown
+  over it, and `back`, which pops its own stack. Commands go to the end of that chain, and
+  `back` pops the deepest stack that has anything to pop.
+- **`ChildDrivers`** (CoreUI) keeps a driver's pushed screens alive while they stay in its
+  stack. Only the front one has appeared, as in a `NavigationStack`, and its effects are
+  followed only while it is in front, as its Route's `.task` follows them. Without that, a
+  lesson started from a pushed deck never presented: nothing followed the deck's effects.
+  What the front screen leaves over reaches the parent's effects through an `EffectRelay`.
+- **`isBusy`.** A dictionary search changes nothing for seconds while it reads the whole
+  dictionary, so the 30ms quiet check gave up early and `ls` showed "searching". A busy
+  screen now holds the settle, which is capped at 10s, and the settle runs before every
+  command as well as after it.
+- **The library's page context** moved from `LibraryRoute` to `LibraryViewModel`, so the
+  Route and the driver build pushed screens from the same one.
+- **Folder detail's opens** went through navigation closures straight from the Screen, so
+  there was no action to send. They are now `deckOpened(id:)` and `folderOpened(id:)`,
+  effects followed by `FolderDetailNavigation.follow`, as checklist U2 asks.
+- **The dictionary's results** are picked by place, `vocabularyTapped {"result":0}`,
+  rather than by a whole `DictionarySearchResult` in JSON.
+- **Factories** share one `makeViewModel` between `makeRoute` and `makeDriver`.
+- **`tab` is refused under a lesson**, as the app's full-screen cover hides the tab bar.
+
+Not driven yet: home's settings, the dictionary's headword pages, the library's search
+results, word editor and HSK levels, and matching, flash cards and today's plan. A pushed
+screen's leftover errors are relayed to its tab, and print as notes.
 
 ## Remote mode: the same commands, driving the simulator
 
@@ -194,10 +227,10 @@ the coordinator, sheets and covers, and the simulator's real store. It also repl
 pointing `ContentView` at a screen to screenshot it (Known gaps in CLAUDE.md): drive to
 the screen by command, then screenshot.
 
-1. **Tabs and the coordinator become drivable.** `TabView` takes a selection from
-   `AppNavigationCoordinator`, and the coordinator gets a driver with `selectTab` and
-   the presented lesson in its state. This is also what gives headless `mando` a `tab`
-   command, so do it first. The library stack is already state
+1. **Partly done. Tabs and the coordinator become drivable.** `TabView` takes its
+   selection from `AppNavigationCoordinator.selectedTab`, and headless `mando` has `tab`.
+   The coordinator's driver, with `selectTab` and the presented lesson, waits for step 2's
+   registry, since nothing in the app could call it before then. The library stack is already state
    (`LibraryState.path`), so a deck opened by command slides in for free.
 2. **Routes register their drivers, in debug builds only.** On appear, a Route hands
    `viewModel.driver(navigation:)` to a registry; on disappear it takes it back. One line
