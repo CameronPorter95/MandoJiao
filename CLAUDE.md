@@ -66,6 +66,15 @@ cd Practice && swift test
 cd Practice && swift test --filter StrictnessTests
 ```
 
+Drive screens headlessly, no simulator: `cd Tools/MandoCLI && swift run mando`, then
+`help`. Not in the Xcode scheme, so its 9 tests (`swift test` there) are not in the counts
+below; see `Documentation/headless-cli.md`. The same commands drive the app on the
+simulator: tick `-remote` under the scheme's Run arguments (committed unticked), run a
+debug build, then `swift run mando --remote`. mando's first line names what it drives;
+only one app can hold the port. Tick `-scripted-speech` as well for `say` to work: lessons
+then hear queued answers instead of the microphone. Ticking either is a local change: do not
+commit them ticked.
+
 Get `<udid>` from `xcrun simctl list devices available`. Xcode 27 did not resolve
 `name=iPhone 17 Pro` here.
 
@@ -76,8 +85,8 @@ times; once it reported `TEST SUCCEEDED` while eight new tests were skipped. A
 green result on its own is not evidence that anything ran.
 
 `xcodebuild test` prints one `Test run with` line per test bundle, six in all.
-Add them up. Current suite: 489 tests in 56 suites: 13 in `Core`, 175 in `Library`,
-88 in `Dictionary`, 189 in `Practice`, 19 in `Progress`, 5 in `Settings`. The app target has no tests of
+Add them up. Current suite: 529 tests in 63 suites: 30 in `Core`, 182 in `Library`,
+89 in `Dictionary`, 202 in `Practice`, 21 in `Progress`, 5 in `Settings`. The app target has no tests of
 its own. If a bundle's line is missing, it did not run.
 
 ```sh

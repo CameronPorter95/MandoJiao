@@ -55,7 +55,7 @@ struct DeckDetailState: Equatable {
     }
 }
 
-enum DeckDetailAction: Equatable {
+enum DeckDetailAction: Equatable, Decodable {
     case appeared
     case disappeared
     case nameChanged(String)
@@ -66,7 +66,7 @@ enum DeckDetailAction: Equatable {
     case pickerSearchChanged(String)
     /// In the sheet: in the deck if it was not, out of it if it was.
     case wordToggled(UUID)
-    case startLessonTapped(LessonExercise)
+    case startLessonTapped(exercise: LessonExercise)
     case moveTapped
     case destinationChosen(UUID?)
     case moveCancelled

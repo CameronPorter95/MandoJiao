@@ -27,22 +27,14 @@ public struct FolderDetailRoute: View {
             state: viewModel.state,
             layout: layout,
             onAction: { viewModel.send($0) },
-            onOpenDeck: { navigation.didOpenDeck($0) },
-            onOpenFolder: { navigation.didOpenFolder($0) },
             results: { AnyView(results($0)) }
         )
+        .drivable { viewModel.driver(navigation: navigation) }
         .onAppear { viewModel.send(.appeared) }
         .onDisappear { viewModel.send(.disappeared) }
         .task {
             for await effect in viewModel.effects() {
-                switch effect {
-                case .startLesson(let request, let exercise):
-                    switch exercise {
-                    case .matching: navigation.didRequestMatching(request)
-                    case .flashcards: navigation.didRequestFlashcards(request)
-                    case .speaking: navigation.didRequestSpeaking(request)
-                    }
-                case .showError(let error):
+                if case .showError(let error) = navigation.follow(effect) {
                     self.error = error
                 }
             }

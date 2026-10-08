@@ -19,4 +19,16 @@ public struct HomeNavigation {
         self.didRequestFlashcards = didRequestFlashcards
         self.didRequestTodayPlan = didRequestTodayPlan
     }
+
+    /// Carries out an effect that starts a lesson, and returns any other for the presenter.
+    func follow(_ effect: HomeEffect) -> HomeEffect? {
+        switch effect {
+        case .requestMatching(let request): didRequestMatching(request)
+        case .requestSpeaking(let request): didRequestSpeaking(request)
+        case .requestFlashcards(let request): didRequestFlashcards(request)
+        case .requestTodayPlan(let plan): didRequestTodayPlan(plan)
+        case .showError: return effect
+        }
+        return nil
+    }
 }

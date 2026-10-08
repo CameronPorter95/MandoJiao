@@ -160,6 +160,15 @@ public final class DictationRecogniser: SpeechRecognising {
         finalAlternatives = []
 
         let transcriber = Self.makeTranscriber(locale: locale)
+        if analyzerFormat == nil {
+            analyzerFormat = await SpeechAnalyzer.bestAvailableAudioFormat(compatibleWith: [transcriber])
+        }
+        // Speech traps on a buffer it cannot take rather than throwing, so with no format to
+        // convert the microphone's into, nothing is captured. Seen on the simulator.
+        guard analyzerFormat != nil else {
+            availability = .unsupported(reason: "Speech recognition could not start here.")
+            throw DictationError.noAudioFormat
+        }
         self.transcriber = transcriber
 
         // This is the payoff for using the dictation module: the expected answer and its
@@ -176,12 +185,6 @@ public final class DictationRecogniser: SpeechRecognising {
             analysisContext: context
         )
         self.analyzer = analyzer
-
-        if analyzerFormat == nil {
-            analyzerFormat = await SpeechAnalyzer.bestAvailableAudioFormat(
-                compatibleWith: [transcriber]
-            )
-        }
 
         resultsTask = Task { @MainActor [weak self] in
             do {
@@ -203,7 +206,12 @@ public final class DictationRecogniser: SpeechRecognising {
             }
         }
 
-        try startCapture()
+        do {
+            try startCapture()
+        } catch {
+            tearDown()
+            throw error
+        }
         isListening = true
     }
 
@@ -212,7 +220,10 @@ public final class DictationRecogniser: SpeechRecognising {
         let inputFormat = input.outputFormat(forBus: 0)
 
         if let analyzerFormat, analyzerFormat != inputFormat {
-            converter = AVAudioConverter(from: inputFormat, to: analyzerFormat)
+            guard let converter = AVAudioConverter(from: inputFormat, to: analyzerFormat) else {
+                throw DictationError.noConverter
+            }
+            self.converter = converter
         } else {
             converter = nil
         }
@@ -223,7 +234,7 @@ public final class DictationRecogniser: SpeechRecognising {
         let format = analyzerFormat
         let continuation = inputContinuation
         input.installTap(onBus: 0, bufferSize: 4096, format: inputFormat) { @Sendable buffer, _ in
-            let converted = Self.convert(buffer, using: converter, to: format)
+            guard let converted = Self.analyzerBuffer(buffer, using: converter, to: format) else { return }
             continuation?.yield(AnalyzerInput(buffer: converted))
         }
 
@@ -231,18 +242,21 @@ public final class DictationRecogniser: SpeechRecognising {
         try engine.start()
     }
 
-    /// The microphone hands back its own hardware format; the analyser wants its own.
-    private nonisolated static func convert(
+    /// The microphone hands back its own hardware format; the analyser wants its own. Nil
+    /// when the buffer cannot be made into it, since `AnalyzerInput` traps on the wrong format.
+    nonisolated static func analyzerBuffer(
         _ buffer: AVAudioPCMBuffer,
         using converter: AVAudioConverter?,
         to format: AVAudioFormat?
-    ) -> AVAudioPCMBuffer {
-        guard let converter, let format else { return buffer }
+    ) -> AVAudioPCMBuffer? {
+        guard let format else { return nil }
+        if buffer.format == format { return buffer }
+        guard let converter else { return nil }
 
         let ratio = format.sampleRate / buffer.format.sampleRate
         let capacity = AVAudioFrameCount(Double(buffer.frameLength) * ratio) + 1024
         guard let output = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: capacity) else {
-            return buffer
+            return nil
         }
 
         var consumed = false
@@ -257,7 +271,7 @@ public final class DictationRecogniser: SpeechRecognising {
             return buffer
         }
 
-        return error == nil ? output : buffer
+        return error == nil ? output : nil
     }
 
     public func stop() async -> SpeechOutcome {
@@ -292,7 +306,11 @@ public final class DictationRecogniser: SpeechRecognising {
     public func cancel() {
         guard isListening else { return }
         isListening = false
+        tearDown()
+    }
 
+    /// Everything a listen set up, whether or not it got as far as listening.
+    private func tearDown() {
         engine.inputNode.removeTap(onBus: 0)
         engine.stop()
         inputContinuation?.finish()
@@ -310,4 +328,11 @@ public final class DictationRecogniser: SpeechRecognising {
 
         Task { await analyzer?.cancelAndFinishNow() }
     }
+}
+
+enum DictationError: Error {
+    /// The analyser offered no audio format to convert the microphone's into.
+    case noAudioFormat
+    /// The microphone's format cannot be converted into the analyser's.
+    case noConverter
 }

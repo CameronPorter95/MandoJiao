@@ -1,3 +1,4 @@
+import CoreUI
 import LibraryDomain
 
 @MainActor
@@ -14,5 +15,16 @@ public struct DeckDetailNavigation {
         self.didRequestMatching = didRequestMatching
         self.didRequestFlashcards = didRequestFlashcards
         self.didRequestSpeaking = didRequestSpeaking
+    }
+
+    /// Carries out an effect that starts a lesson, and returns any other for the presenter.
+    func follow(_ effect: DeckDetailEffect) -> DeckDetailEffect? {
+        guard case .startLesson(let request, let exercise) = effect else { return effect }
+        switch exercise {
+        case .matching: didRequestMatching(request)
+        case .flashcards: didRequestFlashcards(request)
+        case .speaking: didRequestSpeaking(request)
+        }
+        return nil
     }
 }

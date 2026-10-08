@@ -14,20 +14,14 @@ public struct DeckDetailRoute: View {
 
     public var body: some View {
         DeckDetailScreen(state: viewModel.state, onAction: { viewModel.send($0) })
+            .drivable { viewModel.driver(navigation: navigation) }
             .onAppear { viewModel.send(.appeared) }
             .onDisappear { viewModel.send(.disappeared) }
             .task {
                 for await effect in viewModel.effects() {
-                    switch effect {
-                    case .startLesson(let request, let exercise):
-                        // Stays pushed: the lesson is presented over the deck, and closing
-                        // it comes back here rather than to home.
-                        switch exercise {
-                        case .matching: navigation.didRequestMatching(request)
-                        case .flashcards: navigation.didRequestFlashcards(request)
-                        case .speaking: navigation.didRequestSpeaking(request)
-                        }
-                    case .showError(let error):
+                    // A lesson is presented over the deck, which stays pushed, so closing it
+                    // comes back here rather than to home.
+                    if case .showError(let error) = navigation.follow(effect) {
                         self.error = error
                     }
                 }

@@ -1,3 +1,4 @@
+import CoreUI
 import Foundation
 import LibraryDomain
 
@@ -21,5 +22,18 @@ public struct FolderDetailNavigation {
         self.didRequestSpeaking = didRequestSpeaking
         self.didOpenDeck = didOpenDeck
         self.didOpenFolder = didOpenFolder
+    }
+
+    /// Carries out an effect that opens a lesson, deck or folder, and returns any other.
+    func follow(_ effect: FolderDetailEffect) -> FolderDetailEffect? {
+        switch effect {
+        case .startLesson(let request, .matching): didRequestMatching(request)
+        case .startLesson(let request, .flashcards): didRequestFlashcards(request)
+        case .startLesson(let request, .speaking): didRequestSpeaking(request)
+        case .openDeck(let id): didOpenDeck(id)
+        case .openFolder(let id): didOpenFolder(id)
+        case .showError: return effect
+        }
+        return nil
     }
 }

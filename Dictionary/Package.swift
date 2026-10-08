@@ -47,6 +47,7 @@ let package = Package(
             name: "DictionaryDI",
             dependencies: [
                 "DictionaryDomain", "DictionaryData", "DictionaryUI",
+                .product(name: "CoreUI", package: "Core"),
                 .product(name: "CoreDI", package: "Core"),
             ],
             swiftSettings: mainActorByDefault

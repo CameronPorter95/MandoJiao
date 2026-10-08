@@ -22,6 +22,8 @@ public final class DeckDetailViewModel {
     /// Writes run one after another, so rapid toggles land in the order they were made.
     private var lastWrite: Task<Void, Never>?
 
+    public nonisolated static let defaultRenameDelay: Duration = .milliseconds(300)
+
     /// `vocabulary` is shown until the store's own snapshot arrives.
     public init(
         deckID: UUID,
@@ -32,7 +34,7 @@ public final class DeckDetailViewModel {
         renameDeck: RenameDeckUseCase,
         setMembership: SetDeckMembershipUseCase,
         moveDeck: MoveDeckUseCase,
-        renameDelay: Duration = .milliseconds(300)
+        renameDelay: Duration = defaultRenameDelay
     ) {
         state = DeckDetailState(
             deckID: deckID,

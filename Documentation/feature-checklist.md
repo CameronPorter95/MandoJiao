@@ -111,7 +111,10 @@ The project rules in [CLAUDE.md](../CLAUDE.md) apply everywhere, migrated or not
       ([why](architecture.md#8-route--screen-split))
 - [ ] **U4** Mutations update state optimistically and revert on failure.
 - [ ] **U5** Effects are exposed as `func effects() -> AsyncStream<Effect>` backed by an
-      `EffectChannel`, and the only caller is the `Route`, in `.task`. Never a stored
+      `EffectChannel`, and the only callers are the `Route`, in `.task`, and the screen's
+      `ScreenDriver`, which stands in for the Route when the screen runs headlessly
+      ([headless-cli.md](headless-cli.md)). The Route's navigation goes through the same
+      `follow` the driver uses, so the two cannot disagree. Never a stored
       `AsyncStream` property: `.task` is cancelled whenever the view disappears,
       including when a screen is pushed over it, and a cancelled consumer ends a bare
       stream permanently, so every later effect would go nowhere.

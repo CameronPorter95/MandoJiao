@@ -21,6 +21,7 @@ public struct HomeRoute: View {
     public var body: some View {
         HomeScreen(state: viewModel.state, onAction: { viewModel.send($0) })
             .navigationDestination(for: HomeDestination.self) { destination($0) }
+            .drivable { viewModel.driver(navigation: navigation) }
             .onAppear { viewModel.send(.appeared) }
             .onDisappear { viewModel.send(.disappeared) }
             .task {
@@ -32,12 +33,6 @@ public struct HomeRoute: View {
     }
 
     private func handle(_ effect: HomeEffect) {
-        switch effect {
-        case .requestMatching(let request): navigation.didRequestMatching(request)
-        case .requestSpeaking(let request): navigation.didRequestSpeaking(request)
-        case .requestFlashcards(let request): navigation.didRequestFlashcards(request)
-        case .requestTodayPlan(let plan): navigation.didRequestTodayPlan(plan)
-        case .showError(let error): self.error = error
-        }
+        if case .showError(let error) = navigation.follow(effect) { self.error = error }
     }
 }

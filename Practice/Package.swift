@@ -60,26 +60,24 @@ let package = Package(
                 "PracticeDomain", "PracticeData", "PracticeUI",
                 .product(name: "LibraryDomain", package: "Library"),
                 .product(name: "DictionaryDomain", package: "Dictionary"),
+                .product(name: "CoreDomain", package: "Core"),
                 .product(name: "CoreSound", package: "Core"),
+                .product(name: "CoreUI", package: "Core"),
                 .product(name: "CoreDI", package: "Core"),
             ],
-            swiftSettings: mainActorByDefault
-        ),
-        .target(
-            name: "PracticeTestSupport",
-            dependencies: ["PracticeDomain"],
-            path: "TestSupport",
             swiftSettings: mainActorByDefault
         ),
         .testTarget(
             name: "PracticeTests",
             dependencies: [
                 .product(name: "ProgressDomain", package: "Progress"),
-                "PracticeDomain", "PracticeData", "PracticeUI", "PracticeDI", "PracticeTestSupport",
+                "PracticeDomain", "PracticeData", "PracticeUI", "PracticeDI",
                 .product(name: "LibraryDomain", package: "Library"),
                 .product(name: "LibraryTestSupport", package: "Library"),
                 .product(name: "DictionaryDomain", package: "Dictionary"),
                 .product(name: "CoreDomain", package: "Core"),
+                .product(name: "CoreUI", package: "Core"),
+                .product(name: "CoreDI", package: "Core"),
                 .product(name: "CoreTestSupport", package: "Core"),
             ],
             swiftSettings: mainActorByDefault

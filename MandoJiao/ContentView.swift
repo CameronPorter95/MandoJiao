@@ -1,4 +1,5 @@
 import CoreDI
+import CoreUI
 import DictionaryDI
 import DictionaryDomain
 import LibraryDI
@@ -14,14 +15,18 @@ import SwiftUI
 /// The app's root: the home, vocabulary and dictionary tabs, and the lessons presented over all three.
 struct ContentView: View {
     let dependencies: Dependencies
+    /// Set only when launched for remote driving.
+    let screenRegistry: ScreenRegistry?
+    /// Set only when launched to hear scripted speech in place of the microphone.
+    let scriptedSpeech: ScriptedSpeech?
 
     @State private var coordinator = AppNavigationCoordinator()
 
     var body: some View {
         let navigation = AppNavigation.main(coordinator: coordinator)
 
-        TabView {
-            Tab("Home", systemImage: "house") {
+        TabView(selection: $coordinator.selectedTab) {
+            Tab("Home", systemImage: "house", value: .home) {
                 NavigationStack {
                     HomeFactory.makeRoute(
                         dependencies: dependencies,
@@ -39,7 +44,7 @@ struct ContentView: View {
                     )
                 }
             }
-            Tab("Vocabulary", systemImage: "books.vertical") {
+            Tab("Vocabulary", systemImage: "books.vertical", value: .vocabulary) {
                 LibraryFactory.makeRoute(
                     dependencies: dependencies,
                     navigation: navigation.library,
@@ -49,7 +54,7 @@ struct ContentView: View {
                     )
                 )
             }
-            Tab("Dictionary", systemImage: "character.book.closed") {
+            Tab("Dictionary", systemImage: "character.book.closed", value: .dictionary) {
                 DictionaryTabFactory.makeRoute(dependencies: dependencies, input: dictionaryVocabulary(dependencies: dependencies))
             }
         }
@@ -70,7 +75,8 @@ struct ContentView: View {
                     navigation: navigation.practice.speaking,
                     input: SpeakingInput(
                         request: request,
-                        recordResults: VocabularyRepositoryFactory.makeRecordLessonResultsUseCase(dependencies: dependencies)
+                        recordResults: VocabularyRepositoryFactory.makeRecordLessonResultsUseCase(dependencies: dependencies),
+                        speech: scriptedSpeech
                     )
                 )
             case .flashcards(let request):
@@ -95,6 +101,9 @@ struct ContentView: View {
                 )
             }
         }
+        // Outside the cover, so a lesson's screens get the registry too.
+        .environment(\.screenRegistry, screenRegistry)
+        .onAppear { screenRegistry?.app = coordinator.driver() }
     }
 }
 
@@ -154,5 +163,5 @@ private func dictionaryVocabulary(dependencies: Dependencies) -> DictionaryVocab
 
 #Preview {
     let store = try! VocabularyRepositoryFactory.openStore(inMemory: true, hskWords: { (try? DictionaryRepositoryFactory.bundledHSKWords()) ?? [] })
-    ContentView(dependencies: LiveDependencies(modelContainer: store))
+    ContentView(dependencies: LiveDependencies(modelContainer: store), screenRegistry: nil, scriptedSpeech: nil)
 }

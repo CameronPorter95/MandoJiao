@@ -41,6 +41,7 @@ let package = Package(
             dependencies: [
                 "ProgressDomain", "ProgressUI",
                 .product(name: "LibraryDomain", package: "Library"),
+                .product(name: "CoreUI", package: "Core"),
                 .product(name: "CoreDI", package: "Core"),
             ],
             swiftSettings: mainActorByDefault

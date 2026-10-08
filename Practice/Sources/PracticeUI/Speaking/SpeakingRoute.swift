@@ -17,6 +17,7 @@ public struct SpeakingRoute: View {
 
     public var body: some View {
         SpeakingScreen(state: viewModel.state, onAction: { viewModel.send($0) })
+            .drivable { viewModel.driver(navigation: navigation) }
             .onAppear { viewModel.send(.appeared) }
             .onDisappear { viewModel.send(.disappeared) }
             .task {
@@ -38,13 +39,13 @@ public struct SpeakingRoute: View {
     }
 
     private func handle(_ effect: SpeakingEffect) {
-        switch effect {
+        switch navigation.follow(effect) {
         case .haptic(let kind):
             haptic = HapticEvent(kind: kind)
         case .showError(let error):
             self.error = error
-        case .close:
-            navigation.didClose()
+        case .close, nil:
+            break
         }
     }
 }

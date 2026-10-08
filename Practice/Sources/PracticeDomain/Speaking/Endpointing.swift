@@ -56,4 +56,9 @@ public enum Endpointing {
 
         return .reachedLimit
     }
+
+    /// For a recogniser that hears the whole answer as it starts, as a scripted one does.
+    public static func endAtOnce(transcript: () -> String) async -> Ending {
+        transcript().isEmpty ? .reachedLimit : .settled
+    }
 }

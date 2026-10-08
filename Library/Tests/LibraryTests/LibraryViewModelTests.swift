@@ -2,6 +2,7 @@ import Foundation
 import Testing
 import CoreDomain
 import CoreTestSupport
+import CoreUI
 import LibraryTestSupport
 @testable import LibraryDomain
 @testable import LibraryUI
@@ -30,6 +31,80 @@ struct LibraryViewModelTests {
         let current = await repository.snapshot
         #expect(await waitUntil { viewModel.state.vocabulary == current })
         return (viewModel, log)
+    }
+
+    @Test("driven, the selection and each pushed page come to the front, and back pops the stack")
+    func driverFront() async throws {
+        let (library, _) = await makeLibrary()
+        let driver = library.driver(
+            navigation: LibraryTabNavigation(didRequestMatching: { _ in }, didRequestFlashcards: { _ in }, didRequestSpeaking: { _ in }),
+            root: { _, _ in probe("root") },
+            page: { page, _ in
+                switch page {
+                case .folder: probe("folder")
+                case .deck: probe("deck")
+                }
+            }
+        )
+        #expect(driver.front() == nil)
+
+        try driver.send("selected", Data(#"{"_0":{"folder":{"_0":"\#(Fixtures.hsk.id)"}}}"#.utf8))
+        #expect(driver.front()?.name == "root")
+        try driver.send("opened", Data(#"{"_0":{"deck":{"_0":"\#(Fixtures.part1.id)"}}}"#.utf8))
+        #expect(driver.front()?.name == "deck")
+
+        #expect(driver.back())
+        #expect(driver.front()?.name == "root")
+        // Then back to the sidebar, as on iPhone.
+        #expect(driver.back())
+        #expect(driver.front() == nil)
+        #expect(!driver.back())
+    }
+
+    @Test("driven, open finds a folder or deck by name, key or id, as tapping its row would")
+    func driverOpens() async throws {
+        let (library, _) = await makeLibrary()
+        let driver = library.driver(navigation: LibraryTabNavigation(
+            didRequestMatching: { _ in }, didRequestFlashcards: { _ in }, didRequestSpeaking: { _ in }
+        ))
+
+        try driver.open("folder", "hsk")
+        #expect(library.state.selection == .folder(Fixtures.hsk.id))
+        try driver.open("folder", "Level 1")
+        try driver.open("deck", String(Fixtures.part1.id.uuidString.prefix(8)))
+        #expect(library.state.path == [.folder(Fixtures.level1.id), .deck(Fixtures.part1.id)])
+
+        #expect(throws: ScreenDriverError.notFound("deck", "nope")) { try driver.open("deck", "nope") }
+        #expect(throws: ScreenDriverError.cannotOpen("word")) { try driver.open("word", "水") }
+        // Nothing in front of it without builders: in the app, the views hold the stack.
+        #expect(driver.front() == nil)
+    }
+
+    @Test("driven by name, every listed action is accepted")
+    func driverAcceptsEveryAction() async {
+        // Unknown ids, so nothing is really changed in the shared fixture.
+        let id = UUID().uuidString
+        let page = #"{"_0":{"deck":{"_0":"\#(id)"}}}"#
+        let arguments = [
+            "selected": page.replacingOccurrences(of: "deck", with: "folder"), "opened": page,
+            "pathChanged": #"{"_0":[{"deck":{"_0":"\#(id)"}}]}"#,
+            "folderExpanded": #"{"_0":"\#(id)","_1":true,"in":{"tree":{}}}"#,
+            "folderSectionToggled": #"{"_0":"\#(id)","_1":"decks"}"#,
+            "deckSortChanged": #"{"_0":"\#(id)","_1":{"field":"title","ascending":true}}"#,
+            "wordSortChanged": #"{"_0":{"field":"pinyin","ascending":true}}"#,
+            "searchPresentedChanged": #"{"_0":true}"#, "searchChanged": #"{"_0":"wa"}"#,
+            "folderMoved": #"{"id":"\#(id)","parentID":null,"index":0}"#, "newFolderTapped": #"{"parentID":null}"#,
+            "renameFolderTapped": #"{"_0":"\#(id)"}"#, "nameChanged": #"{"_0":"x"}"#,
+            "practiseFolderTapped": #"{"_0":"\#(id)"}"#, "deleteFolderTapped": #"{"_0":"\#(id)"}"#,
+        ]
+        for name in LibraryAction.names {
+            let (library, _) = await makeLibrary()
+            let driver = library.driver(
+                navigation: LibraryTabNavigation(didRequestMatching: { _ in }, didRequestFlashcards: { _ in }, didRequestSpeaking: { _ in }),
+                root: { _, _ in probe("root") }, page: { _, _ in probe("page") }
+            )
+            #expect(throws: Never.self) { try driver.send(name, arguments[name].map { Data($0.utf8) }) }
+        }
     }
 
     @Test("folders and decks opened from a folder push onto its stack, and the sidebar starts a new one")
@@ -238,4 +313,17 @@ struct LibraryViewModelTests {
         library.send(.hskLevelsDismissed)
         #expect(!library.state.isShowingHSKLevels)
     }
+}
+
+/// A screen that only takes appearing and disappearing, standing in for a library page.
+@MainActor
+private func probe(_ name: String) -> ScreenDriver {
+    ScreenDriver(
+        name: name, actions: ["appeared", "disappeared"], state: { name }, summary: { $0 },
+        send: { (_: ProbeLifecycle) in }, effects: { AsyncStream<Int> { $0.finish() } }, follow: { $0 }
+    )
+}
+
+private enum ProbeLifecycle: Decodable {
+    case appeared, disappeared
 }

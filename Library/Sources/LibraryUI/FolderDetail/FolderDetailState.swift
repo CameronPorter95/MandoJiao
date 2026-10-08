@@ -17,7 +17,7 @@ struct FolderDetailState: Equatable {
     var isSearching = false
     var searchText = ""
 
-    enum Naming: Equatable {
+    enum Naming: String, Equatable, Decodable {
         case newDeck
         /// Inside this folder, as a subfolder.
         case newFolder
@@ -91,10 +91,12 @@ struct FolderDetailState: Equatable {
     }
 }
 
-enum FolderDetailAction: Equatable {
+enum FolderDetailAction: Equatable, Decodable {
     case appeared
     case disappeared
-    case startLessonTapped(LessonExercise)
+    case deckOpened(id: UUID)
+    case folderOpened(id: UUID)
+    case startLessonTapped(exercise: LessonExercise)
     case searchPresentedChanged(Bool)
     case searchChanged(String)
     case namingTapped(FolderDetailState.Naming)
@@ -111,5 +113,7 @@ enum FolderDetailAction: Equatable {
 
 enum FolderDetailEffect: Equatable, Sendable {
     case startLesson(LessonRequest, LessonExercise)
+    case openDeck(UUID)
+    case openFolder(UUID)
     case showError(VocabularyError)
 }

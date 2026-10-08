@@ -1,4 +1,5 @@
 import CoreDI
+import CoreUI
 import ProgressUI
 import SwiftUI
 
@@ -10,18 +11,30 @@ public enum HomeFactory: NavigationInputRouteFactory {
         navigation: ProgressNavigation,
         input: HomeInput
     ) -> HomeRoute {
-        let viewModel = HomeViewModel(
+        HomeRoute(viewModel: makeViewModel(input: input), navigation: navigation.home) { destination in
+            switch destination {
+            case .settings:
+                input.settings()
+            }
+        }
+    }
+
+    /// Home without its view. The settings screen pushed from it is not driven.
+    public static func makeDriver(
+        dependencies: Dependencies,
+        navigation: ProgressNavigation,
+        input: HomeInput
+    ) -> ScreenDriver {
+        makeViewModel(input: input).driver(navigation: navigation.home)
+    }
+
+    private static func makeViewModel(input: HomeInput) -> HomeViewModel {
+        HomeViewModel(
             minimumMatchingWords: input.minimumMatchingWords,
             quickPracticeRounds: input.quickPracticeRounds,
             observeVocabulary: input.observeVocabulary,
             getLessonSettings: input.getLessonSettings,
             clearMistakes: input.clearMistakes
         )
-        return HomeRoute(viewModel: viewModel, navigation: navigation.home) { destination in
-            switch destination {
-            case .settings:
-                input.settings()
-            }
-        }
     }
 }

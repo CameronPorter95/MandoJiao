@@ -7,8 +7,6 @@ struct FolderDetailScreen: View {
     let state: FolderDetailState
     let layout: FolderLayout
     let onAction: (FolderDetailAction) -> Void
-    let onOpenDeck: (UUID) -> Void
-    let onOpenFolder: (UUID) -> Void
     /// The search's results for what has been typed: every word in the decks beneath.
     let results: (String) -> AnyView
 
@@ -73,7 +71,7 @@ struct FolderDetailScreen: View {
                         .padding(.vertical, 4)
                 }
                 PractiseRows(wordCount: state.wordCount, minimumMatchingWords: state.minimumMatchingWords) {
-                    onAction(.startLessonTapped($0))
+                    onAction(.startLessonTapped(exercise: $0))
                 }
             } header: {
                 Text(state.summary)
@@ -93,7 +91,7 @@ struct FolderDetailScreen: View {
                             SubfolderRow(
                                 subfolder: subfolder,
                                 layout: layout,
-                                onOpen: onOpenFolder,
+                                onOpen: { onAction(.folderOpened(id: $0)) },
                                 canPractise: { state.canPractise(folder: $0) },
                                 onPractise: { onAction(.practiseFolderTapped($0)) },
                                 onDelete: { onAction(.deleteFolderTapped($0)) }
@@ -145,7 +143,7 @@ struct FolderDetailScreen: View {
 
     private func deckRow(_ deck: DeckSummary) -> some View {
         Button {
-            onOpenDeck(deck.id)
+            onAction(.deckOpened(id: deck.id))
         } label: {
             DeckRow(deck: deck, vocabulary: state.vocabulary, minimumMatchingWords: state.minimumMatchingWords)
         }

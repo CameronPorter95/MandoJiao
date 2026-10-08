@@ -113,7 +113,11 @@
       <CommandLineArguments>
          <CommandLineArgument
             argument = "-remote"
-            isEnabled = "YES">
+            isEnabled = "NO">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "-scripted-speech"
+            isEnabled = "NO">
          </CommandLineArgument>
       </CommandLineArguments>
    </LaunchAction>

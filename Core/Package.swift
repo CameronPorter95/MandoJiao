@@ -14,6 +14,8 @@ let package = Package(
         .library(name: "CoreUI", targets: ["CoreUI"]),
         .library(name: "CoreSound", targets: ["CoreSound"]),
         .library(name: "CoreDI", targets: ["CoreDI"]),
+        // Debug builds only: drives the running app from `mando --remote`.
+        .library(name: "CoreRemote", targets: ["CoreRemote"]),
         .library(name: "CoreTestSupport", targets: ["CoreTestSupport"]),
     ],
     targets: [
@@ -24,10 +26,12 @@ let package = Package(
         .target(name: "CoreSound", dependencies: ["CoreDomain"], swiftSettings: mainActorByDefault),
         // DI primitives only, never registrations.
         .target(name: "CoreDI", swiftSettings: mainActorByDefault),
-        .target(name: "CoreTestSupport", path: "TestSupport", swiftSettings: mainActorByDefault),
+        // Not main-actor by default: Network calls back on its own queue.
+        .target(name: "CoreRemote", dependencies: ["CoreUI"]),
+        .target(name: "CoreTestSupport", dependencies: ["CoreDI"], path: "TestSupport", swiftSettings: mainActorByDefault),
         .testTarget(
             name: "CoreTests",
-            dependencies: ["CoreUI", "CoreSound", "CoreDesignSystem", "CoreTestSupport"],
+            dependencies: ["CoreUI", "CoreRemote", "CoreSound", "CoreDesignSystem", "CoreTestSupport"],
             swiftSettings: mainActorByDefault
         ),
     ],
