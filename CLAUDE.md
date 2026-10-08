@@ -67,7 +67,8 @@ cd Practice && swift test --filter StrictnessTests
 ```
 
 Drive screens headlessly, no simulator: `cd Tools/MandoCLI && swift run mando`, then
-`help`. Not in the Xcode scheme; see `Documentation/headless-cli.md`.
+`help`. Not in the Xcode scheme, so its 5 tests (`swift test` there) are not in the counts
+below; see `Documentation/headless-cli.md`.
 
 Get `<udid>` from `xcrun simctl list devices available`. Xcode 27 did not resolve
 `name=iPhone 17 Pro` here.

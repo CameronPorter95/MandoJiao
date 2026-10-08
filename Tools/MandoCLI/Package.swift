@@ -18,6 +18,12 @@ let package = Package(
     targets: [
         .executableTarget(
             name: "MandoCLI",
+            dependencies: ["MandoKit"],
+            swiftSettings: [.defaultIsolation(MainActor.self)]
+        ),
+        // The commands, apart from reading stdin, so tests can run them in-process.
+        .target(
+            name: "MandoKit",
             dependencies: [
                 .product(name: "CoreDI", package: "Core"),
                 .product(name: "CoreUI", package: "Core"),
@@ -30,6 +36,11 @@ let package = Package(
                 .product(name: "PracticeUI", package: "Practice"),
                 .product(name: "PracticeTestSupport", package: "Practice"),
             ],
+            swiftSettings: [.defaultIsolation(MainActor.self)]
+        ),
+        .testTarget(
+            name: "MandoKitTests",
+            dependencies: ["MandoKit"],
             swiftSettings: [.defaultIsolation(MainActor.self)]
         ),
     ],

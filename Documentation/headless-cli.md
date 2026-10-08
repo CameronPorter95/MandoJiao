@@ -151,8 +151,21 @@ CLI's vocabulary cannot drift from the code's.
    cd Tools/MandoCLI && swift run mando
    ```
 
-7. **Tests that stop the tool rotting.** A golden test running a script through `mando`,
-   and one per screen that every listed action name decodes.
+7. **Done. Tests that stop the tool rotting.** Every listed action decodes: speaking's in
+   `SpeakingDriverTests`, deck detail's in `DeckDetailViewModelTests`.
+
+   Not a golden file. Deck ids are random and card order follows the store's fetch, so a
+   whole transcript cannot be compared. Instead the commands live in a `MandoKit`
+   library, `mando` itself is only the stdin loop, and `InterpreterTests` runs commands
+   in-process and reads the transcript: the starter decks listed, a whole lesson
+   answered from `ls` with ten right, closing back to the deck, an undriven lesson
+   saying so, and refusals worded as sentences. Sending speaking to the flash cards
+   callback in `DeckDetailNavigation.follow` fails both lesson tests. Five runs in a row
+   passed, about 2.6s each, so the 30ms settle has held so far.
+
+   ```sh
+   cd Tools/MandoCLI && swift test
+   ```
 
 ## After the spike
 
