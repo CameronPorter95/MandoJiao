@@ -57,7 +57,9 @@ let package = Package(
                 .product(name: "ProgressDomain", package: "Progress"),
                 "PracticeDomain", "PracticeData", "PracticeUI",
                 .product(name: "LibraryDomain", package: "Library"),
+                .product(name: "CoreDomain", package: "Core"),
                 .product(name: "CoreSound", package: "Core"),
+                .product(name: "CoreUI", package: "Core"),
                 .product(name: "CoreDI", package: "Core"),
             ],
             swiftSettings: mainActorByDefault
@@ -77,6 +79,7 @@ let package = Package(
                 .product(name: "LibraryTestSupport", package: "Library"),
                 .product(name: "CoreDomain", package: "Core"),
                 .product(name: "CoreUI", package: "Core"),
+                .product(name: "CoreDI", package: "Core"),
                 .product(name: "CoreTestSupport", package: "Core"),
             ],
             swiftSettings: mainActorByDefault

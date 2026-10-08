@@ -487,9 +487,7 @@ private final class Harness {
     let repository = FakeVocabularyRepository()
 
     /// Settles as soon as anything has been heard, and runs out otherwise.
-    nonisolated static let settleOnSpeech: SpeakingViewModel.WaitForEnd = { transcript in
-        transcript().isEmpty ? .reachedLimit : .settled
-    }
+    nonisolated static let settleOnSpeech: SpeakingViewModel.WaitForEnd = { await Endpointing.endAtOnce(transcript: $0) }
 
     /// Keeps listening until something stops it.
     nonisolated static let untilCancelled: SpeakingViewModel.WaitForEnd = { _ in

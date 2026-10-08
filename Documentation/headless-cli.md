@@ -110,12 +110,21 @@ CLI's vocabulary cannot drift from the code's.
    Effects are described with `String(describing:)`, which gives
    `haptic(PracticeUI.SpeakingHaptic.success)`. Readable, but the module prefix is noise
    worth trimming before agents use it.
-4. **`makeDriver` beside `makeRoute`** on `LibraryFactory`, `DeckDetailFactory` and
-   `SpeakingFactory`. The library's driver observes `state.path` and builds or drops a deck
-   detail driver as pages are pushed and popped.
-5. **Speaking seams.** `PracticeTestSupport` becomes a product, `ScriptedRecogniser` gains
-   `enqueue` for `say`, `waitForEnd` returns at once, `advanceDelay` is `.zero`, and sounds
-   and the audio session are no-ops.
+4. **Done for speaking. `makeDriver` beside `makeRoute`** on `LibraryFactory`,
+   `DeckDetailFactory` and `SpeakingFactory`. The library's driver observes `state.path`
+   and builds or drops a deck detail driver as pages are pushed and popped.
+
+   `SpeakingFactory.makeDriver` takes the recogniser and the attempt log from its caller
+   and fixes the rest: `SilentAudioSession` and `SilentSounds`, `advanceDelay` of
+   `.zero`, and `Endpointing.endAtOnce`, which ends a listen at once, settled if
+   anything was heard. That pulled most of step 5 forward. The test harness uses
+   `endAtOnce` too, so one rule serves both.
+5. **Speaking seams, what is left.** `PracticeTestSupport` becomes a product, and the
+   recogniser takes `enqueue` for `say`. `ScriptedRecogniser` will not do as it is: it
+   puts the transcript in `partialText` only on `stop`, and consumes one on every `stop`.
+   So the automatic listen after a right answer hears nothing, stops without submitting,
+   and still eats the next card's answer (read from the code, not yet run). The `say`
+   recogniser shows the queued answer from `start` and consumes it only when it has one.
 6. **`Tools/MandoCLI`, building `mando`.** A second composition root: the store from
    `openStore(inMemory:)` (a `--store` flag needs `openStore` to take a URL), a small
    coordinator for the tab and the presented lesson, and the commands `tab`, `do`, `open`,
