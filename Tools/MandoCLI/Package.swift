@@ -19,9 +19,11 @@ let package = Package(
     targets: [
         .executableTarget(
             name: "MandoCLI",
-            dependencies: ["MandoKit"],
+            dependencies: ["MandoKit", "CEditLine"],
             swiftSettings: [.defaultIsolation(MainActor.self)]
         ),
+        // libedit, which macOS ships, for arrow keys and history at a terminal.
+        .systemLibrary(name: "CEditLine", path: "Sources/CEditLine"),
         // The commands, apart from reading stdin, so tests can run them in-process.
         .target(
             name: "MandoKit",
@@ -43,7 +45,8 @@ let package = Package(
         ),
         .testTarget(
             name: "MandoKitTests",
-            dependencies: ["MandoKit"],
+            // MandoCLI so the binary LineEditingTests drives is built first.
+            dependencies: ["MandoKit", "MandoCLI"],
             swiftSettings: [.defaultIsolation(MainActor.self)]
         ),
     ],

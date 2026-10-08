@@ -1,0 +1,53 @@
+# mando at a terminal, driven through a pseudo-terminal: expect line-editing.exp <mando>
+# Run twice with the same HOME: the second run checks the first one's history came back.
+# Prints PASS or FAIL per check; LineEditingTests counts them.
+set timeout 20
+log_user 0
+set mando [lindex $argv 0]
+set run [lindex $argv 1]
+spawn -noecho $mando
+expect "mando> "
+
+if {$run == "first"} {
+  send "open deck Greetings\r"
+  expect "✓ open"
+  expect "mando> "
+  send "\033\[A\r"
+  expect {
+    -re "open deck Greetings\r\n.*✓ open" { puts "PASS up arrow recalls the last command" }
+    timeout { puts "FAIL up arrow" }
+  }
+  expect "mando> "
+  # The typo "vocabulry", mended by going left past "ry" and typing "a".
+  send "tab vocabulry"
+  send "\033\[D\033\[D"
+  send "a\r"
+  expect {
+    "✓ tab" { puts "PASS left arrow edits mid-line" }
+    "no tab" { puts "FAIL left arrow" }
+    timeout { puts "FAIL left arrow" }
+  }
+  expect "mando> "
+  send "tab dictionary\r"
+  expect "mando> "
+  send "do queryChanged {\"query\":\"你好\"}\r"
+  expect "mando> "
+  send "ls\r"
+  expect {
+    "query: 你好  results: 1" { puts "PASS Chinese is typed whole" }
+    timeout { puts "FAIL Chinese" }
+  }
+  expect "mando> "
+} else {
+  send "\033\[A\r"
+  expect {
+    "home  quick practice" { puts "PASS history comes back in a new run" }
+    timeout { puts "FAIL history across runs" }
+  }
+  expect "mando> "
+}
+send "\004"
+expect {
+  eof { puts "PASS Ctrl-D quits" }
+  timeout { puts "FAIL Ctrl-D" }
+}

@@ -209,6 +209,18 @@ Not driven yet: home's settings, the dictionary's headword pages, the library's 
 results, word editor and HSK levels, and matching, flash cards and today's plan. A pushed
 screen's leftover errors are relayed to its tab, and print as notes.
 
+## At a terminal
+
+At a terminal, `mando` reads with libedit, which macOS ships (`CEditLine`, a system library
+target): left and right move the cursor, up and down walk the history, and the history lasts
+between runs in `~/.mando_history`, a command repeated running kept once. libedit blocks while
+it waits for a line, so it reads on a thread of its own and waits for the reply to print
+before the next prompt; the screens' work stays on the main actor. Piped input, as from a
+script or an agent, keeps the plain reader and its echo. `LineEditingTests` runs
+`Tests/line-editing.exp` through `/usr/bin/expect` in a pseudo-terminal, with a HOME of its
+own so the real history is never touched: arrows, Chinese typed whole, Ctrl-D, and history
+across two runs.
+
 ## Remote mode: the same commands, driving the simulator
 
 `mando --remote` sends the same commands to the app running in the simulator, and its
