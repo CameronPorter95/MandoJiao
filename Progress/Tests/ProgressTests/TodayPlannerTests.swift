@@ -92,4 +92,13 @@ nonisolated struct TodayPlannerTests {
         #expect(plan([learnt]) != nil)
         #expect(plan([learnt], settings: LessonSettings(skipsLearntWords: true)) == nil)
     }
+
+    @Test("the words an example may use are the ones answered or marked learnt, never the unstarted")
+    func known() throws {
+        let answered = word("old", "旧", stability: 30, daysAgo: 1)
+        let learnt = Word(english: "small", hanzi: "小", memory: WordMemory.new.markedLearnt(at: now))
+        let words = fresh.prefix(5).map { word(String($0[0]), String($0[1])) } + [answered, learnt]
+        let plan = try #require(plan(words))
+        #expect(plan.known == ["旧", "小"])
+    }
 }

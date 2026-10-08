@@ -1,5 +1,6 @@
 import CoreDesignSystem
 import CoreUI
+import DictionaryDomain
 import LibraryDomain
 import PracticeDomain
 import SwiftUI
@@ -28,7 +29,7 @@ struct MixedLessonScreen: View {
                 Group {
                     switch current {
                     case .teach(let word):
-                        TeachWordView(word: word) { onAction(.stepCompleted([])) }
+                        TeachWordView(word: word, example: state.examples[word.id]) { onAction(.stepCompleted([])) }
                     case .match, .flashcard, .readAloud:
                         step(current)
                     }
@@ -100,9 +101,11 @@ struct MixedLessonScreen: View {
     }
 }
 
-/// A new word, shown in full before anything asks it.
+/// A new word, shown in full before anything asks it, with a sentence using it where there
+/// is one.
 struct TeachWordView: View {
     let word: WordPair
+    let example: ExampleSentence?
     let onContinue: () -> Void
 
     var body: some View {
@@ -129,8 +132,14 @@ struct TeachWordView: View {
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }
+                if let example {
+                    exampleView(example)
+                        .padding(.top, 24)
+                        .transition(.opacity)
+                }
             }
             .multilineTextAlignment(.center)
+            .animation(.easeInOut(duration: 0.2), value: example)
             Spacer(minLength: 12)
             Button(action: onContinue) {
                 Text("Continue")
@@ -142,5 +151,36 @@ struct TeachWordView: View {
             .tint(Theme.accent)
             .keyboardShortcut(.defaultAction)
         }
+    }
+
+    private func exampleView(_ example: ExampleSentence) -> some View {
+        VStack(spacing: 6) {
+            Text(highlighted(example.hanzi))
+                .font(.title3)
+            Text(example.pinyin)
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+            Text(example.english)
+                .font(.subheadline)
+            if example.isGenerated {
+                Label("AI-generated", systemImage: "sparkles")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .padding(.top, 2)
+            }
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(example.isGenerated ? "AI-generated example" : "Example"): \(example.hanzi). \(example.english)")
+    }
+
+    /// The sentence with the word in the accent colour, wherever it appears.
+    private func highlighted(_ sentence: String) -> AttributedString {
+        var text = AttributedString(sentence)
+        var searchStart = text.startIndex
+        while let range = text[searchStart...].range(of: word.hanzi) {
+            text[range].foregroundColor = Theme.accent
+            searchStart = range.upperBound
+        }
+        return text
     }
 }

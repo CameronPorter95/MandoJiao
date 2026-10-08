@@ -41,6 +41,9 @@ public nonisolated struct TodayPlan: Identifiable, Hashable, Sendable {
     public let source: LessonSource?
     /// The rest of the vocabulary, for a flash card's wrong options.
     public let otherWords: [WordPair]
+    /// The Hanzi of every word the learner has started: answered at least once, or marked
+    /// learnt. A taught word's example is the sentence with the fewest words outside these.
+    public let known: Set<String>
 
     public init(
         id: UUID = UUID(),
@@ -49,7 +52,8 @@ public nonisolated struct TodayPlan: Identifiable, Hashable, Sendable {
         synopsis: String,
         steps: [Step],
         source: LessonSource?,
-        otherWords: [WordPair]
+        otherWords: [WordPair],
+        known: Set<String> = []
     ) {
         self.id = id
         self.theme = theme
@@ -58,6 +62,7 @@ public nonisolated struct TodayPlan: Identifiable, Hashable, Sendable {
         self.steps = steps
         self.source = source
         self.otherWords = otherWords
+        self.known = known
     }
 }
 
@@ -93,6 +98,7 @@ public nonisolated enum TodayPlanner {
         let newWords = Array((fromCurrent.isEmpty ? unstarted(words) : fromCurrent).prefix(newWordCount))
         let newSource = fromCurrent.isEmpty ? nil : current
         let otherWords = vocabulary.usableWords.pairs
+        let known = Set(vocabulary.words.filter { $0.memory.lastAnsweredAt != nil || $0.isLearnt }.map(\.hanzi))
 
         if due.count >= reviewThreshold || (newWords.isEmpty && !due.isEmpty) {
             let reviewed = Array(due.prefix(reviewLimit))
@@ -103,7 +109,8 @@ public nonisolated enum TodayPlanner {
                 synopsis: "Practise \(count) you've met that are starting to fade.",
                 steps: reviewed.map { review($0, at: now) },
                 source: nil,
-                otherWords: otherWords
+                otherWords: otherWords,
+                known: known
             )
         }
         guard !newWords.isEmpty else { return nil }
@@ -127,7 +134,8 @@ public nonisolated enum TodayPlanner {
             synopsis: "Learn \(count)\(place)\(then).",
             steps: steps,
             source: newSource,
-            otherWords: otherWords
+            otherWords: otherWords,
+            known: known
         )
     }
 

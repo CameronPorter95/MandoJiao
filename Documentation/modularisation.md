@@ -100,7 +100,7 @@ One package per business area. The target shape, decided on 2026-10-07:
 | Package | Owns | Targets |
 | --- | --- | --- |
 | `Library` | The learner's own words, decks and folders: the library tab, deck and folder detail, the word editor, the mistakes list, the store, the answer record, and each word's strength (`WordMemory`, bands, Mark as learnt). `WordPair`, `LessonRequest`, `LessonResults`, `Answer`. | all four |
-| `Dictionary` | Reference data the learner did not write: CC-CEDICT, the HSK lists, the lexicon, the Dictionary tab and word page, and later Tatoeba sentences. Knows nothing of `Library`. | all four |
+| `Dictionary` | Reference data the learner did not write: CC-CEDICT, the HSK lists, the lexicon, the Dictionary tab and word page, and Tatoeba's example sentences. Knows nothing of `Library`. | all four |
 | `Practice` | Every exercise and the lesson that mixes them: matching, speaking (read aloud), flash cards, later tracing and translation. Grading, plan builders, the recogniser, each exercise's settings, and `MixedLesson`, which builds its own steps. | all four |
 | `Progress` | What to do next and how it is going: Home, `TodayPlanner` and `TodayPlan`, later streaks, goals and rewards. | all four as needed |
 | `Settings` | The settings screen. Edits each setting through the domain of the package that owns it. | `UI`, `DI` |

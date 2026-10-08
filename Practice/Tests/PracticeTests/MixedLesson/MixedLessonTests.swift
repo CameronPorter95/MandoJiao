@@ -1,6 +1,7 @@
 import ProgressDomain
 import CoreDomain
 import CoreTestSupport
+import DictionaryDomain
 import Foundation
 import Testing
 import LibraryTestSupport
@@ -98,17 +99,116 @@ nonisolated struct MixedLessonDomainTests {
 struct MixedLessonViewModelTests {
     private let repository = FakeVocabularyRepository()
     private let sounds = FakeSounds()
+    private static let drinking = ExampleSentence(hanzi: "我喝水。", pinyin: "Wǒ hē shuǐ.", english: "I drink water.")
 
     private func makeViewModel(
-        _ steps: [TodayPlan.Step] = [.teach(LessonWords.water), .recall(LessonWords.water, .recognise)]
+        _ steps: [TodayPlan.Step] = [.teach(LessonWords.water), .recall(LessonWords.water, .recognise)],
+        examples: FakeExamples = FakeExamples(["水": [drinking]]),
+        generator: FakeGenerator = FakeGenerator(nil)
     ) -> (MixedLessonViewModel, EffectLog<MixedLessonEffect>) {
         let viewModel = MixedLessonViewModel(
             lesson: MixedLesson(plan: plan(steps)),
             recordResults: RecordLessonResultsUseCase(repository: repository),
+            findExamples: FindExamplesUseCase(repository: examples),
+            generateExample: GenerateExampleUseCase(generator: generator),
             sounds: sounds,
             audioSession: sounds
         )
         return (viewModel, EffectLog(viewModel.effects()))
+    }
+
+    private static let salt = ExampleSentence(hanzi: "请把盐递给我，水也要。", pinyin: "", english: "Pass the salt, please.")
+    private static let written = ExampleSentence(hanzi: "我想喝水。", pinyin: "Wǒ xiǎng hē shuǐ.", english: "I want to drink water.")
+
+    @Test("a word none of whose sentences say its meaning has one written on the device, marked as such")
+    func examplesWritten() async {
+        let generator = FakeGenerator(Self.written)
+        let (viewModel, _) = makeViewModel(examples: FakeExamples(["水": [Self.salt]]), generator: generator)
+        viewModel.send(.appeared)
+        #expect(await waitUntil { viewModel.state.examples[LessonWords.water.id]?.hanzi == Self.written.hanzi })
+        #expect(viewModel.state.examples[LessonWords.water.id]?.isGenerated == true)
+        #expect(await generator.requests == [ExampleRequest(hanzi: "水", pinyin: "shuǐ", meaning: "water")])
+    }
+
+    @Test("the model is asked for the card's headline, and told its other meanings to check the translation against")
+    func examplesRequestAllMeanings() async {
+        let girl = WordPair(english: "schoolgirl", hanzi: "女生", pinyin: "nǚshēng", otherMeanings: ["female student", "girl"])
+        let generator = FakeGenerator(nil)
+        let (viewModel, _) = makeViewModel([.teach(girl), .recall(girl, .recognise)], examples: FakeExamples([:]), generator: generator)
+        viewModel.send(.appeared)
+        await settle()
+        #expect(await generator.requests == [
+            ExampleRequest(hanzi: "女生", pinyin: "nǚshēng", meaning: "schoolgirl", otherMeanings: ["female student", "girl"]),
+        ])
+    }
+
+    @Test("a word with a sentence in its sense is never written")
+    func examplesNotWritten() async {
+        let generator = FakeGenerator(Self.written)
+        let (viewModel, _) = makeViewModel(generator: generator)
+        viewModel.send(.appeared)
+        #expect(await waitUntil { viewModel.state.examples[LessonWords.water.id] == Self.drinking })
+        await settle()
+        #expect(await generator.requests.isEmpty)
+    }
+
+    /// The owner's decision: no example rather than one teaching another sense.
+    @Test("without the model, a word whose sentences are all in another sense shows none of them")
+    func noModelNoWrongSense() async {
+        let (viewModel, _) = makeViewModel(examples: FakeExamples(["水": [Self.salt]]), generator: FakeGenerator(nil))
+        viewModel.send(.appeared)
+        await settle()
+        #expect(viewModel.state.examples[LessonWords.water.id] == nil)
+    }
+
+    @Test("a sentence the device cannot write leaves the card without one, and no alert")
+    func examplesWritingFails() async {
+        let (viewModel, log) = makeViewModel(examples: FakeExamples(["水": [Self.salt]]), generator: FakeGenerator(nil, fails: true))
+        viewModel.send(.appeared)
+        await settle()
+        #expect(viewModel.state.examples.isEmpty)
+        #expect(log.effects.isEmpty)
+    }
+
+    @Test("each taught word's example arrives on appearing, and a word with none has none")
+    func examples() async {
+        let examples = FakeExamples(["水": [Self.drinking]])
+        let (viewModel, _) = makeViewModel([.teach(LessonWords.water), .teach(LessonWords.tea), .recall(LessonWords.water, .recognise)], examples: examples)
+        viewModel.send(.appeared)
+        #expect(await waitUntil { viewModel.state.examples[LessonWords.water.id] == Self.drinking })
+        #expect(viewModel.state.examples[LessonWords.tea.id] == nil)
+        // Only the taught words are looked up, once, with their own reading.
+        viewModel.send(.appeared)
+        await settle()
+        #expect(await examples.lookups == ["水 shuǐ", "茶 chá"])
+    }
+
+    @Test("a taught word's example is the sentence with the fewest words the learner has not started")
+    func examplesFitTheLearner() async {
+        let unfamiliar = ExampleSentence(hanzi: "妹妹喝水。", pinyin: "", english: "My sister drinks water.", words: ["妹妹", "喝", "水"])
+        let familiar = ExampleSentence(hanzi: "我们喝水。", pinyin: "", english: "We drink water.", words: ["我们", "喝", "水"])
+        let viewModel = MixedLessonViewModel(
+            lesson: MixedLesson(plan: TodayPlan(
+                theme: .newWords, title: "New words", synopsis: "", steps: [.teach(LessonWords.water)],
+                source: nil, otherWords: [], known: ["我们", "喝"]
+            )),
+            recordResults: RecordLessonResultsUseCase(repository: repository),
+            findExamples: FindExamplesUseCase(repository: FakeExamples(["水": [unfamiliar, familiar]])),
+            generateExample: GenerateExampleUseCase(generator: FakeGenerator(nil)),
+            sounds: sounds,
+            audioSession: sounds
+        )
+        viewModel.send(.appeared)
+        #expect(await waitUntil { viewModel.state.examples[LessonWords.water.id] == familiar })
+    }
+
+    @Test("examples that cannot be read are left off without an alert")
+    func examplesFailing() async {
+        let (viewModel, log) = makeViewModel(examples: FakeExamples([:], fails: true))
+        viewModel.send(.appeared)
+        await settle()
+        #expect(viewModel.state.examples.isEmpty)
+        #expect(log.effects.isEmpty)
     }
 
     @Test("the last step plays the finishing tune and records the lesson once, with its deck")
@@ -173,6 +273,43 @@ struct MixedLessonViewModelTests {
         viewModel.send(.stepCompleted([]))
         viewModel.send(.stepCompleted([answer(LessonWords.water, right: false)]))
         #expect(await log.contains(.showError(.recordResultsFailed(FakeVocabularyRepository.failure))))
+    }
+}
+
+/// Sentences by Hanzi, recording each lookup; can be told to fail.
+private actor FakeExamples: ExampleRepository {
+    private let sentences: [String: [ExampleSentence]]
+    private let fails: Bool
+    private(set) var lookups: [String] = []
+
+    init(_ sentences: [String: [ExampleSentence]], fails: Bool = false) {
+        self.sentences = sentences
+        self.fails = fails
+    }
+
+    func examples(forHanzi hanzi: String, pinyin: String) throws -> [ExampleSentence] {
+        lookups.append("\(hanzi) \(pinyin)")
+        if fails { throw DictionaryDomainError.unexpected(model: DomainErrorModel(domain: "test", code: 5, description: "no examples")) }
+        return sentences[hanzi] ?? []
+    }
+}
+
+/// Writes the one sentence it is given, or has no model when given none, recording each
+/// request; can be told to fail.
+private actor FakeGenerator: ExampleGenerating {
+    private let sentence: ExampleSentence?
+    private let fails: Bool
+    private(set) var requests: [ExampleRequest] = []
+
+    init(_ sentence: ExampleSentence?, fails: Bool = false) {
+        self.sentence = sentence
+        self.fails = fails
+    }
+
+    func example(for request: ExampleRequest) throws -> ExampleWriting {
+        requests.append(request)
+        if fails { throw DictionaryDomainError.unexpected(model: DomainErrorModel(domain: "test", code: 6, description: "no model")) }
+        return sentence.map(ExampleWriting.written) ?? .unavailable
     }
 }
 

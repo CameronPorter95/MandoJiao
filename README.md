@@ -109,6 +109,15 @@ pinyin and first sense, and a deck to add it to, or, once saved, opens the word 
 vocabulary instead. Search
 results already in the vocabulary are ticked.
 
+Up to ten example sentences per reading come from Tatoeba, in simplified characters,
+each with its pinyin and an English translation, easiest first. A sentence is only an
+example of the reading its pinyin says, so 长 cháng and 长 zhǎng each get their own.
+Today's plan shows one with each new word: one whose English uses the word in a sense
+its card gives, then the one with the fewest words you haven't started yet. Where none of
+Tatoeba's uses that sense, the on-device model can write one, on devices with Apple
+Intelligence, marked as AI-generated. Rebuild them with `Tools/MakeExamples`
+from Tatoeba's downloads.
+
 ## Building
 
 Requires Xcode 26 and an iOS 26 simulator or device. The project is iPhone and

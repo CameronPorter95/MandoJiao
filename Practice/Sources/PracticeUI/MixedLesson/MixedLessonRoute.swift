@@ -35,6 +35,7 @@ public struct MixedLessonRoute: View {
                 makeStep(step, viewModel.state.lesson.listensOnArrival) { viewModel.send(.stepCompleted($0, carriesOn: $1)) }
             }
         )
+        .onAppear { viewModel.send(.appeared) }
         .onDisappear { viewModel.send(.disappeared) }
         .task {
             for await effect in viewModel.effects() {

@@ -433,7 +433,7 @@
 2	1860	帮忙	bāngmáng	to helpto lend a handto do a favorto do a good turn
 2	1870	进来	jìnlái	to come in
 2	1880	颜色	yánsè	colorcountenanceappearancefacial expression
-2	2025	高中	gāozhōng	senior high school
+2	2025	高中	gāozhōng	high schoolsenior high school
 2	2030	考	kǎo	to take an examto checkto verifyto test
 2	2127	上去	shàngqù	to go up
 2	2146	红色	hóngsè	red (color)revolutionary
@@ -488,7 +488,7 @@
 2	10888	个子	gèzi	stature, height, size (of a person or object)(agriculture) bundle of cereal stalks tied together
 2	11321	没意思	méiyìsi	boringof no interest
 2	11861	书包	shūbāo	schoolbagsatchelbookbag
-2	12849	本子	běnzi	booknotebookJapanese-style self-published comic (esp. an erotic one), aka "dōjinshi"edition
+2	12849	本子	běnzi	notebookexercise book	=
 2	14490	过年	guònián	to celebrate the Chinese New Year
 2	15567	绿茶	lǜchá	green tea(slang) (of a girl) seemingly innocent and charming but actually calculating and manipulative, a girl who has these qualities
 2	15698	打车	dǎchē	to take a taxi (in town)to hitch a lift
@@ -497,7 +497,7 @@
 2	20075	奶茶	nǎichá	milk tea
 2	21109	红茶	hóngchá	black tea
 2	25607	小孩	xiǎohái	child
-2	1000000	公交车	gōngjiāochē	public transport vehicletown bus
+2	1000000	公交车	gōngjiāochē	buspublic transport vehicletown bus
 2	1000000	男孩	nánhái	boy
 3	50	把	bǎ	to hold, to graspto hold a baby in position to help it urinate or defecatehandlebarclassifier: handful, bundle, bunch
 3	54	被	bèi	(passive marker) byquiltto cover (with)(literary) to suffer (a misfortune)
@@ -763,7 +763,7 @@
 3	1876	见面	jiànmiàn	to meet, to see each other
 3	1888	成绩	chéngjì	gradesachievementperformance records
 3	1889	中间	zhōngjiān	the middle, the insidein the middle, within, between, amongduring, in the meantime
-3	1894	女生	nǚshēng	schoolgirlfemale studentgirl
+3	1894	女生	nǚshēng	girlschoolgirlfemale student
 3	1918	聪明	cōngming	intelligent, clever, brightacute (of sight and hearing)
 3	1921	地点	dìdiǎn	placesitelocationvenue
 3	1948	语言	yǔyán	language
@@ -818,7 +818,7 @@
 3	2750	客人	kèrén	visitor, guestcustomer
 3	2773	常常	chángcháng	frequently, often
 3	2780	平时	píngshí	ordinarilyin normal timesin peacetime
-3	2784	男生	nánshēng	schoolboymale studentboyguy (young adult male)
+3	2784	男生	nánshēng	boyschoolboymale studentguy (young adult male)
 3	2866	碗	wǎn	bowlcup
 3	2899	懂得	dǒngde	to understand, to know, to comprehend
 3	2909	好久	hǎojiǔ	(coll.) for a long time
@@ -850,7 +850,7 @@
 3	3548	地图	dìtú	map
 3	3620	晚会	wǎnhuì	evening party
 3	3621	感冒	gǎnmào	to catch cold(common) cold(coll.) to be interested in (often used in the negative)(Tw) to detest
-3	3641	大小	dàxiǎo	large and smallsizeadults and childrenconsideration of seniority
+3	3641	大小	dàxiǎo	sizelarge and smalladults and childrenconsideration of seniority
 3	3667	迟到	chídào	to arrive late
 3	3694	得分	défēn	to score a point (in a competition, test etc)score, rating, grade
 3	3756	刻	kè	quarter (hour)momentto carveto engrave
@@ -906,7 +906,7 @@
 3	5473	香蕉	xiāngjiāo	banana
 3	5821	大衣	dàyī	overcoattopcoatcloak
 3	5836	发烧	fāshāo	to have a high temperature (from illness), to have a fever(fig.) to be fascinated with, to obsess over(fig.) flourishing, thriving, popular
-3	5854	箱子	xiāngzi	suitcasechestboxcase
+3	5854	箱子	xiāngzi	boxsuitcasechestcase
 3	5859	学期	xuéqī	termsemester
 3	5880	路边	lùbiān	curb, roadside, wayside
 3	5922	难题	nántí	difficult problem
@@ -922,7 +922,7 @@
 3	7055	秋天	qiūtiān	autumn
 3	7152	护照	hùzhào	passport
 3	7196	耳机	ěrjī	headphonesearphonestelephone receiver
-3	7208	初中	chūzhōng	junior high school
+3	7208	初中	chūzhōng	middle schooljunior high school
 3	7209	放学	fàngxué	to dismiss students at the end of the school day
 3	7217	画家	huàjiā	painter
 3	7237	西南	xīnán	southwest
@@ -955,7 +955,7 @@
 3	9407	后天	hòutiān	the day after tomorrowlife after birthacquired (not innate or congenital)a posteriori
 3	9442	渴	kě	thirsty
 3	9671	常用	chángyòng	in common usage
-3	9854	请客	qǐngkè	to give a dinner partyto entertain gueststo invite to dinner
+3	9854	请客	qǐngkè	to treat (sb to a meal etc)to give a dinner partyto entertain gueststo invite to dinner
 3	10134	请假	qǐngjià	to request leave of absence
 3	10344	洗衣机	xǐyījī	washing machine, washer
 3	10428	句子	jùzi	sentence

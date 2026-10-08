@@ -1,5 +1,6 @@
 import CoreDI
 import CoreSound
+import DictionaryDomain
 import LibraryDomain
 import PracticeData
 import PracticeDomain
@@ -21,6 +22,8 @@ public enum MixedLessonFactory: NavigationInputRouteFactory {
             viewModel: MixedLessonViewModel(
                 lesson: MixedLesson(plan: input.plan),
                 recordResults: input.recordResults,
+                findExamples: input.findExamples,
+                generateExample: input.generateExample,
                 sounds: ToneEngine.shared,
                 audioSession: ToneEngine.shared
             ),
@@ -58,12 +61,24 @@ public enum MixedLessonFactory: NavigationInputRouteFactory {
 
 public struct MixedLessonInput {
     public let plan: TodayPlan
-    /// Owned by Vocabulary, which this package cannot reach, so the app hands it in.
+    /// Owned by the library, whose data this package cannot reach, so the app hands it in.
     public let recordResults: RecordLessonResultsUseCase
+    /// The dictionary's example sentences, for the words the lesson teaches. Handed in for
+    /// the same reason.
+    public let findExamples: FindExamplesUseCase
+    /// Writes one on the device for a word none of those use in its card's sense.
+    public let generateExample: GenerateExampleUseCase
 
-    public init(plan: TodayPlan, recordResults: RecordLessonResultsUseCase) {
+    public init(
+        plan: TodayPlan,
+        recordResults: RecordLessonResultsUseCase,
+        findExamples: FindExamplesUseCase,
+        generateExample: GenerateExampleUseCase
+    ) {
         self.plan = plan
         self.recordResults = recordResults
+        self.findExamples = findExamples
+        self.generateExample = generateExample
     }
 }
 

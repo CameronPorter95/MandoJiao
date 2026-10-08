@@ -1,5 +1,6 @@
 import CoreDomain
 import CoreUI
+import DictionaryDomain
 import Foundation
 import LibraryDomain
 import Observation
@@ -14,18 +15,25 @@ public final class MixedLessonViewModel {
     private let recordResults: RecordLessonResultsUseCase
     private let sounds: any MatchSoundPlaying
     private let audioSession: any AudioSessionSwitching
+    private let findExamples: FindExamplesUseCase
+    private let generateExample: GenerateExampleUseCase
     private var didRecordResults = false
+    private var examplesTask: Task<Void, Never>?
 
     /// `audioSession` is handed back from the microphone here rather than by each read-aloud
     /// step, so a run of them keeps it and a tone after one plays at the usual level.
     public init(
         lesson: MixedLesson,
         recordResults: RecordLessonResultsUseCase,
+        findExamples: FindExamplesUseCase,
+        generateExample: GenerateExampleUseCase,
         sounds: any MatchSoundPlaying,
         audioSession: any AudioSessionSwitching
     ) {
         state = MixedLessonState(lesson: lesson)
         self.recordResults = recordResults
+        self.findExamples = findExamples
+        self.generateExample = generateExample
         self.sounds = sounds
         self.audioSession = audioSession
     }
@@ -49,6 +57,9 @@ public final class MixedLessonViewModel {
                 await audioSession.exitRecordingMode()
                 sounds.playLessonComplete()
             }
+
+        case .appeared:
+            loadExamples()
 
         case .disappeared:
             leaveRecordingMode()
@@ -80,6 +91,51 @@ public final class MixedLessonViewModel {
         recordResultsOnce()
         leaveRecordingMode()
         effectChannel.send(.close)
+    }
+
+    /// One sentence for each word the lesson teaches, all looked up at the start so none is
+    /// waited for on its card: the one with the fewest words the learner has not started.
+    /// A failure is logged and the card shows no example: an alert mid-lesson would cost more
+    /// than a missing sentence.
+    private func loadExamples() {
+        guard examplesTask == nil else { return }
+        let taught = state.lesson.steps.compactMap { step -> WordPair? in
+            if case .teach(let word) = step { word } else { nil }
+        }
+        let known = state.lesson.plan.known
+        examplesTask = Task { [findExamples, generateExample] in
+            // Tatoeba's for every word first, since they are quick, then the model's for any
+            // word none of them use in a sense its card gives: it takes seconds a sentence.
+            var unmatched: [WordPair] = []
+            for word in taught {
+                do {
+                    let sentences = try await findExamples(hanzi: word.hanzi, pinyin: word.pinyin)
+                    if let example = sentences.best(teaching: word.hanzi, meanings: word.meanings, knowing: known) {
+                        state.examples[word.id] = example
+                    } else {
+                        unmatched.append(word)
+                    }
+                } catch is CancellationError {
+                    return
+                } catch {
+                    MixedLessonError.findExamplesFailed(VocabularyDomainError(error)).log()
+                    unmatched.append(word)
+                }
+            }
+            for word in unmatched {
+                guard let meaning = word.meanings.first else { continue }
+                do {
+                    let request = ExampleRequest(hanzi: word.hanzi, pinyin: word.pinyin, meaning: meaning, otherMeanings: Array(word.meanings.dropFirst()))
+                    if let example = try await generateExample(request) {
+                        state.examples[word.id] = example
+                    }
+                } catch is CancellationError {
+                    return
+                } catch {
+                    MixedLessonError.generateExampleFailed(VocabularyDomainError(error)).log()
+                }
+            }
+        }
     }
 
     /// Does nothing when no step has entered it.

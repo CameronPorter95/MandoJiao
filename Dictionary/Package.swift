@@ -31,7 +31,7 @@ let package = Package(
                 "DictionaryDomain",
                 .product(name: "CoreDomain", package: "Core"),
             ],
-            resources: [.copy("Resources/Dictionary.tsv"), .copy("Resources/HSK.tsv")]
+            resources: [.copy("Resources/Dictionary.tsv"), .copy("Resources/HSK.tsv"), .copy("Resources/Examples.tsv")]
         ),
         .target(
             name: "DictionaryUI",

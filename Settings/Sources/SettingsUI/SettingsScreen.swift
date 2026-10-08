@@ -71,10 +71,12 @@ struct SettingsScreen: View {
                 Link("CC-CEDICT", destination: URL(string: "https://cc-cedict.org/wiki/")!)
                 Link("CC BY-SA 4.0 licence", destination: URL(string: "https://creativecommons.org/licenses/by-sa/4.0/")!)
                 Link("Complete HSK Vocabulary", destination: URL(string: "https://github.com/drkameleon/complete-hsk-vocabulary")!)
+                Link("Tatoeba", destination: URL(string: "https://tatoeba.org")!)
+                Link("CC BY 2.0 FR licence", destination: URL(string: "https://creativecommons.org/licenses/by/2.0/fr/")!)
             } header: {
                 Text("Acknowledgements")
             } footer: {
-                Text("Suggested pinyin and English come from CC-CEDICT, shortened to one sense per word. The HSK word lists come from Complete HSK Vocabulary, copyright 2026 Yanis Zafirópulos, under the MIT licence.")
+                Text("Suggested pinyin and English come from CC-CEDICT, shortened to one sense per word. The HSK word lists come from Complete HSK Vocabulary, copyright 2026 Yanis Zafirópulos, under the MIT licence. Example sentences, their pinyin and their English come from Tatoeba, under CC BY 2.0 FR, written in simplified characters and chosen for each word's reading.")
             }
         }
         .navigationTitle("Settings")
