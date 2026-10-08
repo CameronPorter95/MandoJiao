@@ -8,7 +8,7 @@ import SwiftUI
 /// iPhone while still showing, which ended its effects loop and live data.
 public struct LibraryRoute: View {
     @State private var viewModel: LibraryViewModel
-    private let navigation: LibraryNavigation
+    private let navigation: LibraryTabNavigation
     private let root: (LibrarySelection, LibraryPageContext) -> AnyView
     private let page: (LibraryPage, LibraryPageContext) -> AnyView
     private let results: (String, LibraryPageContext) -> AnyView
@@ -23,7 +23,7 @@ public struct LibraryRoute: View {
     /// the words found by the sidebar's search, for what has been typed.
     public init(
         viewModel: LibraryViewModel,
-        navigation: LibraryNavigation,
+        navigation: LibraryTabNavigation,
         root: @escaping (LibrarySelection, LibraryPageContext) -> AnyView,
         page: @escaping (LibraryPage, LibraryPageContext) -> AnyView,
         results: @escaping (String, LibraryPageContext) -> AnyView,

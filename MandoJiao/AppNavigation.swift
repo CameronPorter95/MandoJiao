@@ -12,33 +12,27 @@ import ProgressUI
 /// is where one package's screen leading to another's is decided.
 @MainActor
 struct AppNavigation {
-    var home: HomeNavigation
-    var vocabulary: VocabularyNavigation
-    var matching: MatchingNavigation
-    var speaking: SpeakingNavigation
-    var flashcards: FlashcardsNavigation
-    var mixedLesson: MixedLessonNavigation
+    var progress: ProgressNavigation
+    var library: LibraryNavigation
+    var practice: PracticeNavigation
 }
 
 extension AppNavigation {
     /// Home at the root, with lessons presented over it.
     static func main(coordinator: AppNavigationCoordinator) -> Self {
         AppNavigation(
-            home: .app(
+            progress: .app(
                 presentMatching: { coordinator.present(.matching($0)) },
                 presentSpeaking: { coordinator.present(.speaking($0)) },
                 presentFlashcards: { coordinator.present(.flashcards($0)) },
                 presentTodayPlan: { coordinator.present(.todayPlan($0)) }
             ),
-            vocabulary: .app(
+            library: .app(
                 presentMatching: { coordinator.present(.matching($0)) },
                 presentSpeaking: { coordinator.present(.speaking($0)) },
                 presentFlashcards: { coordinator.present(.flashcards($0)) }
             ),
-            matching: .app(dismiss: { coordinator.dismissLesson() }),
-            speaking: .app(dismiss: { coordinator.dismissLesson() }),
-            flashcards: .app(dismiss: { coordinator.dismissLesson() }),
-            mixedLesson: .app(dismiss: { coordinator.dismissLesson() })
+            practice: .app(dismiss: { coordinator.dismissLesson() })
         )
     }
 }
