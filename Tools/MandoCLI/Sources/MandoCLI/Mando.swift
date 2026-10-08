@@ -6,9 +6,16 @@ struct Mando {
     static func main() async {
         let interpreter: Interpreter
         do {
-            interpreter = try Interpreter()
+            // mando --remote [port] drives the app on the simulator, launched with -remote.
+            let arguments = CommandLine.arguments.dropFirst()
+            if let flag = arguments.firstIndex(of: "--remote") {
+                let port = arguments.dropFirst(flag - arguments.startIndex + 1).first.flatMap(UInt16.init) ?? 9393
+                interpreter = try await Interpreter(remotePort: port)
+            } else {
+                interpreter = try Interpreter()
+            }
         } catch {
-            print("✗ could not open the store: \(error)")
+            print("✗ \(error)")
             exit(1)
         }
 

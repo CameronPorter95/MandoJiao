@@ -29,13 +29,15 @@ struct InterpreterTests {
         #expect(await mando.run("open folder Starter") == ["✓ open"])
         #expect(await mando.run("open deck Greetings") == ["✓ open"])
 
-        let screens = await mando.run("ls")
-        #expect(screens[0].hasPrefix("library  folders: Starter "))
-        #expect(screens[0].hasSuffix("selected: Starter"))
-        #expect(screens[1] == "deck  Greetings  10 words  lesson words: 10")
+        let listed = await mando.run("ls")
+        #expect(listed[0].hasPrefix("library  folders: Starter "))
+        #expect(listed[0].hasSuffix("selected: Starter"))
+        #expect(listed[1] == "deck  Greetings  10 words  lesson words: 10")
 
         #expect(await mando.run("back") == ["✓ back"])
         #expect(await mando.run("ls")[1].hasPrefix("folder  Starter  "))
+        #expect(await mando.run("back") == ["✓ back"])
+        #expect(await screens(mando).map { $0.components(separatedBy: "  ")[0] } == ["library"])
         #expect(await mando.run("back") == ["✗ nothing to go back from"])
     }
 

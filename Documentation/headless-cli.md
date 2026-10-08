@@ -232,22 +232,44 @@ the screen by command, then screenshot.
    The coordinator's driver, with `selectTab` and the presented lesson, waits for step 2's
    registry, since nothing in the app could call it before then. The library stack is already state
    (`LibraryState.path`), so a deck opened by command slides in for free.
-2. **Routes register their drivers, in debug builds only.** On appear, a Route hands
-   `viewModel.driver(navigation:)` to a registry; on disappear it takes it back. One line
-   per Route. The registry's top is the open screen, as `Session.top` is headlessly.
-3. **A listener in the app, in debug builds only.** `NWListener` on a localhost port, one
-   command per line, the reply as the lines headless `mando` prints. Simulator apps share
-   the Mac's network, so the CLI reaches it at `localhost:<port>`. Network callbacks
-   arrive off the main actor and must hop to `@MainActor` before touching a driver, or
-   Swift 6 traps at runtime (Traps in CLAUDE.md).
-4. **`MandoKit` gets a remote backend.** Without the flag `mando` runs its own `Session`;
-   with `--remote` it forwards each line and prints the reply. Same commands, same
-   output, so an agent cannot tell the modes apart.
-5. **A launch argument for scripted speech.** The app's speaking lesson uses
+2. **Done. Routes register their drivers.** `.drivable { viewModel.driver(navigation:) }`
+   offers a driver to the `ScreenRegistry` in the environment as the Route appears and takes
+   it back as it disappears. The registry is nil unless the app was launched with
+   `-remote`, so feature packages need no `#if DEBUG`. The coordinator's driver is
+   `registry.app`: `selectTab`, and `back` dismisses the lesson. Only `send`, `summary`,
+   `dump`, `back` and `open` are used from a registered driver: the Route keeps following
+   its effects, so the app navigates as if tapped.
+3. **Done. A listener in the app.** `CoreRemote`: `RemoteServer` listens on
+   127.0.0.1:9393, one `RemoteRequest` JSON line in and one `RemoteReply` line out;
+   `RemoteControl` answers from the registry. The target is not main-actor by default,
+   since Network calls back on its own queue, and the control hops to the main actor.
+   Started in `MandoJiaoApp` under `#if DEBUG` and `-remote` only.
+4. **Done. `MandoKit` gets a remote backend.** The interpreter runs against a `Backend`:
+   the local `Session`, or `RemoteBackend` over the loopback. `open deck|folder` moved into
+   the library's driver, `ScreenDriver.open`, so one lookup serves both.
+5. **Deferred. A launch argument for scripted speech.** `say` is refused in remote mode
+   with the `typedAnswerSubmitted` to send instead, which is graded the same way. The app's speaking lesson uses
    `DictationRecogniser`, and recognition on the simulator is not to be judged. Under
    the argument, the speaking factory builds with `ScriptedRecogniser` and `say` feeds
    it. The card reacts in the simulator, which proves the flow and nothing about
    recognition.
+
+**Found by running it on the simulator, and fixed.**
+
+- The registry's environment was set inside the full-screen cover's modifier, so a
+  lesson's screens never registered. It is set outside the cover now.
+- A screen leaves the registry only when its disappearance ends, after the pop or
+  dismissal animation, and nothing on show changes meanwhile, so the settle ended early
+  and `ls` listed screens already gone. After a command that changes anything, remote
+  mode waits 600ms for the transition, then settles again.
+- On iPhone the library's split view shows its sidebar or its detail by the Route's own
+  `compactColumn`, which only a sidebar tap moved. A selection made through the view model
+  left the sidebar showing. The column now follows the selection, and the library's
+  `back` deselects once its stack is empty, as back does on iPhone.
+
+Checked on the iPhone 17 Pro simulator with a screenshot after each command: a tab
+switched, a folder selected and a deck pushed, a speaking lesson presented and a typed
+answer graded, then back through each, with `ls` matching the screen every time.
 
 **Rules.**
 

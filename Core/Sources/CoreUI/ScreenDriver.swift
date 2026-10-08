@@ -20,6 +20,8 @@ public struct ScreenDriver {
     public let back: () -> Bool
     /// Working on something that will change what it shows, such as a search under way.
     public let isBusy: () -> Bool
+    /// Opens something this screen lists by its name, as tapping its row would.
+    public let open: (_ kind: String, _ query: String) throws -> Void
 
     /// `follow` carries out an effect that navigates and returns the rest, as the screen's Route does.
     public init<State, Action: Decodable, Effect: Sendable>(
@@ -33,8 +35,10 @@ public struct ScreenDriver {
         front: @escaping () -> ScreenDriver? = { nil },
         back: @escaping () -> Bool = { false },
         relay: EffectRelay? = nil,
-        isBusy: @escaping (State) -> Bool = { _ in false }
+        isBusy: @escaping (State) -> Bool = { _ in false },
+        open: @escaping (_ kind: String, _ query: String) throws -> Void = { kind, _ in throw ScreenDriverError.cannotOpen(kind) }
     ) {
+        self.open = open
         self.front = front
         self.back = back
         self.isBusy = { isBusy(state()) }
@@ -89,11 +93,15 @@ public final class EffectRelay {
 public nonisolated enum ScreenDriverError: Error, Equatable, CustomStringConvertible {
     case unknownAction(String)
     case badArguments(String)
+    case cannotOpen(String)
+    case notFound(String, String)
 
     public var description: String {
         switch self {
         case .unknownAction(let action): "no action \"\(action)\" here, see ls"
         case .badArguments(let action): "the arguments do not fit \(action)"
+        case .cannotOpen(let kind): "nothing here opens a \(kind)"
+        case .notFound(let kind, let query): "no \(kind) matches \"\(query)\""
         }
     }
 }

@@ -70,6 +70,11 @@ public struct LibraryRoute: View {
         )) {
             makeEditor($0)
         }
+        // A selection made other than by tapping the sidebar, such as by remote driving, shows too.
+        .onChange(of: viewModel.state.selection) { _, selection in
+            compactColumn = selection == nil ? .sidebar : .detail
+        }
+        .drivable { viewModel.driver(navigation: navigation) }
         .onAppear { viewModel.send(.appeared) }
         .onDisappear { viewModel.send(.disappeared) }
         .task {
