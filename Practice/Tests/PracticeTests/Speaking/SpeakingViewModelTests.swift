@@ -488,6 +488,17 @@ struct ScriptedSpeechLessonTests {
         await Endpointing.waitForEnd(settleAfter: .milliseconds(50), hardLimit: .seconds(3), pollInterval: .milliseconds(10), transcript: $0)
     }
 
+    @Test("an answer left queued when a lesson closes is not heard by the next")
+    func closingDropsTheQueue() async throws {
+        let recogniser = ScriptedRecogniser()
+        recogniser.enqueue(SpeechOutcome(best: "shui"))
+        recogniser.cancel()
+
+        try await recogniser.start(hints: [])
+        #expect(recogniser.partialText.isEmpty)
+        #expect(await recogniser.stop() == .empty)
+    }
+
     @Test("an answer queued while the lesson listens on by itself is heard by that listen")
     func queuedDuringAnAutomaticListen() async {
         let recogniser = ScriptedRecogniser()

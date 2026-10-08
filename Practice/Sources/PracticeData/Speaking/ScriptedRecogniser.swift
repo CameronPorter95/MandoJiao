@@ -45,8 +45,11 @@ public final class ScriptedRecogniser: SpeechRecognising {
         return outcome
     }
 
+    /// Drops what is queued too: a lesson cancels as it closes, and the app keeps one of these
+    /// for every lesson, so an answer left over would be heard on another lesson's card.
     public func cancel() {
         isListening = false
         partialText = ""
+        queued.removeAll()
     }
 }
