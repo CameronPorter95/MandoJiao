@@ -14,6 +14,8 @@ let package = Package(
         .library(name: "PracticeDI", targets: ["PracticeDI"]),
         // For the app's navigation values only.
         .library(name: "PracticeUI", targets: ["PracticeUI"]),
+        // The scripted recogniser, for the headless CLI as well as the tests.
+        .library(name: "PracticeTestSupport", targets: ["PracticeTestSupport"]),
     ],
     dependencies: [
         .package(path: "../Core"),
