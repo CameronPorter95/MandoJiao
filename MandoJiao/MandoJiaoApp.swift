@@ -5,6 +5,7 @@ import CoreRemote
 #endif
 import DictionaryDI
 import LibraryDI
+import PracticeDI
 import OSLog
 import SwiftData
 import SwiftUI
@@ -13,6 +14,7 @@ import SwiftUI
 struct MandoJiaoApp: App {
     private let dependencies: LiveDependencies
     private let screenRegistry: ScreenRegistry?
+    private let scriptedSpeech: ScriptedSpeech?
     #if DEBUG
     private let remoteServer: RemoteServer?
     #endif
@@ -32,11 +34,21 @@ struct MandoJiaoApp: App {
             fatalError("Could not open the vocabulary store: \(error)")
         }
 
+        // -scripted-speech: a speaking lesson hears answers queued by `say` instead of the
+        // microphone, which the simulator cannot judge. Debug builds only.
+        #if DEBUG
+        let speech = ProcessInfo.processInfo.arguments.contains("-scripted-speech") ? ScriptedSpeech() : nil
+        scriptedSpeech = speech
+        #else
+        scriptedSpeech = nil
+        #endif
+
         // `mando --remote` drives the app launched with -remote. Debug builds only: an open
         // port in a release build would be a security hole.
         #if DEBUG
         if ProcessInfo.processInfo.arguments.contains("-remote") {
             let registry = ScreenRegistry()
+            registry.speak = speech.map { speech in { speech.enqueue($0) } }
             screenRegistry = registry
             do {
                 remoteServer = try RemoteServer(control: RemoteControl(registry: registry))
@@ -56,7 +68,7 @@ struct MandoJiaoApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView(dependencies: dependencies, screenRegistry: screenRegistry)
+            ContentView(dependencies: dependencies, screenRegistry: screenRegistry, scriptedSpeech: scriptedSpeech)
         }
     }
 }

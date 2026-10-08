@@ -1,7 +1,6 @@
 import Testing
 import CoreDomain
 import CoreTestSupport
-import PracticeTestSupport
 import LibraryTestSupport
 @testable import PracticeDomain
 @testable import PracticeData

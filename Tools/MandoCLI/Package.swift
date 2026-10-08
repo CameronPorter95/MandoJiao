@@ -36,7 +36,6 @@ let package = Package(
                 .product(name: "PracticeDomain", package: "Practice"),
                 .product(name: "PracticeDI", package: "Practice"),
                 .product(name: "PracticeUI", package: "Practice"),
-                .product(name: "PracticeTestSupport", package: "Practice"),
                 .product(name: "ProgressDomain", package: "Progress"),
                 .product(name: "ProgressDI", package: "Progress"),
             ],

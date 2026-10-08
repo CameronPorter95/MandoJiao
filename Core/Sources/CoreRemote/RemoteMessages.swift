@@ -3,7 +3,7 @@ import Foundation
 /// One command to the running app, one JSON object per line.
 public nonisolated struct RemoteRequest: Codable, Sendable, Equatable {
     public enum Operation: String, Codable, Sendable {
-        case ls, send, tab, open, back, state
+        case ls, send, tab, open, back, state, say
         /// Which app on which simulator answered, so mando can say what it is driving.
         case hello
     }
@@ -17,12 +17,15 @@ public nonisolated struct RemoteRequest: Codable, Sendable, Equatable {
     /// `open`.
     public var kind: String?
     public var query: String?
+    /// `say`.
+    public var answer: String?
 
     public init(
         _ operation: Operation,
         action: String? = nil, arguments: String? = nil,
-        tab: String? = nil, kind: String? = nil, query: String? = nil
+        tab: String? = nil, kind: String? = nil, query: String? = nil, answer: String? = nil
     ) {
+        self.answer = answer
         self.operation = operation
         self.action = action
         self.arguments = arguments

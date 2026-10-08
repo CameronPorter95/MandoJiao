@@ -16,7 +16,7 @@ public enum SpeakingFactory: NavigationInputRouteFactory {
     ) -> SpeakingRoute {
         let viewModel = SpeakingViewModel(
             request: input.request,
-            recogniser: DictationRecogniser(),
+            recogniser: input.speech?.recogniser ?? DictationRecogniser() as any SpeechRecognising,
             audioSession: ToneEngine.shared,
             sounds: ToneEngine.shared,
             getSettings: SpeakingSettingsFactory.makeGetSettingsUseCase(dependencies: dependencies),
@@ -26,18 +26,18 @@ public enum SpeakingFactory: NavigationInputRouteFactory {
         return SpeakingRoute(viewModel: viewModel, navigation: navigation)
     }
 
-    /// The lesson without its view, silent and never waiting on the clock. `recogniser` must
-    /// hear the whole answer as it starts, which is what lets a listen end at once.
+    /// The lesson without its view, silent and never waiting on the clock. It hears `speech`,
+    /// which has the whole answer as a listen starts, so the listen can end at once.
     public static func makeDriver(
         dependencies: Dependencies,
         navigation: SpeakingNavigation,
         input: SpeakingInput,
-        recogniser: any SpeechRecognising,
+        speech: ScriptedSpeech,
         logAttempt: @escaping SpeakingViewModel.LogAttempt
     ) -> ScreenDriver {
         SpeakingViewModel(
             request: input.request,
-            recogniser: recogniser,
+            recogniser: speech.recogniser,
             audioSession: SilentAudioSession(),
             sounds: SilentSounds(),
             getSettings: SpeakingSettingsFactory.makeGetSettingsUseCase(dependencies: dependencies),

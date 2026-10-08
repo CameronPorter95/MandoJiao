@@ -11,6 +11,8 @@ public final class ScreenRegistry {
     private var ids: [UUID] = []
     /// The app's own navigation: the open tab and the lesson over it.
     public var app: ScreenDriver?
+    /// Queues an answer for the next listen to hear, when the app hears scripted speech.
+    public var speak: ((String) -> Void)?
 
     public init() {}
 

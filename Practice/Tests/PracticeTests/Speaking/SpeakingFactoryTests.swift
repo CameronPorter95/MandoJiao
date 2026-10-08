@@ -6,7 +6,6 @@ import LibraryDomain
 import LibraryTestSupport
 import PracticeDI
 import PracticeDomain
-import PracticeTestSupport
 import PracticeUI
 
 @Suite("Speaking lesson built to run headlessly")
@@ -15,6 +14,8 @@ struct SpeakingFactoryTests {
     @Test("a lesson runs to the end on scripted speech without waiting on the clock")
     func runsThrough() async throws {
         let repository = FakeVocabularyRepository()
+        let speech = ScriptedSpeech()
+        speech.enqueue("shui")
         var attempts: [SpeechAttempt] = []
         let driver = SpeakingFactory.makeDriver(
             dependencies: try TestDependencies(),
@@ -23,7 +24,7 @@ struct SpeakingFactoryTests {
                 request: LessonRequest(title: "t", pool: [WordPair(english: "water", hanzi: "水", pinyin: "shuǐ")]),
                 recordResults: RecordLessonResultsUseCase(repository: repository)
             ),
-            recogniser: ScriptedRecogniser(transcripts: ["shui"]),
+            speech: speech,
             logAttempt: { attempts.append($0) }
         )
         let started = ContinuousClock.now
@@ -59,8 +60,8 @@ struct SpeakingFactoryTests {
         let lesson = TwoCardLesson()
         try await lesson.start()
         let first = lesson.answerForShownCard()
-        lesson.recogniser.enqueue(SpeechOutcome(best: first))
-        lesson.recogniser.enqueue(SpeechOutcome(best: first == "shui" ? "shouji" : "shui"))
+        lesson.speech.enqueue(first)
+        lesson.speech.enqueue(first == "shui" ? "shouji" : "shui")
 
         try lesson.driver.send("startListeningTapped", nil)
 
@@ -71,7 +72,7 @@ struct SpeakingFactoryTests {
 
 @MainActor
 private final class TwoCardLesson {
-    let recogniser = ScriptedRecogniser()
+    let speech = ScriptedSpeech()
     var attempts: [SpeechAttempt] = []
     private(set) var driver: ScreenDriver!
 
@@ -88,7 +89,7 @@ private final class TwoCardLesson {
                 ]),
                 recordResults: RecordLessonResultsUseCase(repository: FakeVocabularyRepository())
             ),
-            recogniser: recogniser,
+            speech: speech,
             logAttempt: { [unowned self] in attempts.append($0) }
         )
     }
@@ -106,7 +107,7 @@ private final class TwoCardLesson {
 
     /// What the CLI's `say` does: queue the answer, then tap the microphone.
     func say(_ answer: String) throws {
-        recogniser.enqueue(SpeechOutcome(best: answer))
+        speech.enqueue(answer)
         try driver.send("startListeningTapped", nil)
     }
 }
