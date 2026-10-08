@@ -38,7 +38,12 @@ public nonisolated extension DictionaryEntry {
     /// was typed: "yin2 hang2" is yínháng. A word saved without pinyin is no reading in
     /// particular.
     func isReading(hanzi: String, pinyin: String) -> Bool {
-        hanzi == simplified && !pinyin.isEmpty && Self.spelling(pinyin) == Self.spelling(self.pinyin)
+        hanzi == simplified && !pinyin.isEmpty && Self.spellSame(pinyin, self.pinyin)
+    }
+
+    /// Whether two pinyin spellings are the same reading, however each was typed.
+    static func spellSame(_ one: String, _ other: String) -> Bool {
+        spelling(one) == spelling(other)
     }
 
     /// The letters, and the tones in the order written, so marks and numbers compare alike.

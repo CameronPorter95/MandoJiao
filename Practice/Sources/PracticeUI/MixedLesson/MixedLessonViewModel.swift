@@ -1,5 +1,6 @@
 import CoreDomain
 import CoreUI
+import DictionaryDomain
 import Foundation
 import LibraryDomain
 import Observation
@@ -14,18 +15,22 @@ public final class MixedLessonViewModel {
     private let recordResults: RecordLessonResultsUseCase
     private let sounds: any MatchSoundPlaying
     private let audioSession: any AudioSessionSwitching
+    private let findExamples: FindExamplesUseCase
     private var didRecordResults = false
+    private var examplesTask: Task<Void, Never>?
 
     /// `audioSession` is handed back from the microphone here rather than by each read-aloud
     /// step, so a run of them keeps it and a tone after one plays at the usual level.
     public init(
         lesson: MixedLesson,
         recordResults: RecordLessonResultsUseCase,
+        findExamples: FindExamplesUseCase,
         sounds: any MatchSoundPlaying,
         audioSession: any AudioSessionSwitching
     ) {
         state = MixedLessonState(lesson: lesson)
         self.recordResults = recordResults
+        self.findExamples = findExamples
         self.sounds = sounds
         self.audioSession = audioSession
     }
@@ -49,6 +54,9 @@ public final class MixedLessonViewModel {
                 await audioSession.exitRecordingMode()
                 sounds.playLessonComplete()
             }
+
+        case .appeared:
+            loadExamples()
 
         case .disappeared:
             leaveRecordingMode()
@@ -80,6 +88,29 @@ public final class MixedLessonViewModel {
         recordResultsOnce()
         leaveRecordingMode()
         effectChannel.send(.close)
+    }
+
+    /// One sentence for each word the lesson teaches, all looked up at the start so none is
+    /// waited for on its card. A failure is logged and the card shows no example: an alert
+    /// mid-lesson would cost more than a missing sentence.
+    private func loadExamples() {
+        guard examplesTask == nil else { return }
+        let taught = state.lesson.steps.compactMap { step -> WordPair? in
+            if case .teach(let word) = step { word } else { nil }
+        }
+        examplesTask = Task { [findExamples] in
+            for word in taught {
+                do {
+                    if let example = try await findExamples(hanzi: word.hanzi, pinyin: word.pinyin).first {
+                        state.examples[word.id] = example
+                    }
+                } catch is CancellationError {
+                    return
+                } catch {
+                    MixedLessonError.findExamplesFailed(VocabularyDomainError(error)).log()
+                }
+            }
+        }
     }
 
     /// Does nothing when no step has entered it.

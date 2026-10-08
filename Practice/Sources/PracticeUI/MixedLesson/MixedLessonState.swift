@@ -1,3 +1,4 @@
+import DictionaryDomain
 import Foundation
 import LibraryDomain
 import PracticeDomain
@@ -6,6 +7,9 @@ import PracticeDomain
 struct MixedLessonState: Equatable {
     var lesson: MixedLesson
     var isConfirmingQuit = false
+    /// A sentence using each taught word, by its id, as they arrive. A word with none
+    /// has no example on its card.
+    var examples: [UUID: ExampleSentence] = [:]
 
     /// Closing before anything is answered, or after the end, needs no confirmation.
     var canCloseWithoutConfirming: Bool {
@@ -15,6 +19,7 @@ struct MixedLessonState: Equatable {
 
 enum MixedLessonAction: Equatable {
     case stepCompleted([Answer], carriesOn: Bool = false)
+    case appeared
     case disappeared
     case practiseAgainTapped
     case closeTapped

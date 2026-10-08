@@ -1,6 +1,7 @@
 import ProgressDomain
 import CoreDomain
 import CoreTestSupport
+import DictionaryDomain
 import Foundation
 import Testing
 import LibraryTestSupport
@@ -98,17 +99,42 @@ nonisolated struct MixedLessonDomainTests {
 struct MixedLessonViewModelTests {
     private let repository = FakeVocabularyRepository()
     private let sounds = FakeSounds()
+    private static let drinking = ExampleSentence(hanzi: "我喝水。", pinyin: "Wǒ hē shuǐ.", english: "I drink water.")
 
     private func makeViewModel(
-        _ steps: [TodayPlan.Step] = [.teach(LessonWords.water), .recall(LessonWords.water, .recognise)]
+        _ steps: [TodayPlan.Step] = [.teach(LessonWords.water), .recall(LessonWords.water, .recognise)],
+        examples: FakeExamples = FakeExamples(["水": [drinking]])
     ) -> (MixedLessonViewModel, EffectLog<MixedLessonEffect>) {
         let viewModel = MixedLessonViewModel(
             lesson: MixedLesson(plan: plan(steps)),
             recordResults: RecordLessonResultsUseCase(repository: repository),
+            findExamples: FindExamplesUseCase(repository: examples),
             sounds: sounds,
             audioSession: sounds
         )
         return (viewModel, EffectLog(viewModel.effects()))
+    }
+
+    @Test("each taught word's example arrives on appearing, and a word with none has none")
+    func examples() async {
+        let examples = FakeExamples(["水": [Self.drinking]])
+        let (viewModel, _) = makeViewModel([.teach(LessonWords.water), .teach(LessonWords.tea), .recall(LessonWords.water, .recognise)], examples: examples)
+        viewModel.send(.appeared)
+        #expect(await waitUntil { viewModel.state.examples[LessonWords.water.id] == Self.drinking })
+        #expect(viewModel.state.examples[LessonWords.tea.id] == nil)
+        // Only the taught words are looked up, once, with their own reading.
+        viewModel.send(.appeared)
+        await settle()
+        #expect(await examples.lookups == ["水 shuǐ", "茶 chá"])
+    }
+
+    @Test("examples that cannot be read are left off without an alert")
+    func examplesFailing() async {
+        let (viewModel, log) = makeViewModel(examples: FakeExamples([:], fails: true))
+        viewModel.send(.appeared)
+        await settle()
+        #expect(viewModel.state.examples.isEmpty)
+        #expect(log.effects.isEmpty)
     }
 
     @Test("the last step plays the finishing tune and records the lesson once, with its deck")
@@ -173,6 +199,24 @@ struct MixedLessonViewModelTests {
         viewModel.send(.stepCompleted([]))
         viewModel.send(.stepCompleted([answer(LessonWords.water, right: false)]))
         #expect(await log.contains(.showError(.recordResultsFailed(FakeVocabularyRepository.failure))))
+    }
+}
+
+/// Sentences by Hanzi, recording each lookup; can be told to fail.
+private actor FakeExamples: ExampleRepository {
+    private let sentences: [String: [ExampleSentence]]
+    private let fails: Bool
+    private(set) var lookups: [String] = []
+
+    init(_ sentences: [String: [ExampleSentence]], fails: Bool = false) {
+        self.sentences = sentences
+        self.fails = fails
+    }
+
+    func examples(forHanzi hanzi: String, pinyin: String) throws -> [ExampleSentence] {
+        lookups.append("\(hanzi) \(pinyin)")
+        if fails { throw DictionaryDomainError.unexpected(model: DomainErrorModel(domain: "test", code: 5, description: "no examples")) }
+        return sentences[hanzi] ?? []
     }
 }
 

@@ -160,8 +160,31 @@ the session, and a matching or flash card tone after one plays at the usual leve
 Whether switching between steps costs recognition anything is only measurable on a
 device.
 
-Example sentences in the teach view come next, from Tatoeba. Tracing and translation will
-bring themes of their own.
+**The teach view shows a sentence using the word,** from Tatoeba, with its pinyin and
+English and the word in the accent colour. The lesson looks one up for every taught word
+as it appears, so none is waited for on its card; a word with none, or a failed lookup,
+shows the word alone, and a failure is logged rather than alerted.
+
+`Tools/MakeExamples` builds `Examples.tsv` from Tatoeba's downloads. The rules, each
+measured before it was chosen:
+
+- **Simplified only, from every sentence.** Tatoeba transcribes each sentence written in
+  traditional into simplified, so all of its translated Mandarin sentences can be used:
+  25,000 kept, where the sentences written in simplified alone gave a third as many and
+  left 了 and 学生 without one.
+- **The reading is the transcription's.** Tatoeba's pinyin splits a sentence into words.
+  A word only takes a sentence where it is whole words of that split, and where its pinyin
+  says the reading. Without this, 长 cháng showed 他长大了, where it is zhǎng; 42 of HSK 1's
+  words have more than one reading.
+- **Tones.** 不 and 一 match any tone, since theirs change. A neutral tone matches any only
+  inside a longer word, as 学生's -sheng is written both ways; a one-syllable word's tone is
+  all that tells 了's liǎo from liào. A reading said tone for tone keeps a sentence from one
+  only matched loosely, so 东西 dōngxī, east and west, does not take thing's sentences.
+- **Best first:** the hardest other word at or below the word's own HSK level, then a length
+  near eight characters, then pinyin a person has reviewed.
+
+290 of HSK 1's 298 readings have an example, 199 of HSK 2's 202, and 471 of HSK 3's 494.
+Tracing and translation will bring themes of their own.
 
 ## The mistakes list
 

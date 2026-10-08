@@ -17,6 +17,10 @@ public nonisolated enum DictionaryRepositoryFactory {
         HSKSource.repository
     }
 
+    public static func makeExampleRepository() -> any ExampleRepository {
+        Tatoeba.examples
+    }
+
     /// The bundled syllabus, read synchronously, for seeding a fresh store.
     public static func bundledHSKWords() throws -> [HSKWord] {
         try HSKSource.bundledWords()

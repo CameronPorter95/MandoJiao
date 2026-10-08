@@ -88,7 +88,8 @@ struct ContentView: View {
                     navigation: navigation.practice.mixedLesson,
                     input: MixedLessonInput(
                         plan: plan,
-                        recordResults: VocabularyRepositoryFactory.makeRecordLessonResultsUseCase(dependencies: dependencies)
+                        recordResults: VocabularyRepositoryFactory.makeRecordLessonResultsUseCase(dependencies: dependencies),
+                        findExamples: FindExamplesUseCase(repository: DictionaryRepositoryFactory.makeExampleRepository())
                     )
                 )
             }

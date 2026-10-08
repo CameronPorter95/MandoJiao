@@ -45,6 +45,8 @@ let package = Package(
             dependencies: [
                 "PracticeDomain",
                 .product(name: "LibraryDomain", package: "Library"),
+                // Example sentences for the teach step.
+                .product(name: "DictionaryDomain", package: "Dictionary"),
                 .product(name: "CoreDomain", package: "Core"),
                 .product(name: "CoreUI", package: "Core"),
                 .product(name: "CoreDesignSystem", package: "Core"),
@@ -57,6 +59,7 @@ let package = Package(
                 .product(name: "ProgressDomain", package: "Progress"),
                 "PracticeDomain", "PracticeData", "PracticeUI",
                 .product(name: "LibraryDomain", package: "Library"),
+                .product(name: "DictionaryDomain", package: "Dictionary"),
                 .product(name: "CoreSound", package: "Core"),
                 .product(name: "CoreDI", package: "Core"),
             ],
@@ -75,6 +78,7 @@ let package = Package(
                 "PracticeDomain", "PracticeData", "PracticeUI", "PracticeDI", "PracticeTestSupport",
                 .product(name: "LibraryDomain", package: "Library"),
                 .product(name: "LibraryTestSupport", package: "Library"),
+                .product(name: "DictionaryDomain", package: "Dictionary"),
                 .product(name: "CoreDomain", package: "Core"),
                 .product(name: "CoreTestSupport", package: "Core"),
             ],
