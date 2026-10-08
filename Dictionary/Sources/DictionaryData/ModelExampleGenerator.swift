@@ -61,10 +61,12 @@ actor ModelExampleGenerator: ExampleGenerating {
     static func prompt(for request: ExampleRequest) -> String {
         let reading = request.pinyin.isEmpty ? "" : " (\(request.pinyin))"
         // "Exactly as written": asked only to use 看病, it wrote 看医生 three times in three.
+        // "Complete sentence": asked for "one sentence", it gave phrases such as 小明和小红.
         return """
-            Write one sentence that uses \(request.hanzi)\(reading) to mean "\(request.meaning)". \
-            The sentence must contain \(request.hanzi) exactly as written, not a synonym. \
-            Use it in that sense only. Keep the sentence under twelve characters.
+            Write one complete sentence, with a subject and a verb, that uses \(request.hanzi)\(reading) \
+            to mean "\(request.meaning)". The sentence must contain \(request.hanzi) exactly as \
+            written, not a synonym. Use it in that sense only. Keep the sentence under twelve \
+            characters.
             """
     }
 }
@@ -73,7 +75,11 @@ actor ModelExampleGenerator: ExampleGenerating {
 struct WrittenExample {
     @Guide(description: "One short sentence in simplified Chinese characters that uses the word in the given sense")
     var chinese: String
-    @Guide(description: "A natural English translation of that sentence")
+    // Asked for "a natural English translation", it glossed the Chinese word order: "I and my
+    // mom went to the supermarket", where English says "my mom and I". Asking for natural
+    // English here did not change that; a translation asked for on its own did, and the
+    // second review compares the two.
+    @Guide(description: "What a native English speaker would say to mean the same thing: natural English in English word order, not a word-for-word gloss of the Chinese")
     var english: String
 }
 

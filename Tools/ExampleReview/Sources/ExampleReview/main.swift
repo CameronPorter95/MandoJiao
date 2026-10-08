@@ -8,7 +8,7 @@ import LibraryDomain
 // every word Today's plan would ask it for: a starter or HSK 1-3 word whose card meaning no
 // Tatoeba sentence says. It uses the model even while the app holds generated sentences.
 // Needs a Mac with Apple Intelligence on. Run from this folder:
-//   swift run review-examples [--runs 3] [--out ExampleReview.json]
+//   swift run review-examples [--runs 3] [--words 和,里] [--out ExampleReview.json]
 //
 // Each word is written `--runs` times, each run with the use case's own retries, and every
 // attempt's answer is counted. Each kept sentence also gets a second English version, asked
@@ -66,18 +66,29 @@ actor CountingGenerator: ExampleGenerating {
     }
 }
 
-/// The trial second translation: a fresh session asked only to translate.
-func translate(_ chinese: String) async -> String? {
+/// The trial second translation: a fresh session asked only to translate, told what the taught
+/// word means, since both translations made 后年, the year after next, "next year".
+func translate(_ chinese: String, word: Word) async -> String? {
+    // No example sentence in here: given "my mom and I" as one, it translated 家人在一起玩耍,
+    // the family playing together, as "My mom and I are having fun together". A pattern, not
+    // a sentence, carries the word-order rule.
     let session = LanguageModelSession(instructions: """
-        You translate Mandarin Chinese into natural, accurate English for a learner. Translate \
-        exactly what the sentence says, keeping its tense and its words' precise meanings.
+        You translate Mandarin Chinese into English for a learner. Write what a native English \
+        speaker would say to mean the same thing, not a word-for-word gloss of the Chinese. \
+        Follow English word order: never begin a list of people with "I"; write "X and I". \
+        Translate only what the sentence says, adding nothing, and keep its tense and its \
+        words' precise meanings.
         """)
     do {
         let answer = try await session.respond(
-            to: "Translate this sentence into English. Reply with the translation only.\n\(chinese)",
+            to: """
+                In this sentence, \(word.hanzi) means "\(word.meaning)". Translate the sentence \
+                into English. Reply with the translation only.
+                \(chinese)
+                """,
             options: GenerationOptions(maximumResponseTokens: 80)
         )
-        return answer.content.trimmingCharacters(in: .whitespacesAndNewlines)
+        return EnglishWordOrder.speakerLast(answer.content.trimmingCharacters(in: .whitespacesAndNewlines))
     } catch {
         return nil
     }
@@ -114,6 +125,11 @@ for word in words where EnglishMeaning.isCheckable(word.meaning) {
     }
 }
 print("\(asking.count) of \(words.count) starter and HSK 1-3 words would ask the model for a sentence")
+// `--words 和,里` checks a few words quickly, as after a prompt change.
+let only = option("--words", default: "").split(separator: ",").map(String.init)
+if !only.isEmpty {
+    asking = asking.filter { only.contains($0.hanzi) }
+}
 
 // MARK: Writing
 
@@ -147,7 +163,7 @@ for word in asking {
             return "\(written.hanzi) | \(written.english)"
         }
         let outcome = sentence != nil ? "kept" : answers.contains(.unavailable) ? "unavailable" : "none"
-        let separate = if let sentence { await translate(sentence.hanzi) } else { String?.none }
+        let separate = if let sentence { await translate(sentence.hanzi, word: word) } else { String?.none }
         results.append(Run(
             word: word, run: run, outcome: outcome, attempts: answers.count,
             refused: answers.count { $0 == .refused }, unfit: dropped.count,

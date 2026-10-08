@@ -63,6 +63,23 @@ nonisolated struct GenerateExampleTests {
         #expect(try await generated(hanzi, english: english) == nil)
     }
 
+    /// Every translation of 后年 on the Mac said "next year", even told what it means.
+    @Test("a translation that does not say the card's meaning is dropped, so a word is never taught wrongly")
+    func translationMustSayMeaning() async throws {
+        let request = ExampleRequest(hanzi: "后年", pinyin: "hòunián", meaning: "the year after next")
+        let wrong = ScriptedGenerator(.written(ExampleSentence(hanzi: "后年我去旅游。", pinyin: "", english: "I will travel next year.")))
+        #expect(try await GenerateExampleUseCase(generator: wrong)(request) == nil)
+        let right = ScriptedGenerator(.written(ExampleSentence(hanzi: "后年我去旅游。", pinyin: "", english: "I will travel the year after next.")))
+        #expect(try await GenerateExampleUseCase(generator: right)(request)?.english == "I will travel the year after next.")
+    }
+
+    @Test("a written translation's word order is put right before it is shown")
+    func wordOrder() async throws {
+        let request = ExampleRequest(hanzi: "和", pinyin: "hé", meaning: "together with")
+        let generator = ScriptedGenerator(.written(ExampleSentence(hanzi: "我和妈妈一起去超市。", pinyin: "", english: "I and my mom go to the supermarket together with each other.")))
+        #expect(try await GenerateExampleUseCase(generator: generator)(request)?.english == "My mom and I go to the supermarket together with each other.")
+    }
+
     @Test("nothing is asked of the model for a meaning with nothing to check")
     func grammar() async throws {
         let generator = ScriptedGenerator(.written(ExampleSentence(hanzi: "我吃了。", pinyin: "", english: "I ate.")))

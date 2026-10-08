@@ -1,8 +1,9 @@
 import Foundation
 
 public nonisolated struct GenerateExampleUseCase: Sendable {
-    /// Han characters a generated sentence may have, as the bundled ones.
-    public static let lengthLimit = 3...16
+    /// Han characters a generated sentence may have, as the bundled ones: at 3, 我和你 passed,
+    /// a phrase rather than a sentence.
+    public static let lengthLimit = 4...16
     /// Tries for one sentence: on the Mac's model, 小学生 was refused two times in three and
     /// passed the third.
     public static let attempts = 3
@@ -26,7 +27,11 @@ public nonisolated struct GenerateExampleUseCase: Sendable {
                 return nil
             case .refused:
                 continue
-            case .written(let sentence):
+            case .written(let written):
+                let sentence = ExampleSentence(
+                    hanzi: written.hanzi, pinyin: written.pinyin,
+                    english: EnglishWordOrder.speakerLast(written.english), words: written.words
+                )
                 if Self.isFit(sentence, for: request) { return sentence }
             }
         }
@@ -34,13 +39,15 @@ public nonisolated struct GenerateExampleUseCase: Sendable {
     }
 
     /// Whether a written sentence can be shown: it uses the word, is all Hanzi and
-    /// punctuation, is short enough for a card, and has a translation.
+    /// punctuation, is short enough for a card, and its translation says the card's meaning,
+    /// as a Tatoeba sentence must. The last catches a translation that gets the word wrong:
+    /// 后年, the year after next, was "next year" in every one, even told what it means.
     public static func isFit(_ sentence: ExampleSentence, for request: ExampleRequest) -> Bool {
         let hanzi = sentence.hanzi.trimmingCharacters(in: .whitespacesAndNewlines)
         return hanzi.contains(request.hanzi)
             && lengthLimit.contains(hanzi.filter(isHan).count)
             && hanzi.allSatisfy { isHan($0) || $0.isPunctuation || $0.isWhitespace }
-            && !sentence.english.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            && EnglishMeaning.says(request.meaning, in: sentence.english)
     }
 
     static func isHan(_ character: Character) -> Bool {

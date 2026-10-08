@@ -224,6 +224,17 @@ the translation apart, with reasons, and compares the model's own translation wi
 for separately, shown unlabelled and in alternating order. Its verdicts decide whether the
 hold lifts, with which translation, marked as AI-generated or not.
 
+Before it went to her, the owner saw both translations write "I and my mom", the Chinese
+order glossed. No wording of either prompt changed that, and both made 后年, the year after
+next, "next year" even when told what it means; an example put in the prompt was copied
+into other sentences ("My mom and I are having fun together" for the family playing). So
+the fixes are in code: `EnglishWordOrder` puts the speaker last in the shapes the model
+writes, and a written sentence's translation must say the card's meaning, as a Tatoeba
+sentence's must. A sentence needs four Han characters (我和你 passed at three) and the
+prompt asks for a complete one. The cost: of 411 runs, 51% kept where 91% were, and 83 of
+137 words have a sentence where 134 did, partly because the matcher is literal: 水里有鱼,
+"there is a fish in the water", fails 里's "inside".
+
 **Then the sentence is chosen for the learner,** as the owner asked: the one with the fewest
 words outside those they have started (answered at least once, or marked learnt;
 `TodayPlan.known`), and among equals the easiest. Measured on Tatoeba's export:
