@@ -49,14 +49,11 @@ public nonisolated struct ExampleRequest: Hashable, Sendable {
     public let pinyin: String
     /// The sense the sentence must use.
     public let meaning: String
-    /// Words the sentence should keep to where it can.
-    public let known: Set<String>
 
-    public init(hanzi: String, pinyin: String, meaning: String, known: Set<String>) {
+    public init(hanzi: String, pinyin: String, meaning: String) {
         self.hanzi = hanzi
         self.pinyin = pinyin
         self.meaning = meaning
-        self.known = known
     }
 }
 

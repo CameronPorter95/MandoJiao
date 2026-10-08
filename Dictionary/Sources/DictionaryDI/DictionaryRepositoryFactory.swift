@@ -21,9 +21,15 @@ public nonisolated enum DictionaryRepositoryFactory {
         Tatoeba.examples
     }
 
-    /// Writes a sentence on the device where Tatoeba has none in the card's sense.
+    /// Writes a sentence on the device where Tatoeba has none in the card's sense, unless
+    /// generated sentences are held (`OnDeviceExamples.isHeld`), when it writes nothing.
     public static func makeExampleGenerator() -> any ExampleGenerating {
         OnDeviceExamples.generator
+    }
+
+    /// The model itself, held or not, for reviewing what it writes.
+    public static func makeReviewExampleGenerator() -> any ExampleGenerating {
+        OnDeviceExamples.model
     }
 
     /// The bundled syllabus, read synchronously, for seeding a fresh store.

@@ -55,22 +55,17 @@ actor ModelExampleGenerator: ExampleGenerating {
     /// ran on until it filled the model's whole 4,096-token context.
     private static let options = GenerationOptions(maximumResponseTokens: 120)
 
-    /// The learner's own words, up to a number that keeps the prompt small.
-    private static let knownLimit = 150
-
+    /// No list of the learner's words: asked to keep to the starter's, a native speaker judged
+    /// 37% of its sentences natural and 27% wrong, many of them nonsense built around 买书 and
+    /// 学校 ("go to the junior high school to buy books"); asked freely, 61% and 20%.
     static func prompt(for request: ExampleRequest) -> String {
         let reading = request.pinyin.isEmpty ? "" : " (\(request.pinyin))"
         // "Exactly as written": asked only to use 看病, it wrote 看医生 three times in three.
-        var prompt = """
+        return """
             Write one sentence that uses \(request.hanzi)\(reading) to mean "\(request.meaning)". \
             The sentence must contain \(request.hanzi) exactly as written, not a synonym. \
             Use it in that sense only. Keep the sentence under twelve characters.
             """
-        let known = request.known.subtracting([request.hanzi]).sorted().prefix(knownLimit)
-        if !known.isEmpty {
-            prompt += " Besides \(request.hanzi), use only these words if you can: \(known.joined(separator: "、"))."
-        }
-        return prompt
     }
 }
 
@@ -84,5 +79,18 @@ struct WrittenExample {
 
 /// The one generator, for the app's lifetime.
 public nonisolated enum OnDeviceExamples {
-    public static let generator: any ExampleGenerating = ModelExampleGenerator(lexicon: Lexicon.repository)
+    /// Held by the owner on 2026-10-08 until a second native-speaker review: of the first
+    /// round's sentences, 61% were natural at best, and many translations were wrong. While
+    /// held the app writes nothing, so a card with no sentence in its sense shows no example,
+    /// as on a phone without the model. The review harness uses `model` regardless.
+    public static let isHeld = true
+
+    public static let model: any ExampleGenerating = ModelExampleGenerator(lexicon: Lexicon.repository)
+
+    public static var generator: any ExampleGenerating { isHeld ? HeldExampleGenerator() : model }
+}
+
+/// Writes nothing, as if there were no model.
+nonisolated struct HeldExampleGenerator: ExampleGenerating {
+    func example(for request: ExampleRequest) -> ExampleWriting { .unavailable }
 }

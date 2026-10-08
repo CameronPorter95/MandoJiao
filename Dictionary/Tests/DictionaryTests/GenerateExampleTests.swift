@@ -20,7 +20,7 @@ nonisolated struct GenerateExampleTests {
         }
     }
 
-    private let hit = ExampleRequest(hanzi: "打", pinyin: "dǎ", meaning: "to hit, to strike", known: ["我", "你"])
+    private let hit = ExampleRequest(hanzi: "打", pinyin: "dǎ", meaning: "to hit, to strike")
     private let good = ExampleSentence(hanzi: "你别打我。", pinyin: "", english: "Don't hit me.")
 
     private func generated(_ hanzi: String, english: String = "Don't hit me.") async throws -> ExampleSentence? {
@@ -66,17 +66,25 @@ nonisolated struct GenerateExampleTests {
     @Test("nothing is asked of the model for a meaning with nothing to check")
     func grammar() async throws {
         let generator = ScriptedGenerator(.written(ExampleSentence(hanzi: "我吃了。", pinyin: "", english: "I ate.")))
-        let request = ExampleRequest(hanzi: "了", pinyin: "le", meaning: "(completed action marker)", known: [])
+        let request = ExampleRequest(hanzi: "了", pinyin: "le", meaning: "(completed action marker)")
         #expect(try await GenerateExampleUseCase(generator: generator)(request) == nil)
         #expect(await generator.requests.isEmpty)
     }
 
-    @Test("the prompt asks for the sense, and for the learner's own words")
+    @Test("the prompt asks for the word as written, in its sense, and gives no word list")
     func prompt() {
         let prompt = ModelExampleGenerator.prompt(for: hit)
         #expect(prompt.contains("打 (dǎ)"))
         #expect(prompt.contains("\"to hit, to strike\""))
-        #expect(prompt.contains("你、我"))
+        #expect(prompt.contains("exactly as written"))
+        #expect(!prompt.contains("use only these words"))
+    }
+
+    /// The owner's decision of 2026-10-08, until a second review.
+    @Test("while generated sentences are held, the app's generator writes nothing")
+    func held() async throws {
+        #expect(OnDeviceExamples.isHeld)
+        #expect(try await OnDeviceExamples.generator.example(for: hit) == .unavailable)
     }
 
     @Test("a written sentence's pinyin takes the card's reading for the word and the lexicon's for the rest")

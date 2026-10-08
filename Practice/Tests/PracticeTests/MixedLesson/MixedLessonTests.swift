@@ -126,7 +126,7 @@ struct MixedLessonViewModelTests {
         let (viewModel, _) = makeViewModel(examples: FakeExamples(["水": [Self.salt]]), generator: generator)
         viewModel.send(.appeared)
         #expect(await waitUntil { viewModel.state.examples[LessonWords.water.id] == Self.written })
-        #expect(await generator.requests == [ExampleRequest(hanzi: "水", pinyin: "shuǐ", meaning: "water", known: [])])
+        #expect(await generator.requests == [ExampleRequest(hanzi: "水", pinyin: "shuǐ", meaning: "water")])
     }
 
     @Test("a word with a sentence in its sense is never written")

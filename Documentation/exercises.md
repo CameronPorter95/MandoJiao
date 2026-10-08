@@ -207,10 +207,22 @@ generator's code builds for macOS, so `Tools/ExampleReview` (`swift run review-e
 runs the app's own generator over every starter and HSK 1-3 word that would ask it, several
 times each, and writes the results for a native speaker's review page. On 2026-10-08, 137
 words would ask. Keeping to the starter's words, 87% of runs gave a usable sentence, after
-220 of 626 tries were dropped; with no word list, 93%, after 84 of 537. Some were plainly
-wrong either way (们 alone at a sentence's start, "bought yuan"), and the word list made the
-model lean on 买书 and 今天. The review's verdicts decide whether generated sentences ship,
-marked or not, and whether to keep the word list.
+220 of 626 tries were dropped; with no word list, 93%, after 84 of 537.
+
+The owner's partner, a native speaker, judged one sentence a word from each. Kept to the
+starter's words: 37% natural, 34% awkward, 27% wrong, many of them nonsense built around
+买书 and 学校 ("go to the junior high school to buy books"). Written freely: 61% natural,
+17% awkward, 20% wrong. So the prompt no longer gives a word list. Her notes showed "wrong"
+covering several faults: most often the English translation, where the Mandarin was fine
+(后年 as "next year", 包子 as a bun); then ungrammatical or incomplete Mandarin (张桌子 for
+一张桌子); sentences that made no sense; and two utterances run into one (谢谢你，不客气).
+
+**Generated sentences are held,** decided by the owner on 2026-10-08:
+`OnDeviceExamples.isHeld` makes the app's generator write nothing, so every card behaves as
+on a phone without the model, until a second review. That round judges the Mandarin and
+the translation apart, with reasons, and compares the model's own translation with one asked
+for separately, shown unlabelled and in alternating order. Its verdicts decide whether the
+hold lifts, with which translation, marked as AI-generated or not.
 
 **Then the sentence is chosen for the learner,** as the owner asked: the one with the fewest
 words outside those they have started (answered at least once, or marked learnt;

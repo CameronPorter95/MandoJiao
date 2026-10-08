@@ -1,17 +1,23 @@
 import DictionaryDI
 import DictionaryDomain
 import Foundation
+import FoundationModels
 import LibraryDomain
 
 // Runs the app's own example writer, the on-device model behind GenerateExampleUseCase, over
 // every word Today's plan would ask it for: a starter or HSK 1-3 word whose card meaning no
-// Tatoeba sentence says. Needs a Mac with Apple Intelligence on. Run from this folder:
-//   swift run review-examples [--runs 3] [--known starter|none] [--out ExampleReview.json]
+// Tatoeba sentence says. It uses the model even while the app holds generated sentences.
+// Needs a Mac with Apple Intelligence on. Run from this folder:
+//   swift run review-examples [--runs 3] [--out ExampleReview.json]
 //
-// The learner is taken to know the starter words, as a learner a few days in does, so the
-// prompt asks the model to keep to them. Each word is written `--runs` times, each run with
-// the use case's own retries, and every attempt's answer is counted. The JSON is what the
-// review page shows a native speaker.
+// Each word is written `--runs` times, each run with the use case's own retries, and every
+// attempt's answer is counted. Each kept sentence also gets a second English version, asked
+// for on its own, since the first review found the model's Chinese better than the English it
+// wrote alongside it. The JSON is what the review page shows a native speaker.
+//
+// The first review (2026-10-08) also compared asking the model to keep to the starter's words:
+// a native speaker judged 37% of those sentences natural against 61% asked freely, so the app
+// no longer asks.
 
 struct Word: Codable {
     let source: String
@@ -31,13 +37,16 @@ struct Run: Codable {
     let unfit: Int
     let hanzi: String?
     let pinyin: String?
+    /// The translation the model wrote with the sentence, as the app shows it today.
     let english: String?
+    /// A translation asked for on its own, of the same sentence.
+    let separateEnglish: String?
     let seconds: Double
     /// Every unfit sentence, so the review can see what was dropped.
     let dropped: [String]
 }
 
-/// Passes each attempt to the app's generator and keeps its answer for the report.
+/// Passes each attempt to the model and keeps its answer for the report.
 actor CountingGenerator: ExampleGenerating {
     private let generator: any ExampleGenerating
     private(set) var answers: [ExampleWriting] = []
@@ -54,6 +63,23 @@ actor CountingGenerator: ExampleGenerating {
 
     func reset() {
         answers = []
+    }
+}
+
+/// The trial second translation: a fresh session asked only to translate.
+func translate(_ chinese: String) async -> String? {
+    let session = LanguageModelSession(instructions: """
+        You translate Mandarin Chinese into natural, accurate English for a learner. Translate \
+        exactly what the sentence says, keeping its tense and its words' precise meanings.
+        """)
+    do {
+        let answer = try await session.respond(
+            to: "Translate this sentence into English. Reply with the translation only.\n\(chinese)",
+            options: GenerationOptions(maximumResponseTokens: 80)
+        )
+        return answer.content.trimmingCharacters(in: .whitespacesAndNewlines)
+    } catch {
+        return nil
     }
 }
 
@@ -91,17 +117,14 @@ print("\(asking.count) of \(words.count) starter and HSK 1-3 words would ask the
 
 // MARK: Writing
 
-// "none" asks for sentences with no word list, to see whether keeping to one costs quality:
-// with the starter's words, the first run leant on 买书 and 今天 in sentence after sentence.
-let known: Set<String> = option("--known", default: "starter") == "none" ? [] : Set(SampleVocabulary.allEntries.map(\.hanzi))
-let generator = CountingGenerator(DictionaryRepositoryFactory.makeExampleGenerator())
+let generator = CountingGenerator(DictionaryRepositoryFactory.makeReviewExampleGenerator())
 let generate = GenerateExampleUseCase(generator: generator)
 var results: [Run] = []
 
 for word in asking {
     for run in 1...runs {
         await generator.reset()
-        let request = ExampleRequest(hanzi: word.hanzi, pinyin: word.pinyin, meaning: word.meaning, known: known)
+        let request = ExampleRequest(hanzi: word.hanzi, pinyin: word.pinyin, meaning: word.meaning)
         let started = ContinuousClock.now
         let sentence: ExampleSentence?
         do {
@@ -111,7 +134,8 @@ for word in asking {
             print("\(word.hanzi) \(run): error \(error)")
             results.append(Run(
                 word: word, run: run, outcome: "error", attempts: await generator.answers.count + 1,
-                refused: 0, unfit: 0, hanzi: nil, pinyin: nil, english: nil, seconds: 0, dropped: ["\(error)"]
+                refused: 0, unfit: 0, hanzi: nil, pinyin: nil, english: nil, separateEnglish: nil,
+                seconds: 0, dropped: ["\(error)"]
             ))
             continue
         }
@@ -123,13 +147,14 @@ for word in asking {
             return "\(written.hanzi) | \(written.english)"
         }
         let outcome = sentence != nil ? "kept" : answers.contains(.unavailable) ? "unavailable" : "none"
+        let separate = if let sentence { await translate(sentence.hanzi) } else { String?.none }
         results.append(Run(
             word: word, run: run, outcome: outcome, attempts: answers.count,
             refused: answers.count { $0 == .refused }, unfit: dropped.count,
             hanzi: sentence?.hanzi, pinyin: sentence?.pinyin, english: sentence?.english,
-            seconds: seconds, dropped: dropped
+            separateEnglish: separate, seconds: seconds, dropped: dropped
         ))
-        print("\(word.hanzi) \(run): \(outcome) after \(answers.count)  \(sentence.map { "\($0.hanzi) | \($0.english)" } ?? dropped.joined(separator: "; "))")
+        print("\(word.hanzi) \(run): \(outcome) after \(answers.count)  \(sentence.map { "\($0.hanzi) | \($0.english) | \(separate ?? "-")" } ?? dropped.joined(separator: "; "))")
         if outcome == "unavailable" {
             print("The model is unavailable on this Mac: Apple Intelligence must be on.")
             exit(1)
@@ -145,11 +170,9 @@ let round = ISO8601DateFormatter.string(from: .now, timeZone: .current, formatOp
     .replacingOccurrences(of: ":", with: "")
 struct Report: Encodable {
     let round: String
-    /// "starter" or "none": the words the model was asked to keep to.
-    let known: String
     let runs: [Run]
 }
-try encoder.encode(Report(round: round, known: known.isEmpty ? "none" : "starter", runs: results)).write(to: output)
+try encoder.encode(Report(round: round, runs: results)).write(to: output)
 
 let kept = results.count { $0.outcome == "kept" }
 let attempts = results.map(\.attempts).reduce(0, +)
