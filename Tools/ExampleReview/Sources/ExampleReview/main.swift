@@ -18,11 +18,25 @@ import LibraryDomain
 // sentence against a translation asked for on its own: 71% right against 78%, so the app now
 // asks for it on its own.
 
+/// A card as a lesson sees it: every meaning made short by `Gloss.plain`, as `Word.pair` does,
+/// so 可能's "might (happen)" is asked for as "might".
 struct Word: Codable {
     let source: String
     let hanzi: String
     let pinyin: String
+    /// The headline, which the model is asked to use.
     let meaning: String
+    /// All of them, which a Tatoeba sentence may say any of.
+    let meanings: [String]
+
+    init(source: String, hanzi: String, pinyin: String, meanings: [String]) {
+        let plain = meanings.map { Gloss.plain($0) }
+        self.source = source
+        self.hanzi = hanzi
+        self.pinyin = pinyin
+        self.meaning = plain.first ?? ""
+        self.meanings = plain
+    }
 }
 
 struct Run: Codable {
@@ -75,21 +89,21 @@ let output = URL(fileURLWithPath: option("--out", default: "ExampleReview.json")
 // MARK: The words that would ask for a sentence
 
 var words: [Word] = SampleVocabulary.allEntries.map {
-    Word(source: "starter", hanzi: $0.hanzi, pinyin: $0.pinyin, meaning: $0.english)
+    Word(source: "starter", hanzi: $0.hanzi, pinyin: $0.pinyin, meanings: [$0.english])
 }
 var seen = Set<String>()
 for word in try DictionaryRepositoryFactory.bundledHSKWords() where word.level <= 3 && !seen.contains(word.hanzi + word.pinyin) {
     seen.insert(word.hanzi + word.pinyin)
-    // A starter word keeps its own card, as installing HSK does.
-    guard !words.contains(where: { $0.hanzi == word.hanzi }), let headline = word.meanings.first else { continue }
-    words.append(Word(source: "HSK \(word.level)", hanzi: word.hanzi, pinyin: word.pinyin, meaning: headline))
+    // A starter word keeps its own card, as installing HSK does; an HSK card keeps every meaning.
+    guard !words.contains(where: { $0.hanzi == word.hanzi }), !word.meanings.isEmpty else { continue }
+    words.append(Word(source: "HSK \(word.level)", hanzi: word.hanzi, pinyin: word.pinyin, meanings: word.meanings))
 }
 
 let findExamples = FindExamplesUseCase(repository: DictionaryRepositoryFactory.makeExampleRepository())
 var asking: [Word] = []
 for word in words where EnglishMeaning.isCheckable(word.meaning) {
     let sentences = try await findExamples(hanzi: word.hanzi, pinyin: word.pinyin)
-    if sentences.best(teaching: word.hanzi, meanings: [word.meaning], knowing: []) == nil {
+    if sentences.best(teaching: word.hanzi, meanings: word.meanings, knowing: []) == nil {
         asking.append(word)
     }
 }
@@ -98,6 +112,11 @@ print("\(asking.count) of \(words.count) starter and HSK 1-3 words would ask the
 let only = option("--words", default: "").split(separator: ",").map(String.init)
 if !only.isEmpty {
     asking = asking.filter { only.contains($0.hanzi) }
+}
+// `--card 赉/lài/to bestow` tries any card, as one a learner added.
+let card = option("--card", default: "").split(separator: "/").map(String.init)
+if card.count == 3 {
+    asking = [Word(source: "card", hanzi: card[0], pinyin: card[1], meanings: [card[2]])]
 }
 
 // MARK: Writing

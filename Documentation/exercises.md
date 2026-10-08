@@ -209,6 +209,15 @@ times each, and writes the results for a native speaker's review page. On 2026-1
 words would ask. Keeping to the starter's words, 87% of runs gave a usable sentence, after
 220 of 626 tries were dropped; with no word list, 93%, after 84 of 537.
 
+Both review rounds held each word to its headline alone, as written, where the app holds a
+card to every meaning, each made short by `Gloss.plain`: 可能's "might (happen)" is asked
+for as "might", and a Tatoeba sentence saying "possible" serves it. The harness now does
+the same, and on 2026-10-09, 90 words would ask, not 137. `--card 赉/lài/to bestow` tries
+any card. In a debug build, `ExampleLog` prints each written sentence and whether the checks
+keep it, under the `examples` category; a dropped one otherwise shows only as a card with no
+example. It was added when 可能 got none on the simulator in three lessons running, then
+got one in both lessons after a reinstall; the cause was not found.
+
 The owner's partner, a native speaker, judged one sentence a word from each. Kept to the
 starter's words: 37% natural, 34% awkward, 27% wrong, many of them nonsense built around
 买书 and 学校 ("go to the junior high school to buy books"). Written freely: 61% natural,

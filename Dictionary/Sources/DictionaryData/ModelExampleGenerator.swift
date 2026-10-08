@@ -32,6 +32,7 @@ actor ModelExampleGenerator: ExampleGenerating {
             english = try await translator.respond(to: Self.translationPrompt(of: hanzi, for: request), options: Self.translationOptions)
                 .content.trimmingCharacters(in: .whitespacesAndNewlines)
         } catch let error as LanguageModelSession.GenerationError {
+            ExampleLog.failed(request, error)
             switch error {
             case .assetsUnavailable, .unsupportedLanguageOrLocale:
                 return .unavailable
@@ -46,9 +47,13 @@ actor ModelExampleGenerator: ExampleGenerating {
         // Characters the lexicon cannot read have no pinyin to show, so this one is not usable;
         // another may be.
         guard let pinyin = try await SentencePinyin.spell(hanzi, word: request.hanzi, wordPinyin: request.pinyin, lexicon: lexicon) else {
+            ExampleLog.wrote(request, hanzi: hanzi, english: english, verdict: "no pinyin")
             return .refused
         }
-        return .written(ExampleSentence(hanzi: hanzi, pinyin: pinyin, english: english))
+        let sentence = ExampleSentence(hanzi: hanzi, pinyin: pinyin, english: english)
+        let fixed = ExampleSentence(hanzi: hanzi, pinyin: pinyin, english: EnglishWordOrder.speakerLast(english))
+        ExampleLog.wrote(request, hanzi: hanzi, english: english, verdict: GenerateExampleUseCase.isFit(fixed, for: request) ? "fit" : "unfit")
+        return .written(sentence)
     }
 
     static let instructions = """
