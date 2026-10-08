@@ -13,6 +13,10 @@ nonisolated struct EnglishMeaningTests {
         ("friend", "Is this your friend's car?"),
         ("to open (transitive or intransitive)", "The door opened and she came in."),
         ("to drink", "She drank all the milk."),
+        ("aeroplane", "This is his plane."),
+        ("aeroplane", "The airplane took off ten minutes ago."),
+        ("colour", "What color is it?"),
+        ("mum", "My mom is a teacher."),
     ])
     func says(meaning: String, english: String) {
         #expect(EnglishMeaning.says(meaning, in: english))

@@ -40,8 +40,20 @@ public nonisolated enum EnglishMeaning {
     }
 
     static func stem(_ word: String) -> String {
-        irregular[word] ?? regularStem(word)
+        let stem = irregular[word] ?? regularStem(word)
+        return variants[stem] ?? stem
     }
+
+    /// Spellings and words that name the same thing, by stem, met at one: a starter card says
+    /// "aeroplane" where Tatoeba's translations say "plane" and "airplane", and the British
+    /// spellings a learner may type meet the American ones Tatoeba mostly uses.
+    private static let variants: [String: String] = [
+        "aeroplan": "plan", "airplan": "plan", "colour": "color", "favourit": "favorit",
+        "centr": "center", "theatr": "theater", "metr": "meter", "litr": "liter", "flavour": "flavor",
+        "neighbour": "neighbor", "honour": "honor", "organis": "organiz", "realis": "realiz", "mum": "mom",
+        "grey": "gray", "programm": "program", "travell": "travel", "tyr": "tir", "pyjama": "pajama",
+        "chequ": "check",
+    ]
 
     /// "see" and "seeing", "drive" and "driving" meet at "se" and "driv"; "hitting" and
     /// "stopped" lose their doubled consonant, "falling" and "kissing" keep theirs.

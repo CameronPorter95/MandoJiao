@@ -254,7 +254,17 @@ func englishWords(_ text: String) -> [String] {
         .map { $0.trimmingCharacters(in: CharacterSet(charactersIn: "'")) }
         .filter { !$0.isEmpty }
 }
-func stem(_ word: String) -> String { irregular[word] ?? regularStem(word) }
+let variants: [String: String] = [
+    "aeroplan": "plan", "airplan": "plan", "colour": "color", "favourit": "favorit",
+    "centr": "center", "theatr": "theater", "metr": "meter", "litr": "liter", "flavour": "flavor",
+    "neighbour": "neighbor", "honour": "honor", "organis": "organiz", "realis": "realiz", "mum": "mom",
+    "grey": "gray", "programm": "program", "travell": "travel", "tyr": "tir", "pyjama": "pajama",
+    "chequ": "check",
+]
+func stem(_ word: String) -> String {
+    let stem = irregular[word] ?? regularStem(word)
+    return variants[stem] ?? stem
+}
 func meaningParts(_ meaning: String) -> [Set<String>] {
     let plain = meaning.replacingOccurrences(of: "\\([^)]*\\)", with: " ", options: .regularExpression)
     return plain.split(whereSeparator: { ",;/".contains($0) }).compactMap { part in

@@ -46,6 +46,12 @@ public nonisolated extension DictionaryEntry {
         spelling(one) == spelling(other)
     }
 
+    /// Whether two spellings have the same letters, whatever their tones: 对不起 written with
+    /// 不's own tone, duìbùqǐ, and with the neutral tone it is spoken in, duìbuqǐ.
+    static func spellAlike(_ one: String, _ other: String) -> Bool {
+        spelling(one).letters == spelling(other).letters
+    }
+
     /// The letters, and the tones in the order written, so marks and numbers compare alike.
     /// A 5 for the neutral tone is dropped, as a neutral tone is written with no mark.
     private static func spelling(_ pinyin: String) -> (letters: String, tones: [Int]) {

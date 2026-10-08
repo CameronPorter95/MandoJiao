@@ -7,7 +7,10 @@ import Testing
 /// to the wrong reading fails here.
 @Suite("Example sentences")
 nonisolated struct ExampleTests {
-    private let examples = FindExamplesUseCase(repository: ExampleRepositoryImpl())
+    /// One for the suite: each parses the 6 MB file, and a parse per test running in parallel
+    /// starved the view model suites' timing waits.
+    private static let repository = ExampleRepositoryImpl()
+    private let examples = FindExamplesUseCase(repository: ExampleTests.repository)
 
     @Test("a word's examples say its reading, not another the same characters have")
     func readings() async throws {
@@ -71,6 +74,19 @@ nonisolated struct ExampleTests {
         let sentences = try await examples(hanzi: "打", pinyin: "dǎ")
         let chosen = try #require(sentences.best(teaching: "打", meanings: ["to hit, to strike"], knowing: []))
         #expect(EnglishMeaning.says("to hit, to strike", in: chosen.english), "\(chosen.english)")
+    }
+
+    @Test("the starter's aeroplane finds its sentences, which say plane and airplane")
+    func spellingVariants() async throws {
+        let sentences = try await examples(hanzi: "飞机", pinyin: "fēijī")
+        #expect(sentences.best(teaching: "飞机", meanings: ["aeroplane"], knowing: []) != nil)
+    }
+
+    @Test("a card writing a tone the word is not spoken in finds the one reading with its letters, but never guesses between two")
+    func tonesWrittenAnotherWay() async throws {
+        #expect(try await !examples(hanzi: "对不起", pinyin: "duìbùqǐ").isEmpty)
+        // 好 hǎo and hào share letters, so a toneless card's reading is not guessed.
+        #expect(try await examples(hanzi: "好", pinyin: "hao").isEmpty)
     }
 
     @Test("every HSK 1 word with an example has one short enough for a card, in simplified characters")

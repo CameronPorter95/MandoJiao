@@ -169,12 +169,21 @@ shows the word alone, and a failure is logged rather than alerted.
 several things, and 打's easiest sentences are all 打电话, "call", when its card says "to
 hit". A sentence counts only where its English translation says one of the word's meanings
 in the learner's library, the headline before the rest (`EnglishMeaning`: rough stems, the
-common irregular forms, possessives). It cannot see paraphrase ("give me a ring" is not
+common irregular forms, possessives, and spellings that name the same thing: the starter's
+飞机 "aeroplane" found nothing among sentences saying "plane" and "airplane" until
+aeroplane, airplane and plane met, with colour/color and the other British spellings a
+learner may type). It cannot see paraphrase ("give me a ring" is not
 "to call") and treats a meaning made only of grammar or prepositions, as 了's or 在's
 "at, in", as having nothing to check; both are pinned as costs. The tool keeps, besides
 each reading's ten easiest, the easiest sentence for every meaning those leave out (735 of
 them), which gave 打 "Why did you hit me?". With a sentence in the headline's sense: HSK 1
 86% of words (77% before), HSK 2 84% (73%), HSK 3 80% (75%).
+
+**A card's pinyin need not match the dictionary's tone for tone.** The starter writes 对不起
+duìbùqǐ, with 不's own tone, where the dictionary and Tatoeba have the spoken duìbuqǐ, so it
+found no sentence. Where the card's pinyin is no reading the dictionary has, the lookup takes
+the dictionary's one reading with the same letters; never a reading of its own (东西 dōngxī,
+了 liào), and never one of two (好 hǎo and hào).
 
 **Where none says a meaning, the device writes one,** decided by the owner: Apple's on-device
 model (`ModelExampleGenerator`, behind `ExampleGenerating`) is asked for one short sentence

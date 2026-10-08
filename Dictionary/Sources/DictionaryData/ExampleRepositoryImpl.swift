@@ -5,12 +5,28 @@ import Foundation
 /// Reads `Examples.tsv`, which `Tools/MakeExamples` builds from Tatoeba, once for the app's
 /// lifetime.
 actor ExampleRepositoryImpl: ExampleRepository {
+    private let dictionary: any DictionaryRepository
     private var loaded: BundledExamples.Table?
 
-    func examples(forHanzi hanzi: String, pinyin: String) throws -> [ExampleSentence] {
+    init(dictionary: any DictionaryRepository = CEDICT.dictionary) {
+        self.dictionary = dictionary
+    }
+
+    /// The reading spelt tone for tone. Failing that, where the card's pinyin is no reading
+    /// the dictionary has, the dictionary's one reading with the same letters: a card writing
+    /// 对不起 with 不's own tone, duìbùqǐ, finds duìbuqǐ's. Never a reading of its own, as
+    /// 东西 dōngxī or 了 liào, and never one of two with the same letters, as 好 hǎo and hào.
+    func examples(forHanzi hanzi: String, pinyin: String) async throws -> [ExampleSentence] {
         guard let readings = try table()[hanzi] else { return [] }
         guard !pinyin.isEmpty else { return readings.first?.sentences ?? [] }
-        return readings.first { DictionaryEntry.spellSame($0.pinyin, pinyin) }?.sentences ?? []
+        if let exact = readings.first(where: { DictionaryEntry.spellSame($0.pinyin, pinyin) }) {
+            return exact.sentences
+        }
+        let entries = try await dictionary.entries(forHanzi: hanzi)
+        guard !entries.contains(where: { DictionaryEntry.spellSame($0.pinyin, pinyin) }) else { return [] }
+        let alike = entries.filter { DictionaryEntry.spellAlike($0.pinyin, pinyin) }
+        guard alike.count == 1 else { return [] }
+        return readings.first { DictionaryEntry.spellSame($0.pinyin, alike[0].pinyin) }?.sentences ?? []
     }
 
     private func table() throws -> BundledExamples.Table {
