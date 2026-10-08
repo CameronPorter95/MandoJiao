@@ -193,7 +193,8 @@ since a small model's pinyin cannot be trusted on polyphones, though the lexicon
 reading can be wrong for another polyphone in the sentence. `GenerateExampleUseCase` drops a
 sentence that leaves the word out, has another script or digits, runs past 16 characters, or
 has no translation. Nothing is generated without the model: an older device, Apple
-Intelligence off, the model not ready, or no Chinese. Generated sentences are not marked
+Intelligence off, the model not ready, or no Chinese. **Then the card shows no example,**
+decided by the owner: never a sentence in another sense in its place. Generated sentences are not marked
 for now; marking them is for later, if device testing finds enough of them wrong. Their
 quality is only judgeable on a device.
 

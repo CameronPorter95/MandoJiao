@@ -139,6 +139,15 @@ struct MixedLessonViewModelTests {
         #expect(await generator.requests.isEmpty)
     }
 
+    /// The owner's decision: no example rather than one teaching another sense.
+    @Test("without the model, a word whose sentences are all in another sense shows none of them")
+    func noModelNoWrongSense() async {
+        let (viewModel, _) = makeViewModel(examples: FakeExamples(["水": [Self.salt]]), generator: FakeGenerator(nil))
+        viewModel.send(.appeared)
+        await settle()
+        #expect(viewModel.state.examples[LessonWords.water.id] == nil)
+    }
+
     @Test("a sentence the device cannot write leaves the card without one, and no alert")
     func examplesWritingFails() async {
         let (viewModel, log) = makeViewModel(examples: FakeExamples(["水": [Self.salt]]), generator: FakeGenerator(nil, fails: true))
