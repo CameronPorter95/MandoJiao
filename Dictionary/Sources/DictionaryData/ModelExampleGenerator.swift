@@ -117,11 +117,11 @@ struct WrittenExample {
 public nonisolated enum OnDeviceExamples {
     /// Held by the owner on 2026-10-08 until a second native-speaker review: of the first
     /// round's sentences, 61% were natural at best, and many translations were wrong. In the
-    /// second, 81% were natural and 70% were natural with a right translation; lifting the hold
-    /// is the owner's call. While held the app writes nothing, so a card with no sentence in its
-    /// sense shows no example, as on a phone without the model. The review harness uses `model`
-    /// regardless.
-    public static let isHeld = true
+    /// second, 81% were natural and 70% were natural with a right translation, and the owner
+    /// lifted the hold on 2026-10-09, with written sentences marked as AI-generated. While held
+    /// the app writes nothing, so a card with no sentence in its sense shows no example, as on
+    /// a phone without the model. The review harness uses `model` regardless.
+    public static let isHeld = false
 
     public static let model: any ExampleGenerating = ModelExampleGenerator(lexicon: Lexicon.repository)
 

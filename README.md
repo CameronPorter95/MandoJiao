@@ -115,7 +115,7 @@ example of the reading its pinyin says, so 长 cháng and 长 zhǎng each get th
 Today's plan shows one with each new word: one whose English uses the word in a sense
 its card gives, then the one with the fewest words you haven't started yet. Where none of
 Tatoeba's uses that sense, the on-device model can write one, on devices with Apple
-Intelligence, marked as AI-generated; for now these are held back pending review. Rebuild them with `Tools/MakeExamples`
+Intelligence, marked as AI-generated. Rebuild them with `Tools/MakeExamples`
 from Tatoeba's downloads.
 
 ## Building

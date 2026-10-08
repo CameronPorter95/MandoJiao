@@ -248,7 +248,8 @@ the separate one, 70% of sentences were natural with a right translation. So:
   through). Given the rule as the pattern "X and I", the translator wrote "X and I went to
   the park with my mom".
 - **Generated sentences are marked,** since nearly a third had a flaw somewhere.
-- **They stay held** until the owner lifts it.
+- **The hold is lifted,** decided by the owner on 2026-10-09: `OnDeviceExamples.isHeld` is
+  false, so a device with the model shows a written sentence, marked.
 
 About ten failures were the card's meaning, not the model's: 女生 "schoolgirl" for a girl,
 本子 "book" for a notebook, 箱子 "suitcase" for a box, 公交车 "public transport vehicle" for

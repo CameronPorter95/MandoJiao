@@ -113,11 +113,16 @@ nonisolated struct GenerateExampleTests {
         #expect(!prompt.contains("use only these words"))
     }
 
-    /// The owner's decision of 2026-10-08, until a second review.
-    @Test("while generated sentences are held, the app's generator writes nothing")
+    /// Held by the owner on 2026-10-08, lifted on 2026-10-09 after the second review.
+    @Test("generated sentences are not held, so the app writes with the model")
+    func notHeld() {
+        #expect(!OnDeviceExamples.isHeld)
+        #expect(OnDeviceExamples.generator is ModelExampleGenerator)
+    }
+
+    @Test("while held, the generator writes nothing")
     func held() async throws {
-        #expect(OnDeviceExamples.isHeld)
-        #expect(try await OnDeviceExamples.generator.example(for: hit) == .unavailable)
+        #expect(try await HeldExampleGenerator().example(for: hit) == .unavailable)
     }
 
     @Test("a written sentence's pinyin takes the card's reading for the word and the lexicon's for the rest")
