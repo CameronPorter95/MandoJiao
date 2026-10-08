@@ -3,10 +3,19 @@ import LibraryDomain
 import Observation
 import ProgressDomain
 
-/// App-level presentation state: which lesson, if any, is over the home stack.
+/// App-level navigation state: the open tab, and which lesson, if any, is over it.
 @MainActor
 @Observable
 final class AppNavigationCoordinator {
+    /// State rather than the tab bar's own, so something other than a tap can change it.
+    enum AppTab: Hashable {
+        case home
+        case vocabulary
+        case dictionary
+    }
+
+    var selectedTab = AppTab.home
+
     enum PresentedLesson: Identifiable {
         case matching(LessonRequest)
         case speaking(LessonRequest)

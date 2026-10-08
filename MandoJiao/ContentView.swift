@@ -20,8 +20,8 @@ struct ContentView: View {
     var body: some View {
         let navigation = AppNavigation.main(coordinator: coordinator)
 
-        TabView {
-            Tab("Home", systemImage: "house") {
+        TabView(selection: $coordinator.selectedTab) {
+            Tab("Home", systemImage: "house", value: .home) {
                 NavigationStack {
                     HomeFactory.makeRoute(
                         dependencies: dependencies,
@@ -39,7 +39,7 @@ struct ContentView: View {
                     )
                 }
             }
-            Tab("Vocabulary", systemImage: "books.vertical") {
+            Tab("Vocabulary", systemImage: "books.vertical", value: .vocabulary) {
                 LibraryFactory.makeRoute(
                     dependencies: dependencies,
                     navigation: navigation.library,
@@ -49,7 +49,7 @@ struct ContentView: View {
                     )
                 )
             }
-            Tab("Dictionary", systemImage: "character.book.closed") {
+            Tab("Dictionary", systemImage: "character.book.closed", value: .dictionary) {
                 DictionaryTabFactory.makeRoute(dependencies: dependencies, input: dictionaryVocabulary(dependencies: dependencies))
             }
         }

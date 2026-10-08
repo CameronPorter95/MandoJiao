@@ -67,7 +67,7 @@ cd Practice && swift test --filter StrictnessTests
 ```
 
 Drive screens headlessly, no simulator: `cd Tools/MandoCLI && swift run mando`, then
-`help`. Not in the Xcode scheme, so its 5 tests (`swift test` there) are not in the counts
+`help`. Not in the Xcode scheme, so its 8 tests (`swift test` there) are not in the counts
 below; see `Documentation/headless-cli.md`.
 
 Get `<udid>` from `xcrun simctl list devices available`. Xcode 27 did not resolve
@@ -80,8 +80,8 @@ times; once it reported `TEST SUCCEEDED` while eight new tests were skipped. A
 green result on its own is not evidence that anything ran.
 
 `xcodebuild test` prints one `Test run with` line per test bundle, six in all.
-Add them up. Current suite: 458 tests in 54 suites: 18 in `Core`, 177 in `Library`,
-51 in `Dictionary`, 189 in `Practice`, 18 in `Progress`, 5 in `Settings`. The app target has no tests of
+Add them up. Current suite: 469 tests in 55 suites: 22 in `Core`, 181 in `Library`,
+52 in `Dictionary`, 189 in `Practice`, 20 in `Progress`, 5 in `Settings`. The app target has no tests of
 its own. If a bundle's line is missing, it did not run.
 
 ```sh

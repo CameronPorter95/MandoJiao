@@ -14,6 +14,7 @@ let package = Package(
         .package(path: "../../Library"),
         .package(path: "../../Dictionary"),
         .package(path: "../../Practice"),
+        .package(path: "../../Progress"),
     ],
     targets: [
         .executableTarget(
@@ -35,6 +36,8 @@ let package = Package(
                 .product(name: "PracticeDI", package: "Practice"),
                 .product(name: "PracticeUI", package: "Practice"),
                 .product(name: "PracticeTestSupport", package: "Practice"),
+                .product(name: "ProgressDomain", package: "Progress"),
+                .product(name: "ProgressDI", package: "Progress"),
             ],
             swiftSettings: [.defaultIsolation(MainActor.self)]
         ),

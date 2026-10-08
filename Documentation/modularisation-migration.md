@@ -11,8 +11,8 @@ is the part that changes.
 **The MVI migration and the business-area restructure are both done.**
 Every feature is an SPM package at the repo root, and the app target is the composition
 root only: `MandoJiaoApp`, `ContentView` and `LiveDependencies`, with `AppNavigation`
-and its coordinator. 458 tests in 54 suites: 18 in `Core`, 177 in `Library`, 51 in
-`Dictionary`, 189 in `Practice`, 18 in `Progress`, 5 in `Settings`, all runnable headlessly with
+and its coordinator. 469 tests in 55 suites: 22 in `Core`, 181 in `Library`, 52 in
+`Dictionary`, 189 in `Practice`, 20 in `Progress`, 5 in `Settings`, all runnable headlessly with
 `swift test` as well as through the scheme.
 
 ```

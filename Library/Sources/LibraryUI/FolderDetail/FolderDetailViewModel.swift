@@ -63,6 +63,12 @@ public final class FolderDetailViewModel {
             observation?.cancel()
             observation = nil
 
+        case .deckOpened(let id):
+            effectChannel.send(.openDeck(id))
+
+        case .folderOpened(let id):
+            effectChannel.send(.openFolder(id))
+
         case .startLessonTapped(let exercise):
             guard let folder = state.folder, state.canStart(exercise) else { return }
             requestLesson(title: folder.name, pool: state.lessonWords(state.vocabulary.words(in: folder)).pairs, source: .folder(folder.id), exercise: exercise)

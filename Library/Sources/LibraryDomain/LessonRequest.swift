@@ -23,7 +23,7 @@ public nonisolated struct LessonRequest: Identifiable, Hashable, Sendable {
 }
 
 /// A deck or folder practised, which home offers to carry on with.
-public nonisolated enum LessonSource: Hashable, Sendable {
+public nonisolated enum LessonSource: Hashable, Sendable, Decodable {
     case deck(UUID)
     case folder(UUID)
 }

@@ -28,6 +28,26 @@ struct DictionarySearchViewModelTests {
         return results
     }
 
+    @Test("driven, a search is typed and a result picked by its place in the list")
+    func driven() async throws {
+        let search = makeSearch()
+        search.send(.appeared)
+        #expect(await waitUntil { search.state.saved != nil })
+        let driver = search.driver()
+
+        try driver.send("queryChanged", Data(#"{"query":"喝"}"#.utf8))
+        #expect(await waitUntil { driver.summary().contains("results: 2  0. 喝 hē to drink | 1. 喝 hè") })
+
+        try driver.send("vocabularyTapped", Data(#"{"result":5}"#.utf8))
+        #expect(search.state.editor == nil)
+        try driver.send("vocabularyTapped", Data(#"{"result":0}"#.utf8))
+        #expect(search.state.editor != nil)
+
+        for name in driver.actions where name != "queryChanged" && name != "vocabularyTapped" {
+            #expect(throws: Never.self) { try driver.send(name, nil) }
+        }
+    }
+
     @Test("typing searches once typing pauses, for only the last query")
     func debounced() async {
         let search = makeSearch(delay: .milliseconds(50))

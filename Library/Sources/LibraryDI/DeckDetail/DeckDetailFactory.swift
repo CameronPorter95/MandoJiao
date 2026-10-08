@@ -9,18 +9,7 @@ public enum DeckDetailFactory: NavigationInputRouteFactory {
         navigation: DeckDetailNavigation,
         input: DeckDetailInput
     ) -> DeckDetailRoute {
-        let repository = VocabularyRepositoryFactory.makeRepository(dependencies: dependencies)
-        let viewModel = DeckDetailViewModel(
-            deckID: input.deckID,
-            minimumMatchingWords: input.minimumMatchingWords,
-            vocabulary: input.vocabulary,
-            observeVocabulary: ObserveVocabularyUseCase(repository: repository),
-            getLessonSettings: LessonSettingsFactory.makeGetSettingsUseCase(dependencies: dependencies),
-            renameDeck: RenameDeckUseCase(repository: repository),
-            setMembership: SetDeckMembershipUseCase(repository: repository),
-            moveDeck: MoveDeckUseCase(repository: repository)
-        )
-        return DeckDetailRoute(viewModel: viewModel, navigation: navigation)
+        DeckDetailRoute(viewModel: makeViewModel(dependencies: dependencies, input: input), navigation: navigation)
     }
 
     /// The deck without its view, renaming without waiting on the clock.
@@ -29,6 +18,14 @@ public enum DeckDetailFactory: NavigationInputRouteFactory {
         navigation: DeckDetailNavigation,
         input: DeckDetailInput
     ) -> ScreenDriver {
+        makeViewModel(dependencies: dependencies, input: input, renameDelay: .zero).driver(navigation: navigation)
+    }
+
+    private static func makeViewModel(
+        dependencies: Dependencies,
+        input: DeckDetailInput,
+        renameDelay: Duration = DeckDetailViewModel.defaultRenameDelay
+    ) -> DeckDetailViewModel {
         let repository = VocabularyRepositoryFactory.makeRepository(dependencies: dependencies)
         return DeckDetailViewModel(
             deckID: input.deckID,
@@ -39,7 +36,7 @@ public enum DeckDetailFactory: NavigationInputRouteFactory {
             renameDeck: RenameDeckUseCase(repository: repository),
             setMembership: SetDeckMembershipUseCase(repository: repository),
             moveDeck: MoveDeckUseCase(repository: repository),
-            renameDelay: .zero
-        ).driver(navigation: navigation)
+            renameDelay: renameDelay
+        )
     }
 }

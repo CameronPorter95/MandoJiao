@@ -1,4 +1,5 @@
 import CoreDI
+import CoreUI
 import DictionaryDomain
 import DictionaryUI
 
@@ -13,5 +14,15 @@ public enum DictionaryTabFactory: InputRouteFactory {
             makePage: { DictionaryPageViewModel(headword: $0, lookUpDictionary: lookUp, observeSaved: observe) },
             makeEditor: vocabulary.editor
         )
+    }
+
+    /// The search without its view, searching as soon as the query changes.
+    public static func makeDriver(dependencies: Dependencies, input vocabulary: DictionaryVocabulary) -> ScreenDriver {
+        let repository = DictionaryRepositoryFactory.makeDictionaryRepository()
+        return DictionarySearchViewModel(
+            searchDictionary: SearchDictionaryUseCase(repository: repository),
+            observeSaved: ObserveSavedReadingsUseCase(repository: vocabulary.savedReadings),
+            searchDelay: .zero
+        ).driver()
     }
 }

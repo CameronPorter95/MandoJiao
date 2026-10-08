@@ -74,35 +74,11 @@ public struct LibraryRoute: View {
         .onDisappear { viewModel.send(.disappeared) }
         .task {
             for await effect in viewModel.effects() {
-                switch effect {
-                case .requestMatching(let request): navigation.didRequestMatching(request)
-                case .showError(let error): self.error = error
-                }
+                if case .showError(let error) = navigation.follow(effect) { self.error = error }
             }
         }
         .errorAlert($error)
     }
 
-    private var pageContext: LibraryPageContext {
-        LibraryPageContext(
-            vocabulary: viewModel.state.vocabulary,
-            openDeck: { viewModel.send(.opened(.deck($0))) },
-            openFolder: { viewModel.send(.opened(.folder($0))) },
-            layout: { folderID in
-                let layout = viewModel.state.layout
-                return FolderLayout(
-                    expanded: layout.expanded(in: .folder(folderID)),
-                    foldedSections: layout.foldedSections[folderID] ?? [],
-                    deckSort: layout.deckSort(in: folderID),
-                    setExpanded: { viewModel.send(.folderExpanded($0, $1, in: .folder(folderID))) },
-                    toggle: { viewModel.send(.folderSectionToggled(folderID, $0)) },
-                    setDeckSort: { viewModel.send(.deckSortChanged(folderID, $0)) }
-                )
-            },
-            wordList: WordListLayout(
-                sort: viewModel.state.layout.wordSort,
-                setSort: { viewModel.send(.wordSortChanged($0)) }
-            )
-        )
-    }
+    private var pageContext: LibraryPageContext { viewModel.pageContext }
 }

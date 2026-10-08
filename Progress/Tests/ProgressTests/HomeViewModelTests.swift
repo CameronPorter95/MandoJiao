@@ -28,6 +28,41 @@ struct HomeViewModelTests {
         return (viewModel, log)
     }
 
+    @Test("driven by name, every listed action is accepted")
+    func driverAcceptsEveryAction() async {
+        let arguments = [
+            "continueTapped": #"{"exercise":"speaking"}"#,
+            "sourceChosen": #"{"source":{"deck":{"_0":"\#(Fixtures.fullDeck.id)"}}}"#,
+        ]
+        for name in HomeAction.names {
+            let (home, _) = await makeHome()
+            let driver = home.driver(navigation: Self.navigation { _ in })
+            #expect(throws: Never.self) { try driver.send(name, arguments[name].map { Data($0.utf8) }) }
+        }
+    }
+
+    @Test("driven, practising mistakes presents a speaking lesson rather than reaching the effects")
+    func driverPresents() async throws {
+        var spoken: [LessonRequest] = []
+        let (home, _) = await makeHome()
+        let driver = home.driver(navigation: Self.navigation { spoken.append($0) })
+        let effects = EffectLog(driver.effects())
+
+        try driver.send("practiseMistakesTapped", nil)
+
+        #expect(await waitUntil { spoken.count == 1 })
+        #expect(spoken.first?.title == "Mistakes")
+        await settle()
+        #expect(effects.effects.isEmpty)
+    }
+
+    private static func navigation(speaking: @escaping (LessonRequest) -> Void) -> HomeNavigation {
+        HomeNavigation(
+            didRequestMatching: { _ in }, didRequestSpeaking: speaking,
+            didRequestFlashcards: { _ in }, didRequestTodayPlan: { _ in }
+        )
+    }
+
     @Test("appearing shows the library")
     func loading() async {
         let (home, _) = await makeHome()
@@ -53,7 +88,7 @@ struct HomeViewModelTests {
         #expect(home.state.currentName == "Full")
         #expect(home.state.currentSubtitle == "Starter · 5 words")
 
-        home.send(.continueTapped(.flashcards))
+        home.send(.continueTapped(exercise: .flashcards))
         #expect(await waitUntil { log.effects.count == 1 })
         guard case .requestFlashcards(let request) = log.effects.first else {
             Issue.record("expected a flash card request")
@@ -69,13 +104,13 @@ struct HomeViewModelTests {
         let (home, log) = await makeHome()
         home.send(.chooseSourceTapped)
         #expect(home.state.isChoosingSource)
-        home.send(.sourceChosen(.deck(Fixtures.smallDeck.id)))
+        home.send(.sourceChosen(source: .deck(Fixtures.smallDeck.id)))
         #expect(!home.state.isChoosingSource)
         #expect(home.state.current == .deck(Fixtures.smallDeck.id))
         #expect(!home.state.canStart(.matching))
         #expect(home.state.canStart(.speaking))
-        home.send(.continueTapped(.matching))
-        home.send(.continueTapped(.speaking))
+        home.send(.continueTapped(exercise: .matching))
+        home.send(.continueTapped(exercise: .speaking))
         #expect(await waitUntil { log.effects.count == 1 })
         guard case .requestSpeaking(let request) = log.effects.first else {
             Issue.record("expected a speaking request")
@@ -99,9 +134,9 @@ struct HomeViewModelTests {
         home.send(.appeared)
         #expect(home.state.usableWordCount == 4)
         #expect(!home.state.canStartQuickPractice)
-        home.send(.sourceChosen(.deck(Fixtures.fullDeck.id)))
+        home.send(.sourceChosen(source: .deck(Fixtures.fullDeck.id)))
         #expect(home.state.currentWordCount == 4)
-        home.send(.continueTapped(.flashcards))
+        home.send(.continueTapped(exercise: .flashcards))
         #expect(await waitUntil { log.effects.count == 1 })
         guard case .requestFlashcards(let request) = log.effects.first else {
             Issue.record("expected a flash card request")

@@ -2,6 +2,7 @@ import Foundation
 import Testing
 import CoreDomain
 import CoreTestSupport
+import CoreUI
 import LibraryTestSupport
 @testable import LibraryDomain
 @testable import LibraryUI
@@ -29,6 +30,43 @@ struct FolderDetailViewModelTests {
         let current = await repository.snapshot
         #expect(await waitUntil { viewModel.state.vocabulary == current })
         return (viewModel, log)
+    }
+
+    @Test("opening a deck or folder is navigation, which follow carries out")
+    func opening() async {
+        let (hsk, log) = await makeDetail(Fixtures.hsk.id)
+        hsk.send(.deckOpened(id: Fixtures.part1.id))
+        hsk.send(.folderOpened(id: Fixtures.level1.id))
+        #expect(await log.equals([.openDeck(Fixtures.part1.id), .openFolder(Fixtures.level1.id)]))
+
+        var opened: [UUID] = []
+        let navigation = FolderDetailNavigation(
+            didRequestMatching: { _ in }, didRequestFlashcards: { _ in }, didRequestSpeaking: { _ in },
+            didOpenDeck: { opened.append($0) }, didOpenFolder: { opened.append($0) }
+        )
+        #expect(navigation.follow(.openDeck(Fixtures.part1.id)) == nil)
+        #expect(navigation.follow(.openFolder(Fixtures.level1.id)) == nil)
+        #expect(opened == [Fixtures.part1.id, Fixtures.level1.id])
+    }
+
+    @Test("driven by name, every listed action is accepted")
+    func driverAcceptsEveryAction() async {
+        // Unknown ids, so nothing is really deleted from the shared fixture.
+        let id = #"{"_0":"\#(UUID().uuidString)"}"#
+        let arguments = [
+            "deckOpened": #"{"id":"\#(UUID().uuidString)"}"#, "folderOpened": #"{"id":"\#(UUID().uuidString)"}"#,
+            "startLessonTapped": #"{"exercise":"speaking"}"#, "searchPresentedChanged": #"{"_0":true}"#,
+            "searchChanged": #"{"_0":"wa"}"#, "namingTapped": #"{"_0":"newDeck"}"#, "newNameChanged": #"{"_0":"x"}"#,
+            "practiseFolderTapped": id, "practiseDeckTapped": id, "deleteDeckTapped": id, "deleteFolderTapped": id,
+        ]
+        for name in FolderDetailAction.names {
+            let (detail, _) = await makeDetail(Fixtures.hsk.id)
+            let driver = detail.driver(navigation: FolderDetailNavigation(
+                didRequestMatching: { _ in }, didRequestFlashcards: { _ in }, didRequestSpeaking: { _ in },
+                didOpenDeck: { _ in }, didOpenFolder: { _ in }
+            ))
+            #expect(throws: Never.self) { try driver.send(name, arguments[name].map { Data($0.utf8) }) }
+        }
     }
 
     @Test("a folder shows the folders beneath it as a tree, then its own decks")
@@ -71,7 +109,7 @@ struct FolderDetailViewModelTests {
     func startingALesson() async {
         let (hsk, log) = await makeDetail(Fixtures.hsk.id)
         #expect(hsk.state.decks.isEmpty)
-        hsk.send(.startLessonTapped(.flashcards))
+        hsk.send(.startLessonTapped(exercise: .flashcards))
 
         #expect(await waitUntil { log.effects.count == 1 })
         guard case .startLesson(let request, .flashcards) = log.effects.first else {
