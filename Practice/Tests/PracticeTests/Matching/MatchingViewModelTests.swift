@@ -59,7 +59,9 @@ struct MatchingViewModelTests {
 
     @Test("clearing a board moves to the next after a pause, ignoring taps meanwhile")
     func clearingABoard() async {
-        let harness = Harness(pool: pairs, settings: MatchingSettings(showsPinyin: false, rounds: 2), advanceDelay: .milliseconds(100))
+        // Long enough that a busy simulator cannot run it out before the tap below: at 100ms,
+        // waiting for the success haptic alone took longer in the full suite.
+        let harness = Harness(pool: pairs, settings: MatchingSettings(showsPinyin: false, rounds: 2), advanceDelay: .milliseconds(600))
         harness.viewModel.send(.appeared)
 
         pairs.forEach { harness.match($0) }

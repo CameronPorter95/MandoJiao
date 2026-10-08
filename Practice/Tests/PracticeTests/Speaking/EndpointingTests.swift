@@ -73,13 +73,15 @@ struct EndpointingTests {
     func resumingResetsTheTimer() async {
         var text = "完"
         let resume = Task { @MainActor in
-            // Longer than a poll, shorter than the settle window.
+            // Longer than a poll, well short of the settle window.
             try? await Task.sleep(for: .milliseconds(100))
             text = "完成"
         }
 
+        // A wider window than the suite's: at 150ms, a busy simulator could wake the resume
+        // after the window had closed, settling on the first syllable.
         let ending = await Endpointing.waitForEnd(
-            settleAfter: settle,
+            settleAfter: .milliseconds(500),
             hardLimit: limit,
             pollInterval: poll
         ) { text }
