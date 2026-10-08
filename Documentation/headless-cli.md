@@ -174,12 +174,60 @@ CLI's vocabulary cannot drift from the code's.
   spike's known cost; the `Application` module [modularisation.md](modularisation.md)
   sketches is the fix.
 - A line in [feature-checklist.md](feature-checklist.md): a new screen ships a driver.
-- Perhaps a remote mode: a debug-only socket in the app taking the same commands, so they
-  drive the simulator too.
+- Remote mode, below.
+
+## Remote mode: the same commands, driving the simulator
+
+`mando --remote` sends the same commands to the app running in the simulator, and its
+screens update as they arrive. Shopify's video shows exactly this: `dev cli ios --remote`
+beside a simulator that changes tab and opens a product as the commands go in.
+
+**How.** The CLI never touches the UI: no taps, accessibility tree or screenshots. It
+sends actions to the view models the live screens render, and the UI follows because
+each screen renders its state. This is the MVI layering paying off.
+`ScreenDriver` already wraps the real view model, so in the app it drives the screen
+itself, not a copy.
+
+**What it adds.** Headless `mando` stays the fast loop for agents. Remote mode is for
+watching, and for bugs that only exist in the real composition: `ContentView`'s wiring,
+the coordinator, sheets and covers, and the simulator's real store. It also replaces
+pointing `ContentView` at a screen to screenshot it (Known gaps in CLAUDE.md): drive to
+the screen by command, then screenshot.
+
+1. **Tabs and the coordinator become drivable.** `TabView` takes a selection from
+   `AppNavigationCoordinator`, and the coordinator gets a driver with `selectTab` and
+   the presented lesson in its state. This is also what gives headless `mando` a `tab`
+   command, so do it first. The library stack is already state
+   (`LibraryState.path`), so a deck opened by command slides in for free.
+2. **Routes register their drivers, in debug builds only.** On appear, a Route hands
+   `viewModel.driver(navigation:)` to a registry; on disappear it takes it back. One line
+   per Route. The registry's top is the open screen, as `Session.top` is headlessly.
+3. **A listener in the app, in debug builds only.** `NWListener` on a localhost port, one
+   command per line, the reply as the lines headless `mando` prints. Simulator apps share
+   the Mac's network, so the CLI reaches it at `localhost:<port>`. Network callbacks
+   arrive off the main actor and must hop to `@MainActor` before touching a driver, or
+   Swift 6 traps at runtime (Traps in CLAUDE.md).
+4. **`MandoKit` gets a remote backend.** Without the flag `mando` runs its own `Session`;
+   with `--remote` it forwards each line and prints the reply. Same commands, same
+   output, so an agent cannot tell the modes apart.
+5. **A launch argument for scripted speech.** The app's speaking lesson uses
+   `DictationRecogniser`, and recognition on the simulator is not to be judged. Under
+   the argument, the speaking factory builds with `ScriptedRecogniser` and `say` feeds
+   it. The card reacts in the simulator, which proves the flow and nothing about
+   recognition.
+
+**Rules.**
+
+- Never shipped. Everything sits behind `#if DEBUG` and a launch argument, so it is off
+  unless asked for. An open port in a release build is a security hole and an App Store
+  rejection.
+- Sounds and haptics are real in remote mode. That is fine for watching and says
+  nothing about the logic.
+- `✓` means state has settled, not that an animation has finished. A screenshot taken
+  straight after a push can catch it mid-slide; wait before capturing.
 
 ## Unchecked
 
-- Whether `LessonExercise` decodes cleanly.
 - Whether a copy of the simulator's store opens on the Mac.
 - Whether the other packages' DI targets build for macOS.
 - Which `UserDefaults` domain the CLI's settings land in.
