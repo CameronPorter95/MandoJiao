@@ -47,8 +47,12 @@ nonisolated enum BundledExamples {
         for line in text.split(separator: "\n") where !line.hasPrefix("#") {
             let fields = line.split(separator: "\t", omittingEmptySubsequences: false)
             switch fields.first {
-            case "S" where fields.count == 5:
-                sentences[fields[1]] = ExampleSentence(hanzi: String(fields[2]), pinyin: String(fields[3]), english: String(fields[4]))
+            case "S" where fields.count == 6:
+                let hanzi = String(fields[2])
+                sentences[fields[1]] = ExampleSentence(
+                    hanzi: hanzi, pinyin: String(fields[3]), english: String(fields[4]),
+                    words: words(of: hanzi, lengths: fields[5])
+                )
             case "W" where fields.count == 4:
                 let found = fields[3].split(separator: ",").compactMap { sentences[$0] }
                 table[String(fields[1]), default: []].append((String(fields[2]), found))
@@ -57,6 +61,21 @@ nonisolated enum BundledExamples {
             }
         }
         return table
+    }
+
+    /// The sentence's Han characters cut at each length: "2,1,1,2" of 学生是我朋友。 is
+    /// 学生 是 我 朋友. Empty when the lengths do not add up to the characters.
+    static func words(of hanzi: String, lengths: Substring) -> [String] {
+        let characters = hanzi.filter { $0.unicodeScalars.allSatisfy { (0x3400...0x9FFF).contains($0.value) || (0x20000...0x2FFFF).contains($0.value) } }.map(String.init)
+        let sizes = lengths.split(separator: ",").compactMap { Int($0) }
+        guard sizes.reduce(0, +) == characters.count else { return [] }
+        var words: [String] = []
+        var start = 0
+        for size in sizes {
+            words.append(characters[start..<start + size].joined())
+            start += size
+        }
+        return words
     }
 }
 

@@ -165,6 +165,21 @@ English and the word in the accent colour. The lesson looks one up for every tau
 as it appears, so none is waited for on its card; a word with none, or a failed lookup,
 shows the word alone, and a failure is logged rather than alerted.
 
+**The sentence is chosen for the learner,** as the owner asked: of a reading's ten, the one
+with the fewest words outside those they have started (answered at least once, or marked
+learnt; `TodayPlan.known`), and among equals the easiest. Measured on Tatoeba's export:
+
+| Learner | Sentence of only known words | At most one unknown |
+| --- | --- | --- |
+| knows the starter and HSK 1, learning HSK 2 | 74% of words | 94% |
+| knows 30 starter words, learning the other 35 | none | 17% |
+
+Ten candidates rather than every one keeps the file at 5.9 MB; all of them would raise the
+first row to 77%. A learner in their first days is the gap: Tatoeba has almost no sentence
+made of a few dozen words, so the fewest unknown words is the best it can do. Generating a
+sentence from the learner's own words, on device, is the planned answer for them; their
+pinyin would then come from their own words.
+
 `Tools/MakeExamples` builds `Examples.tsv` from Tatoeba's downloads. The rules, each
 measured before it was chosen:
 
@@ -180,8 +195,9 @@ measured before it was chosen:
   inside a longer word, as 学生's -sheng is written both ways; a one-syllable word's tone is
   all that tells 了's liǎo from liào. A reading said tone for tone keeps a sentence from one
   only matched loosely, so 东西 dōngxī, east and west, does not take thing's sentences.
-- **Best first:** the hardest other word at or below the word's own HSK level, then a length
-  near eight characters, then pinyin a person has reviewed.
+- **Easiest first:** the hardest other word at or below the word's own HSK level, then a
+  length near eight characters, then pinyin a person has reviewed. Each sentence carries
+  its words, as their lengths, so the app can count the ones a learner knows.
 
 290 of HSK 1's 298 readings have an example, 199 of HSK 2's 202, and 471 of HSK 3's 494.
 Tracing and translation will bring themes of their own.

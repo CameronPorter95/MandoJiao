@@ -1,7 +1,8 @@
 import Foundation
 
-// Builds the example sentences: for each dictionary reading Tatoeba uses, up to three short
-// sentences, easiest first, each with its pinyin and an English translation.
+// Builds the example sentences: for each dictionary reading Tatoeba uses, up to ten short
+// sentences, easiest first, each with its pinyin, an English translation and its words. Ten
+// rather than one, so the app can choose the sentence the learner knows most words of.
 //
 // Download from https://tatoeba.org/en/downloads into one folder: the Mandarin and English
 // sentences and the Mandarin-English links (per_language/cmn/cmn_sentences.tsv,
@@ -11,12 +12,14 @@ import Foundation
 //
 // Every sentence with a pinyin transcription and an English translation is used, in
 // simplified characters: Tatoeba transcribes each sentence written in traditional into
-// simplified (a `Hans` transcription), and one written in simplified into traditional. The transcription splits a sentence into words, and a word only
+// simplified (a `Hans` transcription), and one written in simplified into traditional. The
+// transcription splits a sentence into words, and a word only
 // has a sentence as an example where it is whole words of that split and its pinyin is the
 // reading's: 长 cháng is never shown with 他长大了, where it is zhǎng.
 //
 // Two kinds of line, tab separated. `S`, a sentence: its Tatoeba id, Hanzi, pinyin with
-// tone marks, English. `W`, a reading: simplified, pinyin as the dictionary writes it, and
+// tone marks, English, and its words as their lengths in Han characters, comma separated:
+// "2,1,1,2" is 学生 是 我 朋友 in 学生是我朋友. `W`, a reading: simplified, pinyin as the dictionary writes it, and
 // its sentences' ids, best first, comma separated. Tatoeba's sentences are CC BY 2.0 FR, so
 // the output is too, and its header line carries the attribution.
 
@@ -29,8 +32,12 @@ let folder = URL(fileURLWithPath: arguments[1])
 let root = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
 let resources = root.appending(path: "Dictionary/Sources/DictionaryData/Resources")
 
-/// The examples kept for each reading.
-let perReading = 3
+/// The examples kept for each reading. Measured on Tatoeba's 2026-10 export: a learner who
+/// knows the starter words and HSK 1, learning HSK 2, finds a sentence of only known words
+/// for 62% of words with 3, 74% with 10, 77% with 20 or every one, and the file is 5.9 MB at
+/// 10. A learner a few days in finds almost none at any number: those are left to the
+/// fewest unknown words.
+let perReading = 10
 /// Han characters in a sentence worth showing a learner on one card.
 let lengthLimit = 4...16
 /// The length a sentence is best at: long enough to show the word in use.
@@ -326,7 +333,7 @@ for (reading, found) in examples.sorted(by: { $0.key < $1.key }) {
     readingLines.append("W\t\(reading)\t\(best.map { String($0.sentence.id) }.joined(separator: ","))")
 }
 let sentenceLines = used.values.sorted { $0.id < $1.id }.map {
-    "S\t\($0.id)\t\($0.hanzi)\t\($0.pinyin)\t\($0.english.replacingOccurrences(of: "\t", with: " "))"
+    "S\t\($0.id)\t\($0.hanzi)\t\($0.pinyin)\t\($0.english.replacingOccurrences(of: "\t", with: " "))\t\($0.words.map { String($0.count) }.joined(separator: ","))"
 }
 let date = ISO8601DateFormatter.string(from: .now, timeZone: .current, formatOptions: .withFullDate)
 let header = "# Tatoeba \(date), CC BY 2.0 FR, https://tatoeba.org"

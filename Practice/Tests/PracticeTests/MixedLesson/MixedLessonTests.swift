@@ -128,6 +128,24 @@ struct MixedLessonViewModelTests {
         #expect(await examples.lookups == ["水 shuǐ", "茶 chá"])
     }
 
+    @Test("a taught word's example is the sentence with the fewest words the learner has not started")
+    func examplesFitTheLearner() async {
+        let unfamiliar = ExampleSentence(hanzi: "妹妹喝水。", pinyin: "", english: "", words: ["妹妹", "喝", "水"])
+        let familiar = ExampleSentence(hanzi: "我们喝水。", pinyin: "", english: "", words: ["我们", "喝", "水"])
+        let viewModel = MixedLessonViewModel(
+            lesson: MixedLesson(plan: TodayPlan(
+                theme: .newWords, title: "New words", synopsis: "", steps: [.teach(LessonWords.water)],
+                source: nil, otherWords: [], known: ["我们", "喝"]
+            )),
+            recordResults: RecordLessonResultsUseCase(repository: repository),
+            findExamples: FindExamplesUseCase(repository: FakeExamples(["水": [unfamiliar, familiar]])),
+            sounds: sounds,
+            audioSession: sounds
+        )
+        viewModel.send(.appeared)
+        #expect(await waitUntil { viewModel.state.examples[LessonWords.water.id] == familiar })
+    }
+
     @Test("examples that cannot be read are left off without an alert")
     func examplesFailing() async {
         let (viewModel, log) = makeViewModel(examples: FakeExamples([:], fails: true))

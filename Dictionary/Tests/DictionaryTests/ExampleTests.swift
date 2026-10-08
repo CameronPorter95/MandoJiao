@@ -14,8 +14,9 @@ nonisolated struct ExampleTests {
         let long = try await examples(hanzi: "长", pinyin: "cháng")
         let grow = try await examples(hanzi: "长", pinyin: "zhǎng")
         #expect(!long.isEmpty && !grow.isEmpty)
-        #expect(long.allSatisfy { $0.pinyin.contains("cháng") })
-        #expect(grow.allSatisfy { $0.pinyin.contains("zhǎng") })
+        // Lowercased, as a sentence can begin with the word: "Zhǎng bù gāo bù shì huàishì."
+        #expect(long.allSatisfy { $0.pinyin.lowercased().contains("cháng") })
+        #expect(grow.allSatisfy { $0.pinyin.lowercased().contains("zhǎng") })
         #expect(Set(long).isDisjoint(with: grow))
     }
 
@@ -42,6 +43,27 @@ nonisolated struct ExampleTests {
         #expect(try await examples(hanzi: "学生", pinyin: "xue2 sheng5") == marked)
         #expect(try await examples(hanzi: "学生", pinyin: "") == marked)
         #expect(try await examples(hanzi: " ", pinyin: "").isEmpty)
+    }
+
+    @Test("each sentence carries its words, which put back together are its characters")
+    func words() async throws {
+        let sentences = try await examples(hanzi: "朋友", pinyin: "péngyou")
+        #expect(sentences.count > 3)
+        for sentence in sentences {
+            #expect(sentence.words.contains("朋友"), "\(sentence.hanzi)")
+            #expect(sentence.words.joined() == sentence.hanzi.filter { !$0.isPunctuation && !$0.isWhitespace }, "\(sentence.hanzi)")
+        }
+    }
+
+    @Test("the learner gets the sentence they know most words of, and the fewest words when they know none")
+    func knownWords() async throws {
+        let sentences = try await examples(hanzi: "朋友", pinyin: "péngyou")
+        let shortest = sentences.map(\.words.count).min()
+        #expect(sentences.best(teaching: "朋友", knowing: [])?.words.count == shortest)
+        let known: Set<String> = ["我", "你", "他", "是", "的", "好", "有", "很", "了", "吗", "这", "我们", "在"]
+        let unknown = { (sentence: ExampleSentence) in sentence.words.count { $0 != "朋友" && !known.contains($0) } }
+        let chosen = try #require(sentences.best(teaching: "朋友", knowing: known))
+        #expect(unknown(chosen) == sentences.map(unknown).min())
     }
 
     @Test("every HSK 1 word with an example has one short enough for a card, in simplified characters")
