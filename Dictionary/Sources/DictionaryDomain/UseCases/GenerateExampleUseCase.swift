@@ -40,15 +40,19 @@ public nonisolated struct GenerateExampleUseCase: Sendable {
     }
 
     /// Whether a written sentence can be shown: it uses the word, is all Hanzi and
-    /// punctuation, is short enough for a card, and its translation says the card's meaning,
-    /// as a Tatoeba sentence must. The last catches a translation that gets the word wrong:
-    /// 后年, the year after next, was "next year" in every one, even told what it means.
+    /// punctuation, is short enough for a card, and its translation says one of the card's
+    /// meanings, as a Tatoeba sentence must. The last catches a translation that gets the word
+    /// wrong: 后年, the year after next, was "next year" in every one, even told what it means.
+    /// Any meaning, not the headline alone: held to 女生's "schoolgirl", "I know a girl" was
+    /// dropped, and only "She is a schoolgirl" got through, which a native speaker judged wrong.
     public static func isFit(_ sentence: ExampleSentence, for request: ExampleRequest) -> Bool {
         let hanzi = sentence.hanzi.trimmingCharacters(in: .whitespacesAndNewlines)
         return hanzi.contains(request.hanzi)
             && lengthLimit.contains(hanzi.filter(isHan).count)
             && hanzi.allSatisfy { isHan($0) || $0.isPunctuation || $0.isWhitespace }
-            && EnglishMeaning.says(request.meaning, in: sentence.english)
+            && ([request.meaning] + request.otherMeanings).contains {
+                EnglishMeaning.isCheckable($0) && EnglishMeaning.says($0, in: sentence.english)
+            }
     }
 
     static func isHan(_ character: Character) -> Bool {

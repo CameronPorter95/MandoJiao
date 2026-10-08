@@ -52,13 +52,17 @@ public nonisolated extension Array where Element == ExampleSentence {
 public nonisolated struct ExampleRequest: Hashable, Sendable {
     public let hanzi: String
     public let pinyin: String
-    /// The sense the sentence must use.
+    /// The sense the sentence is asked to use: the card's headline.
     public let meaning: String
+    /// The card's other meanings. A sentence whose translation says one of these instead is
+    /// still in a sense the card gives, as for a Tatoeba sentence.
+    public let otherMeanings: [String]
 
-    public init(hanzi: String, pinyin: String, meaning: String) {
+    public init(hanzi: String, pinyin: String, meaning: String, otherMeanings: [String] = []) {
         self.hanzi = hanzi
         self.pinyin = pinyin
         self.meaning = meaning
+        self.otherMeanings = otherMeanings
     }
 }
 

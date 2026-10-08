@@ -130,6 +130,18 @@ struct MixedLessonViewModelTests {
         #expect(await generator.requests == [ExampleRequest(hanzi: "水", pinyin: "shuǐ", meaning: "water")])
     }
 
+    @Test("the model is asked for the card's headline, and told its other meanings to check the translation against")
+    func examplesRequestAllMeanings() async {
+        let girl = WordPair(english: "schoolgirl", hanzi: "女生", pinyin: "nǚshēng", otherMeanings: ["female student", "girl"])
+        let generator = FakeGenerator(nil)
+        let (viewModel, _) = makeViewModel([.teach(girl), .recall(girl, .recognise)], examples: FakeExamples([:]), generator: generator)
+        viewModel.send(.appeared)
+        await settle()
+        #expect(await generator.requests == [
+            ExampleRequest(hanzi: "女生", pinyin: "nǚshēng", meaning: "schoolgirl", otherMeanings: ["female student", "girl"]),
+        ])
+    }
+
     @Test("a word with a sentence in its sense is never written")
     func examplesNotWritten() async {
         let generator = FakeGenerator(Self.written)

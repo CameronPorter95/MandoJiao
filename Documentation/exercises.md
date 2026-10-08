@@ -263,8 +263,12 @@ the separate one, 70% of sentences were natural with a right translation. So:
 About ten failures were the card's meaning, not the model's: 女生 "schoolgirl" for a girl,
 本子 "book" for a notebook, 箱子 "suitcase" for a box, 公交车 "public transport vehicle" for
 a bus, 初中 and 高中 "junior" and "senior high school", 大小 "large and small" for size. The
-meaning check makes a translation say these, so the right one, "I know a girl", is dropped
-for 女生. Fixing the meanings would help Tatoeba's sentences too.
+meaning check makes a translation say these, so the right one, "I know a girl", was dropped
+for 女生, though "girl" is among its card's meanings: a written sentence was held to the
+headline alone. Now, as a Tatoeba sentence, it may say any meaning on the card, while the
+model is still asked for the headline. Where the card has no right word at all, as 公交车
+with only "public transport vehicle", "I take the bus to school" is still dropped; fixing
+those meanings would help Tatoeba's sentences too.
 
 **Then the sentence is chosen for the learner,** as the owner asked: the one with the fewest
 words outside those they have started (answered at least once, or marked learnt;

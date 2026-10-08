@@ -125,7 +125,7 @@ public final class MixedLessonViewModel {
             for word in unmatched {
                 guard let meaning = word.meanings.first else { continue }
                 do {
-                    let request = ExampleRequest(hanzi: word.hanzi, pinyin: word.pinyin, meaning: meaning)
+                    let request = ExampleRequest(hanzi: word.hanzi, pinyin: word.pinyin, meaning: meaning, otherMeanings: Array(word.meanings.dropFirst()))
                     if let example = try await generateExample(request) {
                         state.examples[word.id] = example
                     }

@@ -128,7 +128,7 @@ var results: [Run] = []
 for word in asking {
     for run in 1...runs {
         await generator.reset()
-        let request = ExampleRequest(hanzi: word.hanzi, pinyin: word.pinyin, meaning: word.meaning)
+        let request = ExampleRequest(hanzi: word.hanzi, pinyin: word.pinyin, meaning: word.meaning, otherMeanings: Array(word.meanings.dropFirst()))
         let started = ContinuousClock.now
         let sentence: ExampleSentence?
         do {

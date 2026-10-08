@@ -89,6 +89,17 @@ nonisolated struct GenerateExampleTests {
         #expect(try await GenerateExampleUseCase(generator: right)(request)?.english == "I will travel the year after next.")
     }
 
+    /// From the second review: held to the headline, only "She is a schoolgirl" got through,
+    /// which a native speaker judged wrong, and the right "I know a girl" was dropped.
+    @Test("a translation saying another of the card's meanings is kept, and one saying none is not")
+    func anyMeaning() async throws {
+        let request = ExampleRequest(hanzi: "女生", pinyin: "nǚshēng", meaning: "schoolgirl", otherMeanings: ["female student", "girl"])
+        let girl = ScriptedGenerator(.written(ExampleSentence(hanzi: "我认识一个女生。", pinyin: "", english: "I know a girl.")))
+        #expect(try await GenerateExampleUseCase(generator: girl)(request)?.english == "I know a girl.")
+        let woman = ScriptedGenerator(.written(ExampleSentence(hanzi: "我认识一个女生。", pinyin: "", english: "I know a woman.")))
+        #expect(try await GenerateExampleUseCase(generator: woman)(request) == nil)
+    }
+
     @Test("a written translation's word order is put right before it is shown")
     func wordOrder() async throws {
         let request = ExampleRequest(hanzi: "和", pinyin: "hé", meaning: "together with")
@@ -121,8 +132,8 @@ nonisolated struct GenerateExampleTests {
     }
 
     @Test("while held, the generator writes nothing")
-    func held() async throws {
-        #expect(try await HeldExampleGenerator().example(for: hit) == .unavailable)
+    func held() {
+        #expect(HeldExampleGenerator().example(for: hit) == .unavailable)
     }
 
     @Test("a written sentence's pinyin takes the card's reading for the word and the lexicon's for the rest")
