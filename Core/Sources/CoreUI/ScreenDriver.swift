@@ -63,7 +63,14 @@ public struct ScreenDriver {
     }
 }
 
-public nonisolated enum ScreenDriverError: Error, Equatable {
+public nonisolated enum ScreenDriverError: Error, Equatable, CustomStringConvertible {
     case unknownAction(String)
     case badArguments(String)
+
+    public var description: String {
+        switch self {
+        case .unknownAction(let action): "no action \"\(action)\" here, see ls"
+        case .badArguments(let action): "the arguments do not fit \(action)"
+        }
+    }
 }

@@ -32,6 +32,7 @@ extension SpeakingState {
             "speaking",
             "card \(lesson.cardNumber)/\(lesson.plan.cardCount)",
             lesson.card.hanzi,
+            lesson.card.pinyin,
             "mic: \(mic)",
             "\(lesson.phase)",
         ]

@@ -2,7 +2,7 @@ import Foundation
 
 /// What a set of words can be practised with, one row each wherever it is offered. In Core
 /// because the library and Home both offer them, and it names no feature type.
-public enum LessonExercise: CaseIterable, Equatable, Sendable {
+public enum LessonExercise: String, CaseIterable, Equatable, Sendable, Decodable {
     case matching
     case flashcards
     case speaking
