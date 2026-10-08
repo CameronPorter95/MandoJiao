@@ -266,9 +266,13 @@ a bus, 初中 and 高中 "junior" and "senior high school", 大小 "large and sm
 meaning check makes a translation say these, so the right one, "I know a girl", was dropped
 for 女生, though "girl" is among its card's meanings: a written sentence was held to the
 headline alone. Now, as a Tatoeba sentence, it may say any meaning on the card, while the
-model is still asked for the headline. Where the card has no right word at all, as 公交车
-with only "public transport vehicle", "I take the bus to school" is still dropped; fixing
-those meanings would help Tatoeba's sentences too.
+model is still asked for the headline. The flagged meanings were then fixed in
+`Tools/MakeHSK/headlines.tsv`: 女生 "girl", 男生 "boy", 箱子 "box", 本子 "notebook" (with
+"exercise book" only; it had "book" and an erotic comic), 公交车 "bus", 大小 "size", 请客
+"to treat", and, the owner's choice, 初中 "middle school" and 高中 "high school", kept apart
+as her "secondary" and "high" school are not in New Zealand English. Of the nine, only 本子
+and 初中 still ask the model, and 87 words would ask, not 90. A card already installed keeps
+the meanings it was installed with.
 
 **Then the sentence is chosen for the learner,** as the owner asked: the one with the fewest
 words outside those they have started (answered at least once, or marked learnt;

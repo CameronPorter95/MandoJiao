@@ -60,6 +60,26 @@ nonisolated struct HSKListTests {
         #expect(word?.meanings.first == headline)
     }
 
+    /// Flagged by the native speaker judging example sentences on 2026-10-09, where a
+    /// translation held to "schoolgirl" or "public transport vehicle" read wrongly to her.
+    /// 初中 and 高中 are the owner's, kept apart: "secondary" and "high" school are one in NZ.
+    @Test("a word flagged in the example review heads with what it means to a native speaker", arguments: [
+        ("女生", "girl"), ("男生", "boy"), ("箱子", "box"), ("本子", "notebook"), ("公交车", "bus"),
+        ("大小", "size"), ("请客", "to treat (sb to a meal etc)"), ("初中", "middle school"), ("高中", "high school"),
+    ])
+    func reviewedHeadlines(hanzi: String, headline: String) {
+        #expect(words.first { $0.hanzi == hanzi }?.meanings.first == headline)
+    }
+
+    /// 本子's "book" let "The book is on the table" through as an example, and its third
+    /// sense is a kind of erotic comic.
+    @Test("本子 is a notebook and nothing else a learner would mistake it for")
+    func notebook() {
+        let benzi = words.first { $0.hanzi == "本子" }
+        #expect(benzi?.meanings == ["notebook", "exercise book"])
+        #expect(benzi?.replacesSenses == true)
+    }
+
     @Test("a word whose every meaning was chosen by hand has exactly those")
     func replacedSenses() {
         let zui = words.first { $0.hanzi == "最" }
