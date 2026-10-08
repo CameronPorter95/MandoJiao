@@ -1,4 +1,5 @@
 import CoreDI
+import CoreUI
 import DictionaryDI
 import DictionaryDomain
 import LibraryDI
@@ -14,6 +15,8 @@ import SwiftUI
 /// The app's root: the home, vocabulary and dictionary tabs, and the lessons presented over all three.
 struct ContentView: View {
     let dependencies: Dependencies
+    /// Set only when launched for remote driving.
+    let screenRegistry: ScreenRegistry?
 
     @State private var coordinator = AppNavigationCoordinator()
 
@@ -93,6 +96,9 @@ struct ContentView: View {
                 )
             }
         }
+        // Outside the cover, so a lesson's screens get the registry too.
+        .environment(\.screenRegistry, screenRegistry)
+        .onAppear { screenRegistry?.app = coordinator.driver() }
     }
 }
 
@@ -152,5 +158,5 @@ private func dictionaryVocabulary(dependencies: Dependencies) -> DictionaryVocab
 
 #Preview {
     let store = try! VocabularyRepositoryFactory.openStore(inMemory: true, hskWords: { (try? DictionaryRepositoryFactory.bundledHSKWords()) ?? [] })
-    ContentView(dependencies: LiveDependencies(modelContainer: store))
+    ContentView(dependencies: LiveDependencies(modelContainer: store), screenRegistry: nil)
 }

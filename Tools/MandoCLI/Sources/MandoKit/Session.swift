@@ -20,12 +20,12 @@ struct CLIDependencies: Dependencies {
 
 /// The app's tabs, in its order.
 enum CLITab: String, CaseIterable {
-    case home, library, dictionary
+    case home, vocabulary, dictionary
 }
 
 /// The CLI's composition root, as `ContentView` is the app's: the tabs, the lesson presented
 /// over them, and what they say while a command runs.
-final class Session {
+final class Session: Backend {
     private let dependencies: CLIDependencies
     private var tabs: [CLITab: ScreenDriver] = [:]
     private(set) var selectedTab = CLITab.home
@@ -43,7 +43,7 @@ final class Session {
             hskWords: { (try? DictionaryRepositoryFactory.bundledHSKWords()) ?? [] }
         )
         dependencies = CLIDependencies(modelContainer: store)
-        tabs = [.home: makeHome(), .library: makeLibrary(), .dictionary: makeDictionary()]
+        tabs = [.home: makeHome(), .vocabulary: makeLibrary(), .dictionary: makeDictionary()]
         for (tab, driver) in tabs { listen(to: driver, as: tab.rawValue) }
         try? tabs[selectedTab]?.send("appeared", nil)
     }
@@ -61,6 +61,21 @@ final class Session {
 
     var top: ScreenDriver? { chain.last }
 
+    func list() async -> [String] {
+        guard let top else { return [] }
+        return chain.map { $0.summary() } + ["actions: \(top.actions.joined(separator: ", "))"]
+    }
+
+    func send(_ action: String, _ arguments: String?) throws {
+        guard let top else { throw CLIError.usage("nothing is open") }
+        try top.send(action, arguments.map { Data($0.utf8) })
+    }
+
+    func state() throws -> [String] {
+        guard let top else { throw CLIError.usage("nothing is open") }
+        return top.dump().split(separator: "\n").map(String.init)
+    }
+
     func takeNotes() -> [String] {
         defer { notes.removeAll() }
         return notes
@@ -69,7 +84,9 @@ final class Session {
     // MARK: - Commands
 
     func select(_ name: String) throws {
-        guard let tab = CLITab(rawValue: name) else { throw CLIError.usage("tab \(CLITab.allCases.map(\.rawValue).joined(separator: "|"))") }
+        guard let tab = CLITab(rawValue: name) else {
+            throw ScreenDriverError.notOneOf("tab", name, CLITab.allCases.map(\.rawValue))
+        }
         // The lesson covers the tab bar, as the app's full-screen cover does.
         guard presented.isEmpty else { throw CLIError.usage("close the lesson first") }
         guard tab != selectedTab else { return }
@@ -78,32 +95,12 @@ final class Session {
         try? tabs[tab]?.send("appeared", nil)
     }
 
-    func vocabulary() async -> Vocabulary {
-        let stream = VocabularyRepositoryFactory.makeObserveVocabularyUseCase(dependencies: dependencies)()
-        for await vocabulary in stream { return vocabulary }
-        return .empty
-    }
-
-    /// Through the library tab, as tapping it would: a deck is pushed onto its stack, a
-    /// top-level folder selected in its sidebar, and a folder inside another pushed.
+    /// Through the vocabulary tab, which finds it by name as tapping its row would.
     func open(_ kind: String, _ query: String) async throws {
         guard presented.isEmpty else { throw CLIError.usage("close the lesson first") }
-        let vocabulary = await vocabulary()
-        let page: String
-        switch kind {
-        case "deck":
-            guard let deck = Self.find(query, in: vocabulary.decks, name: \.name, key: \.builtInKey) else { throw CLIError.notFound(kind, query) }
-            page = #"{"_0":{"deck":{"_0":"\#(deck.id)"}}}"#
-            try select(CLITab.library.rawValue)
-            try tabs[.library]?.send("opened", Data(page.utf8))
-        case "folder":
-            guard let folder = Self.find(query, in: vocabulary.folders, name: \.name, key: \.builtInKey) else { throw CLIError.notFound(kind, query) }
-            page = #"{"_0":{"folder":{"_0":"\#(folder.id)"}}}"#
-            try select(CLITab.library.rawValue)
-            try tabs[.library]?.send(folder.parentID == nil ? "selected" : "opened", Data(page.utf8))
-        default:
-            throw CLIError.usage("open deck|folder <name>")
-        }
+        try select(CLITab.vocabulary.rawValue)
+        await settle()
+        try tabs[.vocabulary]?.open(kind, query)
     }
 
     func say(_ answer: String) throws {
@@ -214,13 +211,6 @@ final class Session {
         }
     }
 
-    private static func find<Item>(_ query: String, in items: [Item], name: KeyPath<Item, String>, key: KeyPath<Item, String?>) -> Item? where Item: Identifiable, Item.ID == UUID {
-        let lowered = query.lowercased()
-        return items.first { $0[keyPath: name].lowercased() == lowered }
-            ?? items.first { $0[keyPath: key] == query }
-            ?? items.first { $0.id.uuidString.lowercased().hasPrefix(lowered) }
-    }
-
     /// Until no screen is busy and the screens and notes stop changing, so a command's knock-on
     /// work lands before its result prints. Gives up after ten seconds.
     func settle() async {
@@ -241,14 +231,12 @@ final class Session {
 }
 
 enum CLIError: Error, CustomStringConvertible {
-    case notFound(String, String)
     case notSpeaking
     case nothingToGoBackFrom
     case usage(String)
 
     var description: String {
         switch self {
-        case .notFound(let kind, let query): "no \(kind) matches \"\(query)\""
         case .notSpeaking: "say needs a speaking lesson open"
         case .nothingToGoBackFrom: "nothing to go back from"
         case .usage(let text): text

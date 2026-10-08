@@ -55,7 +55,29 @@ struct LibraryViewModelTests {
 
         #expect(driver.back())
         #expect(driver.front()?.name == "root")
+        // Then back to the sidebar, as on iPhone.
+        #expect(driver.back())
+        #expect(driver.front() == nil)
         #expect(!driver.back())
+    }
+
+    @Test("driven, open finds a folder or deck by name, key or id, as tapping its row would")
+    func driverOpens() async throws {
+        let (library, _) = await makeLibrary()
+        let driver = library.driver(navigation: LibraryTabNavigation(
+            didRequestMatching: { _ in }, didRequestFlashcards: { _ in }, didRequestSpeaking: { _ in }
+        ))
+
+        try driver.open("folder", "hsk")
+        #expect(library.state.selection == .folder(Fixtures.hsk.id))
+        try driver.open("folder", "Level 1")
+        try driver.open("deck", String(Fixtures.part1.id.uuidString.prefix(8)))
+        #expect(library.state.path == [.folder(Fixtures.level1.id), .deck(Fixtures.part1.id)])
+
+        #expect(throws: ScreenDriverError.notFound("deck", "nope")) { try driver.open("deck", "nope") }
+        #expect(throws: ScreenDriverError.cannotOpen("word")) { try driver.open("word", "水") }
+        // Nothing in front of it without builders: in the app, the views hold the stack.
+        #expect(driver.front() == nil)
     }
 
     @Test("driven by name, every listed action is accepted")

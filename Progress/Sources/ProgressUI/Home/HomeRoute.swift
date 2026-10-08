@@ -21,6 +21,7 @@ public struct HomeRoute: View {
     public var body: some View {
         HomeScreen(state: viewModel.state, onAction: { viewModel.send($0) })
             .navigationDestination(for: HomeDestination.self) { destination($0) }
+            .drivable { viewModel.driver(navigation: navigation) }
             .onAppear { viewModel.send(.appeared) }
             .onDisappear { viewModel.send(.disappeared) }
             .task {

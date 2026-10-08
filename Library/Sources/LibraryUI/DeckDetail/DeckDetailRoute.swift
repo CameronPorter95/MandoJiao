@@ -14,6 +14,7 @@ public struct DeckDetailRoute: View {
 
     public var body: some View {
         DeckDetailScreen(state: viewModel.state, onAction: { viewModel.send($0) })
+            .drivable { viewModel.driver(navigation: navigation) }
             .onAppear { viewModel.send(.appeared) }
             .onDisappear { viewModel.send(.disappeared) }
             .task {

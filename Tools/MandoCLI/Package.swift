@@ -28,6 +28,7 @@ let package = Package(
             dependencies: [
                 .product(name: "CoreDI", package: "Core"),
                 .product(name: "CoreUI", package: "Core"),
+                .product(name: "CoreRemote", package: "Core"),
                 .product(name: "LibraryDomain", package: "Library"),
                 .product(name: "LibraryDI", package: "Library"),
                 .product(name: "LibraryUI", package: "Library"),

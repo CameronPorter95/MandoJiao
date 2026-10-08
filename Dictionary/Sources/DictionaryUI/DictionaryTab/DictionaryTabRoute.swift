@@ -1,3 +1,4 @@
+import CoreUI
 import DictionaryDomain
 import SwiftUI
 
@@ -21,6 +22,7 @@ public struct DictionaryTabRoute: View {
     public var body: some View {
         NavigationStack {
             DictionarySearchScreen(state: viewModel.state, onAction: { viewModel.send($0) })
+                .drivable { viewModel.driver() }
                 .sheet(
                     item: Binding(
                         get: { viewModel.state.editor },

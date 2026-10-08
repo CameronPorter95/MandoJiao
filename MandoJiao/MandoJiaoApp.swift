@@ -1,4 +1,8 @@
 import CoreDomain
+import CoreUI
+#if DEBUG
+import CoreRemote
+#endif
 import DictionaryDI
 import LibraryDI
 import OSLog
@@ -8,6 +12,10 @@ import SwiftUI
 @main
 struct MandoJiaoApp: App {
     private let dependencies: LiveDependencies
+    private let screenRegistry: ScreenRegistry?
+    #if DEBUG
+    private let remoteServer: RemoteServer?
+    #endif
 
     init() {
         let errorLog = Logger(subsystem: "com.cameronporter.MandoJiao", category: "errors")
@@ -23,11 +31,32 @@ struct MandoJiaoApp: App {
         } catch {
             fatalError("Could not open the vocabulary store: \(error)")
         }
+
+        // `mando --remote` drives the app launched with -remote. Debug builds only: an open
+        // port in a release build would be a security hole.
+        #if DEBUG
+        if ProcessInfo.processInfo.arguments.contains("-remote") {
+            let registry = ScreenRegistry()
+            screenRegistry = registry
+            do {
+                remoteServer = try RemoteServer(control: RemoteControl(registry: registry))
+            } catch {
+                remoteServer = nil
+                errorLog.notice("remote: could not start: \(error.localizedDescription, privacy: .public)")
+            }
+            remoteServer?.start()
+        } else {
+            screenRegistry = nil
+            remoteServer = nil
+        }
+        #else
+        screenRegistry = nil
+        #endif
     }
 
     var body: some Scene {
         WindowGroup {
-            ContentView(dependencies: dependencies)
+            ContentView(dependencies: dependencies, screenRegistry: screenRegistry)
         }
     }
 }

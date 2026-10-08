@@ -1,13 +1,12 @@
 import Foundation
-import LibraryDomain
 
 /// Runs one command line against a session and returns what to print.
 public final class Interpreter {
     public static let help = """
         ls                     the screens open, front last, and the actions the front one takes
-        tab <tab>              home, library or dictionary
-        open deck <deck>       in the library: a deck by name, built-in key or the start of its id
-        open folder <folder>   in the library, the same way
+        tab <tab>              home, vocabulary or dictionary
+        open deck <deck>       in the vocabulary tab: a deck by name, built-in key or the start of its id
+        open folder <folder>   in the vocabulary tab, the same way
         do <action> [json]     send the open screen an action, its payload as a JSON object
         say <answer>           speak an answer to the open speaking lesson
         state                  the open screen's whole state
@@ -15,10 +14,24 @@ public final class Interpreter {
         quit
         """
 
-    private let session: Session
+    private let session: Backend
+    /// What the commands drive, printed as mando starts, since the two modes answer alike.
+    public let banner: String
+    public let prompt: String
 
+    /// Screens built here, over an in-memory store.
     public init() throws {
         session = try Session()
+        banner = "headless: the screens run here, over an in-memory store, on no simulator"
+        prompt = "mando> "
+    }
+
+    /// The app on the simulator, launched with -remote.
+    public init(remotePort: UInt16) async throws {
+        let remote = try await RemoteBackend(port: remotePort)
+        session = remote
+        banner = "remote: \(try await remote.identity()) on 127.0.0.1:\(remotePort)"
+        prompt = "mando remote> "
     }
 
     public func run(_ command: String) async -> [String] {
@@ -29,26 +42,24 @@ public final class Interpreter {
         do {
             switch verb {
             case "ls":
-                output = try await list()
+                output = try await session.list()
             case "tab":
-                try session.select(rest)
+                try await session.select(rest)
             case "open":
                 let (kind, query) = Self.split(rest)
                 guard !query.isEmpty else { throw CLIError.usage("open deck|folder <name>") }
                 try await session.open(kind, query)
             case "do":
-                guard let top = session.top else { throw CLIError.usage("nothing is open") }
                 let (action, arguments) = Self.split(rest)
                 guard !action.isEmpty else { throw CLIError.usage("do <action> [json]") }
-                try top.send(action, arguments.isEmpty ? nil : Data(arguments.utf8))
+                try await session.send(action, arguments.isEmpty ? nil : arguments)
             case "say":
                 guard !rest.isEmpty else { throw CLIError.usage("say <answer>") }
-                try session.say(rest)
+                try await session.say(rest)
             case "state":
-                guard let top = session.top else { throw CLIError.usage("nothing is open") }
-                output = top.dump().split(separator: "\n").map(String.init)
+                output = try await session.state()
             case "back":
-                try session.back()
+                try await session.back()
             case "help":
                 return Self.help.split(separator: "\n").map(String.init)
             default:
@@ -61,13 +72,6 @@ public final class Interpreter {
             output.append("✗ \(error)")
         }
         return output + session.takeNotes()
-    }
-
-    /// One line per screen open, the tab first and the front last, then what the front one takes.
-    private func list() async throws -> [String] {
-        let chain = session.chain
-        guard let top = chain.last else { return [] }
-        return chain.map { $0.summary() } + ["actions: \(top.actions.joined(separator: ", "))"]
     }
 
     /// The first word, and the rest of the line.

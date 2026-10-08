@@ -29,6 +29,7 @@ public struct FolderDetailRoute: View {
             onAction: { viewModel.send($0) },
             results: { AnyView(results($0)) }
         )
+        .drivable { viewModel.driver(navigation: navigation) }
         .onAppear { viewModel.send(.appeared) }
         .onDisappear { viewModel.send(.disappeared) }
         .task {

@@ -14,6 +14,13 @@ struct InterpreterTests {
         await mando.run("ls").filter { !$0.hasPrefix("actions:") && !$0.hasPrefix("✓") }
     }
 
+    @Test("headless, it says it drives no simulator")
+    func banner() throws {
+        let mando = try Interpreter()
+        #expect(mando.banner.hasPrefix("headless: "))
+        #expect(mando.prompt == "mando> ")
+    }
+
     @Test("it starts on home, loaded")
     func startsOnHome() async throws {
         let mando = try Interpreter()
@@ -23,19 +30,21 @@ struct InterpreterTests {
         #expect(output.last == "✓ ls")
     }
 
-    @Test("open goes through the library tab: a folder selected, then a deck pushed over it")
+    @Test("open goes through the vocabulary tab: a folder selected, then a deck pushed over it")
     func opening() async throws {
         let mando = try Interpreter()
         #expect(await mando.run("open folder Starter") == ["✓ open"])
         #expect(await mando.run("open deck Greetings") == ["✓ open"])
 
-        let screens = await mando.run("ls")
-        #expect(screens[0].hasPrefix("library  folders: Starter "))
-        #expect(screens[0].hasSuffix("selected: Starter"))
-        #expect(screens[1] == "deck  Greetings  10 words  lesson words: 10")
+        let listed = await mando.run("ls")
+        #expect(listed[0].hasPrefix("vocabulary  folders: Starter "))
+        #expect(listed[0].hasSuffix("selected: Starter"))
+        #expect(listed[1] == "deck  Greetings  10 words  lesson words: 10")
 
         #expect(await mando.run("back") == ["✓ back"])
         #expect(await mando.run("ls")[1].hasPrefix("folder  Starter  "))
+        #expect(await mando.run("back") == ["✓ back"])
+        #expect(await screens(mando).map { $0.components(separatedBy: "  ")[0] } == ["vocabulary"])
         #expect(await mando.run("back") == ["✗ nothing to go back from"])
     }
 
@@ -113,7 +122,7 @@ struct InterpreterTests {
     func refusals() async throws {
         let mando = try Interpreter()
         #expect(await mando.run("back") == ["✗ nothing to go back from"])
-        #expect(await mando.run("tab settings") == ["✗ tab home|library|dictionary"])
+        #expect(await mando.run("tab settings") == [#"✗ no tab "settings"; the tabs are home, vocabulary and dictionary"#])
         #expect(await mando.run("open deck nope") == [#"✗ no deck matches "nope""#])
         #expect(await mando.run("say ni") == ["✗ say needs a speaking lesson open"])
 
