@@ -28,7 +28,10 @@ struct RemoteControlTests {
                 log.sent.append("\(name) \(action)")
             },
             effects: { AsyncStream<Int> { $0.finish() } }, follow: { $0 }, back: back,
-            open: { kind, query in log.opened.append("\(name) \(kind) \(query)") }
+            open: { kind, query in
+                if kind == "tab" { log.tab = query }
+                log.opened.append("\(name) \(kind) \(query)")
+            }
         )
     }
 
@@ -40,7 +43,7 @@ struct RemoteControlTests {
             log.lesson = false
             return true
         })
-        registry.register(screen("library", log: log, back: {
+        registry.register(screen("vocabulary", log: log, back: {
             guard log.pushed else { return false }
             log.pushed = false
             return true
@@ -54,7 +57,7 @@ struct RemoteControlTests {
         let (control, _, _) = make()
         let reply = await control.handle(RemoteRequest(.ls))
         #expect(reply == RemoteReply(lines: [
-            "app shown", "library shown", "deck shown",
+            "app shown", "vocabulary shown", "deck shown",
             "actions: appeared, disappeared, tapped, selectTab",
         ]))
     }
@@ -63,17 +66,18 @@ struct RemoteControlTests {
     func sending() async {
         let (control, _, log) = make()
         #expect(await control.handle(RemoteRequest(.send, action: "tapped")).error == nil)
-        #expect(await control.handle(RemoteRequest(.tab, tab: "library")).error == nil)
-        #expect(log.sent == ["deck tapped", #"app selectTab(tab: "library")"#])
+        #expect(await control.handle(RemoteRequest(.tab, tab: "vocabulary")).error == nil)
+        #expect(log.sent == ["deck tapped"])
+        #expect(log.tab == "vocabulary")
         #expect(await control.handle(RemoteRequest(.send, action: "bogus")).error == #"no action "bogus" here, see ls"#)
     }
 
-    @Test("open selects the library tab, then asks the library to find it")
+    @Test("open selects the vocabulary tab, then asks it to find the deck or folder")
     func opening() async {
         let (control, _, log) = make()
         #expect(await control.handle(RemoteRequest(.open, kind: "deck", query: "Greetings")).error == nil)
-        #expect(log.tab == "library")
-        #expect(log.opened == ["library deck Greetings"])
+        #expect(log.tab == "vocabulary")
+        #expect(log.opened == ["app tab vocabulary", "vocabulary deck Greetings"])
     }
 
     @Test("back closes a lesson first, then pops the deepest stack that can pop")
@@ -96,6 +100,6 @@ struct RemoteControlTests {
         registry.register(screen("lesson", log: log), as: id)
         #expect(registry.screens.last?.name == "lesson")
         registry.remove(id)
-        #expect(registry.screens.map(\.name) == ["library", "deck"])
+        #expect(registry.screens.map(\.name) == ["vocabulary", "deck"])
     }
 }

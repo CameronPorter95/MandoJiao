@@ -178,8 +178,8 @@ CLI's vocabulary cannot drift from the code's.
 
 ## Tabs
 
-`mando` starts on home, as the app does, and `tab home|library|dictionary` switches. `open
-deck` and `open folder` go through the library tab: a top-level folder is selected in its
+`mando` starts on home, as the app does, and `tab home|vocabulary|dictionary` switches. `open
+deck` and `open folder` go through the vocabulary tab: a top-level folder is selected in its
 sidebar and anything else pushed onto its stack, as tapping would. `ls` prints one line
 per open screen, the tab first and the front last.
 

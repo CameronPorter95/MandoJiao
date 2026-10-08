@@ -4,9 +4,9 @@ import Foundation
 public final class Interpreter {
     public static let help = """
         ls                     the screens open, front last, and the actions the front one takes
-        tab <tab>              home, library or dictionary
-        open deck <deck>       in the library: a deck by name, built-in key or the start of its id
-        open folder <folder>   in the library, the same way
+        tab <tab>              home, vocabulary or dictionary
+        open deck <deck>       in the vocabulary tab: a deck by name, built-in key or the start of its id
+        open folder <folder>   in the vocabulary tab, the same way
         do <action> [json]     send the open screen an action, its payload as a JSON object
         say <answer>           speak an answer to the open speaking lesson
         state                  the open screen's whole state

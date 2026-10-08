@@ -8,9 +8,9 @@ import ProgressDomain
 @Observable
 final class AppNavigationCoordinator {
     /// State rather than the tab bar's own, so something other than a tap can change it.
-    enum AppTab: String, Hashable, Decodable {
+    enum AppTab: String, CaseIterable, Hashable, Decodable {
         case home
-        case library
+        case vocabulary
         case dictionary
     }
 

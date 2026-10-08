@@ -45,13 +45,13 @@ public final class RemoteControl {
             try top.send(action, request.arguments.map { Data($0.utf8) })
         case .tab:
             guard let app = registry.app, let tab = request.tab else { throw RemoteError.notRemote }
-            try app.send("selectTab", Data(#"{"tab":"\#(tab)"}"#.utf8))
+            try app.open("tab", tab)
         case .open:
             guard let app = registry.app, let kind = request.kind, let query = request.query else { throw RemoteError.notRemote }
-            try app.send("selectTab", Data(#"{"tab":"library"}"#.utf8))
+            try app.open("tab", "vocabulary")
             await settle()
-            guard let library = registry.screens.last(where: { $0.name == "library" }) else { throw RemoteError.nothingOpen }
-            try library.open(kind, query)
+            guard let vocabulary = registry.screens.last(where: { $0.name == "vocabulary" }) else { throw RemoteError.nothingOpen }
+            try vocabulary.open(kind, query)
         case .back:
             if registry.app?.back() == true { return [] }
             guard registry.screens.reversed().contains(where: { $0.back() }) else { throw RemoteError.nothingToGoBackFrom }

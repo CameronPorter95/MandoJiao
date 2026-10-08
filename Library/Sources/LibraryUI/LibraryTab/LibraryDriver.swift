@@ -12,7 +12,7 @@ extension LibraryViewModel {
     ) -> ScreenDriver {
         let children = ChildDrivers<LibraryChild>()
         return ScreenDriver(
-            name: "library",
+            name: "vocabulary",
             actions: LibraryAction.names,
             state: { self.state },
             summary: \.summary,
@@ -98,7 +98,7 @@ extension LibraryState {
     var summary: String {
         let folders = vocabulary.folders.filter { $0.parentID == nil }
             .map { "\($0.displayName) \($0.id.uuidString.prefix(8))" }
-        var parts = ["library", "folders: \(folders.joined(separator: ", "))"]
+        var parts = ["vocabulary", "folders: \(folders.joined(separator: ", "))"]
         if case .folder(let id) = selection, let folder = vocabulary.folder(id: id) {
             parts.append("selected: \(folder.displayName)")
         }

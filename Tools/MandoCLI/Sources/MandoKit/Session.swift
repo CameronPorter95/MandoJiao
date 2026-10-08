@@ -20,7 +20,7 @@ struct CLIDependencies: Dependencies {
 
 /// The app's tabs, in its order.
 enum CLITab: String, CaseIterable {
-    case home, library, dictionary
+    case home, vocabulary, dictionary
 }
 
 /// The CLI's composition root, as `ContentView` is the app's: the tabs, the lesson presented
@@ -43,7 +43,7 @@ final class Session: Backend {
             hskWords: { (try? DictionaryRepositoryFactory.bundledHSKWords()) ?? [] }
         )
         dependencies = CLIDependencies(modelContainer: store)
-        tabs = [.home: makeHome(), .library: makeLibrary(), .dictionary: makeDictionary()]
+        tabs = [.home: makeHome(), .vocabulary: makeLibrary(), .dictionary: makeDictionary()]
         for (tab, driver) in tabs { listen(to: driver, as: tab.rawValue) }
         try? tabs[selectedTab]?.send("appeared", nil)
     }
@@ -84,7 +84,9 @@ final class Session: Backend {
     // MARK: - Commands
 
     func select(_ name: String) throws {
-        guard let tab = CLITab(rawValue: name) else { throw CLIError.usage("tab \(CLITab.allCases.map(\.rawValue).joined(separator: "|"))") }
+        guard let tab = CLITab(rawValue: name) else {
+            throw ScreenDriverError.notOneOf("tab", name, CLITab.allCases.map(\.rawValue))
+        }
         // The lesson covers the tab bar, as the app's full-screen cover does.
         guard presented.isEmpty else { throw CLIError.usage("close the lesson first") }
         guard tab != selectedTab else { return }
@@ -93,12 +95,12 @@ final class Session: Backend {
         try? tabs[tab]?.send("appeared", nil)
     }
 
-    /// Through the library tab, which finds it by name as tapping its row would.
+    /// Through the vocabulary tab, which finds it by name as tapping its row would.
     func open(_ kind: String, _ query: String) async throws {
         guard presented.isEmpty else { throw CLIError.usage("close the lesson first") }
-        try select(CLITab.library.rawValue)
+        try select(CLITab.vocabulary.rawValue)
         await settle()
-        try tabs[.library]?.open(kind, query)
+        try tabs[.vocabulary]?.open(kind, query)
     }
 
     func say(_ answer: String) throws {

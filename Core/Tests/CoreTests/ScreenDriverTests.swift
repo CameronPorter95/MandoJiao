@@ -43,6 +43,12 @@ struct ScreenDriverTests {
         #expect(sent.isEmpty)
     }
 
+    @Test("a name that is not one of a kind's lists the ones there are")
+    func notOneOf() {
+        let error = ScreenDriverError.notOneOf("tab", "library", ["home", "vocabulary", "dictionary"])
+        #expect("\(error)" == #"no tab "library"; the tabs are home, vocabulary and dictionary"#)
+    }
+
     @Test("the dump shows the whole state")
     func dump() {
         let driver = ScreenDriver(

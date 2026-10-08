@@ -20,6 +20,13 @@ extension AppNavigationCoordinator {
                 guard self.presentedLesson != nil else { return false }
                 self.dismissLesson()
                 return true
+            },
+            open: { kind, name in
+                guard kind == "tab" else { throw ScreenDriverError.cannotOpen(kind) }
+                guard let tab = AppTab(rawValue: name) else {
+                    throw ScreenDriverError.notOneOf("tab", name, AppTab.allCases.map(\.rawValue))
+                }
+                self.selectedTab = tab
             }
         )
     }

@@ -95,6 +95,8 @@ public nonisolated enum ScreenDriverError: Error, Equatable, CustomStringConvert
     case badArguments(String)
     case cannotOpen(String)
     case notFound(String, String)
+    /// The kind, what was asked for, and the names there are.
+    case notOneOf(String, String, [String])
 
     public var description: String {
         switch self {
@@ -102,6 +104,8 @@ public nonisolated enum ScreenDriverError: Error, Equatable, CustomStringConvert
         case .badArguments(let action): "the arguments do not fit \(action)"
         case .cannotOpen(let kind): "nothing here opens a \(kind)"
         case .notFound(let kind, let query): "no \(kind) matches \"\(query)\""
+        case .notOneOf(let kind, let query, let names):
+            "no \(kind) \"\(query)\"; the \(kind)s are \(names.dropLast().joined(separator: ", ")) and \(names.last ?? "")"
         }
     }
 }
