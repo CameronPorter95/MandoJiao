@@ -4,6 +4,8 @@ import Foundation
 public nonisolated struct RemoteRequest: Codable, Sendable, Equatable {
     public enum Operation: String, Codable, Sendable {
         case ls, send, tab, open, back, state
+        /// Which app on which simulator answered, so mando can say what it is driving.
+        case hello
     }
 
     public var operation: Operation

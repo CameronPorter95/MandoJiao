@@ -52,6 +52,16 @@ struct RemoteControlTests {
         return (RemoteControl(registry: registry, transition: .zero), registry, log)
     }
 
+    @Test("hello names the app and, on a simulator, which one")
+    func hello() async {
+        let (control, _, _) = make()
+        #expect(await control.handle(RemoteRequest(.hello)).lines == [RemoteControl.identity])
+
+        let simulator = ["SIMULATOR_DEVICE_NAME": "iPhone 17 Pro", "SIMULATOR_UDID": "056C9DBA-BD6F-47F7-B8AE-F3E0F33A0F00"]
+        #expect(RemoteControl.identity(app: "MandoJiao", environment: simulator) == "MandoJiao on iPhone 17 Pro (056C9DBA)")
+        #expect(RemoteControl.identity(app: "MandoJiao", environment: [:]) == "MandoJiao, not on a simulator")
+    }
+
     @Test("ls shows the app, then each screen on show, then the front one's actions")
     func listing() async {
         let (control, _, _) = make()

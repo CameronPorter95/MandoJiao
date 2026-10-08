@@ -38,7 +38,12 @@ struct MandoJiaoApp: App {
         if ProcessInfo.processInfo.arguments.contains("-remote") {
             let registry = ScreenRegistry()
             screenRegistry = registry
-            remoteServer = try? RemoteServer(control: RemoteControl(registry: registry))
+            do {
+                remoteServer = try RemoteServer(control: RemoteControl(registry: registry))
+            } catch {
+                remoteServer = nil
+                errorLog.notice("remote: could not start: \(error.localizedDescription, privacy: .public)")
+            }
             remoteServer?.start()
         } else {
             screenRegistry = nil

@@ -1,5 +1,6 @@
 import Foundation
 import Network
+import OSLog
 
 /// Listens on the loopback interface for one JSON request per line and answers each on a line
 /// of its own. For debug builds launched to be driven; never start it otherwise.
@@ -24,11 +25,27 @@ public nonisolated final class RemoteServer: Sendable {
     public func start() {
         let control = control
         let queue = queue
+        let port = listener.parameters.requiredLocalEndpoint.map { "\($0)" } ?? "?"
         listener.newConnectionHandler = { connection in
             RemoteConnection(connection: connection, control: control, queue: queue).start()
         }
+        // Only one app can hold the port. A second one launched with -remote says so here,
+        // rather than leaving mando to drive the first without anyone noticing.
+        listener.stateUpdateHandler = { [listener] state in
+            switch state {
+            case .ready:
+                Self.log.notice("remote: listening on \(port, privacy: .public)")
+            case .failed(let error), .waiting(let error):
+                Self.log.notice("remote: cannot listen on \(port, privacy: .public), so this app cannot be driven: \(error.localizedDescription, privacy: .public)")
+                listener.cancel()
+            default:
+                break
+            }
+        }
         listener.start(queue: queue)
     }
+
+    private static let log = Logger(subsystem: "com.cameronporter.MandoJiao", category: "remote")
 }
 
 /// Reads a connection's requests in turn, replying to each before reading the next.

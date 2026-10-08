@@ -271,6 +271,15 @@ Checked on the iPhone 17 Pro simulator with a screenshot after each command: a t
 switched, a folder selected and a deck pushed, a speaking lesson presented and a typed
 answer graded, then back through each, with `ls` matching the screen every time.
 
+**Knowing what is driven.** The two modes answer alike, which is right for an agent and
+misleading for a person: headless commands succeed with no simulator open, and remote ones
+drive whichever app holds the port, perhaps on a simulator with no window. So mando's first
+line says which: `headless: …`, or `remote: MandoJiao on iPhone 17 Pro Max (1DD26091)`, from
+a `hello` the app answers with its simulator's name and id. The prompt is `mando remote>`
+when remote. Only one app can hold 9393; a second launched with -remote now logs
+`remote: cannot listen on 127.0.0.1:9393 …` in Xcode's console instead of failing silently.
+Checked with two simulators launched with -remote.
+
 **Rules.**
 
 - Never shipped. Everything sits behind `#if DEBUG` and a launch argument, so it is off

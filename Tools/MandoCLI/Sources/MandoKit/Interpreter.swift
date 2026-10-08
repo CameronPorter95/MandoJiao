@@ -15,15 +15,23 @@ public final class Interpreter {
         """
 
     private let session: Backend
+    /// What the commands drive, printed as mando starts, since the two modes answer alike.
+    public let banner: String
+    public let prompt: String
 
     /// Screens built here, over an in-memory store.
     public init() throws {
         session = try Session()
+        banner = "headless: the screens run here, over an in-memory store, on no simulator"
+        prompt = "mando> "
     }
 
     /// The app on the simulator, launched with -remote.
     public init(remotePort: UInt16) async throws {
-        session = try await RemoteBackend(port: remotePort)
+        let remote = try await RemoteBackend(port: remotePort)
+        session = remote
+        banner = "remote: \(try await remote.identity()) on 127.0.0.1:\(remotePort)"
+        prompt = "mando remote> "
     }
 
     public func run(_ command: String) async -> [String] {

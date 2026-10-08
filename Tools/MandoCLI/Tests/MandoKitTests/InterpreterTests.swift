@@ -14,6 +14,13 @@ struct InterpreterTests {
         await mando.run("ls").filter { !$0.hasPrefix("actions:") && !$0.hasPrefix("✓") }
     }
 
+    @Test("headless, it says it drives no simulator")
+    func banner() throws {
+        let mando = try Interpreter()
+        #expect(mando.banner.hasPrefix("headless: "))
+        #expect(mando.prompt == "mando> ")
+    }
+
     @Test("it starts on home, loaded")
     func startsOnHome() async throws {
         let mando = try Interpreter()

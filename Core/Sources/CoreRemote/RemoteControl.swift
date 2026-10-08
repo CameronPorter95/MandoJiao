@@ -35,6 +35,8 @@ public final class RemoteControl {
 
     private func perform(_ request: RemoteRequest) async throws -> [String] {
         switch request.operation {
+        case .hello:
+            return [Self.identity]
         case .ls:
             let screens = ([registry.app] + registry.screens.map(Optional.some)).compactMap { $0?.summary() }
             return screens + (top.map { ["actions: \($0.actions.joined(separator: ", "))"] } ?? [])
@@ -57,6 +59,21 @@ public final class RemoteControl {
             guard registry.screens.reversed().contains(where: { $0.back() }) else { throw RemoteError.nothingToGoBackFrom }
         }
         return []
+    }
+
+    /// "MandoJiao on iPhone 17 Pro (056C9DBA)". Simulators put their name and id in the
+    /// environment; a device does not.
+    nonisolated static var identity: String {
+        identity(
+            app: Bundle.main.object(forInfoDictionaryKey: "CFBundleName") as? String ?? ProcessInfo.processInfo.processName,
+            environment: ProcessInfo.processInfo.environment
+        )
+    }
+
+    nonisolated static func identity(app: String, environment: [String: String]) -> String {
+        guard let device = environment["SIMULATOR_DEVICE_NAME"] else { return "\(app), not on a simulator" }
+        let id = environment["SIMULATOR_UDID"].map { " (\($0.prefix(8)))" } ?? ""
+        return "\(app) on \(device)\(id)"
     }
 
     /// Until no screen is busy and what is on show stops changing. Gives up after ten seconds.

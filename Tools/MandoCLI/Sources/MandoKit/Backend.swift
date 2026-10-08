@@ -28,6 +28,11 @@ final class RemoteBackend: Backend {
         try await client.connect()
     }
 
+    /// Which app on which simulator holds the port.
+    func identity() async throws -> String {
+        try await request(RemoteRequest(.hello)).first ?? "an app"
+    }
+
     func list() async throws -> [String] { try await request(RemoteRequest(.ls)) }
     func send(_ action: String, _ arguments: String?) async throws {
         _ = try await request(RemoteRequest(.send, action: action, arguments: arguments))
