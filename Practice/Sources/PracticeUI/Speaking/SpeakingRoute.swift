@@ -38,13 +38,13 @@ public struct SpeakingRoute: View {
     }
 
     private func handle(_ effect: SpeakingEffect) {
-        switch effect {
+        switch navigation.follow(effect) {
         case .haptic(let kind):
             haptic = HapticEvent(kind: kind)
         case .showError(let error):
             self.error = error
-        case .close:
-            navigation.didClose()
+        case .close, nil:
+            break
         }
     }
 }

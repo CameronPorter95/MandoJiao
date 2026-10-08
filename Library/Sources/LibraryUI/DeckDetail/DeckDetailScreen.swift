@@ -22,7 +22,7 @@ struct DeckDetailScreen: View {
                         .padding(.vertical, 4)
                 }
                 PractiseRows(wordCount: state.selectedCount, minimumMatchingWords: state.minimumMatchingWords) {
-                    onAction(.startLessonTapped($0))
+                    onAction(.startLessonTapped(exercise: $0))
                 }
             }
 

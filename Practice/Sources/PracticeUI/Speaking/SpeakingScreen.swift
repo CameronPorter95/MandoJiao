@@ -92,7 +92,7 @@ struct SpeakingScreen: View {
             canListen: state.availability.canListen,
             onStartListening: { onAction(.startListeningTapped) },
             onStopListening: { onAction(.stopListeningTapped) },
-            onSubmitTyped: { onAction(.typedAnswerSubmitted($0)) },
+            onSubmitTyped: { onAction(.typedAnswerSubmitted(answer: $0)) },
             onToggleTyping: { onAction(.typingToggled) },
             onContinue: { onAction(.continueTapped) }
         )

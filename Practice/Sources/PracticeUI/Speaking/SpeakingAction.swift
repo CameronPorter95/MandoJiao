@@ -1,12 +1,12 @@
 import Foundation
 
-enum SpeakingAction: Equatable {
+enum SpeakingAction: Equatable, Decodable {
     case appeared
     case disappeared
     case sceneLeftForeground
     case startListeningTapped
     case stopListeningTapped
-    case typedAnswerSubmitted(String)
+    case typedAnswerSubmitted(answer: String)
     case typingToggled
     case continueTapped
     case practiseAgainTapped

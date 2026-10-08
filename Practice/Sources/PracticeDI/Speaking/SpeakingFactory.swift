@@ -1,7 +1,10 @@
 import CoreDI
+import CoreDomain
 import CoreSound
+import CoreUI
 import LibraryDomain
 import PracticeData
+import PracticeDomain
 import PracticeUI
 
 /// The only place that names the speaking lesson's concrete dependencies.
@@ -21,6 +24,28 @@ public enum SpeakingFactory: NavigationInputRouteFactory {
             logAttempt: SpeechLog.attempt
         )
         return SpeakingRoute(viewModel: viewModel, navigation: navigation)
+    }
+
+    /// The lesson without its view, silent and never waiting on the clock. `recogniser` must
+    /// hear the whole answer as it starts, which is what lets a listen end at once.
+    public static func makeDriver(
+        dependencies: Dependencies,
+        navigation: SpeakingNavigation,
+        input: SpeakingInput,
+        recogniser: any SpeechRecognising,
+        logAttempt: @escaping SpeakingViewModel.LogAttempt
+    ) -> ScreenDriver {
+        SpeakingViewModel(
+            request: input.request,
+            recogniser: recogniser,
+            audioSession: SilentAudioSession(),
+            sounds: SilentSounds(),
+            getSettings: SpeakingSettingsFactory.makeGetSettingsUseCase(dependencies: dependencies),
+            recordResults: input.recordResults,
+            logAttempt: logAttempt,
+            advanceDelay: .zero,
+            waitForEnd: Endpointing.endAtOnce
+        ).driver(navigation: navigation)
     }
 
     /// One word as a step of a longer lesson, handing its answer back once the card settles.

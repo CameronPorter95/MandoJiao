@@ -51,6 +51,7 @@ let package = Package(
             dependencies: [
                 "LibraryDomain", "LibraryData", "LibraryUI",
                 .product(name: "DictionaryDomain", package: "Dictionary"),
+                .product(name: "CoreUI", package: "Core"),
                 .product(name: "CoreDI", package: "Core"),
             ],
             swiftSettings: mainActorByDefault

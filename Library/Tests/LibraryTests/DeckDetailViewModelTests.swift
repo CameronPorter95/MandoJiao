@@ -156,7 +156,7 @@ struct DeckDetailViewModelTests {
     func startingALesson() async {
         let (detail, log) = await makeDetail()
         detail.send(.nameChanged("Mixed"))
-        detail.send(.startLessonTapped(.matching))
+        detail.send(.startLessonTapped(exercise: .matching))
 
         #expect(await waitUntil { log.effects.count == 1 })
         guard case .startLesson(let request, .matching) = log.effects.first else {
@@ -170,6 +170,40 @@ struct DeckDetailViewModelTests {
         #expect(request.otherWords.count == 5)
     }
 
+    @Test("driven by name, every listed action is accepted")
+    func driverAcceptsEveryAction() async {
+        let word = #"{"_0":"\#(Fixtures.water.id.uuidString)"}"#
+        let arguments = [
+            "nameChanged": #"{"_0":"Mixed"}"#, "searchChanged": #"{"_0":"wa"}"#,
+            "pickerSearchChanged": #"{"_0":"wa"}"#, "removeTapped": word, "wordToggled": word,
+            "startLessonTapped": #"{"exercise":"speaking"}"#, "destinationChosen": word,
+        ]
+        for name in DeckDetailAction.names {
+            let (detail, _) = await makeDetail()
+            let driver = detail.driver(navigation: DeckDetailNavigation(
+                didRequestMatching: { _ in }, didRequestFlashcards: { _ in }, didRequestSpeaking: { _ in }
+            ))
+            #expect(throws: Never.self) { try driver.send(name, arguments[name].map { Data($0.utf8) }) }
+        }
+    }
+
+    @Test("driven by name, starting a lesson presents it rather than reaching the effects")
+    func driverStartsALesson() async throws {
+        var presented: [LessonRequest] = []
+        let (detail, _) = await makeDetail()
+        let driver = detail.driver(navigation: DeckDetailNavigation(
+            didRequestMatching: { _ in }, didRequestFlashcards: { _ in }, didRequestSpeaking: { presented.append($0) }
+        ))
+        let effects = EffectLog(driver.effects())
+
+        try driver.send("startLessonTapped", Data(#"{"exercise":"speaking"}"#.utf8))
+
+        #expect(await waitUntil { presented.count == 1 })
+        #expect(presented.first?.source == .deck(Fixtures.fullDeck.id))
+        await settle()
+        #expect(effects.effects.isEmpty)
+    }
+
     @Test("a deck below the matching floor cannot match, but can start flash cards or reading aloud")
     func tooSmall() async {
         let (detail, log) = await makeDetail(Fixtures.smallDeck)
@@ -177,12 +211,12 @@ struct DeckDetailViewModelTests {
         #expect(!detail.state.canStart(.matching))
         #expect(detail.state.canStart(.flashcards))
         #expect(detail.state.canStart(.speaking))
-        detail.send(.startLessonTapped(.matching))
+        detail.send(.startLessonTapped(exercise: .matching))
         await settle()
         #expect(log.effects.isEmpty)
 
-        detail.send(.startLessonTapped(.flashcards))
-        detail.send(.startLessonTapped(.speaking))
+        detail.send(.startLessonTapped(exercise: .flashcards))
+        detail.send(.startLessonTapped(exercise: .speaking))
         #expect(await waitUntil { log.effects.count == 2 })
         let exercises = log.effects.compactMap { effect -> LessonExercise? in
             if case .startLesson(_, let exercise) = effect { exercise } else { nil }

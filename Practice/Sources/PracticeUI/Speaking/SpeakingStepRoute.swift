@@ -33,7 +33,7 @@ public struct SpeakingStepRoute: View {
                     canListen: state.availability.canListen,
                     onStartListening: { viewModel.send(.startListeningTapped) },
                     onStopListening: { viewModel.send(.stopListeningTapped) },
-                    onSubmitTyped: { viewModel.send(.typedAnswerSubmitted($0)) },
+                    onSubmitTyped: { viewModel.send(.typedAnswerSubmitted(answer: $0)) },
                     onToggleTyping: { viewModel.send(.typingToggled) },
                     onContinue: { viewModel.send(.continueTapped) }
                 )

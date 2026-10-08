@@ -2,34 +2,40 @@ import Foundation
 import Observation
 import PracticeDomain
 
-/// Returns canned transcripts in order. Used by previews and by the checks that drive a
-/// lesson without a microphone.
+/// Hears queued answers in order, each as its listen starts, for driving a lesson without a
+/// microphone.
+///
+/// A listen with nothing queued hears nothing and takes nothing, so the listen a lesson starts
+/// by itself after a right answer cannot eat an answer meant for a later tap.
 @MainActor
 @Observable
 public final class ScriptedRecogniser: SpeechRecognising {
     public var availability: SpeechAvailability = .ready
     public var partialText: String = ""
 
-    private var outcomes: [SpeechOutcome]
-    private var index = 0
+    private var queued: [SpeechOutcome]
 
-    public init(transcripts: [String]) {
-        self.outcomes = transcripts.map { SpeechOutcome(best: $0) }
+    public init(transcripts: [String] = []) {
+        self.queued = transcripts.map { SpeechOutcome(best: $0) }
     }
 
     public init(outcomes: [SpeechOutcome]) {
-        self.outcomes = outcomes
+        self.queued = outcomes
+    }
+
+    public func enqueue(_ outcome: SpeechOutcome) {
+        queued.append(outcome)
     }
 
     public func prepare() async -> SpeechAvailability { availability }
 
     public func start(hints: [String]) async throws {
-        partialText = ""
+        partialText = queued.first?.best ?? ""
     }
 
     public func stop() async -> SpeechOutcome {
-        defer { index += 1 }
-        let outcome = index < outcomes.count ? outcomes[index] : .empty
+        guard !queued.isEmpty else { return .empty }
+        let outcome = queued.removeFirst()
         partialText = outcome.best
         return outcome
     }

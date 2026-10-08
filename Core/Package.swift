@@ -24,7 +24,7 @@ let package = Package(
         .target(name: "CoreSound", dependencies: ["CoreDomain"], swiftSettings: mainActorByDefault),
         // DI primitives only, never registrations.
         .target(name: "CoreDI", swiftSettings: mainActorByDefault),
-        .target(name: "CoreTestSupport", path: "TestSupport", swiftSettings: mainActorByDefault),
+        .target(name: "CoreTestSupport", dependencies: ["CoreDI"], path: "TestSupport", swiftSettings: mainActorByDefault),
         .testTarget(
             name: "CoreTests",
             dependencies: ["CoreUI", "CoreSound", "CoreDesignSystem", "CoreTestSupport"],

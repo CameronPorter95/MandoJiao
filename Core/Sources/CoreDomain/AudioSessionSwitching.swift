@@ -11,3 +11,11 @@ public protocol AudioSessionSwitching: AnyObject {
     /// the usual level.
     func exitRecordingMode() async
 }
+
+/// Used by anything that runs without audio hardware.
+@MainActor
+public final class SilentAudioSession: AudioSessionSwitching {
+    public init() {}
+    public func enterRecordingMode() {}
+    public func exitRecordingMode() async {}
+}
