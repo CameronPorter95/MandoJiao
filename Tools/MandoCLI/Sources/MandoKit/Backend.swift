@@ -44,7 +44,7 @@ final class RemoteBackend: Backend {
     func back() async throws { _ = try await request(RemoteRequest(.back)) }
     func state() async throws -> [String] { try await request(RemoteRequest(.state)) }
     func say(_ answer: String) async throws {
-        throw CLIError.usage(#"the app's microphone is real in remote mode; type it: do typedAnswerSubmitted {"answer":"\#(answer)"}"#)
+        _ = try await request(RemoteRequest(.say, answer: answer))
     }
     func settle() async {}
     func takeNotes() -> [String] { [] }

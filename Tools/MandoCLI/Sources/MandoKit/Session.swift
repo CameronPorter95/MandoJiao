@@ -7,7 +7,6 @@ import LibraryDomain
 import LibraryUI
 import PracticeDI
 import PracticeDomain
-import PracticeTestSupport
 import PracticeUI
 import ProgressDI
 import ProgressDomain
@@ -33,7 +32,7 @@ final class Session: Backend {
     private var presented: [ScreenDriver] = []
     private var effectTasks: [String: Task<Void, Never>] = [:]
     /// The speaking lesson's, while one is open, for `say`.
-    private var recogniser: ScriptedRecogniser?
+    private var speech: ScriptedSpeech?
     /// Effects and attempts since the last command, printed after it settles.
     private var notes: [String] = []
 
@@ -104,8 +103,8 @@ final class Session: Backend {
     }
 
     func say(_ answer: String) throws {
-        guard let recogniser, presented.last?.name == "speaking" else { throw CLIError.notSpeaking }
-        recogniser.enqueue(SpeechOutcome(best: answer))
+        guard let speech, presented.last?.name == "speaking" else { throw CLIError.notSpeaking }
+        speech.enqueue(answer)
         try presented.last?.send("startListeningTapped", nil)
     }
 
@@ -176,8 +175,8 @@ final class Session: Backend {
     // MARK: - Lessons
 
     private func presentSpeaking(_ request: LessonRequest) {
-        let recogniser = ScriptedRecogniser()
-        self.recogniser = recogniser
+        let speech = ScriptedSpeech()
+        self.speech = speech
         let driver = SpeakingFactory.makeDriver(
             dependencies: dependencies,
             navigation: SpeakingNavigation(didClose: { [unowned self] in dismiss() }),
@@ -185,7 +184,7 @@ final class Session: Backend {
                 request: request,
                 recordResults: VocabularyRepositoryFactory.makeRecordLessonResultsUseCase(dependencies: dependencies)
             ),
-            recogniser: recogniser,
+            speech: speech,
             logAttempt: { [unowned self] attempt in
                 notes.append("· heard \"\(attempt.outcome.best)\" for \(attempt.card.hanzi): \(attempt.wasCorrect ? "right" : "wrong")")
             }
@@ -199,7 +198,7 @@ final class Session: Backend {
         guard let driver = presented.popLast() else { return }
         try? driver.send("disappeared", nil)
         effectTasks.removeValue(forKey: "lesson")?.cancel()
-        recogniser = nil
+        speech = nil
     }
 
     /// Only the tabs and the lesson are listened to: what a screen pushed inside a tab leaves

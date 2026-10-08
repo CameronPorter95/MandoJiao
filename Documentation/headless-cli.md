@@ -247,8 +247,19 @@ the screen by command, then screenshot.
 4. **Done. `MandoKit` gets a remote backend.** The interpreter runs against a `Backend`:
    the local `Session`, or `RemoteBackend` over the loopback. `open deck|folder` moved into
    the library's driver, `ScreenDriver.open`, so one lookup serves both.
-5. **Deferred. A launch argument for scripted speech.** `say` is refused in remote mode
-   with the `typedAnswerSubmitted` to send instead, which is graded the same way. The app's speaking lesson uses
+5. **Done. A launch argument for scripted speech.** A debug build launched with
+   `-scripted-speech` hears `ScriptedSpeech` (PracticeDI) in place of the microphone, and
+   remote `say` queues on it through `ScreenRegistry.speak`, then taps the mic, as headless
+   `say` does. It is separate from `-remote`, so remote mode can still use the real
+   microphone; without it, `say` is refused with the `typedAnswerSubmitted` to send instead.
+   `ScriptedRecogniser` moved from `PracticeTestSupport`, now gone, to `PracticeData`, so
+   the app links no test support.
+
+   Found by running it: the app's endpointing keeps the listen it opens after a right answer
+   open for up to 5s, and an answer queued during it was taken unheard as that listen ended
+   empty. An answer queued mid-listen now becomes its transcript, as speech into an open
+   microphone would, and the listen settles on it. Headless mode never showed this, since its
+   listens end at once. Mixed lesson steps still use the microphone: they have no driver. The app's speaking lesson uses
    `DictationRecogniser`, and recognition on the simulator is not to be judged. Under
    the argument, the speaking factory builds with `ScriptedRecogniser` and `say` feeds
    it. The card reacts in the simulator, which proves the flow and nothing about

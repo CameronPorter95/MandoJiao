@@ -14,8 +14,6 @@ let package = Package(
         .library(name: "PracticeDI", targets: ["PracticeDI"]),
         // For the app's navigation values only.
         .library(name: "PracticeUI", targets: ["PracticeUI"]),
-        // The scripted recogniser, for the headless CLI as well as the tests.
-        .library(name: "PracticeTestSupport", targets: ["PracticeTestSupport"]),
     ],
     dependencies: [
         .package(path: "../Core"),
@@ -66,17 +64,11 @@ let package = Package(
             ],
             swiftSettings: mainActorByDefault
         ),
-        .target(
-            name: "PracticeTestSupport",
-            dependencies: ["PracticeDomain"],
-            path: "TestSupport",
-            swiftSettings: mainActorByDefault
-        ),
         .testTarget(
             name: "PracticeTests",
             dependencies: [
                 .product(name: "ProgressDomain", package: "Progress"),
-                "PracticeDomain", "PracticeData", "PracticeUI", "PracticeDI", "PracticeTestSupport",
+                "PracticeDomain", "PracticeData", "PracticeUI", "PracticeDI",
                 .product(name: "LibraryDomain", package: "Library"),
                 .product(name: "LibraryTestSupport", package: "Library"),
                 .product(name: "CoreDomain", package: "Core"),

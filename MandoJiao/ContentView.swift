@@ -17,6 +17,8 @@ struct ContentView: View {
     let dependencies: Dependencies
     /// Set only when launched for remote driving.
     let screenRegistry: ScreenRegistry?
+    /// Set only when launched to hear scripted speech in place of the microphone.
+    let scriptedSpeech: ScriptedSpeech?
 
     @State private var coordinator = AppNavigationCoordinator()
 
@@ -73,7 +75,8 @@ struct ContentView: View {
                     navigation: navigation.practice.speaking,
                     input: SpeakingInput(
                         request: request,
-                        recordResults: VocabularyRepositoryFactory.makeRecordLessonResultsUseCase(dependencies: dependencies)
+                        recordResults: VocabularyRepositoryFactory.makeRecordLessonResultsUseCase(dependencies: dependencies),
+                        speech: scriptedSpeech
                     )
                 )
             case .flashcards(let request):
@@ -158,5 +161,5 @@ private func dictionaryVocabulary(dependencies: Dependencies) -> DictionaryVocab
 
 #Preview {
     let store = try! VocabularyRepositoryFactory.openStore(inMemory: true, hskWords: { (try? DictionaryRepositoryFactory.bundledHSKWords()) ?? [] })
-    ContentView(dependencies: LiveDependencies(modelContainer: store), screenRegistry: nil)
+    ContentView(dependencies: LiveDependencies(modelContainer: store), screenRegistry: nil, scriptedSpeech: nil)
 }

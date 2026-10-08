@@ -7,7 +7,7 @@ import Testing
 @MainActor
 struct RemoteControlTests {
     private enum Action: Decodable {
-        case appeared, disappeared, tapped
+        case appeared, disappeared, tapped, startListeningTapped
         case selectTab(tab: String)
     }
 
@@ -21,7 +21,7 @@ struct RemoteControlTests {
 
     private func screen(_ name: String, log: Log, back: @escaping () -> Bool = { false }) -> ScreenDriver {
         ScreenDriver(
-            name: name, actions: ["appeared", "disappeared", "tapped", "selectTab"],
+            name: name, actions: ["appeared", "disappeared", "tapped", "selectTab", "startListeningTapped"],
             state: { name }, summary: { "\($0) shown" },
             send: { (action: Action) in
                 if case .selectTab(let tab) = action { log.tab = tab }
@@ -68,7 +68,7 @@ struct RemoteControlTests {
         let reply = await control.handle(RemoteRequest(.ls))
         #expect(reply == RemoteReply(lines: [
             "app shown", "vocabulary shown", "deck shown",
-            "actions: appeared, disappeared, tapped, selectTab",
+            "actions: appeared, disappeared, tapped, selectTab, startListeningTapped",
         ]))
     }
 
@@ -101,6 +101,21 @@ struct RemoteControlTests {
         #expect(await control.handle(RemoteRequest(.back)).error == nil)
         #expect(!log.pushed)
         #expect(await control.handle(RemoteRequest(.back)).error == "nothing to go back from")
+    }
+
+    @Test("say queues the answer, then taps the microphone, only with scripted speech and a lesson open")
+    func saying() async {
+        let (control, registry, log) = make()
+        #expect(await control.handle(RemoteRequest(.say, answer: "ni")).error?.hasPrefix("say needs the app launched with -scripted-speech") == true)
+
+        var spoken: [String] = []
+        registry.speak = { spoken.append($0) }
+        #expect(await control.handle(RemoteRequest(.say, answer: "ni")).error == "say needs a speaking lesson open")
+
+        registry.register(screen("speaking", log: log), as: UUID())
+        #expect(await control.handle(RemoteRequest(.say, answer: "nihao")).error == nil)
+        #expect(spoken == ["nihao"])
+        #expect(log.sent.last == "speaking startListeningTapped")
     }
 
     @Test("a screen that disappears leaves the registry, so the one behind is in front again")

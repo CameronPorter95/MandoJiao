@@ -54,6 +54,11 @@ public final class RemoteControl {
             await settle()
             guard let vocabulary = registry.screens.last(where: { $0.name == "vocabulary" }) else { throw RemoteError.nothingOpen }
             try vocabulary.open(kind, query)
+        case .say:
+            guard let speak = registry.speak else { throw RemoteError.noScriptedSpeech }
+            guard let top, top.name == "speaking", let answer = request.answer else { throw RemoteError.notSpeaking }
+            speak(answer)
+            try top.send("startListeningTapped", nil)
         case .back:
             if registry.app?.back() == true { return [] }
             guard registry.screens.reversed().contains(where: { $0.back() }) else { throw RemoteError.nothingToGoBackFrom }
@@ -98,12 +103,17 @@ enum RemoteError: Error, CustomStringConvertible {
     case nothingOpen
     case nothingToGoBackFrom
     case notRemote
+    case noScriptedSpeech
+    case notSpeaking
 
     var description: String {
         switch self {
         case .nothingOpen: "nothing is open"
         case .nothingToGoBackFrom: "nothing to go back from"
         case .notRemote: "the app's navigation is not registered"
+        case .noScriptedSpeech:
+            "say needs the app launched with -scripted-speech as well; or type it: do typedAnswerSubmitted {\"answer\":\"…\"}"
+        case .notSpeaking: "say needs a speaking lesson open"
         }
     }
 }

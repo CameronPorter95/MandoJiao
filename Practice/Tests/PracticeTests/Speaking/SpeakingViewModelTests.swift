@@ -4,7 +4,6 @@ import Testing
 import CoreDomain
 import CoreUI
 import CoreTestSupport
-import PracticeTestSupport
 import LibraryTestSupport
 @testable import PracticeDomain
 @testable import PracticeData
@@ -473,6 +472,65 @@ struct SpeakingDriverTests {
         #expect(throws: ScreenDriverError.badArguments("typedAnswerSubmitted")) {
             try driver.send("typedAnswerSubmitted", nil)
         }
+    }
+}
+
+// MARK: - Scripted speech
+
+@Suite("Speaking lesson heard through scripted speech")
+@MainActor
+struct ScriptedSpeechLessonTests {
+    private let answers = ["水": "shui", "手机": "shouji"]
+
+    /// The app's own endpointing, sped up: it settles on a transcript that stops changing, and
+    /// gives up on silence.
+    nonisolated private static let endpointing: SpeakingViewModel.WaitForEnd = {
+        await Endpointing.waitForEnd(settleAfter: .milliseconds(50), hardLimit: .seconds(3), pollInterval: .milliseconds(10), transcript: $0)
+    }
+
+    @Test("an answer left queued when a lesson closes is not heard by the next")
+    func closingDropsTheQueue() async throws {
+        let recogniser = ScriptedRecogniser()
+        recogniser.enqueue(SpeechOutcome(best: "shui"))
+        recogniser.cancel()
+
+        try await recogniser.start(hints: [])
+        #expect(recogniser.partialText.isEmpty)
+        #expect(await recogniser.stop() == .empty)
+    }
+
+    @Test("an answer queued while the lesson listens on by itself is heard by that listen")
+    func queuedDuringAnAutomaticListen() async {
+        let recogniser = ScriptedRecogniser()
+        var attempts: [Bool] = []
+        let viewModel = SpeakingViewModel(
+            request: LessonRequest(title: "t", pool: [
+                WordPair(english: "water", hanzi: "水", pinyin: "shuǐ"),
+                WordPair(english: "mobile phone", hanzi: "手机", pinyin: "shǒujī"),
+            ]),
+            recogniser: recogniser,
+            audioSession: FakeAudio(),
+            sounds: FakeAudio(),
+            getSettings: GetSpeakingSettingsUseCase(repository: FixedSpeakingSettings(value: .default)),
+            completion: .lesson(RecordLessonResultsUseCase(repository: FakeVocabularyRepository())),
+            logAttempt: { attempts.append($0.wasCorrect) },
+            advanceDelay: .milliseconds(1),
+            waitForEnd: Self.endpointing
+        )
+        viewModel.send(.appeared)
+        #expect(await waitUntil { viewModel.state.lesson != nil && viewModel.state.availability == .ready })
+        let first = viewModel.state.lesson?.card.hanzi ?? ""
+
+        recogniser.enqueue(SpeechOutcome(best: answers[first] ?? ""))
+        viewModel.send(.startListeningTapped)
+        // A right answer: the lesson moves on and listens into the next card by itself.
+        #expect(await waitUntil { viewModel.state.lesson?.cardIndex == 1 && viewModel.state.mic == .listening })
+
+        let second = viewModel.state.lesson?.card.hanzi ?? ""
+        recogniser.enqueue(SpeechOutcome(best: answers[second] ?? ""))
+
+        #expect(await waitUntil { viewModel.state.lesson?.isFinished == true })
+        #expect(attempts == [true, true])
     }
 }
 
