@@ -18,15 +18,52 @@ public nonisolated struct ExampleSentence: Hashable, Sendable {
 }
 
 public nonisolated extension Array where Element == ExampleSentence {
-    /// The sentence for teaching `word` to a learner who knows `known`: the one with the
-    /// fewest other words they do not know, and among those the first, which is the easiest
-    /// as the file orders them. Nil when there are none.
-    func best(teaching word: String, knowing known: Set<String>) -> ExampleSentence? {
+    /// The sentence for teaching `word`, meaning `meanings`, to a learner who knows `known`.
+    ///
+    /// Only a sentence whose English says one of the meanings, the headline before the rest,
+    /// so a word is never shown in a sense the card does not give; then the fewest other words
+    /// the learner does not know; then the first, which is the easiest as the file orders them.
+    /// Nil when none says a meaning, or there are none. A word with no meaning to check, as 了,
+    /// or none given, is held to the rest alone.
+    func best(teaching word: String, meanings: [String] = [], knowing known: Set<String>) -> ExampleSentence? {
+        let checkable = meanings.filter(EnglishMeaning.isCheckable)
+        /// 0 for the headline, 1 for another meaning, nil for none.
+        let sense = { (sentence: ExampleSentence) -> Int? in
+            guard let headline = checkable.first else { return 0 }
+            if EnglishMeaning.says(headline, in: sentence.english) { return 0 }
+            return checkable.dropFirst().contains { EnglishMeaning.says($0, in: sentence.english) } ? 1 : nil
+        }
         let unknown = { (sentence: ExampleSentence) in
             sentence.words.count { $0 != word && !known.contains($0) }
         }
-        return enumerated().min { (unknown($0.element), $0.offset) < (unknown($1.element), $1.offset) }?.element
+        return enumerated()
+            .compactMap { offset, sentence in sense(sentence).map { (sentence, ($0, unknown(sentence), offset)) } }
+            .min { $0.1 < $1.1 }?
+            .0
     }
+}
+
+/// What a sentence is wanted for, when none of the bundled ones will do.
+public nonisolated struct ExampleRequest: Hashable, Sendable {
+    public let hanzi: String
+    public let pinyin: String
+    /// The sense the sentence must use.
+    public let meaning: String
+    /// Words the sentence should keep to where it can.
+    public let known: Set<String>
+
+    public init(hanzi: String, pinyin: String, meaning: String, known: Set<String>) {
+        self.hanzi = hanzi
+        self.pinyin = pinyin
+        self.meaning = meaning
+        self.known = known
+    }
+}
+
+/// Writes an example sentence on the device. Nil where it cannot, as on a device without the
+/// model; a sentence it writes is checked by `GenerateExampleUseCase` before it is shown.
+public nonisolated protocol ExampleGenerating: Sendable {
+    func example(for request: ExampleRequest) async throws -> ExampleSentence?
 }
 
 /// The bundled example sentences.

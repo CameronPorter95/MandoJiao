@@ -16,6 +16,7 @@ public final class MixedLessonViewModel {
     private let sounds: any MatchSoundPlaying
     private let audioSession: any AudioSessionSwitching
     private let findExamples: FindExamplesUseCase
+    private let generateExample: GenerateExampleUseCase
     private var didRecordResults = false
     private var examplesTask: Task<Void, Never>?
 
@@ -25,12 +26,14 @@ public final class MixedLessonViewModel {
         lesson: MixedLesson,
         recordResults: RecordLessonResultsUseCase,
         findExamples: FindExamplesUseCase,
+        generateExample: GenerateExampleUseCase,
         sounds: any MatchSoundPlaying,
         audioSession: any AudioSessionSwitching
     ) {
         state = MixedLessonState(lesson: lesson)
         self.recordResults = recordResults
         self.findExamples = findExamples
+        self.generateExample = generateExample
         self.sounds = sounds
         self.audioSession = audioSession
     }
@@ -100,17 +103,36 @@ public final class MixedLessonViewModel {
             if case .teach(let word) = step { word } else { nil }
         }
         let known = state.lesson.plan.known
-        examplesTask = Task { [findExamples] in
+        examplesTask = Task { [findExamples, generateExample] in
+            // Tatoeba's for every word first, since they are quick, then the model's for any
+            // word none of them use in a sense its card gives: it takes seconds a sentence.
+            var unmatched: [WordPair] = []
             for word in taught {
                 do {
                     let sentences = try await findExamples(hanzi: word.hanzi, pinyin: word.pinyin)
-                    if let example = sentences.best(teaching: word.hanzi, knowing: known) {
+                    if let example = sentences.best(teaching: word.hanzi, meanings: word.meanings, knowing: known) {
                         state.examples[word.id] = example
+                    } else {
+                        unmatched.append(word)
                     }
                 } catch is CancellationError {
                     return
                 } catch {
                     MixedLessonError.findExamplesFailed(VocabularyDomainError(error)).log()
+                    unmatched.append(word)
+                }
+            }
+            for word in unmatched {
+                guard let meaning = word.meanings.first else { continue }
+                do {
+                    let request = ExampleRequest(hanzi: word.hanzi, pinyin: word.pinyin, meaning: meaning, known: known)
+                    if let example = try await generateExample(request) {
+                        state.examples[word.id] = example
+                    }
+                } catch is CancellationError {
+                    return
+                } catch {
+                    MixedLessonError.generateExampleFailed(VocabularyDomainError(error)).log()
                 }
             }
         }

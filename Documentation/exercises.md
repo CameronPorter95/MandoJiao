@@ -165,9 +165,32 @@ English and the word in the accent colour. The lesson looks one up for every tau
 as it appears, so none is waited for on its card; a word with none, or a failed lookup,
 shows the word alone, and a failure is logged rather than alerted.
 
-**The sentence is chosen for the learner,** as the owner asked: of a reading's ten, the one
-with the fewest words outside those they have started (answered at least once, or marked
-learnt; `TodayPlan.known`), and among equals the easiest. Measured on Tatoeba's export:
+**The sentence uses the word in a sense its card gives.** A reading's characters can mean
+several things, and 打's easiest sentences are all 打电话, "call", when its card says "to
+hit". A sentence counts only where its English translation says one of the word's meanings
+in the learner's library, the headline before the rest (`EnglishMeaning`: rough stems, the
+common irregular forms, possessives). It cannot see paraphrase ("give me a ring" is not
+"to call") and treats a meaning made only of grammar or prepositions, as 了's or 在's
+"at, in", as having nothing to check; both are pinned as costs. The tool keeps, besides
+each reading's ten easiest, the easiest sentence for every meaning those leave out (735 of
+them), which gave 打 "Why did you hit me?". With a sentence in the headline's sense: HSK 1
+86% of words (77% before), HSK 2 84% (73%), HSK 3 80% (75%).
+
+**Where none says a meaning, the device writes one,** decided by the owner: Apple's on-device
+model (`ModelExampleGenerator`, behind `ExampleGenerating`) is asked for one short sentence
+using the word in its headline sense, keeping to the learner's started words. Only its Hanzi
+and English are used; the pinyin is the card's for the word and the lexicon's for the rest,
+since a small model's pinyin cannot be trusted on polyphones, though the lexicon's preferred
+reading can be wrong for another polyphone in the sentence. `GenerateExampleUseCase` drops a
+sentence that leaves the word out, has another script or digits, runs past 16 characters, or
+has no translation. Nothing is generated without the model: an older device, Apple
+Intelligence off, the model not ready, or no Chinese. Generated sentences are not marked
+for now; marking them is for later, if device testing finds enough of them wrong. Their
+quality is only judgeable on a device.
+
+**Then the sentence is chosen for the learner,** as the owner asked: the one with the fewest
+words outside those they have started (answered at least once, or marked learnt;
+`TodayPlan.known`), and among equals the easiest. Measured on Tatoeba's export:
 
 | Learner | Sentence of only known words | At most one unknown |
 | --- | --- | --- |
@@ -176,9 +199,9 @@ learnt; `TodayPlan.known`), and among equals the easiest. Measured on Tatoeba's 
 
 Ten candidates rather than every one keeps the file at 5.9 MB; all of them would raise the
 first row to 77%. A learner in their first days is the gap: Tatoeba has almost no sentence
-made of a few dozen words, so the fewest unknown words is the best it can do. Generating a
-sentence from the learner's own words, on device, is the planned answer for them; their
-pinyin would then come from their own words.
+made of a few dozen words, so the fewest unknown words is the best it can do. The model
+writes for them only where no sentence says the meaning; writing for every early learner
+too would be the next step if Tatoeba's fit proves too poor in use.
 
 `Tools/MakeExamples` builds `Examples.tsv` from Tatoeba's downloads. The rules, each
 measured before it was chosen:

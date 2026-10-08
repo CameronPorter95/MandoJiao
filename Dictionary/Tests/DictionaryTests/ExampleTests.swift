@@ -66,6 +66,13 @@ nonisolated struct ExampleTests {
         #expect(unknown(chosen) == sentences.map(unknown).min())
     }
 
+    @Test("a meaning the easiest sentences leave out still has one: 打 is taught as hitting, not only calling")
+    func everySense() async throws {
+        let sentences = try await examples(hanzi: "打", pinyin: "dǎ")
+        let chosen = try #require(sentences.best(teaching: "打", meanings: ["to hit, to strike"], knowing: []))
+        #expect(EnglishMeaning.says("to hit, to strike", in: chosen.english), "\(chosen.english)")
+    }
+
     @Test("every HSK 1 word with an example has one short enough for a card, in simplified characters")
     func shortAndSimplified() async throws {
         let words = try BundledHSK.words().filter { $0.level == 1 }

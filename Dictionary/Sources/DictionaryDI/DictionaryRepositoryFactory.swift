@@ -21,6 +21,11 @@ public nonisolated enum DictionaryRepositoryFactory {
         Tatoeba.examples
     }
 
+    /// Writes a sentence on the device where Tatoeba has none in the card's sense.
+    public static func makeExampleGenerator() -> any ExampleGenerating {
+        OnDeviceExamples.generator
+    }
+
     /// The bundled syllabus, read synchronously, for seeding a fresh store.
     public static func bundledHSKWords() throws -> [HSKWord] {
         try HSKSource.bundledWords()

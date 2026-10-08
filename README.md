@@ -112,8 +112,10 @@ results already in the vocabulary are ticked.
 Up to ten example sentences per reading come from Tatoeba, in simplified characters,
 each with its pinyin and an English translation, easiest first. A sentence is only an
 example of the reading its pinyin says, so 长 cháng and 长 zhǎng each get their own.
-Today's plan shows one with each new word: the one with the fewest words you haven't
-started yet. Rebuild them with `Tools/MakeExamples`
+Today's plan shows one with each new word: one whose English uses the word in a sense
+its card gives, then the one with the fewest words you haven't started yet. Where none of
+Tatoeba's uses that sense, the on-device model writes one, on devices with Apple
+Intelligence. Rebuild them with `Tools/MakeExamples`
 from Tatoeba's downloads.
 
 ## Building

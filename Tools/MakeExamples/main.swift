@@ -38,6 +38,9 @@ let resources = root.appending(path: "Dictionary/Sources/DictionaryData/Resource
 /// 10. A learner a few days in finds almost none at any number: those are left to the
 /// fewest unknown words.
 let perReading = 10
+/// A reading's meanings each given a sentence of its own, where the easiest ten have none:
+/// an HSK word's own, then the dictionary's first senses.
+let senseLimit = 6
 /// Han characters in a sentence worth showing a learner on one card.
 let lengthLimit = 4...16
 /// The length a sentence is best at: long enough to show the word in use.
@@ -179,10 +182,16 @@ struct Reading {
 }
 
 var readings: [String: [Reading]] = [:]
+/// Each reading's meanings, by "simplified\tpinyin": an HSK word's own first, then the
+/// dictionary's senses.
+var meanings: [String: [String]] = [:]
 for line in try lines("Dictionary.tsv", in: resources) where !line.hasPrefix("#") {
     let fields = line.split(separator: "\t", omittingEmptySubsequences: false)
     let simplified = String(fields[0])
     let pinyin = String(fields[2])
+    if fields.count > 4 {
+        meanings["\(simplified)\t\(pinyin)", default: []] += fields[4].split(separator: "\u{1F}").prefix(6).map(String.init)
+    }
     let parsed = syllables(marked: pinyin)
     guard parsed.count == simplified.filter(isHan).count, simplified.allSatisfy(isHan) else { continue }
     if readings[simplified]?.contains(where: { $0.pinyin == pinyin }) == true { continue }
@@ -195,6 +204,67 @@ for line in try lines("HSK.tsv", in: resources) where !line.hasPrefix("#") {
     let fields = line.split(separator: "\t")
     let word = String(fields[2])
     level[word] = min(level[word] ?? 7, Int(fields[0])!)
+    // An HSK word's meanings are what a library copy of it shows, so its sentences cover those.
+    if fields.count > 4 {
+        let key = "\(word)\t\(fields[3])"
+        meanings[key] = fields[4].split(separator: "\u{1F}").map(String.init) + (meanings[key] ?? [])
+    }
+}
+
+// MARK: Meanings
+
+// A copy of DictionaryDomain's EnglishMeaning, since a tool script cannot import the
+// package: whether an English translation says a meaning, by rough stems. Keep the two alike.
+
+let stopWords: Set<String> = [
+    "a", "an", "the", "of", "to", "be", "sb", "sth", "one", "one's", "oneself", "etc", "or", "and",
+    "in", "on", "at", "for", "with", "by", "as", "up", "out", "is", "it", "something", "someone",
+    "somebody", "used", "particle", "classifier", "~",
+]
+let suffixes: [(String, String)] = [("ies", "y"), ("ied", "y"), ("ing", ""), ("ed", ""), ("es", ""), ("s", ""), ("ly", "")]
+func regularStem(_ word: String) -> String {
+    var word = word
+    for (suffix, replacement) in suffixes where word.hasSuffix(suffix) && word.count - suffix.count >= 3 {
+        word = String(word.dropLast(suffix.count)) + replacement
+        if suffix == "ing" || suffix == "ed", let last = word.last, word.dropLast().last == last,
+           !"aeioulsfz".contains(last) {
+            word.removeLast()
+        }
+        break
+    }
+    return word.hasSuffix("e") && word.count > 2 ? String(word.dropLast()) : word
+}
+let irregular: [String: String] = [
+    "went": "go", "gone": "go", "goes": "go", "ate": "eat", "eaten": "eat", "bought": "buy",
+    "saw": "see", "seen": "see", "said": "say", "says": "say", "did": "do", "done": "do", "does": "do",
+    "made": "make", "took": "take", "taken": "take", "came": "come", "gave": "give", "given": "give",
+    "got": "get", "gotten": "get", "had": "have", "has": "have", "knew": "know", "known": "know",
+    "thought": "think", "told": "tell", "wrote": "write", "written": "write", "sat": "sit",
+    "stood": "stand", "slept": "sleep", "drank": "drink", "drunk": "drink", "ran": "run", "sold": "sell",
+    "taught": "teach", "learnt": "learn", "heard": "hear", "left": "leave", "lost": "lose", "met": "meet",
+    "paid": "pay", "spoke": "speak", "spoken": "speak", "began": "begin", "begun": "begin",
+    "brought": "bring", "felt": "feel", "found": "find", "flew": "fly", "drove": "drive",
+    "driven": "drive", "children": "child", "men": "man", "women": "woman", "people": "person",
+    "better": "good", "best": "good", "was": "be", "were": "be", "are": "be", "am": "be", "been": "be",
+].mapValues(regularStem)
+func englishWords(_ text: String) -> [String] {
+    text.lowercased()
+        .replacingOccurrences(of: "'s\\b", with: "", options: .regularExpression)
+        .split(whereSeparator: { !$0.isLetter && $0 != "'" })
+        .map { $0.trimmingCharacters(in: CharacterSet(charactersIn: "'")) }
+        .filter { !$0.isEmpty }
+}
+func stem(_ word: String) -> String { irregular[word] ?? regularStem(word) }
+func meaningParts(_ meaning: String) -> [Set<String>] {
+    let plain = meaning.replacingOccurrences(of: "\\([^)]*\\)", with: " ", options: .regularExpression)
+    return plain.split(whereSeparator: { ",;/".contains($0) }).compactMap { part in
+        let words = Set(englishWords(String(part)).filter { !stopWords.contains($0) }.map(stem))
+        return words.isEmpty ? nil : words
+    }
+}
+func englishSays(_ meaning: String, _ english: String) -> Bool {
+    let said = Set(englishWords(english).map(stem))
+    return meaningParts(meaning).contains { $0.isSubset(of: said) }
 }
 
 /// The simplified rewrite of a sentence written in traditional.
@@ -326,9 +396,22 @@ for sentence in sentences.values {
 
 var used: [Int: Sentence] = [:]
 var readingLines: [String] = []
+var extras = 0
 for (reading, found) in examples.sorted(by: { $0.key < $1.key }) {
     var seen = Set<Int>()
-    let best = found.sorted { $0.key < $1.key }.filter { seen.insert($0.sentence.id).inserted }.prefix(perReading)
+    let ordered = found.sorted { $0.key < $1.key }.filter { seen.insert($0.sentence.id).inserted }
+    var best = Array(ordered.prefix(perReading))
+    // The easiest sentence for each meaning the easiest ten leave out, so 打's "to hit" has
+    // one beside its many 打电话. Easiest first still, after the ten.
+    for meaning in (meanings[reading] ?? []).prefix(senseLimit) where !meaningParts(meaning).isEmpty {
+        guard !best.contains(where: { englishSays(meaning, $0.sentence.english) }),
+              let extra = ordered.first(where: { candidate in
+                  englishSays(meaning, candidate.sentence.english) && !best.contains { $0.sentence.id == candidate.sentence.id }
+              })
+        else { continue }
+        best.append(extra)
+        extras += 1
+    }
     best.forEach { used[$0.sentence.id] = $0.sentence }
     readingLines.append("W\t\(reading)\t\(best.map { String($0.sentence.id) }.joined(separator: ","))")
 }
@@ -339,4 +422,4 @@ let date = ISO8601DateFormatter.string(from: .now, timeZone: .current, formatOpt
 let header = "# Tatoeba \(date), CC BY 2.0 FR, https://tatoeba.org"
 try ([header] + sentenceLines + readingLines).joined(separator: "\n").appending("\n")
     .write(to: URL(fileURLWithPath: arguments[2]), atomically: true, encoding: .utf8)
-print("\(sentenceLines.count) sentences for \(readingLines.count) readings")
+print("\(sentenceLines.count) sentences for \(readingLines.count) readings, \(extras) kept for a meaning the easiest left out")

@@ -23,6 +23,7 @@ public enum MixedLessonFactory: NavigationInputRouteFactory {
                 lesson: MixedLesson(plan: input.plan),
                 recordResults: input.recordResults,
                 findExamples: input.findExamples,
+                generateExample: input.generateExample,
                 sounds: ToneEngine.shared,
                 audioSession: ToneEngine.shared
             ),
@@ -65,11 +66,19 @@ public struct MixedLessonInput {
     /// The dictionary's example sentences, for the words the lesson teaches. Handed in for
     /// the same reason.
     public let findExamples: FindExamplesUseCase
+    /// Writes one on the device for a word none of those use in its card's sense.
+    public let generateExample: GenerateExampleUseCase
 
-    public init(plan: TodayPlan, recordResults: RecordLessonResultsUseCase, findExamples: FindExamplesUseCase) {
+    public init(
+        plan: TodayPlan,
+        recordResults: RecordLessonResultsUseCase,
+        findExamples: FindExamplesUseCase,
+        generateExample: GenerateExampleUseCase
+    ) {
         self.plan = plan
         self.recordResults = recordResults
         self.findExamples = findExamples
+        self.generateExample = generateExample
     }
 }
 
