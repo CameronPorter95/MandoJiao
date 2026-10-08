@@ -1,14 +1,14 @@
 /// Every way out of the package's screens, one member per screen that has one.
 ///
-/// The library and the word editor have none: the editor is a sheet its presenter
-/// dismisses, and the library is left with the back button.
+/// The word editor has none: it is a sheet its presenter dismisses. A folder's navigation
+/// is made by the library tab, whose stack it is pushed onto.
 @MainActor
-public struct VocabularyNavigation {
+public struct LibraryNavigation {
     public var deckDetail: DeckDetailNavigation
-    public var library: LibraryNavigation
+    public var libraryTab: LibraryTabNavigation
 
-    public init(deckDetail: DeckDetailNavigation, library: LibraryNavigation) {
+    public init(deckDetail: DeckDetailNavigation, libraryTab: LibraryTabNavigation) {
         self.deckDetail = deckDetail
-        self.library = library
+        self.libraryTab = libraryTab
     }
 }

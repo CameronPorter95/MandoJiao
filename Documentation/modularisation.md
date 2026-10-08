@@ -144,10 +144,11 @@ domains. The alternative, `Settings` owning every preference, forces
 [CLAUDE.md](../CLAUDE.md#decisions-already-settled)).
 
 **The package is `Library`; its aggregate is still the vocabulary.** The rename moved the
-package, its targets and products. Types keep their names (`Vocabulary`,
-`VocabularyRepository`, `VocabularyNavigation`, `VocabularyError`, `VocabularySchemaV1`),
-because they name the learner's word collection, not the package, and
-`LibraryNavigation` already names the library tab's navigation.
+package, its targets and products, and the package's navigation bundle, which is
+`LibraryNavigation` like every `{X}Navigation`; the library tab's own navigation became
+`LibraryTabNavigation`, after its folder, to make room. Other types keep their names
+(`Vocabulary`, `VocabularyRepository`, `VocabularyError`, `VocabularySchemaV1`), because
+they name the learner's word collection, not the package.
 
 **A view two packages show goes in `CoreUI`, never in a peer's UI.** Home and the library
 both offer `PractiseRows` and a `BandBreakdown`. A shared view names no feature type: the
@@ -300,10 +301,17 @@ are all of this shape.
 
 **One bundle per package.** `{X}Navigation` holds one member per screen, so a factory
 signature stays at a single navigation parameter however many screens the package
-gains. `VocabularyNavigation` holds `deckDetail` and `library`, and `LibraryFactory` takes
-the whole bundle because it roots a tab. A package with one screen that has a way out,
-like `Progress`, uses that screen's navigation as its bundle: `AppNavigation.home` is a
-`HomeNavigation`. A folder in the
+gains. Every package with a screen that has a way out has one, even with a single screen:
+
+| Bundle | Members |
+| --- | --- |
+| `ProgressNavigation` | `home` |
+| `LibraryNavigation` | `deckDetail`, `libraryTab` |
+| `PracticeNavigation` | `matching`, `speaking`, `flashcards`, `mixedLesson` |
+
+`Dictionary` and `Settings` have none: their screens are only closed or left with the back
+button. `HomeFactory` and `LibraryFactory` take their whole bundle because each roots a
+tab; a presented lesson's factory takes its own member. A folder in the
 library gets its `FolderDetailNavigation` from `LibraryFactory`, since "a deck or folder
 was opened" pushes onto the library's own stack rather than leaving the package.
 
@@ -312,21 +320,16 @@ column, re-entering it on iPhone sent its screen a disappear while it was still 
 which ended the route's effects loop and live data; a lesson request then waited until
 the screen next appeared.
 
-`Practice` has no bundle yet: each exercise's screen has its own navigation
-(`MatchingNavigation`, `SpeakingNavigation`, `FlashcardsNavigation`,
-`MixedLessonNavigation`), each a field of `AppNavigation`. A `PracticeNavigation`
-bundle is the obvious tidy-up once a fifth screen arrives.
-
 **Flow constructors live in `{X}DI`,** named for the flow (`.app(...)`): the bundle's
-`VocabularyNavigation+Flows.swift` at the target root composes each screen's
-`HomeNavigation+Flow.swift` and `DeckDetailNavigation+Flow.swift` in its screen folder.
+`LibraryNavigation+Flows.swift` at the target root composes each screen's
+`DeckDetailNavigation+Flow.swift` and `LibraryTabNavigation+Flow.swift` in its screen folder.
 A constructor states what the flow does with each event, which is the decision, so it
 takes the app's actions (present a lesson, dismiss one) rather than building screens.
 A constructor belongs with the stack it navigates, which is not always the package that
 declares the type.
 
-**`AppNavigation` is the composition root's own bundle,** one property per package,
-built once by `AppNavigation.main(coordinator:)`. It is the only place that sees every
+**`AppNavigation` is the composition root's own bundle,** one property per package
+(`progress`, `library`, `practice`), built once by `AppNavigation.main(coordinator:)`. It is the only place that sees every
 package, so a cross-package jump (home to a lesson) is expressed there. App-level
 presentation state, the lesson presented over home, lives in `AppNavigationCoordinator`
 rather than in a view's `@State`, and `ContentView` only reads both.
@@ -352,7 +355,7 @@ resource.
 
 ```
 LibraryUI/
-  VocabularyNavigation.swift         <- the target's own mechanism
+  LibraryNavigation.swift            <- the target's own mechanism
   DeckDetail/DeckDetailRoute.swift
   DeckDetail/DeckDetailScreen.swift
   DeckDetail/DeckDetailViewModel.swift

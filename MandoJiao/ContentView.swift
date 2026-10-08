@@ -6,6 +6,7 @@ import LibraryDomain
 import LibraryUI
 import PracticeDI
 import PracticeDomain
+import PracticeUI
 import ProgressDI
 import SettingsDI
 import SwiftUI
@@ -24,7 +25,7 @@ struct ContentView: View {
                 NavigationStack {
                     HomeFactory.makeRoute(
                         dependencies: dependencies,
-                        navigation: navigation.home,
+                        navigation: navigation.progress,
                         input: HomeInput(
                             minimumMatchingWords: MatchingPlanBuilder.pairsPerExercise,
                             quickPracticeRounds: { [dependencies] in
@@ -41,7 +42,7 @@ struct ContentView: View {
             Tab("Vocabulary", systemImage: "books.vertical") {
                 LibraryFactory.makeRoute(
                     dependencies: dependencies,
-                    navigation: navigation.vocabulary,
+                    navigation: navigation.library,
                     input: LibraryInput(
                         minimumMatchingWords: MatchingPlanBuilder.pairsPerExercise,
                         dictionary: dictionaryAccess(dependencies: dependencies)
@@ -57,7 +58,7 @@ struct ContentView: View {
             case .matching(let request):
                 MatchingFactory.makeRoute(
                     dependencies: dependencies,
-                    navigation: navigation.matching,
+                    navigation: navigation.practice.matching,
                     input: MatchingInput(
                         request: request,
                         recordResults: VocabularyRepositoryFactory.makeRecordLessonResultsUseCase(dependencies: dependencies)
@@ -66,7 +67,7 @@ struct ContentView: View {
             case .speaking(let request):
                 SpeakingFactory.makeRoute(
                     dependencies: dependencies,
-                    navigation: navigation.speaking,
+                    navigation: navigation.practice.speaking,
                     input: SpeakingInput(
                         request: request,
                         recordResults: VocabularyRepositoryFactory.makeRecordLessonResultsUseCase(dependencies: dependencies)
@@ -75,7 +76,7 @@ struct ContentView: View {
             case .flashcards(let request):
                 FlashcardsFactory.makeRoute(
                     dependencies: dependencies,
-                    navigation: navigation.flashcards,
+                    navigation: navigation.practice.flashcards,
                     input: FlashcardsInput(
                         request: request,
                         recordResults: VocabularyRepositoryFactory.makeRecordLessonResultsUseCase(dependencies: dependencies)
@@ -84,7 +85,7 @@ struct ContentView: View {
             case .todayPlan(let plan):
                 MixedLessonFactory.makeRoute(
                     dependencies: dependencies,
-                    navigation: navigation.mixedLesson,
+                    navigation: navigation.practice.mixedLesson,
                     input: MixedLessonInput(
                         plan: plan,
                         recordResults: VocabularyRepositoryFactory.makeRecordLessonResultsUseCase(dependencies: dependencies)

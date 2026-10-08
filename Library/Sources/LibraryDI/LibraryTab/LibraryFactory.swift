@@ -8,7 +8,7 @@ import SwiftUI
 public enum LibraryFactory: NavigationInputRouteFactory {
     public static func makeRoute(
         dependencies: Dependencies,
-        navigation: VocabularyNavigation,
+        navigation: LibraryNavigation,
         input: LibraryInput
     ) -> LibraryRoute {
         let repository = VocabularyRepositoryFactory.makeRepository(dependencies: dependencies)
@@ -28,9 +28,9 @@ public enum LibraryFactory: NavigationInputRouteFactory {
             AnyView(FolderDetailFactory.makeRoute(
                 dependencies: dependencies,
                 navigation: .library(
-                    presentMatching: navigation.library.didRequestMatching,
-                    presentFlashcards: navigation.library.didRequestFlashcards,
-                    presentSpeaking: navigation.library.didRequestSpeaking,
+                    presentMatching: navigation.libraryTab.didRequestMatching,
+                    presentFlashcards: navigation.libraryTab.didRequestFlashcards,
+                    presentSpeaking: navigation.libraryTab.didRequestSpeaking,
                     openDeck: context.openDeck,
                     openFolder: context.openFolder
                 ),
@@ -46,7 +46,7 @@ public enum LibraryFactory: NavigationInputRouteFactory {
         }
         return LibraryRoute(
             viewModel: viewModel,
-            navigation: navigation.library,
+            navigation: navigation.libraryTab,
             root: { selection, context in
                 switch selection {
                 case .folder(let id): folder(id, context)

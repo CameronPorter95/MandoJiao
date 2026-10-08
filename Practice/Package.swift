@@ -72,7 +72,7 @@ let package = Package(
             name: "PracticeTests",
             dependencies: [
                 .product(name: "ProgressDomain", package: "Progress"),
-                "PracticeDomain", "PracticeData", "PracticeUI", "PracticeTestSupport",
+                "PracticeDomain", "PracticeData", "PracticeUI", "PracticeDI", "PracticeTestSupport",
                 .product(name: "LibraryDomain", package: "Library"),
                 .product(name: "LibraryTestSupport", package: "Library"),
                 .product(name: "CoreDomain", package: "Core"),

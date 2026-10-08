@@ -1,7 +1,7 @@
 import LibraryDomain
 
 @MainActor
-public struct LibraryNavigation {
+public struct LibraryTabNavigation {
     public var didRequestMatching: (LessonRequest) -> Void
     /// Not from the library itself, whose folder swipe starts matching, but handed on to
     /// the folders and decks it pushes.
