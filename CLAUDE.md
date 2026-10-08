@@ -69,8 +69,9 @@ cd Practice && swift test --filter StrictnessTests
 Drive screens headlessly, no simulator: `cd Tools/MandoCLI && swift run mando`, then
 `help`. Not in the Xcode scheme, so its 9 tests (`swift test` there) are not in the counts
 below; see `Documentation/headless-cli.md`. The same commands drive the app on the
-simulator: launch a debug build with `-remote`, then `swift run mando --remote`. mando's
-first line names what it drives; only one app can hold the port.
+simulator: tick `-remote` under the scheme's Run arguments (committed unticked), run a
+debug build, then `swift run mando --remote`. mando's first line names what it drives;
+only one app can hold the port. Ticking it is a local change: do not commit it ticked.
 
 Get `<udid>` from `xcrun simctl list devices available`. Xcode 27 did not resolve
 `name=iPhone 17 Pro` here.
