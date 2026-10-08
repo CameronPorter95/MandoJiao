@@ -162,9 +162,15 @@ struct TeachWordView: View {
                 .foregroundStyle(.secondary)
             Text(example.english)
                 .font(.subheadline)
+            if example.isGenerated {
+                Label("AI-generated", systemImage: "sparkles")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .padding(.top, 2)
+            }
         }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("Example: \(example.hanzi). \(example.english)")
+        .accessibilityLabel("\(example.isGenerated ? "AI-generated example" : "Example"): \(example.hanzi). \(example.english)")
     }
 
     /// The sentence with the word in the accent colour, wherever it appears.

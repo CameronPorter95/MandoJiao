@@ -30,7 +30,8 @@ public nonisolated struct GenerateExampleUseCase: Sendable {
             case .written(let written):
                 let sentence = ExampleSentence(
                     hanzi: written.hanzi, pinyin: written.pinyin,
-                    english: EnglishWordOrder.speakerLast(written.english), words: written.words
+                    english: EnglishWordOrder.speakerLast(written.english), words: written.words,
+                    isGenerated: true
                 )
                 if Self.isFit(sentence, for: request) { return sentence }
             }

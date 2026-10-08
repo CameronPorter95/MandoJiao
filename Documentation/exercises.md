@@ -187,15 +187,15 @@ the dictionary's one reading with the same letters; never a reading of its own (
 
 **Where none says a meaning, the device writes one,** decided by the owner: Apple's on-device
 model (`ModelExampleGenerator`, behind `ExampleGenerating`) is asked for one short sentence
-using the word in its headline sense, keeping to the learner's started words. Only its Hanzi
-and English are used; the pinyin is the card's for the word and the lexicon's for the rest,
+using the word in its headline sense, then, in a fresh session, for its English. Only the
+Hanzi and that English are the model's; the pinyin is the card's for the word and the lexicon's for the rest,
 since a small model's pinyin cannot be trusted on polyphones, though the lexicon's preferred
 reading can be wrong for another polyphone in the sentence. `GenerateExampleUseCase` drops a
 sentence that leaves the word out, has another script or digits, runs past 16 characters, or
 has no translation. Nothing is generated without the model: an older device, Apple
 Intelligence off, the model not ready, or no Chinese. **Then the card shows no example,**
-decided by the owner: never a sentence in another sense in its place. Generated sentences are not marked
-for now; marking them is for later, if review finds enough of them wrong.
+decided by the owner: never a sentence in another sense in its place. A generated sentence
+is marked "AI-generated" under its translation, decided by the owner after the second review.
 
 A refusal (the safety filter declined 小学生 two times in three), an answer that runs on, or
 a sentence the checks drop is tried again, three tries in all. The prompt says the sentence
@@ -234,6 +234,27 @@ sentence's must. A sentence needs four Han characters (我和你 passed at three
 prompt asks for a complete one. The cost: of 411 runs, 51% kept where 91% were, and 83 of
 137 words have a sentence where 134 did, partly because the matcher is literal: 水里有鱼,
 "there is a fish in the water", fails 里's "inside".
+
+**The second review** (2026-10-09), of those 83 sentences: Mandarin 81% natural, 7% awkward,
+12% wrong; no sentence was marked down for grammar or punctuation. The model's own
+translation was right for 71%, the separate one for 78%, though only the model's had to pass
+the meaning check; where they differed, the separate one was right 11 times in 16. Taking
+the separate one, 70% of sentences were natural with a right translation. So:
+
+- **The English is asked for on its own,** told what the word means. The sentence's
+  generated type keeps an English field the app ignores: without it, every request for 和
+  and 女生 on the Mac tripped the guardrail.
+- **Word order is left to `EnglishWordOrder`,** which now takes names ("I and Xiaoming" got
+  through). Given the rule as the pattern "X and I", the translator wrote "X and I went to
+  the park with my mom".
+- **Generated sentences are marked,** since nearly a third had a flaw somewhere.
+- **They stay held** until the owner lifts it.
+
+About ten failures were the card's meaning, not the model's: 女生 "schoolgirl" for a girl,
+本子 "book" for a notebook, 箱子 "suitcase" for a box, 公交车 "public transport vehicle" for
+a bus, 初中 and 高中 "junior" and "senior high school", 大小 "large and small" for size. The
+meaning check makes a translation say these, so the right one, "I know a girl", is dropped
+for 女生. Fixing the meanings would help Tatoeba's sentences too.
 
 **Then the sentence is chosen for the learner,** as the owner asked: the one with the fewest
 words outside those they have started (answered at least once, or marked learnt;

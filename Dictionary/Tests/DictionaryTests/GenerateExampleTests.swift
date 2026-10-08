@@ -31,9 +31,9 @@ nonisolated struct GenerateExampleTests {
     @Test("a refusal or an unfit sentence is tried again, up to three times in all")
     func retries() async throws {
         let refusedOnce = ScriptedGenerator(.refused, .written(good))
-        #expect(try await GenerateExampleUseCase(generator: refusedOnce)(hit) == good)
+        #expect(try await GenerateExampleUseCase(generator: refusedOnce)(hit)?.hanzi == good.hanzi)
         let unfitTwice = ScriptedGenerator(.written(ExampleSentence(hanzi: "你别碰我。", pinyin: "", english: "Don't touch me.")), .refused, .written(good))
-        #expect(try await GenerateExampleUseCase(generator: unfitTwice)(hit) == good)
+        #expect(try await GenerateExampleUseCase(generator: unfitTwice)(hit)?.hanzi == good.hanzi)
 
         let neverFit = ScriptedGenerator(.refused)
         #expect(try await GenerateExampleUseCase(generator: neverFit)(hit) == nil)
@@ -50,6 +50,22 @@ nonisolated struct GenerateExampleTests {
     @Test("a short sentence in Hanzi that uses the word is kept")
     func kept() async throws {
         #expect(try await generated("你别打我。")?.hanzi == "你别打我。")
+    }
+
+    /// The owner's decision of 2026-10-09, after the second review found 30% flawed.
+    @Test("a written sentence is marked as generated, and a bundled one is not")
+    func marked() async throws {
+        #expect(try await generated("你别打我。")?.isGenerated == true)
+        #expect(!ExampleSentence(hanzi: "你别打我。", pinyin: "", english: "Don't hit me.").isGenerated)
+    }
+
+    /// Given "X and I" as a pattern, the model wrote it literally: "X and I went to the park".
+    @Test("the translation is asked for on its own, told the word's meaning, with no word-order pattern to copy")
+    func translationPrompt() {
+        let prompt = ModelExampleGenerator.translationPrompt(of: "你别打我。", for: hit)
+        #expect(prompt.contains("打 means \"to hit, to strike\""))
+        #expect(prompt.hasSuffix("你别打我。"))
+        #expect(!ModelExampleGenerator.translatorInstructions.contains("and I"))
     }
 
     @Test("a sentence is dropped if it leaves the word out, has other scripts, runs long or has no translation", arguments: [

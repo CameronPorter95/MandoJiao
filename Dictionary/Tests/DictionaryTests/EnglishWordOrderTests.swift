@@ -9,6 +9,9 @@ nonisolated struct EnglishWordOrderTests {
         ("I and you go to the park together.", "You and I go to the park together."),
         ("I and she went to the park to play", "She and I went to the park to play"),
         ("Yesterday I and my mother had lunch.", "Yesterday my mother and I had lunch."),
+        // From the second review, of 我和小明在咖啡馆对话.
+        ("I and Xiaoming are talking at the cafe", "Xiaoming and I are talking at the cafe"),
+        ("I and Xiao Ming talked.", "Xiao Ming and I talked."),
     ])
     func speakerLast(written: String, fixed: String) {
         #expect(EnglishWordOrder.speakerLast(written) == fixed)

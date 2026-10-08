@@ -120,12 +120,13 @@ struct MixedLessonViewModelTests {
     private static let salt = ExampleSentence(hanzi: "请把盐递给我，水也要。", pinyin: "", english: "Pass the salt, please.")
     private static let written = ExampleSentence(hanzi: "我想喝水。", pinyin: "Wǒ xiǎng hē shuǐ.", english: "I want to drink water.")
 
-    @Test("a word none of whose sentences say its meaning has one written on the device, keeping to the learner's words")
+    @Test("a word none of whose sentences say its meaning has one written on the device, marked as such")
     func examplesWritten() async {
         let generator = FakeGenerator(Self.written)
         let (viewModel, _) = makeViewModel(examples: FakeExamples(["水": [Self.salt]]), generator: generator)
         viewModel.send(.appeared)
-        #expect(await waitUntil { viewModel.state.examples[LessonWords.water.id] == Self.written })
+        #expect(await waitUntil { viewModel.state.examples[LessonWords.water.id]?.hanzi == Self.written.hanzi })
+        #expect(viewModel.state.examples[LessonWords.water.id]?.isGenerated == true)
         #expect(await generator.requests == [ExampleRequest(hanzi: "水", pinyin: "shuǐ", meaning: "water")])
     }
 

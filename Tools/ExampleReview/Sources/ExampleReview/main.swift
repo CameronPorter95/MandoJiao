@@ -1,7 +1,6 @@
 import DictionaryDI
 import DictionaryDomain
 import Foundation
-import FoundationModels
 import LibraryDomain
 
 // Runs the app's own example writer, the on-device model behind GenerateExampleUseCase, over
@@ -11,13 +10,13 @@ import LibraryDomain
 //   swift run review-examples [--runs 3] [--words 和,里] [--out ExampleReview.json]
 //
 // Each word is written `--runs` times, each run with the use case's own retries, and every
-// attempt's answer is counted. Each kept sentence also gets a second English version, asked
-// for on its own, since the first review found the model's Chinese better than the English it
-// wrote alongside it. The JSON is what the review page shows a native speaker.
+// attempt's answer is counted. The JSON is what the review page shows a native speaker.
 //
-// The first review (2026-10-08) also compared asking the model to keep to the starter's words:
+// The first review (2026-10-08) compared asking the model to keep to the starter's words:
 // a native speaker judged 37% of those sentences natural against 61% asked freely, so the app
-// no longer asks.
+// no longer asks. The second (2026-10-09) compared the English the model wrote with the
+// sentence against a translation asked for on its own: 71% right against 78%, so the app now
+// asks for it on its own.
 
 struct Word: Codable {
     let source: String
@@ -37,10 +36,8 @@ struct Run: Codable {
     let unfit: Int
     let hanzi: String?
     let pinyin: String?
-    /// The translation the model wrote with the sentence, as the app shows it today.
+    /// The translation, as the app shows it.
     let english: String?
-    /// A translation asked for on its own, of the same sentence.
-    let separateEnglish: String?
     let seconds: Double
     /// Every unfit sentence, so the review can see what was dropped.
     let dropped: [String]
@@ -63,34 +60,6 @@ actor CountingGenerator: ExampleGenerating {
 
     func reset() {
         answers = []
-    }
-}
-
-/// The trial second translation: a fresh session asked only to translate, told what the taught
-/// word means, since both translations made 后年, the year after next, "next year".
-func translate(_ chinese: String, word: Word) async -> String? {
-    // No example sentence in here: given "my mom and I" as one, it translated 家人在一起玩耍,
-    // the family playing together, as "My mom and I are having fun together". A pattern, not
-    // a sentence, carries the word-order rule.
-    let session = LanguageModelSession(instructions: """
-        You translate Mandarin Chinese into English for a learner. Write what a native English \
-        speaker would say to mean the same thing, not a word-for-word gloss of the Chinese. \
-        Follow English word order: never begin a list of people with "I"; write "X and I". \
-        Translate only what the sentence says, adding nothing, and keep its tense and its \
-        words' precise meanings.
-        """)
-    do {
-        let answer = try await session.respond(
-            to: """
-                In this sentence, \(word.hanzi) means "\(word.meaning)". Translate the sentence \
-                into English. Reply with the translation only.
-                \(chinese)
-                """,
-            options: GenerationOptions(maximumResponseTokens: 80)
-        )
-        return EnglishWordOrder.speakerLast(answer.content.trimmingCharacters(in: .whitespacesAndNewlines))
-    } catch {
-        return nil
     }
 }
 
@@ -150,8 +119,7 @@ for word in asking {
             print("\(word.hanzi) \(run): error \(error)")
             results.append(Run(
                 word: word, run: run, outcome: "error", attempts: await generator.answers.count + 1,
-                refused: 0, unfit: 0, hanzi: nil, pinyin: nil, english: nil, separateEnglish: nil,
-                seconds: 0, dropped: ["\(error)"]
+                refused: 0, unfit: 0, hanzi: nil, pinyin: nil, english: nil, seconds: 0, dropped: ["\(error)"]
             ))
             continue
         }
@@ -163,14 +131,13 @@ for word in asking {
             return "\(written.hanzi) | \(written.english)"
         }
         let outcome = sentence != nil ? "kept" : answers.contains(.unavailable) ? "unavailable" : "none"
-        let separate = if let sentence { await translate(sentence.hanzi, word: word) } else { String?.none }
         results.append(Run(
             word: word, run: run, outcome: outcome, attempts: answers.count,
             refused: answers.count { $0 == .refused }, unfit: dropped.count,
             hanzi: sentence?.hanzi, pinyin: sentence?.pinyin, english: sentence?.english,
-            separateEnglish: separate, seconds: seconds, dropped: dropped
+            seconds: seconds, dropped: dropped
         ))
-        print("\(word.hanzi) \(run): \(outcome) after \(answers.count)  \(sentence.map { "\($0.hanzi) | \($0.english) | \(separate ?? "-")" } ?? dropped.joined(separator: "; "))")
+        print("\(word.hanzi) \(run): \(outcome) after \(answers.count)  \(sentence.map { "\($0.hanzi) | \($0.english)" } ?? dropped.joined(separator: "; "))")
         if outcome == "unavailable" {
             print("The model is unavailable on this Mac: Apple Intelligence must be on.")
             exit(1)

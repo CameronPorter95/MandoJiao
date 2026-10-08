@@ -19,10 +19,18 @@ actor ModelExampleGenerator: ExampleGenerating {
         let model = SystemLanguageModel.default
         guard case .available = model.availability, model.supportsLocale(Locale(identifier: "zh-Hans")) else { return .unavailable }
 
-        let session = LanguageModelSession(model: model, instructions: Self.instructions)
-        let written: WrittenExample
+        let hanzi: String
+        let english: String
         do {
-            written = try await session.respond(to: Self.prompt(for: request), generating: WrittenExample.self, options: Self.options).content
+            let session = LanguageModelSession(model: model, instructions: Self.instructions)
+            hanzi = try await session.respond(to: Self.prompt(for: request), generating: WrittenExample.self, options: Self.options)
+                .content.chinese.trimmingCharacters(in: .whitespacesAndNewlines)
+            // A fresh session for the English: in the second review a native speaker judged 78% of
+            // these translations right against 71% of those written with the sentence, and the
+            // separate one won 11 of the 16 where they differed.
+            let translator = LanguageModelSession(model: model, instructions: Self.translatorInstructions)
+            english = try await translator.respond(to: Self.translationPrompt(of: hanzi, for: request), options: Self.translationOptions)
+                .content.trimmingCharacters(in: .whitespacesAndNewlines)
         } catch let error as LanguageModelSession.GenerationError {
             switch error {
             case .assetsUnavailable, .unsupportedLanguageOrLocale:
@@ -35,13 +43,12 @@ actor ModelExampleGenerator: ExampleGenerating {
                 throw error
             }
         }
-        let hanzi = written.chinese.trimmingCharacters(in: .whitespacesAndNewlines)
         // Characters the lexicon cannot read have no pinyin to show, so this one is not usable;
         // another may be.
         guard let pinyin = try await SentencePinyin.spell(hanzi, word: request.hanzi, wordPinyin: request.pinyin, lexicon: lexicon) else {
             return .refused
         }
-        return .written(ExampleSentence(hanzi: hanzi, pinyin: pinyin, english: written.english.trimmingCharacters(in: .whitespacesAndNewlines)))
+        return .written(ExampleSentence(hanzi: hanzi, pinyin: pinyin, english: english))
     }
 
     static let instructions = """
@@ -69,16 +76,39 @@ actor ModelExampleGenerator: ExampleGenerating {
             characters.
             """
     }
+
+    /// No word-order rule in here; `EnglishWordOrder` makes it. Given "my mom and I" as an
+    /// example, it translated 家人在一起玩耍, the family playing together, as "My mom and I are
+    /// having fun together"; given the rule as the pattern "X and I", it wrote "X and I went to
+    /// the park with my mom".
+    static let translatorInstructions = """
+        You translate Mandarin Chinese into English for a learner. Write what a native English \
+        speaker would say to mean the same thing, not a word-for-word gloss of the Chinese. \
+        Translate only what the sentence says, adding nothing, and keep its tense and its \
+        words' precise meanings.
+        """
+
+    /// Told what the word means, since both translations in the first trial made 后年, the year
+    /// after next, "next year".
+    static func translationPrompt(of hanzi: String, for request: ExampleRequest) -> String {
+        """
+        In this sentence, \(request.hanzi) means "\(request.meaning)". Translate the sentence \
+        into English. Reply with the translation only.
+        \(hanzi)
+        """
+    }
+
+    private static let translationOptions = GenerationOptions(maximumResponseTokens: 80)
 }
 
+/// Only `chinese` is used. The English written alongside it glossed the Chinese word order, "I
+/// and my mom went to the supermarket", and a native speaker judged fewer of those right than
+/// of translations asked for on their own. It stays because without it, on the Mac, every
+/// request for 和 and 女生 tripped the guardrail; with it, they were written.
 @Generable
 struct WrittenExample {
     @Guide(description: "One short sentence in simplified Chinese characters that uses the word in the given sense")
     var chinese: String
-    // Asked for "a natural English translation", it glossed the Chinese word order: "I and my
-    // mom went to the supermarket", where English says "my mom and I". Asking for natural
-    // English here did not change that; a translation asked for on its own did, and the
-    // second review compares the two.
     @Guide(description: "What a native English speaker would say to mean the same thing: natural English in English word order, not a word-for-word gloss of the Chinese")
     var english: String
 }
@@ -86,9 +116,11 @@ struct WrittenExample {
 /// The one generator, for the app's lifetime.
 public nonisolated enum OnDeviceExamples {
     /// Held by the owner on 2026-10-08 until a second native-speaker review: of the first
-    /// round's sentences, 61% were natural at best, and many translations were wrong. While
-    /// held the app writes nothing, so a card with no sentence in its sense shows no example,
-    /// as on a phone without the model. The review harness uses `model` regardless.
+    /// round's sentences, 61% were natural at best, and many translations were wrong. In the
+    /// second, 81% were natural and 70% were natural with a right translation; lifting the hold
+    /// is the owner's call. While held the app writes nothing, so a card with no sentence in its
+    /// sense shows no example, as on a phone without the model. The review harness uses `model`
+    /// regardless.
     public static let isHeld = true
 
     public static let model: any ExampleGenerating = ModelExampleGenerator(lexicon: Lexicon.repository)

@@ -1,6 +1,7 @@
 import Foundation
 
-/// A sentence that uses a word, from Tatoeba, with its pinyin and an English translation.
+/// A sentence that uses a word, from Tatoeba or written on the device, with its pinyin and an
+/// English translation.
 public nonisolated struct ExampleSentence: Hashable, Sendable {
     public let hanzi: String
     /// With tone marks, a space between words.
@@ -8,12 +9,16 @@ public nonisolated struct ExampleSentence: Hashable, Sendable {
     public let english: String
     /// Its words, as Tatoeba's transcription splits it: 学生 是 我 朋友.
     public let words: [String]
+    /// Written by the on-device model rather than a person. Shown as such: in the second
+    /// review, 30% of written sentences had a flaw in the Chinese or its translation.
+    public let isGenerated: Bool
 
-    public init(hanzi: String, pinyin: String, english: String, words: [String] = []) {
+    public init(hanzi: String, pinyin: String, english: String, words: [String] = [], isGenerated: Bool = false) {
         self.hanzi = hanzi
         self.pinyin = pinyin
         self.english = english
         self.words = words
+        self.isGenerated = isGenerated
     }
 }
 
