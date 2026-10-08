@@ -76,6 +76,7 @@ let package = Package(
                 .product(name: "LibraryDomain", package: "Library"),
                 .product(name: "LibraryTestSupport", package: "Library"),
                 .product(name: "CoreDomain", package: "Core"),
+                .product(name: "CoreUI", package: "Core"),
                 .product(name: "CoreTestSupport", package: "Core"),
             ],
             swiftSettings: mainActorByDefault

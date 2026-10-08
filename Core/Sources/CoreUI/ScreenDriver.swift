@@ -1,0 +1,69 @@
+import Foundation
+
+/// A screen driven by action name, without its view, for tools that run the app headlessly.
+@MainActor
+public struct ScreenDriver {
+    public let name: String
+    /// Every action name `send` accepts.
+    public let actions: [String]
+    /// Takes an action's name and its payload as a JSON object, or nil for none.
+    public let send: (_ action: String, _ arguments: Data?) throws -> Void
+    /// One line, for reading at a glance.
+    public let summary: () -> String
+    /// The whole state, as `dump` prints it.
+    public let dump: () -> String
+    /// The effects left over once navigation has been followed, described.
+    public let effects: () -> AsyncStream<String>
+
+    /// `follow` carries out an effect that navigates and returns the rest, as the screen's Route does.
+    public init<State, Action: Decodable, Effect: Sendable>(
+        name: String,
+        actions: [String],
+        state: @escaping () -> State,
+        summary: @escaping (State) -> String,
+        send: @escaping (Action) -> Void,
+        effects: @escaping () -> AsyncStream<Effect>,
+        follow: @escaping (Effect) -> Effect?
+    ) {
+        self.name = name
+        self.actions = actions
+        self.send = { action, arguments in
+            guard actions.contains(action) else { throw ScreenDriverError.unknownAction(action) }
+            send(try Self.decode(Action.self, name: action, arguments: arguments))
+        }
+        self.summary = { summary(state()) }
+        self.dump = {
+            var text = ""
+            Swift.dump(state(), to: &text)
+            return text
+        }
+        self.effects = {
+            let source = effects()
+            let (described, continuation) = AsyncStream.makeStream(of: String.self)
+            let task = Task {
+                for await effect in source {
+                    if let left = follow(effect) { continuation.yield(String(describing: left)) }
+                }
+                continuation.finish()
+            }
+            continuation.onTermination = { _ in task.cancel() }
+            return described
+        }
+    }
+
+    /// Wraps the payload as `{"name": arguments}`, the shape synthesised `Codable` gives an enum case.
+    static func decode<Action: Decodable>(_ type: Action.Type, name: String, arguments: Data?) throws -> Action {
+        do {
+            let payload = try arguments.map { try JSONSerialization.jsonObject(with: $0) } ?? [String: Any]()
+            let wrapped = try JSONSerialization.data(withJSONObject: [name: payload])
+            return try JSONDecoder().decode(type, from: wrapped)
+        } catch {
+            throw ScreenDriverError.badArguments(name)
+        }
+    }
+}
+
+public nonisolated enum ScreenDriverError: Error, Equatable {
+    case unknownAction(String)
+    case badArguments(String)
+}

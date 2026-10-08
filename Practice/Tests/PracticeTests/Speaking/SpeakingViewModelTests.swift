@@ -2,6 +2,7 @@ import Foundation
 import Observation
 import Testing
 import CoreDomain
+import CoreUI
 import CoreTestSupport
 import PracticeTestSupport
 import LibraryTestSupport
@@ -76,7 +77,7 @@ struct SpeakingViewModelTests {
     func listeningClearsAFailure() async {
         let harness = Harness(cards: [water], waitForEnd: Harness.untilCancelled)
         await harness.appear()
-        harness.viewModel.send(.typedAnswerSubmitted("cha"))
+        harness.viewModel.send(.typedAnswerSubmitted(answer: "cha"))
         #expect(harness.viewModel.state.lesson?.phase == .wrong(heard: "cha", attemptsLeft: 2))
 
         harness.viewModel.send(.startListeningTapped)
@@ -128,7 +129,7 @@ struct SpeakingViewModelTests {
         // The answer is left on screen to be read, rather than carrying straight on.
         let harness = Harness(cards: [water, phone])
         await harness.appear()
-        for _ in 0..<3 { harness.viewModel.send(.typedAnswerSubmitted("x")) }
+        for _ in 0..<3 { harness.viewModel.send(.typedAnswerSubmitted(answer: "x")) }
 
         harness.viewModel.send(.continueTapped)
         await settle()
@@ -143,7 +144,7 @@ struct SpeakingViewModelTests {
         await harness.appear()
         harness.viewModel.send(.typingToggled)
 
-        harness.viewModel.send(.typedAnswerSubmitted("shui"))
+        harness.viewModel.send(.typedAnswerSubmitted(answer: "shui"))
 
         #expect(await waitUntil { harness.viewModel.state.lesson?.cardIndex == 1 })
         await settle()
@@ -156,12 +157,12 @@ struct SpeakingViewModelTests {
         await harness.appear()
         harness.viewModel.send(.typingToggled)
 
-        harness.viewModel.send(.typedAnswerSubmitted("水"))
+        harness.viewModel.send(.typedAnswerSubmitted(answer: "水"))
         await settle()
         #expect(harness.viewModel.state.lesson?.attemptsUsed == 0)
         #expect(harness.viewModel.state.lesson?.phase == .idle)
 
-        harness.viewModel.send(.typedAnswerSubmitted("shui"))
+        harness.viewModel.send(.typedAnswerSubmitted(answer: "shui"))
         #expect(await waitUntil { harness.viewModel.state.lesson?.cardIndex == 1 })
     }
 
@@ -188,7 +189,7 @@ struct SpeakingViewModelTests {
         await harness.appear()
         harness.viewModel.send(.typingToggled)
 
-        harness.viewModel.send(.typedAnswerSubmitted("shui"))
+        harness.viewModel.send(.typedAnswerSubmitted(answer: "shui"))
         harness.viewModel.send(.continueTapped)
         #expect(harness.viewModel.state.lesson?.cardIndex == 1)
 
@@ -201,9 +202,9 @@ struct SpeakingViewModelTests {
         let harness = Harness(cards: [water])
         await harness.appear()
 
-        harness.viewModel.send(.typedAnswerSubmitted("x"))
-        harness.viewModel.send(.typedAnswerSubmitted("x"))
-        harness.viewModel.send(.typedAnswerSubmitted("shui"))
+        harness.viewModel.send(.typedAnswerSubmitted(answer: "x"))
+        harness.viewModel.send(.typedAnswerSubmitted(answer: "x"))
+        harness.viewModel.send(.typedAnswerSubmitted(answer: "shui"))
 
         #expect(await harness.effects.equals([.haptic(.error), .haptic(.error), .haptic(.success)]))
     }
@@ -214,8 +215,8 @@ struct SpeakingViewModelTests {
         let harness = Harness(cards: [water, phone])
         await harness.appear()
 
-        harness.viewModel.send(.typedAnswerSubmitted("x"))
-        harness.viewModel.send(.typedAnswerSubmitted("shui"))
+        harness.viewModel.send(.typedAnswerSubmitted(answer: "x"))
+        harness.viewModel.send(.typedAnswerSubmitted(answer: "shui"))
         await settle()
 
         #expect(!harness.audio.events.contains("match"))
@@ -229,7 +230,7 @@ struct SpeakingViewModelTests {
         let harness = Harness(cards: [water])
         await harness.appear()
 
-        harness.viewModel.send(.typedAnswerSubmitted("shui"))
+        harness.viewModel.send(.typedAnswerSubmitted(answer: "shui"))
 
         #expect(await waitUntil { harness.audio.events == ["enter", "exit", "fanfare"] })
         #expect(await waitUntil { await harness.recorded().count == 1 })
@@ -242,7 +243,7 @@ struct SpeakingViewModelTests {
     func closingAfterFinishing() async {
         let harness = Harness(cards: [water])
         await harness.appear()
-        harness.viewModel.send(.typedAnswerSubmitted("shui"))
+        harness.viewModel.send(.typedAnswerSubmitted(answer: "shui"))
         #expect(await waitUntil { harness.viewModel.state.lesson?.isFinished == true })
 
         harness.viewModel.send(.closeTapped)
@@ -256,7 +257,7 @@ struct SpeakingViewModelTests {
     func practisingAgain() async {
         let harness = Harness(cards: [water])
         await harness.appear()
-        harness.viewModel.send(.typedAnswerSubmitted("shui"))
+        harness.viewModel.send(.typedAnswerSubmitted(answer: "shui"))
         #expect(await waitUntil { harness.audio.events.last == "fanfare" })
 
         harness.viewModel.send(.practiseAgainTapped)
@@ -283,7 +284,7 @@ struct SpeakingViewModelTests {
     func quittingPartway() async {
         let harness = Harness(cards: [water, phone])
         await harness.appear()
-        for _ in 0..<3 { harness.viewModel.send(.typedAnswerSubmitted("x")) }
+        for _ in 0..<3 { harness.viewModel.send(.typedAnswerSubmitted(answer: "x")) }
 
         harness.viewModel.send(.closeTapped)
         #expect(harness.viewModel.state.isConfirmingQuit)
@@ -300,7 +301,7 @@ struct SpeakingViewModelTests {
         let harness = Harness(cards: [water, phone])
         await harness.repository.failWrites()
         await harness.appear()
-        for _ in 0..<3 { harness.viewModel.send(.typedAnswerSubmitted("x")) }
+        for _ in 0..<3 { harness.viewModel.send(.typedAnswerSubmitted(answer: "x")) }
 
         harness.viewModel.send(.closeTapped)
         harness.viewModel.send(.quitConfirmed)
@@ -322,7 +323,7 @@ struct SpeakingViewModelTests {
     func cancellingAQuit() async {
         let harness = Harness(cards: [water, phone])
         await harness.appear()
-        for _ in 0..<3 { harness.viewModel.send(.typedAnswerSubmitted("x")) }
+        for _ in 0..<3 { harness.viewModel.send(.typedAnswerSubmitted(answer: "x")) }
         harness.viewModel.send(.closeTapped)
 
         harness.viewModel.send(.quitCancelled)
@@ -342,7 +343,7 @@ struct SpeakingViewModelTests {
         let harness = Harness(cards: [water], step: { handed.append($0); carriesOn.append($1) })
         await harness.appear()
 
-        harness.viewModel.send(.typedAnswerSubmitted("shui"))
+        harness.viewModel.send(.typedAnswerSubmitted(answer: "shui"))
         #expect(await waitUntil { handed.count == 1 })
         #expect(handed.first?.map(\.direction) == [.readAloud])
         #expect(handed.first?.map(\.isCorrect) == [true])
@@ -361,7 +362,7 @@ struct SpeakingViewModelTests {
         let harness = Harness(cards: [water], step: { handed.append($0); carriesOn.append($1) })
         await harness.appear()
 
-        for _ in 0..<3 { harness.viewModel.send(.typedAnswerSubmitted("cha")) }
+        for _ in 0..<3 { harness.viewModel.send(.typedAnswerSubmitted(answer: "cha")) }
         await settle()
         #expect(handed.isEmpty)
         harness.viewModel.send(.continueTapped)
@@ -382,7 +383,7 @@ struct SpeakingViewModelTests {
         let harness = Harness(cards: [water], step: { carriesOn.append($1) })
         await harness.appear()
         harness.viewModel.send(.typingToggled)
-        harness.viewModel.send(.typedAnswerSubmitted("shui"))
+        harness.viewModel.send(.typedAnswerSubmitted(answer: "shui"))
         #expect(await waitUntil { carriesOn == [false] })
     }
 
@@ -408,6 +409,71 @@ struct SpeakingViewModelTests {
         #expect(harness.recogniser.cancelCount == 1)
     }
 
+}
+
+// MARK: - Driver
+
+@Suite("Speaking lesson driven by action name")
+@MainActor
+struct SpeakingDriverTests {
+    private let water = WordPair(english: "water", hanzi: "水", pinyin: "shuǐ")
+    private let answer = Data(#"{"answer":"shui"}"#.utf8)
+
+    @Test("every listed action is accepted")
+    func everyActionDecodes() {
+        for name in SpeakingAction.names {
+            let driver = Harness(cards: [water]).viewModel.driver(navigation: SpeakingNavigation(didClose: {}))
+            #expect(throws: Never.self) { try driver.send(name, name == "typedAnswerSubmitted" ? answer : nil) }
+        }
+    }
+
+    @Test("a typed answer is graded as one from the screen")
+    func typedAnswer() async throws {
+        let harness = Harness(cards: [water])
+        await harness.appear()
+        let driver = harness.viewModel.driver(navigation: SpeakingNavigation(didClose: {}))
+
+        try driver.send("typedAnswerSubmitted", Data(#"{"answer":"cha"}"#.utf8))
+
+        #expect(harness.viewModel.state.lesson?.phase == .wrong(heard: "cha", attemptsLeft: 2))
+        #expect(driver.summary().hasPrefix("speaking  card 1/1  水"))
+    }
+
+    @Test("a verdict's haptic reaches the effects")
+    func haptic() async throws {
+        let harness = Harness(cards: [water])
+        await harness.appear()
+        let driver = harness.viewModel.driver(navigation: SpeakingNavigation(didClose: {}))
+        let effects = EffectLog(driver.effects())
+
+        try driver.send("typedAnswerSubmitted", answer)
+
+        #expect(await effects.equals(["haptic(PracticeUI.SpeakingHaptic.success)"]))
+    }
+
+    @Test("closing navigates rather than reaching the effects")
+    func closing() async throws {
+        var closed = false
+        let harness = Harness(cards: [])
+        await harness.appear()
+        let driver = harness.viewModel.driver(navigation: SpeakingNavigation(didClose: { closed = true }))
+        let effects = EffectLog(driver.effects())
+
+        try driver.send("closeTapped", nil)
+
+        #expect(await waitUntil { closed })
+        await settle()
+        #expect(effects.effects.isEmpty)
+    }
+
+    @Test("an unknown action or a payload that does not fit is refused")
+    func refused() {
+        let driver = Harness(cards: [water]).viewModel.driver(navigation: SpeakingNavigation(didClose: {}))
+        #expect(throws: ScreenDriverError.unknownAction("tapped")) { try driver.send("tapped", nil) }
+        #expect(throws: ScreenDriverError.badArguments("typedAnswerSubmitted")) {
+            try driver.send("typedAnswerSubmitted", nil)
+        }
+    }
 }
 
 // MARK: - Harness
