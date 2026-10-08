@@ -16,13 +16,14 @@ public struct FlashcardsRoute: View {
 
     public var body: some View {
         FlashcardsScreen(state: viewModel.state, onAction: { viewModel.send($0) })
+            .drivable { viewModel.driver(navigation: navigation) }
             .onAppear { viewModel.send(.appeared) }
             .task {
                 for await effect in viewModel.effects() {
-                    switch effect {
+                    switch navigation.follow(effect) {
                     case .haptic(let kind): haptic = HapticEvent(kind: kind)
                     case .showError(let error): self.error = error
-                    case .close: navigation.didClose()
+                    case .close, nil: break
                     }
                 }
             }

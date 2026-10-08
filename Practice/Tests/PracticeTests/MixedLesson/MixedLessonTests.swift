@@ -5,6 +5,8 @@ import DictionaryDomain
 import Foundation
 import Testing
 import LibraryTestSupport
+import CoreUI
+@testable import PracticeDI
 @testable import PracticeDomain
 @testable import PracticeUI
 import LibraryDomain
@@ -273,6 +275,120 @@ struct MixedLessonViewModelTests {
         viewModel.send(.stepCompleted([]))
         viewModel.send(.stepCompleted([answer(LessonWords.water, right: false)]))
         #expect(await log.contains(.showError(.recordResultsFailed(FakeVocabularyRepository.failure))))
+    }
+}
+
+@Suite("Today's plan driven by action name")
+@MainActor
+struct MixedLessonDriverTests {
+    private let speech = ScriptedSpeech()
+
+    /// The lesson, and its driver with each exercise step's real driver in front.
+    private func make(_ steps: [TodayPlan.Step], didClose: @escaping () -> Void = {}) throws -> (MixedLessonViewModel, ScreenDriver) {
+        let sounds = FakeSounds()
+        let viewModel = MixedLessonViewModel(
+            lesson: MixedLesson(plan: plan(steps)),
+            recordResults: RecordLessonResultsUseCase(repository: FakeVocabularyRepository()),
+            findExamples: FindExamplesUseCase(repository: FakeExamples([:])),
+            generateExample: GenerateExampleUseCase(generator: FakeGenerator(nil)),
+            sounds: sounds,
+            audioSession: sounds
+        )
+        let dependencies = try TestDependencies()
+        let driver = viewModel.driver(navigation: MixedLessonNavigation(didClose: didClose)) { [speech] step, listensAtOnce, onComplete in
+            MixedLessonFactory.makeStepDriver(
+                step, dependencies: dependencies, speech: speech, listensAtOnce: listensAtOnce,
+                logAttempt: { _ in }, onComplete: onComplete
+            )
+        }
+        return (viewModel, driver)
+    }
+
+    @Test("every listed action is accepted")
+    func everyActionDecodes() throws {
+        for name in MixedLessonDriverAction.names {
+            let (_, driver) = try make([.teach(LessonWords.water), .match(LessonWords.all)])
+            #expect(throws: Never.self) { try driver.send(name, nil) }
+        }
+    }
+
+    @Test("a whole lesson runs through each step's own driver, in front of the lesson's")
+    func wholeLesson() async throws {
+        let (viewModel, driver) = try make([
+            .teach(LessonWords.water), .match(LessonWords.all), .recall(LessonWords.water, .recognise),
+            .recall(LessonWords.tea, .produce), .readAloud(LessonWords.book),
+        ])
+        try driver.send("appeared", nil)
+        var fronts: [String] = []
+
+        while let step = viewModel.state.lesson.step {
+            let index = viewModel.state.lesson.stepIndex
+            let front = driver.front()
+            fronts.append(front?.name ?? "none")
+            switch step {
+            case .teach:
+                try driver.send("continueTapped", nil)
+            case .match(let pairs):
+                for pair in pairs {
+                    try front?.send("tileTapped", Data(#"{"tile":"\#(pair.english)"}"#.utf8))
+                    try front?.send("tileTapped", Data(#"{"tile":"\#(pair.hanzi)"}"#.utf8))
+                }
+            case .flashcard(let card):
+                if case .picked(let options) = card.format, let place = options.firstIndex(of: card.word) {
+                    try front?.send("optionPicked", Data(#"{"option":\#(place)}"#.utf8))
+                } else {
+                    let answer = card.showsChinese ? card.word.english : card.word.hanzi
+                    try front?.send("typedAnswerSubmitted", Data(#"{"answer":"\#(answer)"}"#.utf8))
+                }
+                try front?.send("continueTapped", nil)
+            case .readAloud(let word):
+                #expect(await waitUntil { front?.summary().hasPrefix("speaking  card 1/1") == true })
+                speech.enqueue(word.pinyin.folding(options: .diacriticInsensitive, locale: nil))
+                try front?.send("startListeningTapped", nil)
+            }
+            #expect(await waitUntil { viewModel.state.lesson.stepIndex > index || viewModel.state.lesson.isFinished })
+        }
+
+        #expect(fronts == ["none", "matching step", "flashcard step", "flashcard step", "speaking"])
+        #expect(driver.front() == nil)
+        let answers = viewModel.state.lesson.answers
+        #expect(driver.summary() == "today's plan  finished  right: \(answers.count)/\(answers.count)")
+        #expect(answers.count == 8)
+    }
+
+    @Test("practising again puts a fresh first step in front, not the one just finished")
+    func practisingAgain() async throws {
+        let (viewModel, driver) = try make([.match(LessonWords.all)])
+        try driver.send("appeared", nil)
+        for pair in LessonWords.all {
+            try driver.front()?.send("tileTapped", Data(#"{"tile":"\#(pair.english)"}"#.utf8))
+            try driver.front()?.send("tileTapped", Data(#"{"tile":"\#(pair.hanzi)"}"#.utf8))
+        }
+        #expect(await waitUntil { viewModel.state.lesson.isFinished })
+
+        try driver.send("practiseAgainTapped", nil)
+
+        #expect(driver.front()?.summary().hasPrefix("matching step  matched 0/5") == true)
+    }
+
+    @Test("a teach step is not left by continueTapped while an exercise step is showing")
+    func continueOnlyTeaches() throws {
+        let (viewModel, driver) = try make([.match(LessonWords.all), .teach(LessonWords.water)])
+        try driver.send("continueTapped", nil)
+        #expect(viewModel.state.lesson.stepIndex == 0)
+    }
+
+    @Test("closing navigates rather than reaching the effects")
+    func closing() async throws {
+        var closed = false
+        let (_, driver) = try make([.teach(LessonWords.water)]) { closed = true }
+        let effects = EffectLog(driver.effects())
+
+        try driver.send("closeTapped", nil)
+
+        #expect(await waitUntil { closed })
+        await settle()
+        #expect(effects.effects.isEmpty)
     }
 }
 

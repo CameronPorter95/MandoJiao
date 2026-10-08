@@ -1,4 +1,5 @@
 import CoreDomain
+import CoreUI
 import LibraryDomain
 import Observation
 import PracticeDomain
@@ -23,6 +24,7 @@ public struct FlashcardStepRoute: View {
             onDontKnow: { viewModel.dontKnow() },
             onContinue: { viewModel.finish() }
         )
+        .drivable { viewModel.driver() }
         .onAppear { viewModel.appeared() }
         .sensoryFeedback(trigger: haptic) { _, event in
             switch event?.isRight {

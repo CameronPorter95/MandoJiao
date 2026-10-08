@@ -2,6 +2,7 @@ import Foundation
 import Testing
 import CoreDomain
 import CoreTestSupport
+import CoreUI
 import LibraryTestSupport
 @testable import PracticeDomain
 @testable import PracticeUI
@@ -141,6 +142,89 @@ struct FlashcardsViewModelTests {
         #expect(viewModel.state.lesson == nil)
         viewModel.send(.closeTapped)
         #expect(await log.contains(.close))
+    }
+}
+
+@Suite("Flash cards driven by action name")
+@MainActor
+struct FlashcardsDriverTests {
+    private let cards = [
+        Flashcard(word: Words.water, direction: .englishToChinese, format: .typed),
+        Flashcard(word: Words.tea, direction: .chineseToEnglish, format: .picked(options: [Words.book, Words.tea, Words.water, Words.dad])),
+    ]
+
+    private func makeDriver(didClose: @escaping () -> Void = {}) -> ScreenDriver {
+        let cards = cards
+        return FlashcardsViewModel(
+            request: LessonRequest(title: "t", pool: cards.map(\.word), source: .deck(testDeckID)),
+            recordResults: RecordLessonResultsUseCase(repository: FakeVocabularyRepository()),
+            sounds: FakeSounds(),
+            makePlan: { FlashcardPlan(title: $0.title, cards: cards) }
+        ).driver(navigation: FlashcardsNavigation(didClose: didClose))
+    }
+
+    private func arguments(_ json: String) -> Data { Data(json.utf8) }
+
+    @Test("every listed action is accepted")
+    func everyActionDecodes() {
+        let arguments = ["typedAnswerSubmitted": #"{"answer":"水"}"#, "optionPicked": #"{"option":1}"#]
+        for name in FlashcardsDriverAction.names {
+            let driver = makeDriver()
+            try? driver.send("appeared", nil)
+            #expect(throws: Never.self) { try driver.send(name, arguments[name].map { Data($0.utf8) }) }
+        }
+    }
+
+    @Test("a typed card and a picked one are answered from what the summary shows")
+    func answering() async throws {
+        let driver = makeDriver()
+        try driver.send("appeared", nil)
+        #expect(driver.summary() == "flashcards  card 1/2  water  type the Hanzi")
+
+        try driver.send("typedAnswerSubmitted", arguments(#"{"answer":"水"}"#))
+        #expect(driver.summary() == "flashcards  card 1/2  water  right  given: 水  answer: 水")
+        try driver.send("continueTapped", nil)
+
+        #expect(driver.summary() == "flashcards  card 2/2  茶 chá  pick the English: 0. book | 1. tea | 2. water | 3. (coll.) father, dad")
+        try driver.send("optionPicked", arguments(#"{"option":1}"#))
+        #expect(driver.summary().contains("right"))
+        try driver.send("continueTapped", nil)
+        #expect(driver.summary() == "flashcards  finished  wrong: 0")
+    }
+
+    @Test("an option the card does not have is ignored")
+    func noSuchOption() throws {
+        let driver = makeDriver()
+        try driver.send("appeared", nil)
+        try driver.send("typedAnswerSubmitted", arguments(#"{"answer":"水"}"#))
+        try driver.send("continueTapped", nil)
+        try driver.send("optionPicked", arguments(#"{"option":9}"#))
+        #expect(driver.summary().hasPrefix("flashcards  card 2/2  茶 chá  pick the English"))
+    }
+
+    @Test("closing navigates rather than reaching the effects")
+    func closing() async throws {
+        var closed = false
+        let driver = makeDriver { closed = true }
+        let effects = EffectLog(driver.effects())
+        try driver.send("appeared", nil)
+
+        try driver.send("closeTapped", nil)
+
+        #expect(await waitUntil { closed })
+        await settle()
+        #expect(effects.effects.isEmpty)
+    }
+
+    @Test("one card as a step is picked by its place and hands its answer back on Continue")
+    func step() throws {
+        var answers: [Answer] = []
+        let driver = FlashcardStepViewModel(card: cards[1], sounds: FakeSounds()) { answers = $0 }.driver()
+        try driver.send("appeared", nil)
+        try driver.send("optionPicked", arguments(#"{"option":1}"#))
+        #expect(answers.isEmpty)
+        try driver.send("continueTapped", nil)
+        #expect(answers.map(\.isCorrect) == [true])
     }
 }
 

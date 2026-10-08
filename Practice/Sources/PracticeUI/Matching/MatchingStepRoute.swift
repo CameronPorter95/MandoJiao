@@ -1,4 +1,5 @@
 import CoreDomain
+import CoreUI
 import LibraryDomain
 import Observation
 import PracticeDomain
@@ -27,6 +28,7 @@ public struct MatchingStepRoute: View {
             }
             Spacer(minLength: 0)
         }
+        .drivable { viewModel.driver() }
         .onAppear { viewModel.appeared() }
         .sensoryFeedback(trigger: haptic) { _, event in
             switch event?.kind {

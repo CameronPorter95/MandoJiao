@@ -16,6 +16,7 @@ public struct MatchingRoute: View {
 
     public var body: some View {
         MatchingScreen(state: viewModel.state, onAction: { viewModel.send($0) })
+            .drivable { viewModel.driver(navigation: navigation) }
             .onAppear { viewModel.send(.appeared) }
             .task {
                 for await effect in viewModel.effects() {
@@ -35,10 +36,10 @@ public struct MatchingRoute: View {
     }
 
     private func handle(_ effect: MatchingEffect) {
-        switch effect {
+        switch navigation.follow(effect) {
         case .haptic(let kind): haptic = HapticEvent(kind: kind)
         case .showError(let error): self.error = error
-        case .close: navigation.didClose()
+        case .close, nil: break
         }
     }
 }

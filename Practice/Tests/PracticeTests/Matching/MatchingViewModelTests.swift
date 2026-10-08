@@ -164,6 +164,90 @@ struct MatchingViewModelTests {
     }
 }
 
+// MARK: - Driver
+
+@Suite("Matching lesson driven by action name")
+@MainActor
+struct MatchingDriverTests {
+    private let pairs = [
+        WordPair(english: "water", hanzi: "水", pinyin: "shuǐ"),
+        WordPair(english: "tea", hanzi: "茶", pinyin: "chá"),
+        WordPair(english: "book", hanzi: "书", pinyin: "shū"),
+        WordPair(english: "car", hanzi: "车", pinyin: "chē"),
+        WordPair(english: "big", hanzi: "大", pinyin: "dà"),
+    ]
+
+    private func tile(_ text: String) -> Data { Data(#"{"tile":"\#(text)"}"#.utf8) }
+
+    @Test("every listed action is accepted")
+    func everyActionDecodes() {
+        for name in MatchingDriverAction.names {
+            let harness = Harness(pool: pairs)
+            let driver = harness.viewModel.driver(navigation: MatchingNavigation(didClose: {}))
+            try? driver.send("appeared", nil)
+            #expect(throws: Never.self) { try driver.send(name, name == "tileTapped" ? tile("water") : nil) }
+        }
+    }
+
+    @Test("a board is solved by naming each pair's tiles, English or Hanzi, and the lesson moves on")
+    func solvingByName() async throws {
+        let harness = Harness(pool: pairs)
+        let driver = harness.viewModel.driver(navigation: MatchingNavigation(didClose: {}))
+        try driver.send("appeared", nil)
+        #expect(driver.summary().hasPrefix("matching  board 1/2  matched 0/5"))
+        #expect(driver.summary().contains("水 shuǐ"))
+
+        for board in 1...2 {
+            #expect(await waitUntil { driver.summary().hasPrefix("matching  board \(board)/2  matched 0/5") })
+            for pair in harness.viewModel.state.lesson?.board.pairs ?? [] {
+                try driver.send("tileTapped", tile(pair.english))
+                try driver.send("tileTapped", tile(pair.hanzi))
+            }
+        }
+
+        #expect(await waitUntil { driver.summary() == "matching  finished  misses: 0" })
+    }
+
+    @Test("a tile no board shows is ignored")
+    func unknownTile() throws {
+        let harness = Harness(pool: pairs)
+        let driver = harness.viewModel.driver(navigation: MatchingNavigation(didClose: {}))
+        try driver.send("appeared", nil)
+        try driver.send("tileTapped", tile("coffee"))
+        #expect(harness.viewModel.state.lesson?.board.selected == nil)
+    }
+
+    @Test("closing navigates rather than reaching the effects")
+    func closing() async throws {
+        var closed = false
+        let harness = Harness(pool: pairs)
+        let driver = harness.viewModel.driver(navigation: MatchingNavigation(didClose: { closed = true }))
+        let effects = EffectLog(driver.effects())
+        try driver.send("appeared", nil)
+
+        try driver.send("closeTapped", nil)
+
+        #expect(await waitUntil { closed })
+        await settle()
+        #expect(effects.effects.isEmpty)
+    }
+
+    @Test("one board as a step is solved by name and hands its answers back")
+    func step() async throws {
+        var answers: [Answer] = []
+        let step = MatchingStepViewModel(pairs: pairs, showsPinyin: false, sounds: FakeSounds(), advanceDelay: .zero) { answers = $0 }
+        let driver = step.driver()
+        try driver.send("appeared", nil)
+        for pair in pairs {
+            try driver.send("tileTapped", tile(pair.hanzi))
+            try driver.send("tileTapped", tile(pair.english))
+        }
+        #expect(driver.summary().hasPrefix("matching step  matched 5/5"))
+        #expect(await waitUntil { answers.count == 5 })
+        #expect(answers.filter { !$0.isCorrect }.isEmpty)
+    }
+}
+
 // MARK: - Harness
 
 @MainActor
