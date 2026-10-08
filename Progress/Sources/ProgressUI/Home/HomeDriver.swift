@@ -2,15 +2,31 @@ import CoreUI
 import Foundation
 
 extension HomeViewModel {
-    public func driver(navigation: HomeNavigation) -> ScreenDriver {
-        ScreenDriver(
+    /// `destination` builds what is pushed over home, such as settings; without it home has
+    /// nothing in front of it, as in the app, where the views hold the stack.
+    public func driver(
+        navigation: HomeNavigation,
+        destination: ((HomeDestination) -> ScreenDriver)? = nil
+    ) -> ScreenDriver {
+        let children = ChildDrivers<HomeDestination>()
+        return ScreenDriver(
             name: "home",
             actions: HomeAction.names,
             state: { self.state },
             summary: \.summary,
             send: send,
             effects: effects,
-            follow: navigation.follow
+            follow: navigation.follow,
+            front: {
+                guard let destination else { return nil }
+                return children.front(of: self.state.destination.map { [$0] } ?? [], make: destination)
+            },
+            back: {
+                guard self.state.destination != nil else { return false }
+                self.send(.destinationDismissed)
+                return true
+            },
+            relay: children.relay
         )
     }
 }
@@ -21,6 +37,7 @@ extension HomeAction {
         "appeared", "disappeared", "quickPracticeTapped", "todayPlanTapped", "continueTapped",
         "chooseSourceTapped", "sourceChosen", "sourceChoiceDismissed", "practiseMistakesTapped",
         "clearMistakesTapped", "clearMistakesConfirmed", "clearMistakesCancelled",
+        "opened", "destinationDismissed",
     ]
 }
 

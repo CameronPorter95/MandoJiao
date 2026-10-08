@@ -15,11 +15,13 @@ public final class DictionarySearchViewModel {
     private var searching: Task<Void, Never>?
     private var observation: Task<Void, Never>?
 
+    public nonisolated static let defaultSearchDelay: Duration = .milliseconds(250)
+
     /// `searchDelay` waits for typing to pause, since every search reads the whole dictionary.
     public init(
         searchDictionary: SearchDictionaryUseCase,
         observeSaved: ObserveSavedReadingsUseCase,
-        searchDelay: Duration = .milliseconds(250)
+        searchDelay: Duration = defaultSearchDelay
     ) {
         self.searchDictionary = searchDictionary
         self.observeSaved = observeSaved
@@ -48,6 +50,12 @@ public final class DictionarySearchViewModel {
 
         case .editorDismissed:
             state.editor = nil
+
+        case .opened(let headword):
+            state.path.append(headword)
+
+        case .pathChanged(let path):
+            state.path = path
 
         case .queryChanged(let query):
             // The field sets the same text again, such as on return.

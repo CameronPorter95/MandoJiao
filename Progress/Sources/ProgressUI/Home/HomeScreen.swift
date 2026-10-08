@@ -25,7 +25,7 @@ struct HomeScreen: View {
         .navigationTitle("MandoJiao")
         .toolbar {
             ToolbarItemGroup(placement: .primaryAction) {
-                NavigationLink(value: HomeDestination.settings) {
+                Button { onAction(.opened(destination: .settings)) } label: {
                     Label("Settings", systemImage: "gearshape")
                 }
             }

@@ -2,6 +2,7 @@ import Foundation
 import Testing
 import CoreDomain
 import CoreTestSupport
+import CoreUI
 import DictionaryTestSupport
 @testable import DictionaryDomain
 @testable import DictionaryUI
@@ -157,5 +158,49 @@ struct DictionaryPageViewModelTests {
         #expect(readings.allSatisfy { page.state.vocabulary(for: $0) == nil })
         page.send(.vocabularyTapped(readings[0].id))
         #expect(page.state.editor == nil)
+    }
+
+    @Test("driven, the page lists each reading with whether it is saved, and opens one by its place")
+    func drivenReadings() async throws {
+        let page = makePage("行", saved: FakeSavedReadingsRepository([Self.hang]))
+        let driver = page.driver(open: nil)
+        try driver.send("appeared", nil)
+        #expect(await waitUntil { !driver.isBusy() && page.state.saved != nil })
+
+        let summary = driver.summary()
+        #expect(summary == "page  行  readings: 0. xíng to walk, okay | 1. háng row, line, profession (saved)")
+
+        try driver.send("vocabularyTapped", Data(#"{"reading":1}"#.utf8))
+        #expect(page.state.editor == .open(Self.hang))
+        try driver.send("editorDismissed", nil)
+        #expect(page.state.editor == nil)
+    }
+
+    @Test("driven, a character's page is opened through the stack the page is on, and only where there is one")
+    func drivenCharacters() async throws {
+        var opened: [DictionaryHeadword] = []
+        let page = makePage("银行")
+        let driver = page.driver(open: { opened.append($0) })
+        try driver.send("appeared", nil)
+        #expect(await waitUntil { !driver.isBusy() })
+        // 行 as 银行 reads it, háng, not its preferred xíng.
+        #expect(driver.summary().hasSuffix("characters: 0. 银 yín silver | 1. 行 háng row, line"))
+
+        try driver.send("characterOpened", Data(#"{"character":1}"#.utf8))
+        #expect(opened == [DictionaryHeadword(hanzi: "行", pinyin: "háng")])
+
+        let stackless = makePage("银行").driver(open: nil)
+        #expect(throws: ScreenDriverError.unknownAction("characterOpened")) {
+            try stackless.send("characterOpened", Data(#"{"character":1}"#.utf8))
+        }
+    }
+
+    @Test("driven by name, every listed action is accepted")
+    func driverAcceptsEveryAction() {
+        let arguments = ["vocabularyTapped": #"{"reading":0}"#, "characterOpened": #"{"character":0}"#]
+        let driver = makePage("银行").driver(open: { _ in })
+        for name in driver.actions {
+            #expect(throws: Never.self) { try driver.send(name, arguments[name].map { Data($0.utf8) }) }
+        }
     }
 }

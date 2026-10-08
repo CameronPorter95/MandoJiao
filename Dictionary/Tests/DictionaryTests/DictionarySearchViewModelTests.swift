@@ -43,9 +43,46 @@ struct DictionarySearchViewModelTests {
         try driver.send("vocabularyTapped", Data(#"{"result":0}"#.utf8))
         #expect(search.state.editor != nil)
 
-        for name in driver.actions where name != "queryChanged" && name != "vocabularyTapped" {
-            #expect(throws: Never.self) { try driver.send(name, nil) }
+        let arguments = ["queryChanged": #"{"query":"银"}"#, "vocabularyTapped": #"{"result":0}"#, "opened": #"{"result":0}"#]
+        for name in driver.actions {
+            #expect(throws: Never.self) { try driver.send(name, arguments[name].map { Data($0.utf8) }) }
         }
+    }
+
+    @Test("driven, a result's page is pushed, a character's over it, and back pops each")
+    func drivenStack() async throws {
+        let lookUp = LookUpDictionaryUseCase(repository: dictionary)
+        let search = makeSearch()
+        let driver = search.driver { headword, open in
+            DictionaryPageViewModel(headword: headword, lookUpDictionary: lookUp, observeSaved: nil).driver(open: open)
+        }
+        try driver.send("appeared", nil)
+        #expect(driver.front() == nil)
+
+        try driver.send("queryChanged", Data(#"{"query":"银行"}"#.utf8))
+        #expect(await waitUntil { !driver.isBusy() })
+        try driver.send("opened", Data(#"{"result":0}"#.utf8))
+        #expect(search.state.path == [DictionaryHeadword(hanzi: "银行", pinyin: "yínháng")])
+
+        let page = try #require(driver.front())
+        #expect(await waitUntil { !page.isBusy() })
+        try page.send("characterOpened", Data(#"{"character":1}"#.utf8))
+        #expect(search.state.path.map(\.hanzi) == ["银行", "行"])
+        #expect(await waitUntil { driver.front()?.summary().hasPrefix("page  行  readings: ") == true })
+
+        #expect(driver.back())
+        #expect(driver.front()?.summary().hasPrefix("page  银行") == true)
+        #expect(driver.back())
+        #expect(driver.front() == nil)
+        #expect(!driver.back())
+    }
+
+    @Test("a link the view pushes reaches the stack the driver reads")
+    func linksPushThroughThePath() {
+        let search = makeSearch()
+        // What the bound NavigationStack sends when a NavigationLink(value:) is tapped.
+        search.send(.pathChanged([DictionaryHeadword(hanzi: "喝", pinyin: "hē")]))
+        #expect(search.state.path == [DictionaryHeadword(hanzi: "喝", pinyin: "hē")])
     }
 
     @Test("typing searches once typing pauses, for only the last query")

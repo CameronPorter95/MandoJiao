@@ -20,7 +20,9 @@ public struct DictionaryTabRoute: View {
     }
 
     public var body: some View {
-        NavigationStack {
+        // The stack is the view model's, so a page pushed by its link and one opened by a
+        // driver go the same way.
+        NavigationStack(path: Binding(get: { viewModel.state.path }, set: { viewModel.send(.pathChanged($0)) })) {
             DictionarySearchScreen(state: viewModel.state, onAction: { viewModel.send($0) })
                 .drivable { viewModel.driver() }
                 .sheet(
@@ -32,7 +34,7 @@ public struct DictionaryTabRoute: View {
                     makeEditor($0)
                 }
                 .navigationDestination(for: DictionaryHeadword.self) {
-                    DictionaryPage(viewModel: makePage($0), makeEditor: makeEditor)
+                    DictionaryPage(viewModel: makePage($0), makeEditor: makeEditor, open: { viewModel.send(.opened($0)) })
                 }
         }
     }
