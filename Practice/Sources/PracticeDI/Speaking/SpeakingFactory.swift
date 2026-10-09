@@ -54,7 +54,7 @@ public enum SpeakingFactory: NavigationInputRouteFactory {
     static func makeStepRoute(
         dependencies: Dependencies,
         word: WordPair,
-        recogniser: DictationRecogniser,
+        recogniser: any SpeechRecognising,
         listensAtOnce: Bool,
         onComplete: @escaping (_ answers: [Answer], _ carriesOn: Bool) -> Void
     ) -> SpeakingStepRoute {
@@ -68,5 +68,29 @@ public enum SpeakingFactory: NavigationInputRouteFactory {
             logAttempt: SpeechLog.attempt,
             listensAtOnce: listensAtOnce
         ))
+    }
+
+    /// The step without its view, silent and never waiting on the clock, hearing `speech`.
+    static func makeStepDriver(
+        dependencies: Dependencies,
+        word: WordPair,
+        speech: ScriptedSpeech,
+        listensAtOnce: Bool,
+        logAttempt: @escaping SpeakingViewModel.LogAttempt,
+        onComplete: @escaping (_ answers: [Answer], _ carriesOn: Bool) -> Void
+    ) -> ScreenDriver {
+        SpeakingViewModel(
+            request: LessonRequest(title: "", pool: [word]),
+            recogniser: speech.recogniser,
+            audioSession: SilentAudioSession(),
+            sounds: SilentSounds(),
+            getSettings: SpeakingSettingsFactory.makeGetSettingsUseCase(dependencies: dependencies),
+            completion: .step(onComplete),
+            logAttempt: logAttempt,
+            listensAtOnce: listensAtOnce,
+            advanceDelay: .zero,
+            waitForEnd: Endpointing.endAtOnce
+        // A step is closed by the lesson around it, never by itself.
+        ).driver(navigation: SpeakingNavigation(didClose: {}))
     }
 }

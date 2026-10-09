@@ -56,8 +56,8 @@ public enum LibraryFactory: NavigationInputRouteFactory {
         )
     }
 
-    /// The tab without its view: its folders and decks drive too. Search results, the word
-    /// editor and the HSK levels do not.
+    /// The tab without its view: its folders, decks, search results, word editor and HSK levels
+    /// drive too. Dictionary pages opened from them do not.
     public static func makeDriver(
         dependencies: Dependencies,
         navigation: LibraryNavigation,
@@ -88,6 +88,28 @@ public enum LibraryFactory: NavigationInputRouteFactory {
                         input: deckInput(id, context: context, input: input)
                     )
                 }
+            },
+            results: { searchText, context in
+                WordLibraryFactory.makeDriver(
+                    dependencies: dependencies,
+                    input: WordLibraryInput(
+                        folderID: nil,
+                        layout: context.wordList,
+                        searchText: searchText,
+                        vocabulary: context.vocabulary,
+                        dictionary: input.dictionary
+                    )
+                )
+            },
+            editor: { target, dismissed in
+                WordEditorFactory.makeDriver(
+                    dependencies: dependencies,
+                    input: WordEditorInput(target: target, dictionary: input.dictionary),
+                    dismiss: dismissed
+                )
+            },
+            hskLevels: { dismissed in
+                HSKLevelsFactory.makeDriver(dependencies: dependencies, input: input.dictionary, dismiss: dismissed)
             }
         )
     }

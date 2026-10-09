@@ -26,6 +26,8 @@ struct HomeState: Equatable {
     /// Picked from Practise another deck, and shown until something is next practised.
     var chosen: LessonSource?
     var isChoosingSource = false
+    /// Pushed over home, such as settings.
+    var destination: HomeDestination?
 
     /// A folder offered to carry on with, and its decks, in the library tree's order.
     struct SourceSection: Identifiable, Equatable {
@@ -114,6 +116,9 @@ enum HomeAction: Equatable, Decodable {
     case clearMistakesTapped
     case clearMistakesConfirmed
     case clearMistakesCancelled
+    case opened(destination: HomeDestination)
+    /// Back from what was pushed over home.
+    case destinationDismissed
 }
 
 enum HomeEffect: Equatable, Sendable {

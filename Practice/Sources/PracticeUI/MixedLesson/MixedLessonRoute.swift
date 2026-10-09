@@ -35,14 +35,12 @@ public struct MixedLessonRoute: View {
                 makeStep(step, viewModel.state.lesson.listensOnArrival) { viewModel.send(.stepCompleted($0, carriesOn: $1)) }
             }
         )
+        .drivable { viewModel.driver(navigation: navigation) }
         .onAppear { viewModel.send(.appeared) }
         .onDisappear { viewModel.send(.disappeared) }
         .task {
             for await effect in viewModel.effects() {
-                switch effect {
-                case .showError(let error): self.error = error
-                case .close: navigation.didClose()
-                }
+                if case .showError(let error) = navigation.follow(effect) { self.error = error }
             }
         }
         .errorAlert($error)

@@ -107,15 +107,52 @@ struct InterpreterTests {
         #expect(await mando.run("ls").first?.hasSuffix("editing a reading") == true)
     }
 
-    @Test("a lesson nothing drives yet says so and stays on the deck")
-    func undriven() async throws {
+    @Test("every exercise opens from a deck, and back closes it to the deck")
+    func everyExercise() async throws {
         let mando = try Interpreter()
         _ = await mando.run("open deck Greetings")
+        for (exercise, screen) in [("matching", "matching  board 1/"), ("flashcards", "flashcards  card 1/"), ("speaking", "speaking  card 1/")] {
+            #expect(await mando.run(#"do startLessonTapped {"exercise":"\#(exercise)"}"#) == ["✓ startLessonTapped"])
+            #expect(await screens(mando).last?.hasPrefix(screen) == true, "\(exercise)")
+            #expect(await mando.run("back") == ["✓ back"])
+            #expect(await screens(mando).last?.hasPrefix("deck  Greetings") == true, "\(exercise)")
+        }
+    }
 
-        let output = await mando.run(#"do startLessonTapped {"exercise":"matching"}"#)
+    @Test("today's plan opens from home, with its first step in front")
+    func todayPlan() async throws {
+        let mando = try Interpreter()
+        #expect(await mando.run("do todayPlanTapped") == ["✓ todayPlanTapped"])
+        #expect(await screens(mando).contains { $0.hasPrefix("today's plan  step 1/") })
+    }
 
-        #expect(output == ["✓ startLessonTapped", "· matching is not driven yet"])
-        #expect(await screens(mando).last?.hasPrefix("deck  Greetings") == true)
+    @Test("home pushes settings, a setting changes and reads back, and back pops it")
+    func settings() async throws {
+        let mando = try Interpreter()
+        #expect(await mando.run(#"do opened {"destination":"settings"}"#) == ["✓ opened"])
+        let before = await screens(mando).last ?? ""
+        #expect(before.hasPrefix("settings  strictness: "))
+        let showsPinyin = before.contains("pinyin: on")
+
+        _ = await mando.run(#"do showsPinyinChanged {"showsPinyin":\#(!showsPinyin)}"#)
+        #expect(await screens(mando).last?.contains("pinyin: \(showsPinyin ? "off" : "on")") == true)
+        // mando keeps settings in UserDefaults, so put it back for the next run.
+        _ = await mando.run(#"do showsPinyinChanged {"showsPinyin":\#(showsPinyin)}"#)
+
+        #expect(await mando.run("back") == ["✓ back"])
+        #expect(await screens(mando).last?.hasPrefix("home  ") == true)
+    }
+
+    @Test("the dictionary tab pushes a headword's page, and back pops it")
+    func headwordPage() async throws {
+        let mando = try Interpreter()
+        _ = await mando.run("tab dictionary")
+        _ = await mando.run(#"do queryChanged {"query":"你好"}"#)
+        #expect(await mando.run(#"do opened {"result":0}"#) == ["✓ opened"])
+        #expect(await screens(mando).last?.hasPrefix("page  你好") == true)
+
+        #expect(await mando.run("back") == ["✓ back"])
+        #expect(await screens(mando).last?.hasPrefix("dictionary  query: 你好") == true)
     }
 
     @Test("mistakes are refused in a sentence and leave the session usable")

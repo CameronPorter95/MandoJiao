@@ -8,6 +8,9 @@ import SwiftUI
 @MainActor
 public final class ScreenRegistry {
     public private(set) var screens: [ScreenDriver] = []
+    /// Each screen's way out as SwiftUI gives it, for one pushed or presented: the way back when
+    /// the screen beneath has disappeared and cannot pop it.
+    public private(set) var dismissals: [() -> Bool] = []
     private var ids: [UUID] = []
     /// The app's own navigation: the open tab and the lesson over it.
     public var app: ScreenDriver?
@@ -16,16 +19,19 @@ public final class ScreenRegistry {
 
     public init() {}
 
-    func register(_ driver: ScreenDriver, as id: UUID) {
+    /// `dismiss` returns false when there is nothing to dismiss, the screen being no one's push.
+    func register(_ driver: ScreenDriver, as id: UUID, dismiss: @escaping () -> Bool = { false }) {
         remove(id)
         ids.append(id)
         screens.append(driver)
+        dismissals.append(dismiss)
     }
 
     func remove(_ id: UUID) {
         guard let index = ids.firstIndex(of: id) else { return }
         ids.remove(at: index)
         screens.remove(at: index)
+        dismissals.remove(at: index)
     }
 }
 
@@ -45,11 +51,30 @@ private struct Drivable: ViewModifier {
     let makeDriver: () -> ScreenDriver
 
     @Environment(\.screenRegistry) private var registry
+    @Environment(\.isPresented) private var isPresented
+    @Environment(\.dismiss) private var dismiss
     @State private var id = UUID()
+    @State private var exit = Exit()
 
     func body(content: Content) -> some View {
-        content
-            .onAppear { registry?.register(makeDriver(), as: id) }
+        // Kept current on every update and read when back runs, not when the screen appears.
+        exit.isPresented = isPresented
+        exit.dismiss = dismiss
+        return content
+            .onAppear { [exit] in registry?.register(makeDriver(), as: id, dismiss: exit.leave) }
             .onDisappear { registry?.remove(id) }
+    }
+}
+
+/// How a screen leaves as SwiftUI sees it, read when it is needed.
+@MainActor
+private final class Exit {
+    var isPresented = false
+    var dismiss: DismissAction?
+
+    func leave() -> Bool {
+        guard isPresented, let dismiss else { return false }
+        dismiss()
+        return true
     }
 }

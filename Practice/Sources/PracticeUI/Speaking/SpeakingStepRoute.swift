@@ -1,3 +1,4 @@
+import CoreUI
 import SwiftUI
 
 /// One word read aloud as a step of a longer lesson: the speaking lesson's card, microphone
@@ -39,6 +40,8 @@ public struct SpeakingStepRoute: View {
                 )
             }
         }
+        // A step is closed by the lesson around it, never by itself.
+        .drivable { viewModel.driver(navigation: SpeakingNavigation(didClose: {})) }
         .onAppear { viewModel.send(.appeared) }
         .onDisappear { viewModel.send(.disappeared) }
         .task {

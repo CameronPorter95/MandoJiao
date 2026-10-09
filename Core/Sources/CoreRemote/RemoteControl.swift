@@ -61,7 +61,10 @@ public final class RemoteControl {
             try top.send("startListeningTapped", nil)
         case .back:
             if registry.app?.back() == true { return [] }
-            guard registry.screens.reversed().contains(where: { $0.back() }) else { throw RemoteError.nothingToGoBackFrom }
+            if registry.screens.reversed().contains(where: { $0.back() }) { return [] }
+            // A screen pushed over one that has disappeared, as settings over home: nothing on
+            // show can pop it, so SwiftUI's own dismissal does, as the back button would.
+            guard registry.dismissals.reversed().contains(where: { $0() }) else { throw RemoteError.nothingToGoBackFrom }
         }
         return []
     }

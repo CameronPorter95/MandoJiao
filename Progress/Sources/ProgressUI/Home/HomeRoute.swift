@@ -20,7 +20,11 @@ public struct HomeRoute: View {
 
     public var body: some View {
         HomeScreen(state: viewModel.state, onAction: { viewModel.send($0) })
-            .navigationDestination(for: HomeDestination.self) { destination($0) }
+            // In the stack home is pushed in. The view model's, so a driver opens it as a tap does.
+            .navigationDestination(item: Binding(
+                get: { viewModel.state.destination },
+                set: { if $0 == nil { viewModel.send(.destinationDismissed) } }
+            )) { destination($0) }
             .drivable { viewModel.driver(navigation: navigation) }
             .onAppear { viewModel.send(.appeared) }
             .onDisappear { viewModel.send(.disappeared) }

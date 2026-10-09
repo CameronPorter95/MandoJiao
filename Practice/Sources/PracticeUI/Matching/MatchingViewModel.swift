@@ -23,15 +23,17 @@ public final class MatchingViewModel {
     private var didRecordResults = false
     private var advanceTask: Task<Void, Never>?
 
-    /// `advanceDelay` is long enough for the last tile to read as matched, short enough
-    /// that it never feels like waiting.
+    /// Long enough for the last tile to read as matched, short enough that it never feels
+    /// like waiting.
+    public nonisolated static let defaultAdvanceDelay: Duration = .milliseconds(320)
+
     public init(
         request: LessonRequest,
         sounds: any MatchSoundPlaying,
         getSettings: GetMatchingSettingsUseCase,
         setShowsPinyin: SetShowsPinyinUseCase,
         recordResults: RecordLessonResultsUseCase,
-        advanceDelay: Duration = .milliseconds(320)
+        advanceDelay: Duration = defaultAdvanceDelay
     ) {
         self.request = request
         self.sounds = sounds

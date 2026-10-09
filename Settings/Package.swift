@@ -23,6 +23,7 @@ let package = Package(
             dependencies: [
                 .product(name: "PracticeDomain", package: "Practice"),
                 .product(name: "LibraryDomain", package: "Library"),
+                .product(name: "CoreUI", package: "Core"),
                 .product(name: "CoreDesignSystem", package: "Core"),
             ],
             swiftSettings: mainActorByDefault
@@ -33,6 +34,7 @@ let package = Package(
                 "SettingsUI",
                 .product(name: "PracticeDomain", package: "Practice"),
                 .product(name: "LibraryDomain", package: "Library"),
+                .product(name: "CoreUI", package: "Core"),
                 .product(name: "CoreDI", package: "Core"),
             ],
             swiftSettings: mainActorByDefault
@@ -41,6 +43,7 @@ let package = Package(
             name: "SettingsTests",
             dependencies: [
                 "SettingsUI",
+                .product(name: "CoreUI", package: "Core"),
                 .product(name: "PracticeDomain", package: "Practice"),
                 .product(name: "LibraryDomain", package: "Library"),
             ],
