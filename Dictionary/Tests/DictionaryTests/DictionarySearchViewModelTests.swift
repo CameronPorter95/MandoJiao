@@ -2,6 +2,7 @@ import Foundation
 import Testing
 import CoreDomain
 import CoreTestSupport
+import CoreUI
 import DictionaryTestSupport
 @testable import DictionaryDomain
 @testable import DictionaryUI
@@ -26,6 +27,37 @@ struct DictionarySearchViewModelTests {
         guard await waitUntil({ search.state.results != .searching }), case .found(let results) = search.state.results
         else { return [] }
         return results
+    }
+
+    @Test("driven, the editor a result opens is in front, over any pushed page, and back closes it first")
+    func drivenEditor() async throws {
+        let search = makeSearch()
+        search.send(.appeared)
+        #expect(await waitUntil { search.state.saved != nil })
+        var dismiss: (() -> Void)?
+        let driver = search.driver(
+            page: { headword, _ in editorProbe(.add(DictionaryEntry(simplified: "page \(headword.hanzi)", traditional: "", pinyin: "", isPreferred: true, senses: []))) },
+            editor: { edit, dismissed in
+                dismiss = dismissed
+                return editorProbe(edit)
+            }
+        )
+        try driver.send("queryChanged", Data(#"{"query":"喝"}"#.utf8))
+        #expect(await waitUntil { !driver.isBusy() })
+
+        try driver.send("opened", Data(#"{"result":0}"#.utf8))
+        try driver.send("vocabularyTapped", Data(#"{"result":0}"#.utf8))
+        let edit = try #require(search.state.editor)
+        #expect(driver.front()?.name == "word editor \(edit.id)")
+
+        // The editor closes before the page beneath it is popped.
+        #expect(driver.back())
+        #expect(search.state.editor == nil)
+        #expect(search.state.path.count == 1)
+
+        try driver.send("vocabularyTapped", Data(#"{"result":0}"#.utf8))
+        dismiss?()
+        #expect(search.state.editor == nil)
     }
 
     @Test("driven, a search is typed and a result picked by its place in the list")
@@ -189,4 +221,13 @@ struct DictionarySearchViewModelTests {
         search.send(.vocabularyTapped(results[0]))
         #expect(search.state.editor == nil)
     }
+}
+
+/// A stand-in for the library's word editor, which the dictionary cannot see.
+@MainActor
+private func editorProbe(_ edit: ReadingEdit) -> ScreenDriver {
+    ScreenDriver(
+        name: "word editor \(edit.id)", actions: [], state: { 0 }, summary: { _ in "" },
+        send: { (_: Int) in }, effects: { AsyncStream<Int> { $0.finish() } }, follow: { $0 }
+    )
 }

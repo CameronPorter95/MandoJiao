@@ -176,6 +176,23 @@ struct DictionaryPageViewModelTests {
         #expect(page.state.editor == nil)
     }
 
+    @Test("driven, a reading's editor is in front while open, and back closes it")
+    func drivenEditor() async throws {
+        let page = makePage("行", saved: FakeSavedReadingsRepository([Self.hang]))
+        let driver = page.driver(open: nil, editor: { edit, _ in editorProbe(edit) })
+        try driver.send("appeared", nil)
+        #expect(await waitUntil { !driver.isBusy() && page.state.saved != nil })
+        #expect(driver.front() == nil)
+
+        try driver.send("vocabularyTapped", Data(#"{"reading":1}"#.utf8))
+        #expect(driver.front()?.name == "word editor \(ReadingEdit.open(Self.hang).id)")
+
+        #expect(driver.back())
+        #expect(page.state.editor == nil)
+        #expect(driver.front() == nil)
+        #expect(!driver.back())
+    }
+
     @Test("driven, a character's page is opened through the stack the page is on, and only where there is one")
     func drivenCharacters() async throws {
         var opened: [DictionaryHeadword] = []
@@ -203,4 +220,13 @@ struct DictionaryPageViewModelTests {
             #expect(throws: Never.self) { try driver.send(name, arguments[name].map { Data($0.utf8) }) }
         }
     }
+}
+
+/// A stand-in for the library's word editor, which the dictionary cannot see.
+@MainActor
+private func editorProbe(_ edit: ReadingEdit) -> ScreenDriver {
+    ScreenDriver(
+        name: "word editor \(edit.id)", actions: [], state: { 0 }, summary: { _ in "" },
+        send: { (_: Int) in }, effects: { AsyncStream<Int> { $0.finish() } }, follow: { $0 }
+    )
 }

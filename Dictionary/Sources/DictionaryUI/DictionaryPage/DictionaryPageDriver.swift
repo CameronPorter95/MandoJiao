@@ -5,8 +5,13 @@ import Foundation
 extension DictionaryPageViewModel {
     /// A reading and a character are picked by their place in the lists `ls` shows. `open` pushes
     /// a character's page; without it, as where the stack is the view's own, none can be opened.
-    public func driver(open: ((DictionaryHeadword) -> Void)?) -> ScreenDriver {
-        ScreenDriver(
+    /// `editor` builds the sheet a reading is added or opened in; without it nothing is in front.
+    public func driver(
+        open: ((DictionaryHeadword) -> Void)?,
+        editor: ((ReadingEdit, _ dismissed: @escaping () -> Void) -> ScreenDriver)? = nil
+    ) -> ScreenDriver {
+        let children = ChildDrivers<ReadingEdit>()
+        return ScreenDriver(
             name: "page",
             actions: open == nil ? DriverAction.names.filter { $0 != "characterOpened" } : DriverAction.names,
             state: { self.state },
@@ -28,6 +33,18 @@ extension DictionaryPageViewModel {
             },
             effects: { AsyncStream<Never> { $0.finish() } },
             follow: { $0 },
+            front: {
+                guard let editor else { return nil }
+                return children.front(of: self.state.editor.map { [$0] } ?? []) { edit in
+                    editor(edit) { self.send(.editorDismissed) }
+                }
+            },
+            back: {
+                guard self.state.editor != nil else { return false }
+                self.send(.editorDismissed)
+                return true
+            },
+            relay: children.relay,
             isBusy: { $0.content == .loading }
         )
     }

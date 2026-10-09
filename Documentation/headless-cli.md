@@ -233,7 +233,10 @@ A dictionary page opened from the word editor or the search results is a Diction
 which Library cannot see, so `DictionaryAccess` carries `pageDriver` beside its `page` view:
 nil in the app, where the page's own view registers, and `DictionaryFactory.makeDriver` in
 mando. The editor and the results put it in front while open, and `back` closes it before
-anything else. Today's plan is busy while the teach card on show waits for its example
+anything else. The other way round, the word editor a dictionary reading opens is a Library
+screen, so `DictionaryVocabulary` carries `editorDriver` beside its `editor` view; the
+dictionary's search and pages put it in front while open, and `back` closes it before popping
+a page. `AppComposer` builds both seams. Today's plan is busy while the teach card on show waits for its example
 sentence (`MixedLessonState.examplesPending`), so `ls` shows the sentence once it has come;
 only that card's, since the model takes seconds a sentence and the rest are looked up ahead.
 
