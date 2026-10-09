@@ -226,6 +226,12 @@ Where an action carries a value nobody would type as JSON (a tile, an option's i
 whole search result, a strictness), the driver takes a small action enum of its own and
 picks it by name or place; the screen's own actions are unchanged.
 
+In the app, a screen pushed over another that disappears, as settings over home or a page
+over the dictionary's search, leaves nothing registered that can pop it. So each registered
+screen also carries SwiftUI's own way out: remote `back` tries the app, then each screen's
+own `back`, and only then the frontmost screen's `dismiss`, as its back button would. Its
+`isPresented` is read when back runs: read as the screen appeared, it was still false.
+
 Not driven: a dictionary page opened from the word editor or the search results (the
 summaries say when one is open), and today's plan has no `isBusy` while an example
 sentence loads.

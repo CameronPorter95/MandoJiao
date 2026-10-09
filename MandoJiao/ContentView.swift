@@ -96,7 +96,8 @@ struct ContentView: View {
                         plan: plan,
                         recordResults: VocabularyRepositoryFactory.makeRecordLessonResultsUseCase(dependencies: dependencies),
                         findExamples: FindExamplesUseCase(repository: DictionaryRepositoryFactory.makeExampleRepository()),
-                        generateExample: GenerateExampleUseCase(generator: DictionaryRepositoryFactory.makeExampleGenerator())
+                        generateExample: GenerateExampleUseCase(generator: DictionaryRepositoryFactory.makeExampleGenerator()),
+                        speech: scriptedSpeech
                     )
                 )
             }

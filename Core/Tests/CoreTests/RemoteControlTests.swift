@@ -118,6 +118,32 @@ struct RemoteControlTests {
         #expect(log.sent.last == "speaking startListeningTapped")
     }
 
+    @Test("with nothing on show able to pop, back dismisses the frontmost pushed screen")
+    func backDismisses() async {
+        let log = Log()
+        let registry = ScreenRegistry()
+        registry.app = screen("app", log: log)
+        var dismissed: [String] = []
+        // Settings pushed over home, which has disappeared and left the registry.
+        registry.register(screen("settings", log: log), as: UUID(), dismiss: { dismissed.append("settings"); return true })
+        let control = RemoteControl(registry: registry, transition: .zero)
+
+        #expect(await control.handle(RemoteRequest(.back)).error == nil)
+        #expect(dismissed == ["settings"])
+    }
+
+    @Test("a screen's own back is tried before any dismissal")
+    func ownBackFirst() async {
+        let (control, registry, log) = make()
+        log.pushed = true
+        var dismissed = 0
+        registry.register(screen("deck", log: log), as: UUID(), dismiss: { dismissed += 1; return true })
+
+        #expect(await control.handle(RemoteRequest(.back)).error == nil)
+        #expect(!log.pushed)
+        #expect(dismissed == 0)
+    }
+
     @Test("a screen that disappears leaves the registry, so the one behind is in front again")
     func registry() {
         let (_, registry, log) = make()

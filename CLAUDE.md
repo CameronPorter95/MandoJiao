@@ -85,7 +85,7 @@ times; once it reported `TEST SUCCEEDED` while eight new tests were skipped. A
 green result on its own is not evidence that anything ran.
 
 `xcodebuild test` prints one `Test run with` line per test bundle, six in all.
-Add them up. Current suite: 564 tests in 66 suites: 30 in `Core`, 192 in `Library`,
+Add them up. Current suite: 566 tests in 66 suites: 32 in `Core`, 192 in `Library`,
 94 in `Dictionary`, 217 in `Practice`, 23 in `Progress`, 8 in `Settings`. The app target has no tests of
 its own. If a bundle's line is missing, it did not run.
 
