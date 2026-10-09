@@ -3,6 +3,7 @@ import Foundation
 import Testing
 import CoreDomain
 import CoreTestSupport
+import CoreUI
 import DictionaryTestSupport
 import LibraryTestSupport
 @testable import LibraryDomain
@@ -30,6 +31,35 @@ struct HSKLevelsViewModelTests {
         levels.state.levels.first { $0.level == level }?.status
     }
 
+    @Test("driven by name, every listed action is accepted")
+    func driverAcceptsEveryAction() async {
+        for name in HSKLevelsAction.names {
+            let (levels, _) = await makeLevels()
+            let driver = levels.driver(dismiss: {})
+            #expect(throws: Never.self) { try driver.send(name, name == "installTapped" ? Data(#"{"level":1}"#.utf8) : nil) }
+        }
+    }
+
+    @Test("driven, a level is installed by its number, and back closes the sheet rather than reaching the effects")
+    func driverInstallsAndCloses() async throws {
+        var dismissed = 0
+        let (levels, _) = await makeLevels()
+        let driver = levels.driver(dismiss: { dismissed += 1 })
+        let effects = EffectLog(driver.effects())
+        #expect(driver.summary().contains("level 1: HSK 1 not added, 2 decks, 60 words"))
+
+        try driver.send("installTapped", Data(#"{"level":1}"#.utf8))
+        #expect(driver.isBusy())
+        #expect(await waitUntil { status(levels, 1) == .added })
+        #expect(await waitUntil { !driver.isBusy() })
+        #expect(driver.summary().contains("level 1: HSK 1 added"))
+
+        #expect(driver.back())
+        #expect(await waitUntil { dismissed == 1 })
+        await settle()
+        #expect(effects.effects.isEmpty)
+    }
+
     @Test("every level is listed with its size, none added yet")
     func listing() async {
         let (levels, _) = await makeLevels()
@@ -43,7 +73,7 @@ struct HSKLevelsViewModelTests {
     @Test("adding a level installs its decks, and it then shows as added")
     func adding() async {
         let (levels, _) = await makeLevels()
-        levels.send(.installTapped(1))
+        levels.send(.installTapped(level: 1))
 
         #expect(await waitUntil { await repository.writes == ["install 2 decks"] })
         #expect(await waitUntil { self.status(levels, 1) == .added })
@@ -53,7 +83,7 @@ struct HSKLevelsViewModelTests {
     @Test("a level with a deleted deck offers to restore just that many")
     func restoring() async {
         let (levels, _) = await makeLevels()
-        levels.send(.installTapped(1))
+        levels.send(.installTapped(level: 1))
         #expect(await waitUntil { self.status(levels, 1) == .added })
 
         let deck = await repository.snapshot.decks.first { $0.builtInKey == HSK.deckKey(1, 2) }!
@@ -65,7 +95,7 @@ struct HSKLevelsViewModelTests {
     func failedInstall() async {
         let (levels, log) = await makeLevels()
         await repository.failWrites()
-        levels.send(.installTapped(2))
+        levels.send(.installTapped(level: 2))
 
         #expect(await log.contains(.showError(.installHSKFailed(FakeVocabularyRepository.failure))))
         #expect(await waitUntil { levels.state.installing.isEmpty })

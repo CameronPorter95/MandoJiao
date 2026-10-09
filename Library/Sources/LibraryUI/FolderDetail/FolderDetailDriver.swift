@@ -2,8 +2,15 @@ import CoreUI
 import Foundation
 
 extension FolderDetailViewModel {
-    public func driver(navigation: FolderDetailNavigation) -> ScreenDriver {
-        ScreenDriver(
+    /// `results` builds the words its search finds, as the Route's does. Without it nothing is
+    /// in front of it, as in the app.
+    public func driver(
+        navigation: FolderDetailNavigation,
+        results: ((_ searchText: String) -> ScreenDriver)? = nil
+    ) -> ScreenDriver {
+        let children = ChildDrivers<String>()
+        let search = SearchHandOn()
+        return ScreenDriver(
             name: "folder",
             actions: FolderDetailAction.names,
             state: { self.state },
@@ -18,7 +25,22 @@ extension FolderDetailViewModel {
             },
             send: send,
             effects: effects,
-            follow: navigation.follow
+            follow: navigation.follow,
+            front: {
+                guard let results else { return nil }
+                let front = children.front(of: self.state.isSearching ? ["results"] : []) { _ in
+                    search.handedOn = self.state.searchText
+                    return results(self.state.searchText)
+                }
+                if let front { search.handOn(self.state.searchText, to: front) }
+                return front
+            },
+            back: {
+                guard self.state.isSearching else { return false }
+                self.send(.searchPresentedChanged(false))
+                return true
+            },
+            relay: children.relay
         )
     }
 }

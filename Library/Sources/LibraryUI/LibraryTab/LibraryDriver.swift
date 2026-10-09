@@ -3,14 +3,20 @@ import Foundation
 import LibraryDomain
 
 extension LibraryViewModel {
-    /// `root` and `page` build what the sidebar selects and what is pushed over it, as the Route's
-    /// do. Without them it has nothing in front of it, as in the app, where the views hold the stack.
+    /// `root` and `page` build what the sidebar selects and what is pushed over it, `results` the
+    /// words a search finds, and `editor` and `hskLevels` the sheets, given how to close them, as
+    /// the Route's do. Without them nothing is in front of it, as in the app, where the views hold
+    /// the stack.
     public func driver(
         navigation: LibraryTabNavigation,
         root: ((LibrarySelection, LibraryPageContext) -> ScreenDriver)? = nil,
-        page: ((LibraryPage, LibraryPageContext) -> ScreenDriver)? = nil
+        page: ((LibraryPage, LibraryPageContext) -> ScreenDriver)? = nil,
+        results: ((_ searchText: String, LibraryPageContext) -> ScreenDriver)? = nil,
+        editor: ((WordEditorTarget, _ dismissed: @escaping () -> Void) -> ScreenDriver)? = nil,
+        hskLevels: ((_ dismissed: @escaping () -> Void) -> ScreenDriver)? = nil
     ) -> ScreenDriver {
         let children = ChildDrivers<LibraryChild>()
+        let search = SearchHandOn()
         return ScreenDriver(
             name: "vocabulary",
             actions: LibraryAction.names,
@@ -20,18 +26,37 @@ extension LibraryViewModel {
             effects: effects,
             follow: navigation.follow,
             front: {
-                guard let root, let page else { return nil }
-                let stack = (self.state.selection.map { [LibraryChild.root($0)] } ?? [])
-                    + self.state.path.enumerated().map { LibraryChild.page($0.offset, $0.element) }
-                return children.front(of: stack) { child in
+                var stack: [LibraryChild] = []
+                if root != nil, page != nil {
+                    stack += self.state.selection.map { [.root($0)] } ?? []
+                    stack += self.state.path.enumerated().map { .page($0.offset, $0.element) }
+                }
+                // The search shows over the stack, and the sheets over everything.
+                if self.state.isSearching, results != nil { stack.append(.results) }
+                if let target = self.state.editor, editor != nil { stack.append(.editor(target.id)) }
+                if self.state.isShowingHSKLevels, hskLevels != nil { stack.append(.hskLevels) }
+                let front = children.front(of: stack) { child in
                     switch child {
-                    case .root(let selection): root(selection, self.pageContext)
-                    case .page(_, let pushed): page(pushed, self.pageContext)
+                    case .root(let selection): return root!(selection, self.pageContext)
+                    case .page(_, let pushed): return page!(pushed, self.pageContext)
+                    case .results:
+                        search.handedOn = self.state.searchText
+                        return results!(self.state.searchText, self.pageContext)
+                    case .editor:
+                        return editor!(self.state.editor ?? .new(WordDraft(meanings: [], hanzi: ""))) {
+                            self.send(.editorDismissed)
+                        }
+                    case .hskLevels:
+                        return hskLevels! { self.send(.hskLevelsDismissed) }
                     }
                 }
+                if stack.last == .results, let front { search.handOn(self.state.searchText, to: front) }
+                return front
             },
             back: {
-                if !self.state.path.isEmpty {
+                if self.state.isSearching {
+                    self.send(.searchPresentedChanged(false))
+                } else if !self.state.path.isEmpty {
                     self.send(.pathChanged(Array(self.state.path.dropLast())))
                 } else if self.state.selection != nil {
                     // Back to the sidebar, as on iPhone.
@@ -80,6 +105,24 @@ extension LibraryViewModel {
 private enum LibraryChild: Hashable {
     case root(LibrarySelection)
     case page(Int, LibraryPage)
+    case results
+    case editor(String)
+    case hskLevels
+}
+
+/// The search text as the results last heard it, so each change is handed on once, as the
+/// Route hands on the field's text as it changes.
+@MainActor
+final class SearchHandOn {
+    var handedOn: String?
+
+    func handOn(_ text: String, to results: ScreenDriver) {
+        guard text != handedOn,
+              let arguments = try? JSONSerialization.data(withJSONObject: ["text": text])
+        else { return }
+        handedOn = text
+        try? results.send("searchChanged", arguments)
+    }
 }
 
 extension LibraryAction {

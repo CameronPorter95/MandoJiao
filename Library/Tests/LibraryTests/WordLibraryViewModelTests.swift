@@ -3,6 +3,7 @@ import Foundation
 import Testing
 import CoreDomain
 import CoreTestSupport
+import CoreUI
 import LibraryTestSupport
 @testable import LibraryDomain
 @testable import LibraryData
@@ -27,6 +28,66 @@ struct WordLibraryViewModelTests {
         viewModel.send(.appeared)
         _ = await waitUntil { viewModel.state.vocabulary == Fixtures.vocabulary }
         return (viewModel, log)
+    }
+
+    @Test("driven by name, every listed action is accepted")
+    func driverAcceptsEveryAction() async {
+        let arguments = [
+            "searchChanged": #"{"text":"sh"}"#, "sortChanged": #"{"sort":{"field":"pinyin","ascending":true}}"#,
+            "editTapped": #"{"word":0}"#, "dictionaryTapped": #"{"word":0}"#, "deleteTapped": #"{"word":99}"#,
+            "learntToggled": #"{"word":99}"#,
+        ]
+        for name in ["appeared", "disappeared", "searchChanged", "sortChanged", "editTapped", "editorDismissed",
+                     "dictionaryTapped", "dictionaryDismissed", "deleteTapped", "learntToggled"] {
+            let (library, _) = await makeLibrary()
+            let driver = library.driver(layout: WordListLayout(sort: .default, setSort: { _ in }))
+            #expect(driver.actions.contains(name))
+            #expect(throws: Never.self) { try driver.send(name, arguments[name].map { Data($0.utf8) }) }
+        }
+    }
+
+    @Test("driven, a word is opened by its place in the list, with the editor in front until it closes")
+    func driverOpensByPlace() async throws {
+        var sorts: [WordSort] = []
+        var dismiss: (() -> Void)?
+        let (library, _) = await makeLibrary()
+        let driver = library.driver(layout: WordListLayout(sort: .default, setSort: { sorts.append($0) })) { target, dismissed in
+            dismiss = dismissed
+            return Self.probe("editor \(target.id)")
+        }
+        try driver.send("searchChanged", Data(#"{"text":"sh"}"#.utf8))
+        let first = library.state.words[0]
+        #expect(driver.summary().hasPrefix("results  3 of 6 words  0. \(first.hanzi)"))
+
+        try driver.send("editTapped", Data(#"{"word":0}"#.utf8))
+        #expect(driver.front()?.name == "editor \(first.id.uuidString)")
+        dismiss?()
+        #expect(driver.front() == nil)
+
+        // Past the end of the list: nothing happens.
+        try driver.send("editTapped", Data(#"{"word":9}"#.utf8))
+        #expect(library.state.editor == nil)
+
+        let byPinyin = WordSort(field: .pinyin, ascending: true)
+        try driver.send("sortChanged", Data(#"{"sort":{"field":"pinyin","ascending":true}}"#.utf8))
+        #expect(sorts == [byPinyin])
+        #expect(library.state.sort == byPinyin)
+
+        try driver.send("dictionaryTapped", Data(#"{"word":0}"#.utf8))
+        #expect(driver.back())
+        #expect(library.state.dictionary == nil)
+        #expect(!driver.back())
+    }
+
+    private static func probe(_ name: String) -> ScreenDriver {
+        ScreenDriver(
+            name: name, actions: ["appeared", "disappeared"], state: { name }, summary: { $0 },
+            send: { (_: Lifecycle) in }, effects: { AsyncStream<Int> { $0.finish() } }, follow: { $0 }
+        )
+    }
+
+    private enum Lifecycle: Decodable {
+        case appeared, disappeared
     }
 
     @Test("words are listed alphabetically and filtered by the search")

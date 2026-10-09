@@ -203,4 +203,11 @@ enum WordEditorAction: Equatable {
 enum WordEditorEffect: Equatable, Sendable {
     case dismiss
     case showError(VocabularyError)
+
+    /// Carries out a dismissal, which the presenter owns, and returns any other effect.
+    func followed(dismiss: () -> Void) -> WordEditorEffect? {
+        guard self == .dismiss else { return self }
+        dismiss()
+        return nil
+    }
 }

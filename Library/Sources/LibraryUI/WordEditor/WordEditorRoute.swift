@@ -25,12 +25,10 @@ public struct WordEditorRoute: View {
             }
             .task {
                 for await effect in viewModel.effects() {
-                    switch effect {
-                    case .dismiss: dismiss()
-                    case .showError(let error): self.error = error
-                    }
+                    if case .showError(let error) = effect.followed(dismiss: { dismiss() }) { self.error = error }
                 }
             }
+            .drivable { viewModel.driver(dismiss: { dismiss() }) }
             .onAppear { viewModel.send(.appeared) }
             .onDisappear { viewModel.send(.disappeared) }
             .errorAlert($error)

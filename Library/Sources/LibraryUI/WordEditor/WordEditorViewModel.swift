@@ -21,6 +21,8 @@ public final class WordEditorViewModel {
     private var suggestionTask: Task<Void, Never>?
     private var observation: Task<Void, Never>?
 
+    public nonisolated static let defaultSuggestionDelay: Duration = .milliseconds(250)
+
     /// `suggestionDelay` waits for typing to pause before looking the Hanzi up.
     public init(
         target: WordEditorTarget,
@@ -30,7 +32,7 @@ public final class WordEditorViewModel {
         suggestWord: SuggestWordUseCase,
         lookUpDictionary: LookUpDictionaryUseCase,
         observeVocabulary: ObserveVocabularyUseCase,
-        suggestionDelay: Duration = .milliseconds(250)
+        suggestionDelay: Duration = defaultSuggestionDelay
     ) {
         state = switch target {
         case .new(let draft):

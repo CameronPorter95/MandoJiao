@@ -3,6 +3,7 @@ import Foundation
 import Testing
 import CoreDomain
 import CoreTestSupport
+import CoreUI
 import DictionaryTestSupport
 import LibraryTestSupport
 @testable import LibraryDomain
@@ -35,6 +36,81 @@ struct WordEditorViewModelTests {
             suggestionDelay: suggestionDelay
         )
         return (viewModel, EffectLog(viewModel.effects()))
+    }
+
+    @Test("driven by name, every listed action is accepted")
+    func driverAcceptsEveryAction() {
+        let arguments = [
+            "hanziChanged": #"{"text":"喝"}"#, "pinyinChanged": #"{"text":"he"}"#, "senseToggled": #"{"sense":"to drink"}"#,
+            "meaningAdded": #"{"text":"to drink"}"#, "meaningEdited": #"{"at":0,"text":"drink"}"#,
+            "meaningMoved": #"{"from":0,"to":1}"#, "meaningRemoved": #"{"at":0}"#, "deckChosen": #"{"deck":null}"#,
+            "deckSectionToggled": #"{"section":"none"}"#, "learntToggled": #"{"isLearnt":true}"#,
+        ]
+        for name in ["appeared", "disappeared", "hanziChanged", "pinyinChanged", "senseToggled", "meaningAdded",
+                     "meaningEdited", "meaningMoved", "meaningRemoved", "sensesTapped", "sensesDismissed",
+                     "dictionaryTapped", "dictionaryDismissed", "deckChosen", "deckSectionToggled", "saveTapped",
+                     "learntToggled", "deleteTapped", "cancelTapped"] {
+            let (editor, _) = makeEditor(nil, lexicon: FakeLexiconRepository([]), dictionary: FakeDictionaryRepository([]))
+            let driver = editor.driver(dismiss: {})
+            #expect(driver.actions.contains(name))
+            #expect(throws: Never.self) { try driver.send(name, arguments[name].map { Data($0.utf8) }) }
+        }
+    }
+
+    @Test("driven, a new word is typed, put in a deck by name, and saved, which closes the sheet")
+    func driverAddsAWord() async throws {
+        var dismissed = 0
+        let (editor, _) = makeEditor(nil, lexicon: FakeLexiconRepository([]), dictionary: FakeDictionaryRepository([]))
+        let driver = editor.driver(dismiss: { dismissed += 1 })
+        let effects = EffectLog(driver.effects())
+        try driver.send("appeared", nil)
+        #expect(await waitUntil { !editor.state.vocabulary.decks.isEmpty })
+
+        try driver.send("hanziChanged", Data(#"{"text":"喝"}"#.utf8))
+        try driver.send("meaningAdded", Data(#"{"text":"to drink"}"#.utf8))
+        try driver.send("deckChosen", Data(#"{"deck":"\#(Fixtures.fullDeck.name.lowercased())"}"#.utf8))
+        #expect(await waitUntil { !driver.isBusy() })
+        let summary = driver.summary()
+        #expect(summary.contains("hanzi: 喝  pinyin:   meanings: 0. to drink"))
+        #expect(summary.contains("deck: \(editor.state.chosenDeckTitle)  can save"))
+        #expect(editor.state.chosenDeckID == Fixtures.fullDeck.id)
+
+        try driver.send("saveTapped", nil)
+        #expect(await waitUntil { dismissed == 1 })
+        #expect(effects.effects.isEmpty)
+        #expect(await repository.writes == ["saveWord new to drink|喝| into \(Fixtures.fullDeck.name)"])
+    }
+
+    @Test("driven, a meaning's place past the end is ignored rather than trapping")
+    func driverMeaningOutOfRange() throws {
+        let (editor, _) = makeEditor(nil, lexicon: FakeLexiconRepository([]), dictionary: FakeDictionaryRepository([]))
+        let driver = editor.driver(dismiss: {})
+        try driver.send("meaningAdded", Data(#"{"text":"to drink"}"#.utf8))
+        try driver.send("meaningAdded", Data(#"{"text":"to swallow"}"#.utf8))
+
+        try driver.send("meaningRemoved", Data(#"{"at":5}"#.utf8))
+        try driver.send("meaningMoved", Data(#"{"from":5,"to":0}"#.utf8))
+        try driver.send("meaningMoved", Data(#"{"from":0,"to":9}"#.utf8))
+        #expect(editor.state.meanings == ["to drink", "to swallow"])
+
+        try driver.send("meaningMoved", Data(#"{"from":1,"to":0}"#.utf8))
+        try driver.send("meaningRemoved", Data(#"{"at":1}"#.utf8))
+        #expect(editor.state.meanings == ["to swallow"])
+    }
+
+    @Test("driven, a deck nothing matches leaves the choice as it was, and back cancels")
+    func driverUnknownDeckAndBack() async throws {
+        var dismissed = 0
+        let (editor, _) = makeEditor(nil, lexicon: FakeLexiconRepository([]), dictionary: FakeDictionaryRepository([]))
+        let driver = editor.driver(dismiss: { dismissed += 1 })
+        let effects = EffectLog(driver.effects())
+        try driver.send("deckChosen", Data(#"{"deck":"nope"}"#.utf8))
+        #expect(editor.state.deckID == nil)
+
+        #expect(driver.back())
+        #expect(await waitUntil { dismissed == 1 })
+        // Followed, so it never reaches the effects as a dismissal.
+        #expect(effects.effects.isEmpty)
     }
 
     @Test("a new word needs a meaning and Hanzi, is saved trimmed, then closes")

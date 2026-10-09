@@ -24,13 +24,24 @@ public enum FolderDetailFactory: NavigationInputRouteFactory {
         }
     }
 
-    /// The folder without its view. Its search results are not driven.
+    /// The folder without its view, with the words its search finds in front while it searches.
     public static func makeDriver(
         dependencies: Dependencies,
         navigation: FolderDetailNavigation,
         input: FolderDetailInput
     ) -> ScreenDriver {
-        makeViewModel(dependencies: dependencies, input: input).driver(navigation: navigation)
+        makeViewModel(dependencies: dependencies, input: input).driver(navigation: navigation) { searchText in
+            WordLibraryFactory.makeDriver(
+                dependencies: dependencies,
+                input: WordLibraryInput(
+                    folderID: input.folderID,
+                    layout: input.wordList,
+                    searchText: searchText,
+                    vocabulary: input.vocabulary,
+                    dictionary: input.dictionary
+                )
+            )
+        }
     }
 
     private static func makeViewModel(dependencies: Dependencies, input: FolderDetailInput) -> FolderDetailViewModel {
