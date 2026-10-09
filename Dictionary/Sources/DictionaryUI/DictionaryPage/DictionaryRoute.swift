@@ -1,3 +1,4 @@
+import CoreUI
 import DictionaryDomain
 import SwiftUI
 
@@ -23,14 +24,14 @@ public struct DictionaryRoute: View {
 
     public var body: some View {
         NavigationStack {
-            DictionaryPage(viewModel: makeViewModel(headword), makeEditor: makeEditor)
+            DictionaryPage(viewModel: makeViewModel(headword), makeEditor: makeEditor, open: nil)
                 .toolbar {
                     ToolbarItem(placement: .confirmationAction) {
                         Button("Done") { dismiss() }
                     }
                 }
                 .navigationDestination(for: DictionaryHeadword.self) {
-                    DictionaryPage(viewModel: makeViewModel($0), makeEditor: makeEditor)
+                    DictionaryPage(viewModel: makeViewModel($0), makeEditor: makeEditor, open: nil)
                 }
         }
     }
@@ -40,14 +41,18 @@ public struct DictionaryRoute: View {
 struct DictionaryPage: View {
     @State private var viewModel: DictionaryPageViewModel
     private let makeEditor: ((ReadingEdit) -> AnyView)?
+    private let open: ((DictionaryHeadword) -> Void)?
 
-    init(viewModel: DictionaryPageViewModel, makeEditor: ((ReadingEdit) -> AnyView)?) {
+    /// `open` pushes a character's page, for a driver; nil where the stack is the view's own.
+    init(viewModel: DictionaryPageViewModel, makeEditor: ((ReadingEdit) -> AnyView)?, open: ((DictionaryHeadword) -> Void)?) {
         _viewModel = State(initialValue: viewModel)
         self.makeEditor = makeEditor
+        self.open = open
     }
 
     var body: some View {
         DictionaryPageScreen(state: viewModel.state, onAction: { viewModel.send($0) })
+            .drivable { viewModel.driver(open: open) }
             .sheet(
                 item: Binding(
                     get: { viewModel.state.editor },

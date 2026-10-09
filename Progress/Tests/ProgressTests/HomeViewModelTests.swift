@@ -2,6 +2,7 @@ import Foundation
 import Testing
 import CoreDomain
 import CoreTestSupport
+import CoreUI
 import LibraryDomain
 import LibraryTestSupport
 @testable import ProgressDomain
@@ -33,12 +34,47 @@ struct HomeViewModelTests {
         let arguments = [
             "continueTapped": #"{"exercise":"speaking"}"#,
             "sourceChosen": #"{"source":{"deck":{"_0":"\#(Fixtures.fullDeck.id)"}}}"#,
+            "opened": #"{"destination":"settings"}"#,
         ]
         for name in HomeAction.names {
             let (home, _) = await makeHome()
             let driver = home.driver(navigation: Self.navigation { _ in })
             #expect(throws: Never.self) { try driver.send(name, arguments[name].map { Data($0.utf8) }) }
         }
+    }
+
+    @Test("driven, settings is pushed over home by name and popped by back")
+    func drivenSettings() async throws {
+        var made = 0
+        let (home, _) = await makeHome()
+        let driver = home.driver(navigation: Self.navigation { _ in }, destination: { _ in
+            made += 1
+            return ScreenDriver(
+                name: "settings", actions: ["appeared", "disappeared"], state: { 0 }, summary: { _ in "settings" },
+                send: { (_: Lifecycle) in }, effects: { AsyncStream<Int> { $0.finish() } }, follow: { $0 }
+            )
+        })
+        #expect(driver.front() == nil)
+
+        try driver.send("opened", Data(#"{"destination":"settings"}"#.utf8))
+        #expect(home.state.destination == .settings)
+        #expect(driver.front()?.name == "settings")
+
+        #expect(driver.back())
+        #expect(home.state.destination == nil)
+        #expect(driver.front() == nil)
+        #expect(!driver.back())
+        #expect(made == 1)
+    }
+
+    @Test("the toolbar's settings button and the view's back both go through the view model")
+    func settingsByTap() async {
+        let (home, _) = await makeHome()
+        home.send(.opened(destination: .settings))
+        #expect(home.state.destination == .settings)
+        // What the bound navigationDestination(item:) sends when the page is popped.
+        home.send(.destinationDismissed)
+        #expect(home.state.destination == nil)
     }
 
     @Test("driven, practising mistakes presents a speaking lesson rather than reaching the effects")
@@ -234,4 +270,8 @@ struct HomeViewModelTests {
 private final class Box {
     var value: Int
     init(_ value: Int) { self.value = value }
+}
+
+private enum Lifecycle: Decodable {
+    case appeared, disappeared
 }

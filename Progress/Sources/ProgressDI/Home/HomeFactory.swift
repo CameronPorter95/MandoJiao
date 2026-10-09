@@ -19,13 +19,21 @@ public enum HomeFactory: NavigationInputRouteFactory {
         }
     }
 
-    /// Home without its view. The settings screen pushed from it is not driven.
+    /// Home without its view. `settings` builds the settings screen's driver, which belongs to
+    /// another package, for when it is pushed; without it settings opens with nothing to drive.
     public static func makeDriver(
         dependencies: Dependencies,
         navigation: ProgressNavigation,
-        input: HomeInput
+        input: HomeInput,
+        settings: (() -> ScreenDriver)? = nil
     ) -> ScreenDriver {
-        makeViewModel(input: input).driver(navigation: navigation.home)
+        makeViewModel(input: input).driver(navigation: navigation.home, destination: settings.map { settings in
+            { destination in
+                switch destination {
+                case .settings: settings()
+                }
+            }
+        })
     }
 
     private static func makeViewModel(input: HomeInput) -> HomeViewModel {

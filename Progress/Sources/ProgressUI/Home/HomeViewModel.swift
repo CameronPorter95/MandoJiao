@@ -100,6 +100,12 @@ public final class HomeViewModel {
 
         case .clearMistakesCancelled:
             state.isConfirmingClear = false
+
+        case .opened(let destination):
+            state.destination = destination
+
+        case .destinationDismissed:
+            state.destination = nil
         }
     }
 
