@@ -16,6 +16,7 @@ let package = Package(
         .package(path: "../../Practice"),
         .package(path: "../../Progress"),
         .package(path: "../../Settings"),
+        .package(path: "../../AppComposition"),
     ],
     targets: [
         .executableTarget(
@@ -36,13 +37,13 @@ let package = Package(
                 .product(name: "LibraryDI", package: "Library"),
                 .product(name: "LibraryUI", package: "Library"),
                 .product(name: "DictionaryDI", package: "Dictionary"),
-                .product(name: "DictionaryDomain", package: "Dictionary"),
                 .product(name: "PracticeDomain", package: "Practice"),
                 .product(name: "PracticeDI", package: "Practice"),
                 .product(name: "PracticeUI", package: "Practice"),
                 .product(name: "ProgressDomain", package: "Progress"),
                 .product(name: "ProgressDI", package: "Progress"),
                 .product(name: "SettingsDI", package: "Settings"),
+                .product(name: "AppComposition", package: "AppComposition"),
             ],
             swiftSettings: [.defaultIsolation(MainActor.self)]
         ),

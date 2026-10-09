@@ -19,7 +19,8 @@ sharing. One package per business area: `Core/`, `Library/`, `Dictionary/`, `Pra
 `Progress/` and `Settings/` are SPM packages at the repo root, and `Library` is the
 reference vertical. A new exercise is a folder in `Practice`, never a new package; a view
 two packages show goes in `CoreUI`, never imported from a peer's UI. The app target
-holds only the entry point and the composition root. See
+holds only the entry point and how screens are shown; every screen's input is built in
+`AppComposition`'s `AppComposer`, which mando shares, so a new input goes there. See
 `Documentation/modularisation-migration.md` for the state and what is left.
 
 - `Documentation/architecture.md`: the layers, UDF, and the reasoning behind each decision
@@ -29,7 +30,8 @@ holds only the entry point and the composition root. See
 - `Documentation/code-comments.md`: when a comment is warranted, and how long
 
 Packages: `Core` (`CoreDomain`, `CorePersistence`, `CoreSound`, `CoreDesignSystem`,
-`CoreUI`, `CoreDI`, `CoreTestSupport`), `Library`, `Dictionary`, `Practice`, `Progress` and `Settings`, each with up to four targets: `{X}Domain`, `{X}Data`, `{X}UI`, `{X}DI`.
+`CoreUI`, `CoreDI`, `CoreRemote`, `CoreTestSupport`), `Library`, `Dictionary`, `Practice`, `Progress` and `Settings`, each with up to four targets: `{X}Domain`, `{X}Data`, `{X}UI`, `{X}DI`.
+`AppComposition` is not a feature package: it composes them for the app and mando.
 The rules most easily broken:
 
 - A feature package may depend only on another package's `Domain` product.
@@ -67,7 +69,7 @@ cd Practice && swift test --filter StrictnessTests
 ```
 
 Drive screens headlessly, no simulator: `cd Tools/MandoCLI && swift run mando`, then
-`help`. Not in the Xcode scheme, so its 14 tests (`swift test` there) are not in the counts
+`help`. Not in the Xcode scheme, so its 14 tests, and `AppComposition`'s 3, are not in the counts
 below; see `Documentation/headless-cli.md`. The same commands drive the app on the
 simulator: tick `-remote` under the scheme's Run arguments (committed unticked), run a
 debug build, then `swift run mando --remote`. mando's first line names what it drives;

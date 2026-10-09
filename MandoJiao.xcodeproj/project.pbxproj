@@ -24,6 +24,7 @@
 		000000000000000320000014 /* SettingsDI in Frameworks */ = {isa = PBXBuildFile; productRef = 000000000000000310000014 /* SettingsDI */; };
 		000000000000000320000015 /* CoreUI in Frameworks */ = {isa = PBXBuildFile; productRef = 000000000000000310000015 /* CoreUI */; };
 		000000000000000320000016 /* CoreRemote in Frameworks */ = {isa = PBXBuildFile; productRef = 000000000000000310000016 /* CoreRemote */; };
+		000000000000000320000017 /* AppComposition in Frameworks */ = {isa = PBXBuildFile; productRef = 000000000000000310000017 /* AppComposition */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -64,6 +65,7 @@
 				000000000000000320000014 /* SettingsDI in Frameworks */,
 				000000000000000320000015 /* CoreUI in Frameworks */,
 				000000000000000320000016 /* CoreRemote in Frameworks */,
+				000000000000000320000017 /* AppComposition in Frameworks */,
 				000000000000000320000006 /* ProgressDomain in Frameworks */,
 				000000000000000320000012 /* ProgressDI in Frameworks */,
 				000000000000000320000013 /* ProgressUI in Frameworks */,
@@ -127,6 +129,7 @@
 				000000000000000310000014 /* SettingsDI */,
 				000000000000000310000015 /* CoreUI */,
 				000000000000000310000016 /* CoreRemote */,
+				000000000000000310000017 /* AppComposition */,
 				000000000000000310000006 /* ProgressDomain */,
 				000000000000000310000012 /* ProgressDI */,
 				000000000000000310000013 /* ProgressUI */,
@@ -169,6 +172,7 @@
 				000000000000000300000003 /* XCLocalSwiftPackageReference "Practice" */,
 				000000000000000300000006 /* XCLocalSwiftPackageReference "Progress" */,
 				000000000000000300000005 /* XCLocalSwiftPackageReference "Settings" */,
+				000000000000000300000007 /* XCLocalSwiftPackageReference "AppComposition" */,
 			);
 			preferredProjectObjectVersion = 90;
 			productRefGroup = 000000000000000000000020 /* Products */;
@@ -455,6 +459,10 @@
 			isa = XCLocalSwiftPackageReference;
 			relativePath = Settings;
 		};
+		000000000000000300000007 /* XCLocalSwiftPackageReference "AppComposition" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = AppComposition;
+		};
 		000000000000000300000006 /* XCLocalSwiftPackageReference "Progress" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = Progress;
@@ -546,6 +554,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 000000000000000300000001 /* XCLocalSwiftPackageReference "Core" */;
 			productName = CoreRemote;
+		};
+		000000000000000310000017 /* AppComposition */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 000000000000000300000007 /* XCLocalSwiftPackageReference "AppComposition" */;
+			productName = AppComposition;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
