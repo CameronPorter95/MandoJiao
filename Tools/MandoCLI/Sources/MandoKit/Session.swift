@@ -1,6 +1,7 @@
 import CoreDI
 import CoreUI
 import DictionaryDI
+import DictionaryDomain
 import Foundation
 import LibraryDI
 import LibraryDomain
@@ -10,6 +11,7 @@ import PracticeDomain
 import PracticeUI
 import ProgressDI
 import ProgressDomain
+import SettingsDI
 import SwiftData
 import SwiftUI
 
@@ -47,15 +49,18 @@ final class Session: Backend {
         try? tabs[selectedTab]?.send("appeared", nil)
     }
 
-    /// From the open tab's screen down to the one in front, then any lesson over them.
+    /// From the open tab's screen down to the one in front, then any lesson over them and the
+    /// step in front of it.
     var chain: [ScreenDriver] {
         var chain: [ScreenDriver] = []
-        var next = tabs[selectedTab]
-        while let driver = next {
-            chain.append(driver)
-            next = driver.front()
+        for root in [tabs[selectedTab]] + presented.map(Optional.some) {
+            var next = root
+            while let driver = next {
+                chain.append(driver)
+                next = driver.front()
+            }
         }
-        return chain + presented
+        return chain
     }
 
     var top: ScreenDriver? { chain.last }
@@ -102,10 +107,11 @@ final class Session: Backend {
         try tabs[.vocabulary]?.open(kind, query)
     }
 
+    /// To a speaking lesson, or a word read aloud as a step of today's plan.
     func say(_ answer: String) throws {
-        guard let speech, presented.last?.name == "speaking" else { throw CLIError.notSpeaking }
+        guard let speech, let top, top.name == "speaking" else { throw CLIError.notSpeaking }
         speech.enqueue(answer)
-        try presented.last?.send("startListeningTapped", nil)
+        try top.send("startListeningTapped", nil)
     }
 
     /// Closes a lesson, or else pops the deepest stack in the open tab that has anything to pop.
@@ -123,10 +129,10 @@ final class Session: Backend {
         HomeFactory.makeDriver(
             dependencies: dependencies,
             navigation: .app(
-                presentMatching: { [unowned self] _ in notes.append("· matching is not driven yet") },
+                presentMatching: { [unowned self] in presentMatching($0) },
                 presentSpeaking: { [unowned self] in presentSpeaking($0) },
-                presentFlashcards: { [unowned self] _ in notes.append("· flash cards are not driven yet") },
-                presentTodayPlan: { [unowned self] _ in notes.append("· today's plan is not driven yet") }
+                presentFlashcards: { [unowned self] in presentFlashcards($0) },
+                presentTodayPlan: { [unowned self] in presentTodayPlan($0) }
             ),
             input: HomeInput(
                 minimumMatchingWords: MatchingPlanBuilder.pairsPerExercise,
@@ -137,6 +143,24 @@ final class Session: Backend {
                 getLessonSettings: LessonSettingsFactory.makeGetSettingsUseCase(dependencies: dependencies),
                 clearMistakes: VocabularyRepositoryFactory.makeClearMistakesUseCase(dependencies: dependencies),
                 settings: { AnyView(EmptyView()) }
+            ),
+            settings: { [unowned self] in makeSettings() }
+        )
+    }
+
+    /// Composed as ContentView composes it: the settings edit what the lessons own.
+    private func makeSettings() -> ScreenDriver {
+        SettingsFactory.makeDriver(
+            dependencies: dependencies,
+            input: SettingsInput(
+                getSpeakingSettings: SpeakingSettingsFactory.makeGetSettingsUseCase(dependencies: dependencies),
+                setStrictness: SpeakingSettingsFactory.makeSetStrictnessUseCase(dependencies: dependencies),
+                setSpeakingCardLimit: SpeakingSettingsFactory.makeSetCardLimitUseCase(dependencies: dependencies),
+                getMatchingSettings: MatchingSettingsFactory.makeGetSettingsUseCase(dependencies: dependencies),
+                setShowsPinyin: MatchingSettingsFactory.makeSetShowsPinyinUseCase(dependencies: dependencies),
+                setMatchingRounds: MatchingSettingsFactory.makeSetRoundsUseCase(dependencies: dependencies),
+                getLessonSettings: LessonSettingsFactory.makeGetSettingsUseCase(dependencies: dependencies),
+                setSkipsLearntWords: LessonSettingsFactory.makeSetSkipsLearntWordsUseCase(dependencies: dependencies)
             )
         )
     }
@@ -145,9 +169,9 @@ final class Session: Backend {
         LibraryFactory.makeDriver(
             dependencies: dependencies,
             navigation: .app(
-                presentMatching: { [unowned self] _ in notes.append("· matching is not driven yet") },
+                presentMatching: { [unowned self] in presentMatching($0) },
                 presentSpeaking: { [unowned self] in presentSpeaking($0) },
-                presentFlashcards: { [unowned self] _ in notes.append("· flash cards are not driven yet") }
+                presentFlashcards: { [unowned self] in presentFlashcards($0) }
             ),
             input: LibraryInput(
                 minimumMatchingWords: MatchingPlanBuilder.pairsPerExercise,
@@ -174,21 +198,67 @@ final class Session: Backend {
 
     // MARK: - Lessons
 
+    /// Every lesson closes the same way: its presenter dismisses it.
+    private var lessonNavigation: PracticeNavigation {
+        .app(dismiss: { [unowned self] in dismiss() })
+    }
+
+    private func presentMatching(_ request: LessonRequest) {
+        present(MatchingFactory.makeDriver(
+            dependencies: dependencies,
+            navigation: lessonNavigation.matching,
+            input: MatchingInput(request: request, recordResults: recordResults)
+        ))
+    }
+
+    private func presentFlashcards(_ request: LessonRequest) {
+        present(FlashcardsFactory.makeDriver(
+            dependencies: dependencies,
+            navigation: lessonNavigation.flashcards,
+            input: FlashcardsInput(request: request, recordResults: recordResults)
+        ))
+    }
+
     private func presentSpeaking(_ request: LessonRequest) {
         let speech = ScriptedSpeech()
-        self.speech = speech
-        let driver = SpeakingFactory.makeDriver(
+        present(SpeakingFactory.makeDriver(
             dependencies: dependencies,
-            navigation: SpeakingNavigation(didClose: { [unowned self] in dismiss() }),
-            input: SpeakingInput(
-                request: request,
-                recordResults: VocabularyRepositoryFactory.makeRecordLessonResultsUseCase(dependencies: dependencies)
+            navigation: lessonNavigation.speaking,
+            input: SpeakingInput(request: request, recordResults: recordResults),
+            speech: speech,
+            logAttempt: logAttempt
+        ), speech: speech)
+    }
+
+    /// Its read-aloud steps hear the same scripted speech a speaking lesson does.
+    private func presentTodayPlan(_ plan: TodayPlan) {
+        let speech = ScriptedSpeech()
+        present(MixedLessonFactory.makeDriver(
+            dependencies: dependencies,
+            navigation: lessonNavigation.mixedLesson,
+            input: MixedLessonInput(
+                plan: plan,
+                recordResults: recordResults,
+                findExamples: FindExamplesUseCase(repository: DictionaryRepositoryFactory.makeExampleRepository()),
+                generateExample: GenerateExampleUseCase(generator: DictionaryRepositoryFactory.makeExampleGenerator())
             ),
             speech: speech,
-            logAttempt: { [unowned self] attempt in
-                notes.append("· heard \"\(attempt.outcome.best)\" for \(attempt.card.hanzi): \(attempt.wasCorrect ? "right" : "wrong")")
-            }
-        )
+            logAttempt: logAttempt
+        ), speech: speech)
+    }
+
+    private var recordResults: RecordLessonResultsUseCase {
+        VocabularyRepositoryFactory.makeRecordLessonResultsUseCase(dependencies: dependencies)
+    }
+
+    private var logAttempt: SpeakingViewModel.LogAttempt {
+        { [unowned self] attempt in
+            notes.append("· heard \"\(attempt.outcome.best)\" for \(attempt.card.hanzi): \(attempt.wasCorrect ? "right" : "wrong")")
+        }
+    }
+
+    private func present(_ driver: ScreenDriver, speech: ScriptedSpeech? = nil) {
+        self.speech = speech
         presented.append(driver)
         listen(to: driver, as: "lesson")
         try? driver.send("appeared", nil)

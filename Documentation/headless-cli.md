@@ -205,9 +205,30 @@ per open screen, the tab first and the front last.
 - **Factories** share one `makeViewModel` between `makeRoute` and `makeDriver`.
 - **`tab` is refused under a lesson**, as the app's full-screen cover hides the tab bar.
 
-Not driven yet: home's settings, the dictionary's headword pages, the library's search
-results, word editor and HSK levels, and matching, flash cards and today's plan. A pushed
-screen's leftover errors are relayed to its tab, and print as notes.
+A pushed screen's leftover errors are relayed to its tab, and print as notes.
+
+## Every screen
+
+Every screen has a driver, and each is reachable from `mando`, headless and remote:
+
+| Screen | Reached by | Notes |
+| --- | --- | --- |
+| Matching, flash cards | a deck's or folder's `startLessonTapped`, home | driver-only actions: `tileTapped {"tile":"水"}` by English or Hanzi, `optionPicked {"option":1}` by place |
+| Today's plan | home's `todayPlanTapped` | its current step is in front (`matching step`, `flashcard step`, `speaking`); `continueTapped` passes a teach step; `say` reaches a read-aloud step, and `-scripted-speech` covers its steps in the app too |
+| Settings | home's `opened {"destination":"settings"}` | strictness by the title the screen shows |
+| Headword page | the dictionary's `opened {"result":0}`, a page's `characterOpened {"character":1}` | readings by place |
+| Search results, word editor, HSK levels | the vocabulary tab and folders, in front while open | `back` closes a sheet or search before popping the stack |
+
+To be pushed by an action, two pushes moved from the views into view-model state: the
+dictionary tab's stack is `DictionarySearchState.path`, bound to its `NavigationStack`, and
+home's settings is `HomeState.destination`, its toolbar `NavigationLink` now a `Button`.
+Where an action carries a value nobody would type as JSON (a tile, an option's id, a
+whole search result, a strictness), the driver takes a small action enum of its own and
+picks it by name or place; the screen's own actions are unchanged.
+
+Not driven: a dictionary page opened from the word editor or the search results (the
+summaries say when one is open), and today's plan has no `isBusy` while an example
+sentence loads.
 
 ## At a terminal
 
@@ -271,11 +292,7 @@ the screen by command, then screenshot.
    open for up to 5s, and an answer queued during it was taken unheard as that listen ended
    empty. An answer queued mid-listen now becomes its transcript, as speech into an open
    microphone would, and the listen settles on it. Headless mode never showed this, since its
-   listens end at once. Mixed lesson steps still use the microphone: they have no driver. The app's speaking lesson uses
-   `DictationRecogniser`, and recognition on the simulator is not to be judged. Under
-   the argument, the speaking factory builds with `ScriptedRecogniser` and `say` feeds
-   it. The card reacts in the simulator, which proves the flow and nothing about
-   recognition.
+   listens end at once. Today's plan's read-aloud steps hear the same scripted speech.
 
 **Found by running it on the simulator, and fixed.**
 
