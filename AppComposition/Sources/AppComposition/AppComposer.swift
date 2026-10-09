@@ -93,6 +93,13 @@ public struct AppComposer {
                     dependencies: dependencies,
                     input: WordEditorInput(target: WordEditorTarget(edit), dictionary: dictionaryAccess)
                 ))
+            },
+            editorDriver: { [self] edit, dismissed in
+                WordEditorFactory.makeDriver(
+                    dependencies: dependencies,
+                    input: WordEditorInput(target: WordEditorTarget(edit), dictionary: dictionaryAccess),
+                    dismiss: dismissed
+                )
             }
         )
     }

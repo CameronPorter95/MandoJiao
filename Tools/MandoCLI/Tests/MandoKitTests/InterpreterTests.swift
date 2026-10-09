@@ -170,6 +170,20 @@ struct InterpreterTests {
         #expect(await screens(mando).last?.hasPrefix("results  ") == true)
     }
 
+    @Test("the dictionary tab opens a reading in the word editor, and back closes it")
+    func editorFromDictionary() async throws {
+        let mando = try Interpreter()
+        _ = await mando.run("tab dictionary")
+        _ = await mando.run(#"do queryChanged {"query":"你好"}"#)
+
+        #expect(await mando.run(#"do vocabularyTapped {"result":0}"#) == ["✓ vocabularyTapped"])
+        #expect(await screens(mando).last?.hasPrefix("word editor  ") == true)
+        #expect(await screens(mando).last?.contains("hanzi: 你好") == true)
+
+        #expect(await mando.run("back") == ["✓ back"])
+        #expect(await screens(mando).last?.hasPrefix("dictionary  query: 你好") == true)
+    }
+
     @Test("mistakes are refused in a sentence and leave the session usable")
     func refusals() async throws {
         let mando = try Interpreter()

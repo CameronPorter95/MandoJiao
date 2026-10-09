@@ -14,7 +14,7 @@ public enum DictionaryFactory: InputRouteFactory {
 
     /// The page without its view. Its characters' pages, pushed in the view's own stack, are not.
     public static func makeDriver(dependencies: Dependencies, input: DictionaryInput) -> ScreenDriver {
-        makePage(input: input)(input.headword).driver(open: nil)
+        makePage(input: input)(input.headword).driver(open: nil, editor: input.vocabulary?.editorDriver)
     }
 
     private static func makePage(input: DictionaryInput) -> (DictionaryHeadword) -> DictionaryPageViewModel {

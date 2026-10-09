@@ -29,9 +29,10 @@ struct AppComposerTests {
         #expect(composer.todayPlanInput(plan).speech == nil)
     }
 
-    @Test("the library reaches dictionary pages as views and as drivers")
-    func bothPageSeams() throws {
+    @Test("the library reaches dictionary pages, and the dictionary the word editor, as views and as drivers")
+    func bothSeams() throws {
         let composer = AppComposer(dependencies: try TestDependencies(), speech: nil)
         #expect(composer.libraryInput.dictionary.pageDriver != nil)
+        #expect(composer.dictionaryVocabulary.editorDriver != nil)
     }
 }
