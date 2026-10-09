@@ -479,6 +479,27 @@ struct WordEditorViewModelTests {
         #expect(await dictionary.lookups.isEmpty)
     }
 
+    @Test("driven, the dictionary page is in front while open, and back closes it before the editor")
+    func driverDictionaryPage() async throws {
+        var dismissed = 0
+        let (editor, _) = makeEditor(nil)
+        let driver = editor.driver(dismiss: { dismissed += 1 }, page: { headword in
+            ScreenDriver(
+                name: "page \(headword.hanzi)", actions: [], state: { 0 }, summary: { _ in "" },
+                send: { (_: Int) in }, effects: { AsyncStream<Int> { $0.finish() } }, follow: { $0 }
+            )
+        })
+        try driver.send("hanziChanged", Data(#"{"text":"行"}"#.utf8))
+        #expect(await waitUntil { !driver.isBusy() })
+
+        try driver.send("dictionaryTapped", nil)
+        #expect(driver.front()?.name == "page 行")
+        #expect(driver.back())
+        #expect(editor.state.dictionary == nil)
+        #expect(driver.front() == nil)
+        #expect(dismissed == 0)
+    }
+
     @Test("the dictionary opens on the Hanzi with the reading that would be saved")
     func dictionary() async {
         let (editor, _) = makeEditor(nil)

@@ -1,13 +1,19 @@
 import CoreUI
+import DictionaryDomain
 import Foundation
 import LibraryDomain
 
 extension WordEditorViewModel {
     /// Meanings are moved and removed by their place, and a deck chosen by its name, built-in key
     /// or the start of its id, rather than spelled out as index sets and UUIDs. `dismiss` closes
-    /// the sheet, which the presenter owns. A dictionary page opened from here is not driven.
-    public func driver(dismiss: @escaping () -> Void) -> ScreenDriver {
-        ScreenDriver(
+    /// the sheet, which the presenter owns. `page` builds the dictionary page it opens; without
+    /// it, as in the app, nothing is in front.
+    public func driver(
+        dismiss: @escaping () -> Void,
+        page: ((DictionaryHeadword) -> ScreenDriver)? = nil
+    ) -> ScreenDriver {
+        let children = ChildDrivers<DictionaryHeadword>()
+        return ScreenDriver(
             name: "word editor",
             actions: WordEditorDriverAction.names,
             state: { self.state },
@@ -17,10 +23,15 @@ extension WordEditorViewModel {
             },
             effects: effects,
             follow: { $0.followed(dismiss: dismiss) },
+            front: {
+                guard let page else { return nil }
+                return children.front(of: self.state.dictionary.map { [$0] } ?? [], make: page)
+            },
             back: {
-                self.send(.cancelTapped)
+                self.send(self.state.dictionary == nil ? .cancelTapped : .dictionaryDismissed)
                 return true
             },
+            relay: children.relay,
             // A lookup is under way until one has come back for the Hanzi as typed.
             isBusy: { $0.isLoading || $0.lookup?.hanzi != $0.draft.trimmed.hanzi }
         )
@@ -110,7 +121,7 @@ extension WordEditorState {
         if wordID == nil { parts.append("deck: \(chosenDeckTitle)") }
         if isLearnt { parts.append("learnt") }
         if isChoosingSenses { parts.append("choosing senses") }
-        if dictionary != nil { parts.append("dictionary page open, not driven") }
+        if dictionary != nil { parts.append("dictionary page open") }
         if isLoading { parts.append("loading") }
         parts.append(canSave ? "can save" : "cannot save yet")
         return parts.joined(separator: "  ")

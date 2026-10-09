@@ -48,7 +48,12 @@ extension MixedLessonViewModel {
                     }
                 }
             },
-            relay: children.relay
+            relay: children.relay,
+            // A teach card whose example is still coming, so `ls` waits for the sentence.
+            isBusy: { state in
+                guard case .teach(let word) = state.lesson.step else { return false }
+                return state.examplesPending.contains(word.id)
+            }
         )
     }
 }

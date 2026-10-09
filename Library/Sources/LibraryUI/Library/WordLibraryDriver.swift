@@ -1,17 +1,19 @@
 import CoreUI
+import DictionaryDomain
 import Foundation
 import LibraryDomain
 
 extension WordLibraryViewModel {
     /// A word is picked by its place in the list the summary shows, rather than by its id.
     /// Sorting goes through `layout`, which the library owns, as the screen's sort menu does.
-    /// `editor` builds the editor sheet over the results, given how to close it; without it, as
-    /// in the app, nothing is in front. A dictionary page opened from here is not driven.
+    /// `editor` builds the editor sheet over the results, given how to close it, and `page` a
+    /// word's dictionary page; without them, as in the app, nothing is in front.
     public func driver(
         layout: WordListLayout,
-        editor: ((WordEditorTarget, _ dismissed: @escaping () -> Void) -> ScreenDriver)? = nil
+        editor: ((WordEditorTarget, _ dismissed: @escaping () -> Void) -> ScreenDriver)? = nil,
+        page: ((DictionaryHeadword) -> ScreenDriver)? = nil
     ) -> ScreenDriver {
-        let children = ChildDrivers<String>()
+        let children = ChildDrivers<ResultsChild>()
         return ScreenDriver(
             name: "results",
             actions: WordLibraryDriverAction.names,
@@ -24,9 +26,16 @@ extension WordLibraryViewModel {
             effects: effects,
             follow: { $0 },
             front: {
-                guard let editor else { return nil }
-                return children.front(of: self.state.editor.map { [$0.id] } ?? []) { _ in
-                    editor(self.state.editor ?? .new(WordDraft(meanings: [], hanzi: ""))) { self.send(.editorDismissed) }
+                var stack: [ResultsChild] = []
+                if editor != nil, let target = self.state.editor { stack.append(.editor(target.id)) }
+                if page != nil, let headword = self.state.dictionary { stack.append(.page(headword)) }
+                return children.front(of: stack) { child in
+                    switch child {
+                    case .editor:
+                        editor!(self.state.editor ?? .new(WordDraft(meanings: [], hanzi: ""))) { self.send(.editorDismissed) }
+                    case .page(let headword):
+                        page!(headword)
+                    }
                 }
             },
             back: {
@@ -37,6 +46,12 @@ extension WordLibraryViewModel {
             relay: children.relay
         )
     }
+}
+
+/// The editor sheet or a dictionary page, over the results.
+private enum ResultsChild: Hashable {
+    case editor(String)
+    case page(DictionaryHeadword)
 }
 
 private enum WordLibraryDriverAction: Decodable {
@@ -85,7 +100,7 @@ extension WordLibraryState {
         var parts = ["results", count]
         if !shown.isEmpty { parts.append(shown.joined(separator: " | ")) }
         if editor != nil { parts.append("editing a word") }
-        if dictionary != nil { parts.append("dictionary page open, not driven") }
+        if dictionary != nil { parts.append("dictionary page open") }
         return parts.joined(separator: "  ")
     }
 }

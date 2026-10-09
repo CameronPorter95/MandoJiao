@@ -103,7 +103,9 @@ public final class MixedLessonViewModel {
             if case .teach(let word) = step { word } else { nil }
         }
         let known = state.lesson.plan.known
+        state.examplesPending = Set(taught.map(\.id))
         examplesTask = Task { [findExamples, generateExample] in
+            defer { state.examplesPending = [] }
             // Tatoeba's for every word first, since they are quick, then the model's for any
             // word none of them use in a sense its card gives: it takes seconds a sentence.
             var unmatched: [WordPair] = []
@@ -112,6 +114,7 @@ public final class MixedLessonViewModel {
                     let sentences = try await findExamples(hanzi: word.hanzi, pinyin: word.pinyin)
                     if let example = sentences.best(teaching: word.hanzi, meanings: word.meanings, knowing: known) {
                         state.examples[word.id] = example
+                        state.examplesPending.remove(word.id)
                     } else {
                         unmatched.append(word)
                     }
@@ -123,6 +126,7 @@ public final class MixedLessonViewModel {
                 }
             }
             for word in unmatched {
+                defer { state.examplesPending.remove(word.id) }
                 guard let meaning = word.meanings.first else { continue }
                 do {
                     let request = ExampleRequest(hanzi: word.hanzi, pinyin: word.pinyin, meaning: meaning, otherMeanings: Array(word.meanings.dropFirst()))

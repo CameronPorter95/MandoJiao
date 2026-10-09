@@ -10,6 +10,9 @@ struct MixedLessonState: Equatable {
     /// A sentence using each taught word, by its id, as they arrive. A word with none
     /// has no example on its card.
     var examples: [UUID: ExampleSentence] = [:]
+    /// Taught words whose example is still being looked for, by id. A word leaves once a
+    /// sentence is found for it or every source has been tried.
+    var examplesPending: Set<UUID> = []
 
     /// Closing before anything is answered, or after the end, needs no confirmation.
     var canCloseWithoutConfirming: Bool {

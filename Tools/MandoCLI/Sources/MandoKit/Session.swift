@@ -175,24 +175,31 @@ final class Session: Backend {
             ),
             input: LibraryInput(
                 minimumMatchingWords: MatchingPlanBuilder.pairsPerExercise,
-                // Its pages are views, which nothing here drives.
                 dictionary: DictionaryAccess(
                     dictionary: DictionaryRepositoryFactory.makeDictionaryRepository(),
                     lexicon: DictionaryRepositoryFactory.makeLexiconRepository(),
                     hsk: DictionaryRepositoryFactory.makeHSKRepository(),
-                    page: { _, _ in AnyView(EmptyView()) }
+                    page: { _, _ in AnyView(EmptyView()) },
+                    pageDriver: { [unowned self] headword, addsToVocabulary in
+                        DictionaryFactory.makeDriver(
+                            dependencies: dependencies,
+                            input: DictionaryInput(headword: headword, vocabulary: addsToVocabulary ? dictionaryVocabulary : nil)
+                        )
+                    }
                 )
             )
         )
     }
 
     private func makeDictionary() -> ScreenDriver {
-        DictionaryTabFactory.makeDriver(
-            dependencies: dependencies,
-            input: DictionaryVocabulary(
-                savedReadings: VocabularyRepositoryFactory.makeSavedReadingsRepository(dependencies: dependencies),
-                editor: { _ in AnyView(EmptyView()) }
-            )
+        DictionaryTabFactory.makeDriver(dependencies: dependencies, input: dictionaryVocabulary)
+    }
+
+    /// What the dictionary uses of the vocabulary: which readings are saved.
+    private var dictionaryVocabulary: DictionaryVocabulary {
+        DictionaryVocabulary(
+            savedReadings: VocabularyRepositoryFactory.makeSavedReadingsRepository(dependencies: dependencies),
+            editor: { _ in AnyView(EmptyView()) }
         )
     }
 
