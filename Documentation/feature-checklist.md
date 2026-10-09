@@ -220,6 +220,27 @@ Rules stated and justified in [modularisation.md](modularisation.md#navigation).
 
 ---
 
+## Driving headlessly
+
+Every screen runs without its view, for `mando` and for agents
+([headless-cli.md](headless-cli.md)).
+
+- [ ] **H1** The screen ships a driver: `{Screen}Driver.swift` in `{X}UI` with
+      `driver(navigation:)`, a one-line `summary` an agent can act on, and `isBusy` where
+      async work changes what is shown. Its factory has `makeDriver` beside `makeRoute`,
+      sharing one private `makeViewModel`, silent and off the clock (zero delays).
+- [ ] **H2** Navigating effects go through `{Screen}Navigation.follow`, which the Route and
+      the driver both call, and the Route carries `.drivable { ... }` for remote mode.
+- [ ] **H3** Its actions decode by name: the action enum is `Decodable`, payloads labelled
+      where `_0` would be the only key, or a driver-only enum picks a value nobody would type
+      as JSON by name or place. `static let names` lists them, and a test sends each one.
+- [ ] **H4** A push or sheet a driver must follow is view-model state (a path, a destination,
+      an optional item), not a `NavigationLink` alone in the view, and a screen in front is
+      reached through `front` (`ChildDrivers`), its `back` closing it.
+- [ ] **H5** Its input is built in `AppComposer`, never in `ContentView` or mando's `Session`,
+      so the app and mando cannot drift; mando reaches the screen and an `InterpreterTests`
+      case covers it.
+
 ## Tests
 
 - [ ] **T1** New tests use Swift Testing and live in the package test target.

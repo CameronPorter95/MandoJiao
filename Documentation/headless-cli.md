@@ -169,12 +169,9 @@ CLI's vocabulary cannot drift from the code's.
 
 ## After the spike
 
-- Drivers for the remaining screens. The tabs are done, below.
-- One composition shared by the app and the CLI. The duplicated composition root is the
-  spike's known cost; the `Application` module [modularisation.md](modularisation.md)
-  sketches is the fix.
-- A line in [feature-checklist.md](feature-checklist.md): a new screen ships a driver.
-- Remote mode, below.
+All done: drivers for every screen ([Every screen](#every-screen)), one composition shared
+by the app and mando ([One composition](#one-composition)), checklist items H1 to H5 in
+[feature-checklist.md](feature-checklist.md), and remote mode, below.
 
 ## Tabs
 
@@ -239,6 +236,18 @@ mando. The editor and the results put it in front while open, and `back` closes 
 anything else. Today's plan is busy while the teach card on show waits for its example
 sentence (`MixedLessonState.examplesPending`), so `ls` shows the sentence once it has come;
 only that card's, since the model takes seconds a sentence and the rest are looked up ahead.
+
+## One composition
+
+Every screen's input is built once, in `AppComposer` (the `AppComposition` package), and both
+`ContentView` and mando's `Session` take theirs from it. Before, each built its own, and they
+drifted: today's plan gained `speech` in its input and only mando's copy passed it, so the
+app's read-aloud steps went on hearing the microphone under `-scripted-speech`. Inputs carry
+both seams where a neighbour is another package's screen, a view for the app and a driver for
+mando (`DictionaryAccess.page` and `pageDriver`). How screens are shown stays with each: the
+app's tabs and full-screen cover, mando's stack. `AppComposerTests` pins scripted speech
+reaching both lessons that listen; like mando's tests it is outside the Xcode scheme, so run
+`swift test` in `AppComposition`.
 
 ## At a terminal
 
@@ -342,6 +351,8 @@ Checked with two simulators launched with -remote.
 
 ## Unchecked
 
-- Whether a copy of the simulator's store opens on the Mac.
-- Whether the other packages' DI targets build for macOS.
-- Which `UserDefaults` domain the CLI's settings land in.
+- Whether a copy of the simulator's store opens on the Mac: mando has no `--store` flag yet.
+
+Answered: every package's DI target builds for macOS, since mando links them all. mando keeps
+its settings in the `mando` defaults domain (`~/Library/Preferences/mando.plist`), apart from
+the app's; `defaults read mando` shows them.

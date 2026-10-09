@@ -1,7 +1,7 @@
+import AppComposition
 import CoreDI
 import CoreUI
 import DictionaryDI
-import DictionaryDomain
 import Foundation
 import LibraryDI
 import LibraryDomain
@@ -13,7 +13,6 @@ import ProgressDI
 import ProgressDomain
 import SettingsDI
 import SwiftData
-import SwiftUI
 
 struct CLIDependencies: Dependencies {
     let modelContainer: ModelContainer
@@ -125,6 +124,12 @@ final class Session: Backend {
 
     // MARK: - Tabs
 
+    /// Every screen's input, as the app's are: mando shows them its own way, and nothing else.
+    /// Each lesson's scripted speech is its own, handed to its driver rather than its input.
+    private var composer: AppComposer {
+        AppComposer(dependencies: dependencies, speech: nil)
+    }
+
     private func makeHome() -> ScreenDriver {
         HomeFactory.makeDriver(
             dependencies: dependencies,
@@ -134,34 +139,8 @@ final class Session: Backend {
                 presentFlashcards: { [unowned self] in presentFlashcards($0) },
                 presentTodayPlan: { [unowned self] in presentTodayPlan($0) }
             ),
-            input: HomeInput(
-                minimumMatchingWords: MatchingPlanBuilder.pairsPerExercise,
-                quickPracticeRounds: { [dependencies] in
-                    MatchingSettingsFactory.makeGetSettingsUseCase(dependencies: dependencies)().rounds
-                },
-                observeVocabulary: VocabularyRepositoryFactory.makeObserveVocabularyUseCase(dependencies: dependencies),
-                getLessonSettings: LessonSettingsFactory.makeGetSettingsUseCase(dependencies: dependencies),
-                clearMistakes: VocabularyRepositoryFactory.makeClearMistakesUseCase(dependencies: dependencies),
-                settings: { AnyView(EmptyView()) }
-            ),
-            settings: { [unowned self] in makeSettings() }
-        )
-    }
-
-    /// Composed as ContentView composes it: the settings edit what the lessons own.
-    private func makeSettings() -> ScreenDriver {
-        SettingsFactory.makeDriver(
-            dependencies: dependencies,
-            input: SettingsInput(
-                getSpeakingSettings: SpeakingSettingsFactory.makeGetSettingsUseCase(dependencies: dependencies),
-                setStrictness: SpeakingSettingsFactory.makeSetStrictnessUseCase(dependencies: dependencies),
-                setSpeakingCardLimit: SpeakingSettingsFactory.makeSetCardLimitUseCase(dependencies: dependencies),
-                getMatchingSettings: MatchingSettingsFactory.makeGetSettingsUseCase(dependencies: dependencies),
-                setShowsPinyin: MatchingSettingsFactory.makeSetShowsPinyinUseCase(dependencies: dependencies),
-                setMatchingRounds: MatchingSettingsFactory.makeSetRoundsUseCase(dependencies: dependencies),
-                getLessonSettings: LessonSettingsFactory.makeGetSettingsUseCase(dependencies: dependencies),
-                setSkipsLearntWords: LessonSettingsFactory.makeSetSkipsLearntWordsUseCase(dependencies: dependencies)
-            )
+            input: composer.homeInput,
+            settings: { [unowned self] in SettingsFactory.makeDriver(dependencies: dependencies, input: composer.settingsInput) }
         )
     }
 
@@ -173,34 +152,12 @@ final class Session: Backend {
                 presentSpeaking: { [unowned self] in presentSpeaking($0) },
                 presentFlashcards: { [unowned self] in presentFlashcards($0) }
             ),
-            input: LibraryInput(
-                minimumMatchingWords: MatchingPlanBuilder.pairsPerExercise,
-                dictionary: DictionaryAccess(
-                    dictionary: DictionaryRepositoryFactory.makeDictionaryRepository(),
-                    lexicon: DictionaryRepositoryFactory.makeLexiconRepository(),
-                    hsk: DictionaryRepositoryFactory.makeHSKRepository(),
-                    page: { _, _ in AnyView(EmptyView()) },
-                    pageDriver: { [unowned self] headword, addsToVocabulary in
-                        DictionaryFactory.makeDriver(
-                            dependencies: dependencies,
-                            input: DictionaryInput(headword: headword, vocabulary: addsToVocabulary ? dictionaryVocabulary : nil)
-                        )
-                    }
-                )
-            )
+            input: composer.libraryInput
         )
     }
 
     private func makeDictionary() -> ScreenDriver {
-        DictionaryTabFactory.makeDriver(dependencies: dependencies, input: dictionaryVocabulary)
-    }
-
-    /// What the dictionary uses of the vocabulary: which readings are saved.
-    private var dictionaryVocabulary: DictionaryVocabulary {
-        DictionaryVocabulary(
-            savedReadings: VocabularyRepositoryFactory.makeSavedReadingsRepository(dependencies: dependencies),
-            editor: { _ in AnyView(EmptyView()) }
-        )
+        DictionaryTabFactory.makeDriver(dependencies: dependencies, input: composer.dictionaryVocabulary)
     }
 
     // MARK: - Lessons
@@ -212,17 +169,13 @@ final class Session: Backend {
 
     private func presentMatching(_ request: LessonRequest) {
         present(MatchingFactory.makeDriver(
-            dependencies: dependencies,
-            navigation: lessonNavigation.matching,
-            input: MatchingInput(request: request, recordResults: recordResults)
+            dependencies: dependencies, navigation: lessonNavigation.matching, input: composer.matchingInput(request)
         ))
     }
 
     private func presentFlashcards(_ request: LessonRequest) {
         present(FlashcardsFactory.makeDriver(
-            dependencies: dependencies,
-            navigation: lessonNavigation.flashcards,
-            input: FlashcardsInput(request: request, recordResults: recordResults)
+            dependencies: dependencies, navigation: lessonNavigation.flashcards, input: composer.flashcardsInput(request)
         ))
     }
 
@@ -231,7 +184,7 @@ final class Session: Backend {
         present(SpeakingFactory.makeDriver(
             dependencies: dependencies,
             navigation: lessonNavigation.speaking,
-            input: SpeakingInput(request: request, recordResults: recordResults),
+            input: composer.speakingInput(request),
             speech: speech,
             logAttempt: logAttempt
         ), speech: speech)
@@ -243,19 +196,10 @@ final class Session: Backend {
         present(MixedLessonFactory.makeDriver(
             dependencies: dependencies,
             navigation: lessonNavigation.mixedLesson,
-            input: MixedLessonInput(
-                plan: plan,
-                recordResults: recordResults,
-                findExamples: FindExamplesUseCase(repository: DictionaryRepositoryFactory.makeExampleRepository()),
-                generateExample: GenerateExampleUseCase(generator: DictionaryRepositoryFactory.makeExampleGenerator())
-            ),
+            input: composer.todayPlanInput(plan),
             speech: speech,
             logAttempt: logAttempt
         ), speech: speech)
-    }
-
-    private var recordResults: RecordLessonResultsUseCase {
-        VocabularyRepositoryFactory.makeRecordLessonResultsUseCase(dependencies: dependencies)
     }
 
     private var logAttempt: SpeakingViewModel.LogAttempt {
