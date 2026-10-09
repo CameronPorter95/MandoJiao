@@ -155,6 +155,21 @@ struct InterpreterTests {
         #expect(await screens(mando).last?.hasPrefix("dictionary  query: 你好") == true)
     }
 
+    @Test("a word's dictionary page opens over the vocabulary's search results, and back closes it")
+    func pageFromResults() async throws {
+        let mando = try Interpreter()
+        _ = await mando.run("tab vocabulary")
+        _ = await mando.run(#"do searchPresentedChanged {"_0":true}"#)
+        _ = await mando.run(#"do searchChanged {"text":"ni"}"#)
+        let word = await screens(mando).last?.components(separatedBy: "0. ").dropFirst().first?.prefix(while: { $0 != " " })
+
+        #expect(await mando.run(#"do dictionaryTapped {"word":0}"#) == ["✓ dictionaryTapped"])
+        #expect(await screens(mando).last?.hasPrefix("page  \(word ?? "?")") == true)
+
+        #expect(await mando.run("back") == ["✓ back"])
+        #expect(await screens(mando).last?.hasPrefix("results  ") == true)
+    }
+
     @Test("mistakes are refused in a sentence and leave the session usable")
     func refusals() async throws {
         let mando = try Interpreter()

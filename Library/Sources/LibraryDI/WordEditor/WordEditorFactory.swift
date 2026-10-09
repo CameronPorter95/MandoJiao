@@ -21,7 +21,10 @@ public enum WordEditorFactory: InputRouteFactory {
         input: WordEditorInput,
         dismiss: @escaping () -> Void
     ) -> ScreenDriver {
-        makeViewModel(dependencies: dependencies, input: input, suggestionDelay: .zero).driver(dismiss: dismiss)
+        makeViewModel(dependencies: dependencies, input: input, suggestionDelay: .zero).driver(
+            dismiss: dismiss,
+            page: input.dictionary.pageDriver.map { page in { page($0, false) } }
+        )
     }
 
     private static func makeViewModel(

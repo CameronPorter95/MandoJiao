@@ -14,16 +14,20 @@ public enum WordLibraryFactory: InputRouteFactory {
         )
     }
 
-    /// The results without their view, with the word editor over them when a word is opened.
-    /// Its dictionary pages are not driven.
+    /// The results without their view, with the word editor over them when a word is opened, and
+    /// a word's dictionary page when the dictionary gives a driver for one.
     public static func makeDriver(dependencies: Dependencies, input: WordLibraryInput) -> ScreenDriver {
-        makeViewModel(dependencies: dependencies, input: input).driver(layout: input.layout) { target, dismissed in
-            WordEditorFactory.makeDriver(
-                dependencies: dependencies,
-                input: WordEditorInput(target: target, dictionary: input.dictionary),
-                dismiss: dismissed
-            )
-        }
+        makeViewModel(dependencies: dependencies, input: input).driver(
+            layout: input.layout,
+            editor: { target, dismissed in
+                WordEditorFactory.makeDriver(
+                    dependencies: dependencies,
+                    input: WordEditorInput(target: target, dictionary: input.dictionary),
+                    dismiss: dismissed
+                )
+            },
+            page: input.dictionary.pageDriver.map { page in { page($0, true) } }
+        )
     }
 
     private static func makeViewModel(dependencies: Dependencies, input: WordLibraryInput) -> WordLibraryViewModel {

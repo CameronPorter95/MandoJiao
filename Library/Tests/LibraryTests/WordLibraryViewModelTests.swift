@@ -51,10 +51,10 @@ struct WordLibraryViewModelTests {
         var sorts: [WordSort] = []
         var dismiss: (() -> Void)?
         let (library, _) = await makeLibrary()
-        let driver = library.driver(layout: WordListLayout(sort: .default, setSort: { sorts.append($0) })) { target, dismissed in
+        let driver = library.driver(layout: WordListLayout(sort: .default, setSort: { sorts.append($0) }), editor: { target, dismissed in
             dismiss = dismissed
             return Self.probe("editor \(target.id)")
-        }
+        })
         try driver.send("searchChanged", Data(#"{"text":"sh"}"#.utf8))
         let first = library.state.words[0]
         #expect(driver.summary().hasPrefix("results  3 of 6 words  0. \(first.hanzi)"))
@@ -77,6 +77,21 @@ struct WordLibraryViewModelTests {
         #expect(driver.back())
         #expect(library.state.dictionary == nil)
         #expect(!driver.back())
+    }
+
+    @Test("driven, a word's dictionary page is in front while open, and back closes it")
+    func driverDictionaryPage() async throws {
+        let (library, _) = await makeLibrary()
+        let driver = library.driver(layout: WordListLayout(sort: .default, setSort: { _ in }), page: { Self.probe("page \($0.hanzi)") })
+        let first = library.state.words[0]
+
+        try driver.send("dictionaryTapped", Data(#"{"word":0}"#.utf8))
+        #expect(driver.front()?.name == "page \(first.hanzi)")
+        #expect(driver.summary().hasSuffix("dictionary page open"))
+
+        #expect(driver.back())
+        #expect(library.state.dictionary == nil)
+        #expect(driver.front() == nil)
     }
 
     private static func probe(_ name: String) -> ScreenDriver {

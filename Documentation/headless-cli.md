@@ -232,9 +232,13 @@ screen also carries SwiftUI's own way out: remote `back` tries the app, then eac
 own `back`, and only then the frontmost screen's `dismiss`, as its back button would. Its
 `isPresented` is read when back runs: read as the screen appeared, it was still false.
 
-Not driven: a dictionary page opened from the word editor or the search results (the
-summaries say when one is open), and today's plan has no `isBusy` while an example
-sentence loads.
+A dictionary page opened from the word editor or the search results is a Dictionary screen,
+which Library cannot see, so `DictionaryAccess` carries `pageDriver` beside its `page` view:
+nil in the app, where the page's own view registers, and `DictionaryFactory.makeDriver` in
+mando. The editor and the results put it in front while open, and `back` closes it before
+anything else. Today's plan is busy while the teach card on show waits for its example
+sentence (`MixedLessonState.examplesPending`), so `ls` shows the sentence once it has come;
+only that card's, since the model takes seconds a sentence and the rest are looked up ahead.
 
 ## At a terminal
 

@@ -106,7 +106,7 @@ struct MixedLessonViewModelTests {
     private func makeViewModel(
         _ steps: [TodayPlan.Step] = [.teach(LessonWords.water), .recall(LessonWords.water, .recognise)],
         examples: FakeExamples = FakeExamples(["水": [drinking]]),
-        generator: FakeGenerator = FakeGenerator(nil)
+        generator: any ExampleGenerating = FakeGenerator(nil)
     ) -> (MixedLessonViewModel, EffectLog<MixedLessonEffect>) {
         let viewModel = MixedLessonViewModel(
             lesson: MixedLesson(plan: plan(steps)),
@@ -121,6 +121,30 @@ struct MixedLessonViewModelTests {
 
     private static let salt = ExampleSentence(hanzi: "请把盐递给我，水也要。", pinyin: "", english: "Pass the salt, please.")
     private static let written = ExampleSentence(hanzi: "我想喝水。", pinyin: "Wǒ xiǎng hē shuǐ.", english: "I want to drink water.")
+
+    @Test("driven, a teach card whose example is still coming is busy until it arrives, so ls waits for it")
+    func busyWhileTheExampleComes() async {
+        let generator = HeldGenerator()
+        let (viewModel, _) = makeViewModel(examples: FakeExamples([:]), generator: generator)
+        let driver = viewModel.driver(navigation: MixedLessonNavigation(didClose: {}))
+        try? driver.send("appeared", nil)
+
+        #expect(await waitUntil { await generator.isWaiting })
+        #expect(driver.isBusy())
+
+        await generator.release()
+        #expect(await waitUntil { !driver.isBusy() })
+        #expect(viewModel.state.examples[LessonWords.water.id] != nil)
+    }
+
+    @Test("a word Tatoeba has a sentence for is not waited on")
+    func notBusyOnceFound() async {
+        let (viewModel, _) = makeViewModel(examples: FakeExamples(["水": [Self.drinking]]), generator: HeldGenerator())
+        let driver = viewModel.driver(navigation: MixedLessonNavigation(didClose: {}))
+        try? driver.send("appeared", nil)
+        #expect(await waitUntil { viewModel.state.examples[LessonWords.water.id] != nil })
+        #expect(!driver.isBusy())
+    }
 
     @Test("a word none of whose sentences say its meaning has one written on the device, marked as such")
     func examplesWritten() async {
@@ -138,7 +162,8 @@ struct MixedLessonViewModelTests {
         let generator = FakeGenerator(nil)
         let (viewModel, _) = makeViewModel([.teach(girl), .recall(girl, .recognise)], examples: FakeExamples([:]), generator: generator)
         viewModel.send(.appeared)
-        await settle()
+        // Waited for rather than given a fixed pause: a busy simulator outran 100ms.
+        #expect(await waitUntil { await !generator.requests.isEmpty })
         #expect(await generator.requests == [
             ExampleRequest(hanzi: "女生", pinyin: "nǚshēng", meaning: "schoolgirl", otherMeanings: ["female student", "girl"]),
         ])
@@ -426,6 +451,24 @@ private actor FakeGenerator: ExampleGenerating {
         requests.append(request)
         if fails { throw DictionaryDomainError.unexpected(model: DomainErrorModel(domain: "test", code: 6, description: "no model")) }
         return sentence.map(ExampleWriting.written) ?? .unavailable
+    }
+}
+
+/// Writes a sentence only once released, so a test can look while it is still coming.
+private actor HeldGenerator: ExampleGenerating {
+    private var waiting: CheckedContinuation<Void, Never>?
+    private var released = false
+    var isWaiting: Bool { waiting != nil }
+
+    func example(for request: ExampleRequest) async throws -> ExampleWriting {
+        if !released { await withCheckedContinuation { waiting = $0 } }
+        return .written(ExampleSentence(hanzi: "我想喝水。", pinyin: "Wǒ xiǎng hē shuǐ.", english: "I want to drink water."))
+    }
+
+    func release() {
+        released = true
+        waiting?.resume()
+        waiting = nil
     }
 }
 
