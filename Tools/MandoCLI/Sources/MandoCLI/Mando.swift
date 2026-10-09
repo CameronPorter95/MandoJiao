@@ -7,10 +7,19 @@ struct Mando {
         let interpreter: Interpreter
         do {
             // mando --remote [port] drives the app on the simulator, launched with -remote.
-            let arguments = CommandLine.arguments.dropFirst()
+            // mando --store <path> runs headlessly over a copy of a store, such as a simulator's.
+            let arguments = Array(CommandLine.arguments.dropFirst())
+            let store = arguments.firstIndex(of: "--store").map { flag in
+                arguments.indices.contains(flag + 1) ? arguments[flag + 1] : ""
+            }
             if let flag = arguments.firstIndex(of: "--remote") {
-                let port = arguments.dropFirst(flag - arguments.startIndex + 1).first.flatMap(UInt16.init) ?? 9393
+                // The app has a store of its own; there is nothing to hand it.
+                if store != nil { refuse("--store is for running headlessly; the app uses its own store") }
+                let port = arguments.indices.contains(flag + 1) ? UInt16(arguments[flag + 1]) ?? 9393 : 9393
                 interpreter = try await Interpreter(remotePort: port)
+            } else if let store {
+                if store.isEmpty { refuse("--store <path to a store, or an app's data container>") }
+                interpreter = try Interpreter(store: URL(fileURLWithPath: (store as NSString).expandingTildeInPath))
             } else {
                 interpreter = try Interpreter()
             }
@@ -57,6 +66,11 @@ struct Mando {
             print("✗ \(error)")
         }
         print()
+    }
+
+    private static func refuse(_ reason: String) -> Never {
+        print("✗ \(reason)")
+        exit(1)
     }
 
     private static func prompt(_ prompt: String) {

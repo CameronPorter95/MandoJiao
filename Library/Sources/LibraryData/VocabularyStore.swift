@@ -7,10 +7,11 @@ import SwiftData
 public enum VocabularyStore {
     /// Opens the store. One written by an earlier shape is migrated where SwiftData can infer
     /// how, and otherwise fails to open, as `VocabularySchemaV1` explains.
-    public static func makeContainer(inMemory: Bool = false) throws -> ModelContainer {
+    /// `url` opens a store file of one's own instead of the app's default one.
+    public static func makeContainer(inMemory: Bool = false, url: URL? = nil) throws -> ModelContainer {
         try ModelContainer(
             for: Schema(versionedSchema: VocabularySchemaV1.self),
-            configurations: ModelConfiguration(isStoredInMemoryOnly: inMemory)
+            configurations: url.map { ModelConfiguration(url: $0) } ?? ModelConfiguration(isStoredInMemoryOnly: inMemory)
         )
     }
 

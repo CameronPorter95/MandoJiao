@@ -352,10 +352,25 @@ Checked with two simulators launched with -remote.
 - `✓` means state has settled, not that an animation has finished. A screenshot taken
   straight after a push can catch it mid-slide; wait before capturing.
 
-## Unchecked
+## Over a real store
 
-- Whether a copy of the simulator's store opens on the Mac: mando has no `--store` flag yet.
+`mando --store <path>` runs headlessly over a copy of a store instead of an in-memory one
+seeded as a new install is, to replay a bug against real vocabulary. The path is a store file,
+or an app's data container, as this prints it:
 
-Answered: every package's DI target builds for macOS, since mando links them all. mando keeps
+```sh
+swift run mando --store "$(xcrun simctl get_app_container booted com.cameronporter.MandoJiao data)"
+```
+
+It copies the store with its `-wal` and `-shm`, which can hold writes the store file has not
+taken in yet, into a folder of its own and opens the copy, so the original is never written
+to: a lesson's answers and renames land in the copy. `--remote` refuses `--store`, since the
+app has a store of its own. Measured on the iPhone 17 Pro Max simulator's store: it opens on
+the Mac, shows that store's own folders and decks, records a mistake in the copy, and the
+original's three files hash the same before and after.
+
+## Answered
+
+Every package's DI target builds for macOS, since mando links them all. mando keeps
 its settings in the `mando` defaults domain (`~/Library/Preferences/mando.plist`), apart from
 the app's; `defaults read mando` shows them.
