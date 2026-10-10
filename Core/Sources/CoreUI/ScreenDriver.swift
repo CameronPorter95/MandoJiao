@@ -12,6 +12,8 @@ public struct ScreenDriver {
     public let summary: () -> String
     /// The whole state, as `dump` prints it.
     public let dump: () -> String
+    /// The state, cheaply: what a settle compares while it waits, many times a second.
+    public let fingerprint: () -> String
     /// The effects left over once navigation has been followed, described.
     public let effects: () -> AsyncStream<String>
     /// The screen this one shows in front of itself, such as a page pushed onto its stack.
@@ -20,8 +22,14 @@ public struct ScreenDriver {
     public let back: () -> Bool
     /// Working on something that will change what it shows, such as a search under way.
     public let isBusy: () -> Bool
+    /// Showing a dialog over everything in front of it, such as asking whether to quit, so
+    /// commands reach it and not the screens it covers.
+    public let covers: () -> Bool
     /// Opens something this screen lists by its name, as tapping its row would.
     public let open: (_ kind: String, _ query: String) throws -> Void
+    /// Answers the card showing, right or wrong, as a learner would, then goes on to the next
+    /// where the card is done. Says what it gave and how it was graded.
+    public let answer: (_ right: Bool) throws -> String
 
     /// `follow` carries out an effect that navigates and returns the rest, as the screen's Route does.
     public init<State, Action: Decodable, Effect: Sendable>(
@@ -36,12 +44,16 @@ public struct ScreenDriver {
         back: @escaping () -> Bool = { false },
         relay: EffectRelay? = nil,
         isBusy: @escaping (State) -> Bool = { _ in false },
-        open: @escaping (_ kind: String, _ query: String) throws -> Void = { kind, _ in throw ScreenDriverError.cannotOpen(kind) }
+        covers: @escaping (State) -> Bool = { _ in false },
+        open: @escaping (_ kind: String, _ query: String) throws -> Void = { kind, _ in throw ScreenDriverError.cannotOpen(kind) },
+        answer: @escaping (_ right: Bool) throws -> String = { _ in throw ScreenDriverError.cannotAnswer("nothing to answer here") }
     ) {
         self.open = open
+        self.answer = answer
         self.front = front
         self.back = back
         self.isBusy = { isBusy(state()) }
+        self.covers = { covers(state()) }
         self.name = name
         self.actions = actions
         self.send = { action, arguments in
@@ -54,6 +66,7 @@ public struct ScreenDriver {
             Swift.dump(state(), to: &text)
             return text
         }
+        self.fingerprint = { String(describing: state()) }
         self.effects = {
             let source = effects()
             let (described, continuation) = AsyncStream.makeStream(of: String.self)
@@ -94,6 +107,8 @@ public nonisolated enum ScreenDriverError: Error, Equatable, CustomStringConvert
     case unknownAction(String)
     case badArguments(String)
     case cannotOpen(String)
+    /// Why the screen cannot answer as asked.
+    case cannotAnswer(String)
     case notFound(String, String)
     /// The kind, what was asked for, and the names there are.
     case notOneOf(String, String, [String])
@@ -103,6 +118,7 @@ public nonisolated enum ScreenDriverError: Error, Equatable, CustomStringConvert
         case .unknownAction(let action): "no action \"\(action)\" here, see ls"
         case .badArguments(let action): "the arguments do not fit \(action)"
         case .cannotOpen(let kind): "nothing here opens a \(kind)"
+        case .cannotAnswer(let reason): reason
         case .notFound(let kind, let query): "no \(kind) matches \"\(query)\""
         case .notOneOf(let kind, let query, let names):
             "no \(kind) \"\(query)\"; the \(kind)s are \(names.dropLast().joined(separator: ", ")) and \(names.last ?? "")"

@@ -8,22 +8,32 @@ public final class RemoteControl {
     private let registry: ScreenRegistry
     private let transition: Duration
 
-    /// `transition` outlasts a push, pop or dismissal: a screen leaves the registry only as its
-    /// disappearance ends, and nothing on show changes in the meantime for the settle to see.
-    public init(registry: ScreenRegistry, transition: Duration = .milliseconds(600)) {
+    private let quiet: Duration
+
+    /// After a command, a reply waits for the app to be still for `quiet`, and no longer than
+    /// `transition` in all: a screen leaves the registry only as its disappearance ends, and
+    /// nothing on show changes in the meantime for the settle to see.
+    public init(registry: ScreenRegistry, transition: Duration = .seconds(2), quiet: Duration = .milliseconds(100)) {
         self.registry = registry
         self.transition = transition
+        self.quiet = quiet
     }
 
-    private var top: ScreenDriver? { registry.screens.last ?? registry.app }
+    /// The screens on show, back first, ending at one with a dialog over the rest.
+    private var shown: [ScreenDriver] {
+        guard let covering = registry.screens.firstIndex(where: { $0.covers() }) else { return registry.screens }
+        return Array(registry.screens[...covering])
+    }
+
+    private var top: ScreenDriver? { shown.last ?? registry.app }
 
     public func handle(_ request: RemoteRequest) async -> RemoteReply {
         await settle()
         do {
             let lines = try await perform(request)
             await settle()
-            if request.operation != .ls, request.operation != .state {
-                try? await Task.sleep(for: transition)
+            if ![.ls, .state, .hello].contains(request.operation) {
+                await waitForStillness()
                 await settle()
             }
             return RemoteReply(lines: lines)
@@ -38,7 +48,7 @@ public final class RemoteControl {
         case .hello:
             return [Self.identity]
         case .ls:
-            let screens = ([registry.app] + registry.screens.map(Optional.some)).compactMap { $0?.summary() }
+            let screens = ([registry.app] + shown.map(Optional.some)).compactMap { $0?.summary() }
             return screens + (top.map { ["actions: \($0.actions.joined(separator: ", "))"] } ?? [])
         case .state:
             return top?.dump().split(separator: "\n").map(String.init) ?? []
@@ -59,9 +69,12 @@ public final class RemoteControl {
             guard let top, top.name == "speaking", let answer = request.answer else { throw RemoteError.notSpeaking }
             speak(answer)
             try top.send("startListeningTapped", nil)
+        case .answer:
+            guard let top else { throw RemoteError.nothingOpen }
+            return [try top.answer(request.wrong != true)]
         case .back:
             if registry.app?.back() == true { return [] }
-            if registry.screens.reversed().contains(where: { $0.back() }) { return [] }
+            if shown.reversed().contains(where: { $0.back() }) { return [] }
             // A screen pushed over one that has disappeared, as settings over home: nothing on
             // show can pop it, so SwiftUI's own dismissal does, as the back button would.
             guard registry.dismissals.reversed().contains(where: { $0() }) else { throw RemoteError.nothingToGoBackFrom }
@@ -97,8 +110,24 @@ public final class RemoteControl {
         }
     }
 
+    /// Until no screen is leaving and nothing animates for `quiet`, since one transition can
+    /// begin only as another ends: a lesson's cover closes once its quit dialog has.
+    private func waitForStillness() async {
+        let clock = ContinuousClock()
+        let deadline = clock.now.advanced(by: transition)
+        var stillSince = clock.now
+        while clock.now < deadline {
+            if registry.isLeaving || registry.isTransitioning {
+                stillSince = clock.now
+            } else if stillSince.duration(to: clock.now) >= quiet {
+                return
+            }
+            try? await Task.sleep(for: .milliseconds(10))
+        }
+    }
+
     private func snapshot() -> String {
-        ([registry.app] + registry.screens.map(Optional.some)).compactMap { $0?.dump() }.joined()
+        ([registry.app] + registry.screens.map(Optional.some)).compactMap { $0?.fingerprint() }.joined()
     }
 }
 

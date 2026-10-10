@@ -24,7 +24,20 @@ extension MatchingViewModel {
                 }
             },
             effects: effects,
-            follow: navigation.follow
+            follow: navigation.follow,
+            // As the ✕ does, so a lesson with answers to keep asks before it quits.
+            back: {
+                self.send(.closeTapped)
+                return true
+            },
+            answer: { right in
+                guard let lesson = self.state.lesson, !lesson.isFinished, !self.state.isConfirmingQuit else {
+                    throw ScreenDriverError.cannotAnswer("no board is waiting for an answer")
+                }
+                let taps = try lesson.board.guess(right: right)
+                for tile in taps { self.send(.tileTapped(tile)) }
+                return MatchingBoard.describe(taps, right: right)
+            }
         )
     }
 }
@@ -47,7 +60,12 @@ extension MatchingStepViewModel {
                 }
             },
             effects: { AsyncStream<Never> { $0.finish() } },
-            follow: { $0 }
+            follow: { $0 },
+            answer: { right in
+                let taps = try self.lesson.board.guess(right: right)
+                for tile in taps { _ = self.tap(tile) }
+                return MatchingBoard.describe(taps, right: right)
+            }
         )
     }
 }
@@ -88,19 +106,42 @@ extension MatchingState {
 }
 
 extension MatchingBoard {
-    /// Each side's tiles in the order shown, a matched one marked ✓ and the selected one *.
-    /// Hanzi carry their pinyin whether or not the board shows it, so an answer can be worked out.
+    /// Each side's tiles in the order shown, a matched one marked ✓, the last wrong guess's ✗
+    /// as they shake, and the selected one *. Hanzi carry their pinyin whether or not the board
+    /// shows it, so an answer can be worked out.
     var summary: String {
         func line(_ tiles: [Tile]) -> String {
             tiles.map { tile in
                 var text = tile.text
                 if tile.side == .hanzi, let pinyin = pinyin(for: tile), !pinyin.isEmpty { text += " \(pinyin)" }
                 if isMatched(tile) { text += " ✓" }
+                if missedTileIDs.contains(tile.id) { text += " ✗" }
                 if isSelected(tile) { text = "*" + text }
                 return text
             }.joined(separator: " | ")
         }
-        return "matched \(matchedCount)/\(pairs.count)  english: \(line(englishTiles))  hanzi: \(line(hanziTiles))"
+        var parts = ["matched \(matchedCount)/\(pairs.count)"]
+        if !missedPairIDs.isEmpty { parts.append("missed: \(missedPairIDs.count)") }
+        parts += ["english: \(line(englishTiles))", "hanzi: \(line(hanziTiles))"]
+        return parts.joined(separator: "  ")
+    }
+
+    /// The taps that match one pair left, or that pair one pair's English with another's Hanzi,
+    /// after a tap that clears any selection.
+    func guess(right: Bool) throws -> [Tile] {
+        let left = pairs.filter { !matchedPairIDs.contains($0.id) }
+        guard let first = left.first else { throw ScreenDriverError.cannotAnswer("the board is matched") }
+        guard right || left.count > 1 else { throw ScreenDriverError.cannotAnswer("one pair left, so no wrong match") }
+        let hanziPair = right ? first : left[1]
+        guard let english = englishTiles.first(where: { $0.pairID == first.id }),
+              let hanzi = hanziTiles.first(where: { $0.pairID == hanziPair.id })
+        else { throw ScreenDriverError.cannotAnswer("the board has no tiles for its pairs") }
+        return (selected.map { [$0] } ?? []) + [english, hanzi]
+    }
+
+    /// The last two taps of a guess, as `answer` reports them.
+    static func describe(_ taps: [Tile], right: Bool) -> String {
+        "\(taps.suffix(2).map(\.text).joined(separator: " ↔ ")): \(right ? "matched" : "missed")"
     }
 
     /// The tile showing `text`, exactly or ignoring case.

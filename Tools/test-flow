@@ -1,0 +1,152 @@
+#!/bin/bash
+# Hands a flow to a headless Claude Code agent, which drives the app on a simulator through
+# `mando --remote` and reports what each screen showed.
+#
+#   Tools/test-flow "test the speaking lesson on Greetings"
+#   Tools/test-flow "test the new feature we've been working on"
+#   Tools/test-flow --prepare     build, install and launch only, for an agent already running
+#
+# It drives the simulator DeviceHub shows, so the run can be watched there, keeping the app's
+# data. With none shown, it drives a simulator of its own, "MandoJiao Agent".
+#
+#   --device <udid>   drive this simulator instead
+#   --fresh           uninstall the app first, so the run starts from a new install
+#   --no-build        install the last build of the app and mando
+#   --quiet           print only the agent's report, not each step as it takes it
+set -euo pipefail
+
+repo="$(cd "$(dirname "$0")/.." && pwd)"
+bundle=com.cameronporter.MandoJiao
+port=9393
+products="$repo/.build/test-flow"
+mando="$repo/Tools/MandoCLI/.build/debug/mando"
+device_name="MandoJiao Agent"
+
+usage() { sed -n '2,15p' "$0" | sed -E 's/^# ?//'; exit 64; }
+fail() { echo "✗ $*" >&2; exit 1; }
+# set -e otherwise exits without a word.
+trap 'echo "✗ stopped at line $LINENO: $BASH_COMMAND" >&2' ERR
+
+prompt="" prepare_only=0 device="" fresh=0 build=1 quiet=0
+while [ $# -gt 0 ]; do
+    case "$1" in
+        --prepare) prepare_only=1 ;;
+        --device) shift; device="${1:-}"; [ -n "$device" ] || usage ;;
+        --fresh) fresh=1 ;;
+        --no-build) build=0 ;;
+        --quiet) quiet=1 ;;
+        -h|--help) usage ;;
+        -*) fail "no option $1; see --help" ;;
+        *) [ -z "$prompt" ] || fail "one prompt, in quotes"; prompt="$1" ;;
+    esac
+    shift
+done
+[ "$prepare_only" = 1 ] || [ -n "$prompt" ] || usage
+
+# The simulator DeviceHub shows, which is the one last picked there.
+if [ -z "$device" ]; then
+    shown="$(defaults export com.apple.dt.Devices - 2>/dev/null \
+        | plutil -extract lastSelectedDeviceIdentifier raw -o - - 2>/dev/null | base64 -D 2>/dev/null \
+        | tr -d '"' || true)"
+    if [ -n "$shown" ] && xcrun simctl list devices available | grep -qF "($shown)"; then
+        device="$shown"
+    fi
+fi
+# Else one of its own. grep finding nothing means there is none yet, not a failure.
+if [ -z "$device" ]; then
+    device="$(xcrun simctl list devices available | { grep -F "$device_name (" || true; } | head -1 \
+        | sed -E 's/.*\(([0-9A-F-]{36})\).*/\1/')"
+    if [ -z "$device" ]; then
+        type="$(xcrun simctl list devicetypes | { grep -E '^iPhone [0-9]+ Pro \(' || true; } | sort -k2 -n \
+            | tail -1 | sed -E 's/.*\((com\.apple[^)]+)\).*/\1/')"
+        [ -n "$type" ] || fail "no iPhone Pro simulator type installed; pass --device <udid>"
+        device="$(xcrun simctl create "$device_name" "$type")"
+        echo "created simulator $device_name ($device)"
+    fi
+fi
+xcrun simctl bootstatus "$device" -b >/dev/null || fail "could not boot simulator $device"
+# Xcode 27 shows simulators in DeviceHub, before it in Simulator.
+viewer="$(xcode-select -p)/../Applications/DeviceHub.app"
+[ -d "$viewer" ] || viewer="$(xcode-select -p)/Applications/Simulator.app"
+open -a "$viewer" 2>/dev/null || true
+
+if [ "$build" = 1 ]; then
+    echo "building the app and mando"
+    mkdir -p "$products"
+    xcodebuild build -scheme MandoJiao -destination "platform=iOS Simulator,id=$device" \
+        -derivedDataPath "$products" -quiet >"$products/build.log" 2>&1 \
+        || { tail -20 "$products/build.log"; fail "app build failed; see $products/build.log"; }
+    swift build --package-path "$repo/Tools/MandoCLI" -q >"$products/mando-build.log" 2>&1 \
+        || { tail -20 "$products/mando-build.log"; fail "mando build failed"; }
+fi
+app="$products/Build/Products/Debug-iphonesimulator/MandoJiao.app"
+[ -d "$app" ] || fail "no build at $app; run without --no-build"
+
+xcrun simctl terminate "$device" "$bundle" 2>/dev/null || true
+[ "$fresh" = 0 ] || xcrun simctl uninstall "$device" "$bundle" 2>/dev/null || true
+xcrun simctl install "$device" "$app"
+
+# Only one app can listen on the port, and mando would drive whichever does. This app on
+# another simulator is closed; anything else is left for the user.
+if holder="$(lsof -nP -iTCP:$port -sTCP:LISTEN -t 2>/dev/null)"; then
+    other="$(ps -p "$holder" -o command= | sed -nE 's|.*/CoreSimulator/Devices/([0-9A-F-]{36})/.*/MandoJiao\.app/.*|\1|p')"
+    [ -n "$other" ] || fail "port $port is held by pid $holder, which is not MandoJiao on a simulator; quit it first"
+    echo "closing MandoJiao on simulator $other, which held port $port"
+    xcrun simctl terminate "$other" "$bundle"
+    for _ in $(seq 1 20); do lsof -nP -iTCP:$port -sTCP:LISTEN -t >/dev/null 2>&1 || break; sleep 0.1; done
+fi
+
+# The flags as launch arguments, so the scheme is never ticked.
+xcrun simctl launch "$device" "$bundle" -remote -scripted-speech >/dev/null
+
+banner=""
+for _ in $(seq 1 50); do
+    banner="$(printf 'quit\n' | "$mando" --remote 2>/dev/null | head -1 || true)"
+    case "$banner" in remote:*) break ;; esac
+    sleep 0.2
+done
+case "$banner" in
+    *"(${device:0:8})"*) echo "$banner" ;;
+    remote:*) fail "mando reached another app: $banner" ;;
+    *) fail "the app did not answer on port $port" ;;
+esac
+
+[ "$prepare_only" = 0 ] || exit 0
+
+mkdir -p "$products/shots"
+cd "$repo"
+agent=(claude -p "$prompt"
+    --append-system-prompt "MandoJiao is running for you on simulator $device, launched with -remote and -scripted-speech: $banner. Use the drive-app skill (.claude/skills/drive-app/SKILL.md) and skip its setup. Save screenshots under .build/test-flow/shots/. Do not edit code, rebuild or reinstall."
+    --allowedTools "Skill" "Read" "Grep" "Glob"
+        "Bash(printf:*)" "Bash(Tools/MandoCLI/.build/debug/mando:*)" "Bash($repo/Tools/MandoCLI/.build/debug/mando:*)"
+        "Bash(xcrun simctl io:*)" "Bash(git log:*)" "Bash(git diff:*)" "Bash(git show:*)"
+    --disallowedTools "Edit" "Write" "NotebookEdit")
+
+[ "$quiet" = 0 ] || exec "${agent[@]}"
+
+# The agent's steps as it takes them: what it sends mando as `→`, what else it does as `·`,
+# and any `✗` that comes back, then its report.
+progress="$(cat <<'JQ'
+def text: if type == "string" then . else map(.text? // "") | join("\n") end;
+def commands: [scan("'([^']*)'") | .[0]] | map(select(. != "%s\\n") | split("\\n")[])
+    | map(select(length > 0)) | join(", ");
+if .type == "assistant" then
+    .message.content[]? | select(.type == "tool_use") |
+    if .name == "Bash" then
+        .input.command as $c |
+        if ($c | test("/mando( |$)")) then
+            ($c | split("|")[0] | commands) as $sent | "→ " + (if $sent == "" then $c else $sent end)
+        else "· $ " + ($c | split("\n")[0]) end
+    elif .name == "Read" then "· read " + (.input.file_path | ltrimstr($repo + "/"))
+    elif .name == "Skill" then "· skill " + .input.skill
+    elif .name == "Grep" or .name == "Glob" then "· search " + (.input.pattern // "")
+    else "· " + .name end
+elif .type == "user" then
+    .message.content[]? | select(.type == "tool_result") | (.content | text) as $out |
+    if .is_error == true then "  ✗ " + ($out | split("\n")[0])
+    else $out | split("\n")[] | select(startswith("✗")) | "  " + . end
+elif .type == "result" then "\n" + (.result // ("✗ the agent stopped: " + .subtype))
+else empty end
+JQ
+)"
+"${agent[@]}" --output-format stream-json --verbose | jq --unbuffered -r --arg repo "$repo" "$progress"

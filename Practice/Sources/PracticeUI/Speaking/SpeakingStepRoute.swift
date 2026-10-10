@@ -41,7 +41,7 @@ public struct SpeakingStepRoute: View {
             }
         }
         // A step is closed by the lesson around it, never by itself.
-        .drivable { viewModel.driver(navigation: SpeakingNavigation(didClose: {})) }
+        .drivable { viewModel.driver(navigation: SpeakingNavigation(didClose: {}), isStep: true) }
         .onAppear { viewModel.send(.appeared) }
         .onDisappear { viewModel.send(.disappeared) }
         .task {

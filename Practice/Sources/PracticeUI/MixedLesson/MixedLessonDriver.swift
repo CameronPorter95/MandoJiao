@@ -48,11 +48,28 @@ extension MixedLessonViewModel {
                     }
                 }
             },
+            // As the ✕ does, so a lesson with answers to keep asks before it quits. A step in
+            // front has no way out of its own, so a back reaches this.
+            back: {
+                self.send(.closeTapped)
+                return true
+            },
             relay: children.relay,
             // A teach card whose example is still coming, so `ls` waits for the sentence.
             isBusy: { state in
                 guard case .teach(let word) = state.lesson.step else { return false }
                 return state.examplesPending.contains(word.id)
+            },
+            // The quit dialog covers the step, whose driver is kept as it is for a cancel.
+            covers: \.isConfirmingQuit,
+            // An exercise step in front answers for itself. A taught word has nothing to get
+            // right or wrong, so either way it goes on.
+            answer: { _ in
+                guard case .teach(let word) = self.state.lesson.step, !self.state.isConfirmingQuit else {
+                    throw ScreenDriverError.cannotAnswer("no step is waiting for an answer")
+                }
+                self.send(.stepCompleted([]))
+                return "\(word.hanzi): taught, continued"
             }
         )
     }

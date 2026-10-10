@@ -73,13 +73,14 @@ final class Session: Backend {
     }
 
     /// From the open tab's screen down to the one in front, then any lesson over them and the
-    /// step in front of it.
+    /// step in front of it, ending at a screen with a dialog over the rest.
     var chain: [ScreenDriver] {
         var chain: [ScreenDriver] = []
         for root in [tabs[selectedTab]] + presented.map(Optional.some) {
             var next = root
             while let driver = next {
                 chain.append(driver)
+                if driver.covers() { return chain }
                 next = driver.front()
             }
         }
@@ -137,12 +138,14 @@ final class Session: Backend {
         try top.send("startListeningTapped", nil)
     }
 
-    /// Closes a lesson, or else pops the deepest stack in the open tab that has anything to pop.
+    func answer(right: Bool) throws -> [String] {
+        guard let top else { throw CLIError.usage("nothing is open") }
+        return [try top.answer(right)]
+    }
+
+    /// Taps a lesson's ✕, which asks first when it has answers to keep, or else pops the deepest
+    /// stack in the open tab that has anything to pop. A lesson covers the tab, so it goes first.
     func back() throws {
-        if !presented.isEmpty {
-            dismiss()
-            return
-        }
         guard chain.reversed().contains(where: { $0.back() }) else { throw CLIError.nothingToGoBackFrom }
     }
 
@@ -270,7 +273,7 @@ final class Session: Backend {
     }
 
     private func snapshot() -> String {
-        chain.map { $0.dump() }.joined() + "\(notes.count)"
+        chain.map { $0.fingerprint() }.joined() + "\(notes.count)"
     }
 }
 

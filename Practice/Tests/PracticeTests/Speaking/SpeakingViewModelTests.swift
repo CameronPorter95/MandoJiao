@@ -438,6 +438,24 @@ struct SpeakingDriverTests {
         #expect(driver.summary().hasPrefix("speaking  card 1/1  水"))
     }
 
+    @Test("answer types the pinyin or a miss, and goes on once the card is settled")
+    func answeringByCommand() async throws {
+        let tea = WordPair(english: "tea", hanzi: "茶", pinyin: "chá")
+        let harness = Harness(cards: [water, tea])
+        await harness.appear()
+        let driver = harness.viewModel.driver(navigation: SpeakingNavigation(didClose: {}))
+
+        #expect(try driver.answer(true) == #"水: typed shuǐ, correct(heard: "shuǐ")"#)
+        #expect(harness.viewModel.state.lesson?.cardNumber == 2)
+
+        #expect(try driver.answer(false) == #"茶: typed zzz, wrong(heard: "zzz", attemptsLeft: 2)"#)
+        _ = try driver.answer(false)
+        #expect(harness.viewModel.state.lesson?.cardNumber == 2)
+        #expect(try driver.answer(false) == #"茶: typed zzz, exhausted(heard: "zzz")"#)
+        #expect(harness.viewModel.state.lesson?.isFinished == true)
+        #expect(throws: ScreenDriverError.cannotAnswer("no card is waiting for an answer")) { try driver.answer(true) }
+    }
+
     @Test("a verdict's haptic reaches the effects")
     func haptic() async throws {
         let harness = Harness(cards: [water])
@@ -463,6 +481,27 @@ struct SpeakingDriverTests {
         #expect(await waitUntil { closed })
         await settle()
         #expect(effects.effects.isEmpty)
+    }
+
+    @Test("back taps the ✕, so a lesson with an answer to keep asks first, and a step has no back")
+    func backAsksFirst() async throws {
+        var closed = false
+        let harness = Harness(cards: [water, water])
+        await harness.appear()
+        let driver = harness.viewModel.driver(navigation: SpeakingNavigation(didClose: { closed = true }))
+        _ = EffectLog(driver.effects())
+
+        // A card settled is an answer to keep.
+        try driver.send("typedAnswerSubmitted", answer)
+        #expect(driver.back())
+        #expect(harness.viewModel.state.isConfirmingQuit)
+        #expect(!closed)
+
+        try driver.send("quitConfirmed", nil)
+        #expect(await waitUntil { closed })
+
+        let step = Harness(cards: [water]).viewModel.driver(navigation: SpeakingNavigation(didClose: {}), isStep: true)
+        #expect(!step.back())
     }
 
     @Test("an unknown action or a payload that does not fit is refused")

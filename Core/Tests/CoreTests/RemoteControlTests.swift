@@ -19,7 +19,9 @@ struct RemoteControlTests {
         var pushed = false
     }
 
-    private func screen(_ name: String, log: Log, back: @escaping () -> Bool = { false }) -> ScreenDriver {
+    private func screen(
+        _ name: String, log: Log, back: @escaping () -> Bool = { false }, covers: @escaping () -> Bool = { false }
+    ) -> ScreenDriver {
         ScreenDriver(
             name: name, actions: ["appeared", "disappeared", "tapped", "selectTab", "startListeningTapped"],
             state: { name }, summary: { "\($0) shown" },
@@ -28,6 +30,7 @@ struct RemoteControlTests {
                 log.sent.append("\(name) \(action)")
             },
             effects: { AsyncStream<Int> { $0.finish() } }, follow: { $0 }, back: back,
+            covers: { _ in covers() },
             open: { kind, query in
                 if kind == "tab" { log.tab = query }
                 log.opened.append("\(name) \(kind) \(query)")
@@ -80,6 +83,44 @@ struct RemoteControlTests {
         #expect(log.sent == ["deck tapped"])
         #expect(log.tab == "vocabulary")
         #expect(await control.handle(RemoteRequest(.send, action: "bogus")).error == #"no action "bogus" here, see ls"#)
+    }
+
+    @Test("a screen showing a dialog takes the commands, and the screens it covers are left off ls")
+    func covering() async {
+        let log = Log()
+        let registry = ScreenRegistry()
+        var asking = true
+        var closed = false
+        registry.register(screen("plan", log: log, back: { closed = true; return true }, covers: { asking }), as: UUID())
+        registry.register(screen("step", log: log), as: UUID())
+        let control = RemoteControl(registry: registry, transition: .zero)
+
+        #expect(await control.handle(RemoteRequest(.ls)).lines.prefix(2) == ["plan shown", "actions: appeared, disappeared, tapped, selectTab, startListeningTapped"])
+        #expect(await control.handle(RemoteRequest(.send, action: "tapped")).error == nil)
+        #expect(await control.handle(RemoteRequest(.back)).error == nil)
+        #expect(log.sent == ["plan tapped"])
+        #expect(closed)
+
+        asking = false
+        #expect(await control.handle(RemoteRequest(.send, action: "tapped")).error == nil)
+        #expect(log.sent == ["plan tapped", "step tapped"])
+    }
+
+    @Test("answer goes to the screen in front, right unless asked for wrong")
+    func answering() async {
+        let registry = ScreenRegistry()
+        registry.register(ScreenDriver(
+            name: "lesson", actions: [], state: { 0 }, summary: { _ in "" },
+            send: { (_: Action) in }, effects: { AsyncStream<Int> { $0.finish() } }, follow: { $0 },
+            answer: { right in right ? "right" : "wrong" }
+        ), as: UUID())
+        let control = RemoteControl(registry: registry, transition: .zero)
+
+        #expect(await control.handle(RemoteRequest(.answer)).lines == ["right"])
+        #expect(await control.handle(RemoteRequest(.answer, wrong: true)).lines == ["wrong"])
+
+        let (plain, _, _) = make()
+        #expect(await plain.handle(RemoteRequest(.answer)).error == "nothing to answer here")
     }
 
     @Test("open selects the vocabulary tab, then asks it to find the deck or folder")
@@ -144,6 +185,27 @@ struct RemoteControlTests {
         #expect(dismissed == 0)
     }
 
+    @Test("a reply waits while a screen animates out, and no longer than the transition")
+    func waitsWhileLeaving() async {
+        let log = Log()
+        let registry = ScreenRegistry()
+        registry.app = screen("app", log: log)
+        var checks = 0
+        registry.register(screen("deck", log: log), as: UUID(), leaving: {
+            checks += 1
+            return checks < 5
+        })
+        let control = RemoteControl(registry: registry, transition: .seconds(5))
+        #expect(await control.handle(RemoteRequest(.send, action: "tapped")).error == nil)
+        #expect(checks >= 5)
+
+        // One that never finishes leaving, as SwiftUI can leave a screen, holds a reply only so long.
+        registry.register(screen("ghost", log: log), as: UUID(), leaving: { true })
+        let capped = RemoteControl(registry: registry, transition: .milliseconds(20))
+        #expect(await capped.handle(RemoteRequest(.send, action: "tapped")).error == nil)
+        #expect(log.sent == ["deck tapped", "ghost tapped"])
+    }
+
     @Test("a screen that disappears leaves the registry, so the one behind is in front again")
     func registry() {
         let (_, registry, log) = make()
@@ -152,5 +214,41 @@ struct RemoteControlTests {
         #expect(registry.screens.last?.name == "lesson")
         registry.remove(id)
         #expect(registry.screens.map(\.name) == ["vocabulary", "deck"])
+    }
+
+    @Test("a screen coming back into view keeps its place, whatever order the screens reappear in")
+    func reappearing() {
+        let log = Log()
+        let registry = ScreenRegistry()
+        let (list, deck) = (UUID(), UUID())
+        registry.register(screen("vocabulary", log: log), as: list)
+        registry.register(screen("deck", log: log), as: deck)
+        // Away to another tab and back: SwiftUI shows the pushed deck before the list.
+        registry.remove(list)
+        registry.remove(deck)
+        registry.register(screen("deck", log: log), as: deck)
+        registry.register(screen("vocabulary", log: log), as: list)
+        #expect(registry.screens.map(\.name) == ["vocabulary", "deck"])
+        // A screen new to the registry goes in front of them both.
+        registry.register(screen("speaking", log: log), as: UUID())
+        #expect(registry.screens.last?.name == "speaking")
+    }
+
+    @Test("a reply waits for the app to stop animating, as one transition follows another")
+    func waitsForTransitions() async {
+        let log = Log()
+        var checks = 0
+        let registry = ScreenRegistry(transitioning: {
+            checks += 1
+            return checks < 5
+        })
+        registry.app = screen("app", log: log)
+        let control = RemoteControl(registry: registry, transition: .seconds(5))
+        #expect(await control.handle(RemoteRequest(.tab, tab: "home")).error == nil)
+        #expect(checks >= 5)
+        // Reading waits for nothing.
+        let before = checks
+        _ = await control.handle(RemoteRequest(.ls))
+        #expect(checks == before)
     }
 }

@@ -9,8 +9,9 @@ public final class Interpreter {
         open folder <folder>   in the vocabulary tab, the same way
         do <action> [json]     send the open screen an action, its payload as a JSON object
         say <answer>           speak an answer to the open speaking lesson
+        answer [wrong]         answer the card in front right, or wrong, and go on to the next
         state                  the open screen's whole state
-        back                   close the lesson, or go back in the open tab
+        back                   tap the lesson's ✕, or go back in the open tab
         quit
         """
 
@@ -57,6 +58,9 @@ public final class Interpreter {
             case "say":
                 guard !rest.isEmpty else { throw CLIError.usage("say <answer>") }
                 try await session.say(rest)
+            case "answer":
+                guard ["", "right", "wrong"].contains(rest) else { throw CLIError.usage("answer [wrong]") }
+                output = try await session.answer(right: rest != "wrong")
             case "state":
                 output = try await session.state()
             case "back":

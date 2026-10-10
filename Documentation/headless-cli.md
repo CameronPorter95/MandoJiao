@@ -291,7 +291,8 @@ the screen by command, then screenshot.
    offers a driver to the `ScreenRegistry` in the environment as the Route appears and takes
    it back as it disappears. The registry is nil unless the app was launched with
    `-remote`, so feature packages need no `#if DEBUG`. The coordinator's driver is
-   `registry.app`: `selectTab`, and `back` dismisses the lesson. Only `send`, `summary`,
+   `registry.app`: `selectTab`. A lesson is closed by its own screen's `back`, which sends
+   `closeTapped` as its ✕ does (see "Watching it drive"). Only `send`, `summary`,
    `dump`, `back` and `open` are used from a registered driver: the Route keeps following
    its effects, so the app navigates as if tapped.
 3. **Done. A listener in the app.** `CoreRemote`: `RemoteServer` listens on
@@ -322,8 +323,8 @@ the screen by command, then screenshot.
   lesson's screens never registered. It is set outside the cover now.
 - A screen leaves the registry only when its disappearance ends, after the pop or
   dismissal animation, and nothing on show changes meanwhile, so the settle ended early
-  and `ls` listed screens already gone. After a command that changes anything, remote
-  mode waits 600ms for the transition, then settles again.
+  and `ls` listed screens already gone. Remote mode first waited a fixed 600ms after every
+  command; see "Watching it drive" for what replaced it.
 - On iPhone the library's split view shows its sidebar or its detail by the Route's own
   `compactColumn`, which only a sidebar tap moved. A selection made through the view model
   left the sidebar showing. The column now follows the selection, and the library's
@@ -351,6 +352,121 @@ Checked with two simulators launched with -remote.
   nothing about the logic.
 - `✓` means state has settled, not that an animation has finished. A screenshot taken
   straight after a push can catch it mid-slide; wait before capturing.
+
+## Handing a flow to an agent
+
+```sh
+Tools/test-flow "test a speaking lesson on Greetings: one right, one wrong, then close it"
+Tools/test-flow "test the new feature we've been working on"
+```
+
+The script builds the app and mando, installs the app on the simulator DeviceHub shows
+(see "Watching it drive"), and launches it with `-remote -scripted-speech` as launch
+arguments, so the scheme is never ticked. It checks that mando's banner names that
+simulator, then runs `claude -p` with the prompt. The agent follows the `drive-app` skill
+(`.claude/skills/drive-app/SKILL.md`): it pipes a few commands into `mando --remote` at a
+time, reads `ls`, decides, and goes on, since the state lives in the app between runs. It
+ends with a report of each step, what it expected and what it saw.
+
+`claude -p` prints nothing until the agent finishes, so the script reads its event stream
+instead and prints each step as the agent takes it: `→` and the commands it sent mando, `·`
+for anything else it does, a reading or a screenshot, and any `✗` that comes back. The report
+follows. `--quiet` prints only the report.
+
+```
+→ help, tab vocabulary, open deck Greetings, ls
+→ do startLessonTapped {"exercise":"speaking"}, ls, state
+→ say xuesheng, ls, do continueTapped, ls, say pingguo, ls
+→ do closeTapped, ls
+· read .build/test-flow/shots/speaking-quit-confirm.png
+→ do quitConfirmed, ls
+```
+
+The agent may read code and git history, run mando and take screenshots, and nothing else:
+`--allowedTools` names those and `--disallowedTools` refuses edits. `--fresh` uninstalls
+the app first, so a run starts from a new install, `--device <udid>` drives another simulator, `--no-build` reuses the
+last build, and `--prepare` only launches the app, for an agent already running in a
+session, which the skill tells it to use.
+
+It refuses when another app holds 9393, such as one launched with -remote on the user's own
+simulator.
+
+`Tools/smoke-test` hands it a fixed prompt that visits every screen once, as shallow as
+covers it: settings, today's plan, quick practice, a folder, a deck and its search, the
+dictionary and a result's character, and a speaking and a flash-card lesson. It takes the
+same options, so `Tools/smoke-test --no-build` reruns it against the installed app.
+
+Lessons deal their cards in a random order, so an agent used to read each card and answer it
+in the next run, a turn per card. `answer` and `answer wrong` answer whatever card is in front
+as a learner would, and go on once the card is done, so a lesson goes in one run:
+
+- speaking types the pinyin, or `zzz`; typed, so it needs no `-scripted-speech`
+- flash cards pick the right option or another, or type the answer, or a wrong one
+- matching taps a pair, or one pair's English and another's Hanzi
+- today's plan goes on from a taught word, and its exercise steps answer as their lessons do
+
+Each driver gives its own through `ScreenDriver.answer`, which reports what it gave and the
+verdict. A matching board with one pair left has no wrong match and says so. Its wrong
+match adds words to the mistakes list, and its quit lessons save what they answered.
+
+Checked on a throwaway iPhone 18 Pro simulator, iOS 27, which was deleted afterwards:
+`--prepare` reached the app in 44s from a cold build, and the prompt above ran from start to
+finish. On its first try the agent found that a `continueTapped` sent while the lesson
+was advancing on its own skipped a card unrecorded: `SpeakingLesson.advance()` has no
+guard on the phase, where `FlashcardLesson.advance()` has one. Whether the app's view can
+send that is unchecked.
+
+## Watching it drive
+
+The script drives the simulator DeviceHub shows, so a run can be watched as it happens.
+DeviceHub has no way to be told which simulator to show: no launch argument, and its
+`devices://` links did nothing visible for a simulator's id. So the script goes the other way
+and drives the one shown, which DeviceHub stores as `lastSelectedDeviceIdentifier` in
+`com.apple.dt.Devices`, keeping the app's data unless `--fresh`. With none stored it falls
+back to a simulator of its own, "MandoJiao Agent". A MandoJiao on another simulator holding
+the port is closed first; anything else holding it is refused. For that to look like driving rather than waiting, commands have to land at the
+pace of the animations, and the agent has to send a flow at once rather than a step a turn:
+the skill says to scout, then send the whole flow in one run.
+
+Measured on the iPhone 18 Pro simulator, iOS 27, debug build:
+
+| | Before | After |
+| --- | --- | --- |
+| A command that changes nothing, `tab home` on home | 0.88s | 0.28s |
+| `ls` with a speaking lesson open | 1.8s | 0.16s |
+| 17 commands: three tabs, a deck, settings, a lesson with an answer | about 16s | 9.8s |
+
+- **No fixed wait.** Remote mode waited 600ms after every command, for a screen animating
+  out to leave the registry. Now a reply waits until no screen is leaving and UIKit has
+  shown no transition for 100ms, capped at 2s. Leaving runs from UIKit's
+  `viewWillDisappear` to `viewDidDisappear`, through a view controller `.drivable` puts
+  behind each screen; SwiftUI's `isPresented` was tried first and does not change until the
+  screen has gone. The 100ms covers a transition that starts as another ends: a lesson's
+  cover closes only once its quit dialog has, and with no quiet period `ls` still listed
+  the lesson.
+- **A cheap settle.** The settle compared every screen's `dump()` each 10ms, and a lesson's
+  dump reflects all its cards, so a settle with a lesson open took over a second. It
+  compares `fingerprint`, the state described in one line, instead.
+- **`say` waits for its grade.** Endpointing ends a listen after the answer is heard, so a
+  reply came back with the answer still ungraded. The speaking screen is busy while the
+  microphone arms, or while it listens having heard something.
+- **A screen keeps its place.** Back on the vocabulary tab, SwiftUI showed the pushed deck
+  before the list, which registered after it and took the front, so commands went to the
+  list. A screen now keeps the place it first registered in.
+- **`open` on what is already in front does nothing.** Opening the deck on show pushed a
+  second copy beneath it, which a `back` popped with nothing to see, and which never
+  disappeared from the registry.
+
+- **`back` taps a lesson's ✕.** It dismissed the lesson outright, skipping the "Quit this
+  drill?" dialog, and with it the results recording that quitting does: an agent quit a
+  lesson with a card answered and found nothing recorded and Continue unmoved. Each lesson's
+  screen now answers `back` by sending `closeTapped`; a speaking step in today's plan has no
+  ✕ of its own, so `back` passes it to the plan's. Headless mando does the same.
+
+Found by an agent's tour and not fixed: a `continueTapped` sent while a speaking lesson
+advances on its own after a right answer skips the next card, since
+`SpeakingLesson.advance()` has no guard on the phase. A person tapping Continue just as it
+advances could do the same; that is the app's to decide.
 
 ## Over a real store
 
