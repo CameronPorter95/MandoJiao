@@ -49,8 +49,9 @@ let package = Package(
         ),
         .testTarget(
             name: "MandoKitTests",
-            // MandoCLI so the binary LineEditingTests drives is built first.
-            dependencies: ["MandoKit", "MandoCLI"],
+            // MandoCLI so the binary LineEditingTests drives is built first; LibraryDI to make
+            // a store on disk for --store.
+            dependencies: ["MandoKit", "MandoCLI", .product(name: "LibraryDI", package: "Library")],
             swiftSettings: [.defaultIsolation(MainActor.self)]
         ),
     ],

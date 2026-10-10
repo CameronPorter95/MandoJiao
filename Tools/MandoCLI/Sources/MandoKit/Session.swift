@@ -37,15 +37,39 @@ final class Session: Backend {
     /// Effects and attempts since the last command, printed after it settles.
     private var notes: [String] = []
 
-    init() throws {
-        let store = try VocabularyRepositoryFactory.openStore(
-            inMemory: true,
-            hskWords: { (try? DictionaryRepositoryFactory.bundledHSKWords()) ?? [] }
-        )
-        dependencies = CLIDependencies(modelContainer: store)
+    /// Over an in-memory store seeded as the app seeds a new one, or over a copy of `store`, so
+    /// the original, a simulator's say, is never written to.
+    init(store: URL? = nil) throws {
+        let hskWords = { (try? DictionaryRepositoryFactory.bundledHSKWords()) ?? [] }
+        let container = try store.map { try VocabularyRepositoryFactory.openStore(at: Self.copy($0), hskWords: hskWords) }
+            ?? VocabularyRepositoryFactory.openStore(inMemory: true, hskWords: hskWords)
+        dependencies = CLIDependencies(modelContainer: container)
         tabs = [.home: makeHome(), .vocabulary: makeLibrary(), .dictionary: makeDictionary()]
         for (tab, driver) in tabs { listen(to: driver, as: tab.rawValue) }
         try? tabs[selectedTab]?.send("appeared", nil)
+    }
+
+    /// Copies a store with the write-ahead log and index beside it, which can hold writes the
+    /// store file has not taken in yet, into a folder of its own. A directory is taken to be the
+    /// app's data container, as `xcrun simctl get_app_container … data` prints it.
+    static func copy(_ source: URL) throws -> URL {
+        let manager = FileManager.default
+        var isDirectory: ObjCBool = false
+        var file = source
+        if manager.fileExists(atPath: source.path, isDirectory: &isDirectory), isDirectory.boolValue {
+            file = source.appendingPathComponent("Library/Application Support/default.store")
+        }
+        guard manager.fileExists(atPath: file.path) else { throw CLIError.usage("no store at \(file.path)") }
+
+        let folder = manager.temporaryDirectory.appendingPathComponent("mando-\(UUID().uuidString)")
+        try manager.createDirectory(at: folder, withIntermediateDirectories: true)
+        let copy = folder.appendingPathComponent(file.lastPathComponent)
+        for suffix in ["", "-wal", "-shm"] {
+            let from = URL(fileURLWithPath: file.path + suffix)
+            guard manager.fileExists(atPath: from.path) else { continue }
+            try manager.copyItem(at: from, to: URL(fileURLWithPath: copy.path + suffix))
+        }
+        return copy
     }
 
     /// From the open tab's screen down to the one in front, then any lesson over them and the
