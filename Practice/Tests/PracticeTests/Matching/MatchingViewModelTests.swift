@@ -208,6 +208,23 @@ struct MatchingDriverTests {
         #expect(await waitUntil { driver.summary() == "matching  finished  misses: 0" })
     }
 
+    @Test("driven by name, a wrong guess shows as its tiles' ✗ and the board's misses")
+    func summaryMiss() throws {
+        let harness = Harness(pool: pairs)
+        let driver = harness.viewModel.driver(navigation: MatchingNavigation(didClose: {}))
+        try driver.send("appeared", nil)
+        let board = try #require(harness.viewModel.state.lesson?.board.pairs)
+        #expect(!driver.summary().contains("missed"))
+
+        try driver.send("tileTapped", tile(board[0].english))
+        try driver.send("tileTapped", tile(board[1].hanzi))
+
+        #expect(driver.summary().contains("matched 0/5  missed: 2"))
+        #expect(driver.summary().contains("\(board[0].english) ✗"))
+        #expect(driver.summary().contains("\(board[1].hanzi) "))
+        #expect(driver.summary().components(separatedBy: "✗").count == 3)
+    }
+
     @Test("a tile no board shows is ignored")
     func unknownTile() throws {
         let harness = Harness(pool: pairs)

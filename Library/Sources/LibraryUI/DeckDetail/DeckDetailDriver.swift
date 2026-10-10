@@ -28,7 +28,13 @@ extension DeckDetailState {
     var summary: String {
         guard deck != nil else { return "deck  not found" }
         var parts = ["deck", title, "\(wordCount) words", "lesson words: \(selectedCount)"]
-        if isAddingWords { parts.append("adding words") }
+        if !searchText.isEmpty {
+            parts.append("search: \(searchText)  showing \(words.count): \(words.map(\.hanzi).joined(separator: ", "))")
+        }
+        if isAddingWords {
+            parts.append("adding words")
+            if !pickerSearchText.isEmpty { parts.append("picker search: \(pickerSearchText)  showing \(pickerWords.count)") }
+        }
         if isChoosingDestination { parts.append("choosing destination") }
         return parts.joined(separator: "  ")
     }

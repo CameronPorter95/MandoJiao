@@ -187,6 +187,22 @@ struct DeckDetailViewModelTests {
         }
     }
 
+    @Test("driven by name, a search shows in the summary with the words it leaves")
+    func driverSummarySearch() async throws {
+        let (detail, _) = await makeDetail(Fixtures.smallDeck)
+        let driver = detail.driver(navigation: DeckDetailNavigation(
+            didRequestMatching: { _ in }, didRequestFlashcards: { _ in }, didRequestSpeaking: { _ in }
+        ))
+        #expect(!driver.summary().contains("search"))
+
+        try driver.send("searchChanged", Data(#"{"_0":"shui"}"#.utf8))
+        #expect(driver.summary().contains("search: shui  showing 1: 水"))
+
+        try driver.send("addWordsTapped", nil)
+        try driver.send("pickerSearchChanged", Data(#"{"_0":"cha"}"#.utf8))
+        #expect(driver.summary().contains("adding words  picker search: cha  showing 1"))
+    }
+
     @Test("driven by name, starting a lesson presents it rather than reaching the effects")
     func driverStartsALesson() async throws {
         var presented: [LessonRequest] = []
