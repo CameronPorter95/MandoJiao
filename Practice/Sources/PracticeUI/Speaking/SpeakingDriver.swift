@@ -22,8 +22,25 @@ extension SpeakingViewModel {
             // A listen that has heard nothing, as after a right answer, may wait for a word.
             isBusy: { state in
                 state.mic == .arming || (state.mic == .listening && !state.partialText.isEmpty)
-            }
+            },
+            answer: answerCard
         )
+    }
+}
+
+extension SpeakingViewModel {
+    /// Typed rather than spoken, so it needs no scripted speech. A listen under way stops
+    /// without answering first, as leaving the app does.
+    func answerCard(right: Bool) throws -> String {
+        guard let lesson = state.lesson, !lesson.isFinished, !lesson.phase.isSettled, !state.isConfirmingQuit else {
+            throw ScreenDriverError.cannotAnswer("no card is waiting for an answer")
+        }
+        send(.sceneLeftForeground)
+        let given = right ? lesson.card.pinyin : "zzz"
+        send(.typedAnswerSubmitted(answer: given))
+        let phase = state.lesson?.phase
+        if phase?.isSettled == true { send(.continueTapped) }
+        return "\(lesson.card.hanzi): typed \(given), \(phase.map { "\($0)" } ?? "")"
     }
 }
 

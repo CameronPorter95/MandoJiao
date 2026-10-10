@@ -192,6 +192,23 @@ struct FlashcardsDriverTests {
         #expect(driver.summary() == "flashcards  finished  wrong: 0")
     }
 
+    @Test("answer gets a typed card and a picked one right or wrong, then goes on")
+    func answeringByCommand() throws {
+        let driver = makeDriver()
+        try driver.send("appeared", nil)
+
+        #expect(try driver.answer(true) == "water  right  given: 水  answer: 水")
+        #expect(try driver.answer(false) == "茶 chá  wrong  given: book  answer: tea")
+        #expect(driver.summary() == "flashcards  finished  wrong: 1")
+        #expect(throws: ScreenDriverError.cannotAnswer("no card is waiting for an answer")) { try driver.answer(true) }
+
+        var answers: [Answer] = []
+        let step = FlashcardStepViewModel(card: cards[0], sounds: FakeSounds()) { answers = $0 }.driver()
+        try step.send("appeared", nil)
+        #expect(try step.answer(false) == "water  wrong  given: 错  answer: 水")
+        #expect(answers.map(\.isCorrect) == [false])
+    }
+
     @Test("an option the card does not have is ignored")
     func noSuchOption() throws {
         let driver = makeDriver()

@@ -126,6 +126,19 @@ struct InterpreterTests {
         #expect(await screens(mando).contains { $0.hasPrefix("today's plan  step 1/") })
     }
 
+    @Test("answer alone runs a whole plan, whatever order its cards come in")
+    func answeringAPlan() async throws {
+        let mando = try Interpreter()
+        _ = await mando.run("do todayPlanTapped")
+        for _ in 0..<60 where !(await screens(mando).contains { $0.contains("finished") }) {
+            let output = await mando.run("answer")
+            #expect(output.contains("✓ answer"), "\(output)")
+        }
+        #expect(await screens(mando).contains { $0.hasPrefix("today's plan  finished") })
+        #expect(await mando.run("answer") == ["✗ no step is waiting for an answer"])
+        #expect(await mando.run("answer maybe") == ["✗ answer [wrong]"])
+    }
+
     @Test("home pushes settings, a setting changes and reads back, and back pops it")
     func settings() async throws {
         let mando = try Interpreter()

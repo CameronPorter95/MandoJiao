@@ -438,6 +438,24 @@ struct SpeakingDriverTests {
         #expect(driver.summary().hasPrefix("speaking  card 1/1  水"))
     }
 
+    @Test("answer types the pinyin or a miss, and goes on once the card is settled")
+    func answeringByCommand() async throws {
+        let tea = WordPair(english: "tea", hanzi: "茶", pinyin: "chá")
+        let harness = Harness(cards: [water, tea])
+        await harness.appear()
+        let driver = harness.viewModel.driver(navigation: SpeakingNavigation(didClose: {}))
+
+        #expect(try driver.answer(true) == #"水: typed shuǐ, correct(heard: "shuǐ")"#)
+        #expect(harness.viewModel.state.lesson?.cardNumber == 2)
+
+        #expect(try driver.answer(false) == #"茶: typed zzz, wrong(heard: "zzz", attemptsLeft: 2)"#)
+        _ = try driver.answer(false)
+        #expect(harness.viewModel.state.lesson?.cardNumber == 2)
+        #expect(try driver.answer(false) == #"茶: typed zzz, exhausted(heard: "zzz")"#)
+        #expect(harness.viewModel.state.lesson?.isFinished == true)
+        #expect(throws: ScreenDriverError.cannotAnswer("no card is waiting for an answer")) { try driver.answer(true) }
+    }
+
     @Test("a verdict's haptic reaches the effects")
     func haptic() async throws {
         let harness = Harness(cards: [water])

@@ -1,5 +1,6 @@
 import CoreDomain
 import CoreTestSupport
+import CoreUI
 import Foundation
 import Testing
 @testable import PracticeDomain
@@ -223,6 +224,22 @@ struct MatchingDriverTests {
         #expect(driver.summary().contains("\(board[0].english) ✗"))
         #expect(driver.summary().contains("\(board[1].hanzi) "))
         #expect(driver.summary().components(separatedBy: "✗").count == 3)
+    }
+
+    @Test("answer matches a pair, or misses with two pairs' tiles, and a selection does not get in the way")
+    func answeringByCommand() throws {
+        let harness = Harness(pool: pairs)
+        let driver = harness.viewModel.driver(navigation: MatchingNavigation(didClose: {}))
+        try driver.send("appeared", nil)
+        let board = try #require(harness.viewModel.state.lesson?.board.pairs)
+
+        try driver.send("tileTapped", tile(board[4].hanzi))
+        #expect(try driver.answer(true) == "\(board[0].english) ↔ \(board[0].hanzi): matched")
+        #expect(try driver.answer(false) == "\(board[1].english) ↔ \(board[2].hanzi): missed")
+        #expect(driver.summary().contains("matched 1/5  missed: 2"))
+
+        for _ in 1...3 { _ = try driver.answer(true) }
+        #expect(throws: ScreenDriverError.cannotAnswer("one pair left, so no wrong match")) { try driver.answer(false) }
     }
 
     @Test("a tile no board shows is ignored")

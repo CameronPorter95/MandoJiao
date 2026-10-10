@@ -69,6 +69,9 @@ public final class RemoteControl {
             guard let top, top.name == "speaking", let answer = request.answer else { throw RemoteError.notSpeaking }
             speak(answer)
             try top.send("startListeningTapped", nil)
+        case .answer:
+            guard let top else { throw RemoteError.nothingOpen }
+            return [try top.answer(request.wrong != true)]
         case .back:
             if registry.app?.back() == true { return [] }
             if shown.reversed().contains(where: { $0.back() }) { return [] }

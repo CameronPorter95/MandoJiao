@@ -27,6 +27,9 @@ public struct ScreenDriver {
     public let covers: () -> Bool
     /// Opens something this screen lists by its name, as tapping its row would.
     public let open: (_ kind: String, _ query: String) throws -> Void
+    /// Answers the card showing, right or wrong, as a learner would, then goes on to the next
+    /// where the card is done. Says what it gave and how it was graded.
+    public let answer: (_ right: Bool) throws -> String
 
     /// `follow` carries out an effect that navigates and returns the rest, as the screen's Route does.
     public init<State, Action: Decodable, Effect: Sendable>(
@@ -42,9 +45,11 @@ public struct ScreenDriver {
         relay: EffectRelay? = nil,
         isBusy: @escaping (State) -> Bool = { _ in false },
         covers: @escaping (State) -> Bool = { _ in false },
-        open: @escaping (_ kind: String, _ query: String) throws -> Void = { kind, _ in throw ScreenDriverError.cannotOpen(kind) }
+        open: @escaping (_ kind: String, _ query: String) throws -> Void = { kind, _ in throw ScreenDriverError.cannotOpen(kind) },
+        answer: @escaping (_ right: Bool) throws -> String = { _ in throw ScreenDriverError.cannotAnswer("nothing to answer here") }
     ) {
         self.open = open
+        self.answer = answer
         self.front = front
         self.back = back
         self.isBusy = { isBusy(state()) }
@@ -102,6 +107,8 @@ public nonisolated enum ScreenDriverError: Error, Equatable, CustomStringConvert
     case unknownAction(String)
     case badArguments(String)
     case cannotOpen(String)
+    /// Why the screen cannot answer as asked.
+    case cannotAnswer(String)
     case notFound(String, String)
     /// The kind, what was asked for, and the names there are.
     case notOneOf(String, String, [String])
@@ -111,6 +118,7 @@ public nonisolated enum ScreenDriverError: Error, Equatable, CustomStringConvert
         case .unknownAction(let action): "no action \"\(action)\" here, see ls"
         case .badArguments(let action): "the arguments do not fit \(action)"
         case .cannotOpen(let kind): "nothing here opens a \(kind)"
+        case .cannotAnswer(let reason): reason
         case .notFound(let kind, let query): "no \(kind) matches \"\(query)\""
         case .notOneOf(let kind, let query, let names):
             "no \(kind) \"\(query)\"; the \(kind)s are \(names.dropLast().joined(separator: ", ")) and \(names.last ?? "")"

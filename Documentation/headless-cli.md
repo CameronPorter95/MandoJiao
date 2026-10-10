@@ -394,7 +394,19 @@ simulator.
 `Tools/smoke-test` hands it a fixed prompt that visits every screen once, as shallow as
 covers it: settings, today's plan, quick practice, a folder, a deck and its search, the
 dictionary and a result's character, and a speaking and a flash-card lesson. It takes the
-same options, so `Tools/smoke-test --no-build` reruns it against the installed app. Its wrong
+same options, so `Tools/smoke-test --no-build` reruns it against the installed app.
+
+Lessons deal their cards in a random order, so an agent used to read each card and answer it
+in the next run, a turn per card. `answer` and `answer wrong` answer whatever card is in front
+as a learner would, and go on once the card is done, so a lesson goes in one run:
+
+- speaking types the pinyin, or `zzz`; typed, so it needs no `-scripted-speech`
+- flash cards pick the right option or another, or type the answer, or a wrong one
+- matching taps a pair, or one pair's English and another's Hanzi
+- today's plan goes on from a taught word, and its exercise steps answer as their lessons do
+
+Each driver gives its own through `ScreenDriver.answer`, which reports what it gave and the
+verdict. A matching board with one pair left has no wrong match and says so. Its wrong
 match adds words to the mistakes list, and its quit lessons save what they answered.
 
 Checked on a throwaway iPhone 18 Pro simulator, iOS 27, which was deleted afterwards:

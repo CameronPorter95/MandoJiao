@@ -439,6 +439,16 @@ struct MixedLessonDriverTests {
         #expect(effects.effects.isEmpty)
     }
 
+    @Test("answer goes on from a taught word, and leaves an exercise step to answer for itself")
+    func answeringByCommand() throws {
+        let (viewModel, driver) = try make([.teach(LessonWords.water), .recall(LessonWords.water, .recognise)])
+        #expect(try driver.answer(false) == "水: taught, continued")
+        #expect(viewModel.state.lesson.stepIndex == 1)
+        #expect(throws: ScreenDriverError.cannotAnswer("no step is waiting for an answer")) { try driver.answer(true) }
+        _ = try driver.front()?.answer(true)
+        #expect(viewModel.state.lesson.isFinished)
+    }
+
     @Test("closing navigates rather than reaching the effects")
     func closing() async throws {
         var closed = false

@@ -32,6 +32,18 @@ extension FlashcardsViewModel {
             back: {
                 self.send(.closeTapped)
                 return true
+            },
+            answer: { right in
+                guard let lesson = self.state.lesson, !lesson.isFinished, lesson.phase == .answering, !self.state.isConfirmingQuit else {
+                    throw ScreenDriverError.cannotAnswer("no card is waiting for an answer")
+                }
+                switch lesson.card.given(right: right) {
+                case .typed(let text): self.send(.typedAnswerSubmitted(text))
+                case .picked(let option): self.send(.optionPicked(option.id))
+                }
+                let verdict = self.state.lesson?.summary ?? ""
+                self.send(.continueTapped)
+                return verdict
             }
         )
     }
@@ -58,7 +70,17 @@ extension FlashcardStepViewModel {
                 }
             },
             effects: { AsyncStream<Never> { $0.finish() } },
-            follow: { $0 }
+            follow: { $0 },
+            answer: { right in
+                guard self.lesson.phase == .answering else { throw ScreenDriverError.cannotAnswer("the card is answered") }
+                switch self.lesson.card.given(right: right) {
+                case .typed(let text): _ = self.submit(typed: text)
+                case .picked(let option): _ = self.pick(option.id)
+                }
+                let verdict = self.lesson.summary
+                self.finish()
+                return verdict
+            }
         )
     }
 }
@@ -129,6 +151,23 @@ extension FlashcardLesson {
 }
 
 extension Flashcard {
+    enum Given {
+        case typed(String)
+        case picked(WordPair)
+    }
+
+    /// What a learner gives to get the card right, or wrong: another option, or a word that is
+    /// none of the card's. A wrong Hanzi is a character, since Latin text there cannot be graded.
+    func given(right: Bool) -> Given {
+        switch format {
+        case .typed:
+            guard !right else { return .typed(showsChinese ? word.english : word.hanzi) }
+            return .typed(showsChinese ? "zzz" : (word.hanzi == "错" ? "对" : "错"))
+        case .picked(let options):
+            return .picked(right ? word : options.first { $0.id != word.id } ?? word)
+        }
+    }
+
     func option(at index: Int) -> WordPair? {
         guard case .picked(let options) = format, options.indices.contains(index) else { return nil }
         return options[index]

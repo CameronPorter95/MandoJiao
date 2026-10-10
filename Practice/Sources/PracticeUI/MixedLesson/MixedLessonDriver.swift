@@ -61,7 +61,16 @@ extension MixedLessonViewModel {
                 return state.examplesPending.contains(word.id)
             },
             // The quit dialog covers the step, whose driver is kept as it is for a cancel.
-            covers: \.isConfirmingQuit
+            covers: \.isConfirmingQuit,
+            // An exercise step in front answers for itself. A taught word has nothing to get
+            // right or wrong, so either way it goes on.
+            answer: { _ in
+                guard case .teach(let word) = self.state.lesson.step, !self.state.isConfirmingQuit else {
+                    throw ScreenDriverError.cannotAnswer("no step is waiting for an answer")
+                }
+                self.send(.stepCompleted([]))
+                return "\(word.hanzi): taught, continued"
+            }
         )
     }
 }

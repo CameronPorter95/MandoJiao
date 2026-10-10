@@ -114,6 +114,11 @@ final class Session: Backend {
         try top.send("startListeningTapped", nil)
     }
 
+    func answer(right: Bool) throws -> [String] {
+        guard let top else { throw CLIError.usage("nothing is open") }
+        return [try top.answer(right)]
+    }
+
     /// Taps a lesson's ✕, which asks first when it has answers to keep, or else pops the deepest
     /// stack in the open tab that has anything to pop. A lesson covers the tab, so it goes first.
     func back() throws {

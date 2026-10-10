@@ -106,6 +106,23 @@ struct RemoteControlTests {
         #expect(log.sent == ["plan tapped", "step tapped"])
     }
 
+    @Test("answer goes to the screen in front, right unless asked for wrong")
+    func answering() async {
+        let registry = ScreenRegistry()
+        registry.register(ScreenDriver(
+            name: "lesson", actions: [], state: { 0 }, summary: { _ in "" },
+            send: { (_: Action) in }, effects: { AsyncStream<Int> { $0.finish() } }, follow: { $0 },
+            answer: { right in right ? "right" : "wrong" }
+        ), as: UUID())
+        let control = RemoteControl(registry: registry, transition: .zero)
+
+        #expect(await control.handle(RemoteRequest(.answer)).lines == ["right"])
+        #expect(await control.handle(RemoteRequest(.answer, wrong: true)).lines == ["wrong"])
+
+        let (plain, _, _) = make()
+        #expect(await plain.handle(RemoteRequest(.answer)).error == "nothing to answer here")
+    }
+
     @Test("open selects the vocabulary tab, then asks it to find the deck or folder")
     func opening() async {
         let (control, _, log) = make()

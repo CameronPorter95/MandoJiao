@@ -11,6 +11,8 @@ protocol Backend: AnyObject {
     func select(_ tab: String) async throws
     func open(_ kind: String, _ query: String) async throws
     func say(_ answer: String) async throws
+    /// What the card in front was given, and how it was graded.
+    func answer(right: Bool) async throws -> [String]
     func back() async throws
     func state() async throws -> [String]
     /// Waits for what the last command set going. The app settles before it replies.
@@ -45,6 +47,9 @@ final class RemoteBackend: Backend {
     func state() async throws -> [String] { try await request(RemoteRequest(.state)) }
     func say(_ answer: String) async throws {
         _ = try await request(RemoteRequest(.say, answer: answer))
+    }
+    func answer(right: Bool) async throws -> [String] {
+        try await request(RemoteRequest(.answer, wrong: !right))
     }
     func settle() async {}
     func takeNotes() -> [String] { [] }

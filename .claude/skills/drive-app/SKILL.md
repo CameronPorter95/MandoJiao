@@ -76,6 +76,14 @@ sent while that screen is in front.
   - `do skipsLearntWordsChanged {"skips":true}`
   - These change the user's settings, so set back anything you change.
 - **lessons**
+  - Any lesson, or any step of today's plan: `answer` gets the card in front right,
+    `answer wrong` gets it wrong, and either goes on to the next card once that card is
+    done. It prints what it gave and the verdict. Cards come in a random order, so use it
+    rather than reading cards first: a whole lesson then fits in one run.
+  - A speaking card has three tries, so `answer wrong` three times runs it out. A matching
+    board with one pair left has no wrong match, and says so.
+  - Today's plan: `answer` also goes on from a taught word.
+  - The commands below are for testing a particular answer, such as a given pinyin.
   - Speaking: `say <pinyin>`, then `do continueTapped`.
   - Matching: a tile by its text, `do tileTapped {"tile":"hot"}` then `do tileTapped {"tile":"热"}`.
   - Flash cards: `do optionPicked {"option":0}` for a card with options (numbered from 0 in
@@ -94,13 +102,15 @@ only run what its allow list names, so anything else is refused and costs a turn
 
 - no shell variables, `$'…'` or double-quoted commands; a JSON payload goes inside the
   single quotes as it is: `'do startLessonTapped {"exercise":"speaking"}'`
-- nothing chained with `;`, `&&` or a second pipe; a screenshot is a call of its own
+- nothing chained with `;`, `&&` or a second pipe, and no `tee` or `>` to save the
+  transcript, since it comes back to you anyway; a screenshot is a call of its own
 
 - The state lives in the app, so the next run carries on from where this one left it.
 - Take action names and payload keys from `ls` and `state`; never guess them.
   `do <action> {json}` sends one, for example `do startLessonTapped {"exercise":"speaking"}`.
-- A lesson's cards come in a random order. To answer from a plan made in advance, read
-  them from `state` once the lesson has started, then send the answers as the next run.
+- A lesson's cards come in a random order, so answer with `answer` and `answer wrong`. To
+  test a particular answer, read the cards from `ls` once the lesson has started, then
+  send the answers as the next run.
 - End every run with `ls`, so you see where it left the app.
 - A line starting `✗` is a failure. mando still exits 0, so read the transcript.
 - A line starting `·` is an effect a screen sent: a navigation, a save, a lesson's result.
@@ -108,8 +118,9 @@ only run what its allow list names, so anything else is refused and costs a turn
   toneless pinyin or Hanzi. The summary shows the pinyin, so answers can come from `ls`.
   Cards come in a random order, so for a wrong answer say `zzz`, which is no card's
   answer, rather than another card's word.
-- A right answer moves on to the next card by itself after 850ms. Between runs it will
-  have moved, so `do continueTapped` is only needed within the same run.
+- After `say`, a right answer moves on to the next card by itself after 850ms. Between
+  runs it will have moved, so `do continueTapped` is only needed within the same run.
+  `answer` moves on itself.
 - `back` taps a lesson's ✕, or closes a sheet or a search, then pops the open tab. A lesson
   with a card settled asks first, `confirming quit`; answer `do quitConfirmed` or
   `do quitCancelled`. A speaking card counts as a mistake only once it is out of tries.
