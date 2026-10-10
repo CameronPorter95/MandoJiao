@@ -2,7 +2,7 @@ import CoreUI
 import Foundation
 
 extension AppNavigationCoordinator {
-    /// The app's navigation for remote driving: the open tab, and closing the lesson over it.
+    /// The app's navigation for remote driving: the open tab.
     func driver() -> ScreenDriver {
         ScreenDriver(
             name: "app",
@@ -15,12 +15,9 @@ extension AppNavigationCoordinator {
                 }
             },
             effects: { AsyncStream<Never> { $0.finish() } },
+            // No back of its own: a lesson's own screen closes it as its ✕ does, asking first
+            // when it has answers to keep.
             follow: { $0 },
-            back: {
-                guard self.presentedLesson != nil else { return false }
-                self.dismissLesson()
-                return true
-            },
             open: { kind, name in
                 guard kind == "tab" else { throw ScreenDriverError.cannotOpen(kind) }
                 guard let tab = AppTab(rawValue: name) else {

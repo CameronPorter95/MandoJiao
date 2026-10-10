@@ -27,7 +27,12 @@ extension FlashcardsViewModel {
                 }
             },
             effects: effects,
-            follow: navigation.follow
+            follow: navigation.follow,
+            // As the ✕ does, so a lesson with answers to keep asks before it quits.
+            back: {
+                self.send(.closeTapped)
+                return true
+            }
         )
     }
 }

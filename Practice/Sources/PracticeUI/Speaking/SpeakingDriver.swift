@@ -2,7 +2,8 @@ import CoreUI
 import Foundation
 
 extension SpeakingViewModel {
-    public func driver(navigation: SpeakingNavigation) -> ScreenDriver {
+    /// A step of a longer lesson has no way out of its own, so `back` passes it by.
+    public func driver(navigation: SpeakingNavigation, isStep: Bool = false) -> ScreenDriver {
         ScreenDriver(
             name: "speaking",
             actions: SpeakingAction.names,
@@ -10,7 +11,18 @@ extension SpeakingViewModel {
             summary: \.summary,
             send: send,
             effects: effects,
-            follow: navigation.follow
+            follow: navigation.follow,
+            // As the ✕ does, so a lesson with answers to keep asks before it quits.
+            back: {
+                guard !isStep else { return false }
+                self.send(.closeTapped)
+                return true
+            },
+            // Heard something and not graded yet: the listen ends only as endpointing settles.
+            // A listen that has heard nothing, as after a right answer, may wait for a word.
+            isBusy: { state in
+                state.mic == .arming || (state.mic == .listening && !state.partialText.isEmpty)
+            }
         )
     }
 }

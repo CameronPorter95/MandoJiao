@@ -48,6 +48,12 @@ extension MixedLessonViewModel {
                     }
                 }
             },
+            // As the ✕ does, so a lesson with answers to keep asks before it quits. A step in
+            // front has no way out of its own, so a back reaches this.
+            back: {
+                self.send(.closeTapped)
+                return true
+            },
             relay: children.relay,
             // A teach card whose example is still coming, so `ls` waits for the sentence.
             isBusy: { state in

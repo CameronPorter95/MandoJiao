@@ -91,6 +91,6 @@ public enum SpeakingFactory: NavigationInputRouteFactory {
             advanceDelay: .zero,
             waitForEnd: Endpointing.endAtOnce
         // A step is closed by the lesson around it, never by itself.
-        ).driver(navigation: SpeakingNavigation(didClose: {}))
+        ).driver(navigation: SpeakingNavigation(didClose: {}), isStep: true)
     }
 }

@@ -465,6 +465,27 @@ struct SpeakingDriverTests {
         #expect(effects.effects.isEmpty)
     }
 
+    @Test("back taps the ✕, so a lesson with an answer to keep asks first, and a step has no back")
+    func backAsksFirst() async throws {
+        var closed = false
+        let harness = Harness(cards: [water, water])
+        await harness.appear()
+        let driver = harness.viewModel.driver(navigation: SpeakingNavigation(didClose: { closed = true }))
+        _ = EffectLog(driver.effects())
+
+        // A card settled is an answer to keep.
+        try driver.send("typedAnswerSubmitted", answer)
+        #expect(driver.back())
+        #expect(harness.viewModel.state.isConfirmingQuit)
+        #expect(!closed)
+
+        try driver.send("quitConfirmed", nil)
+        #expect(await waitUntil { closed })
+
+        let step = Harness(cards: [water]).viewModel.driver(navigation: SpeakingNavigation(didClose: {}), isStep: true)
+        #expect(!step.back())
+    }
+
     @Test("an unknown action or a payload that does not fit is refused")
     func refused() {
         let driver = Harness(cards: [water]).viewModel.driver(navigation: SpeakingNavigation(didClose: {}))

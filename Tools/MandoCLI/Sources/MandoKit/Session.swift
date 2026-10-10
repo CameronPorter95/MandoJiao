@@ -113,12 +113,9 @@ final class Session: Backend {
         try top.send("startListeningTapped", nil)
     }
 
-    /// Closes a lesson, or else pops the deepest stack in the open tab that has anything to pop.
+    /// Taps a lesson's ✕, which asks first when it has answers to keep, or else pops the deepest
+    /// stack in the open tab that has anything to pop. A lesson covers the tab, so it goes first.
     func back() throws {
-        if !presented.isEmpty {
-            dismiss()
-            return
-        }
         guard chain.reversed().contains(where: { $0.back() }) else { throw CLIError.nothingToGoBackFrom }
     }
 
@@ -246,7 +243,7 @@ final class Session: Backend {
     }
 
     private func snapshot() -> String {
-        chain.map { $0.dump() }.joined() + "\(notes.count)"
+        chain.map { $0.fingerprint() }.joined() + "\(notes.count)"
     }
 }
 

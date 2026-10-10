@@ -10,7 +10,7 @@ public final class Interpreter {
         do <action> [json]     send the open screen an action, its payload as a JSON object
         say <answer>           speak an answer to the open speaking lesson
         state                  the open screen's whole state
-        back                   close the lesson, or go back in the open tab
+        back                   tap the lesson's ✕, or go back in the open tab
         quit
         """
 
