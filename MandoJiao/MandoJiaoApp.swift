@@ -47,7 +47,7 @@ struct MandoJiaoApp: App {
         // port in a release build would be a security hole.
         #if DEBUG
         if ProcessInfo.processInfo.arguments.contains("-remote") {
-            let registry = ScreenRegistry()
+            let registry = ScreenRegistry(transitioning: UIKitTransitions.inProgress)
             registry.speak = speech.map { speech in { speech.enqueue($0) } }
             screenRegistry = registry
             do {

@@ -144,6 +144,27 @@ struct RemoteControlTests {
         #expect(dismissed == 0)
     }
 
+    @Test("a reply waits while a screen animates out, and no longer than the transition")
+    func waitsWhileLeaving() async {
+        let log = Log()
+        let registry = ScreenRegistry()
+        registry.app = screen("app", log: log)
+        var checks = 0
+        registry.register(screen("deck", log: log), as: UUID(), leaving: {
+            checks += 1
+            return checks < 5
+        })
+        let control = RemoteControl(registry: registry, transition: .seconds(5))
+        #expect(await control.handle(RemoteRequest(.send, action: "tapped")).error == nil)
+        #expect(checks >= 5)
+
+        // One that never finishes leaving, as SwiftUI can leave a screen, holds a reply only so long.
+        registry.register(screen("ghost", log: log), as: UUID(), leaving: { true })
+        let capped = RemoteControl(registry: registry, transition: .milliseconds(20))
+        #expect(await capped.handle(RemoteRequest(.send, action: "tapped")).error == nil)
+        #expect(log.sent == ["deck tapped", "ghost tapped"])
+    }
+
     @Test("a screen that disappears leaves the registry, so the one behind is in front again")
     func registry() {
         let (_, registry, log) = make()
@@ -152,5 +173,41 @@ struct RemoteControlTests {
         #expect(registry.screens.last?.name == "lesson")
         registry.remove(id)
         #expect(registry.screens.map(\.name) == ["vocabulary", "deck"])
+    }
+
+    @Test("a screen coming back into view keeps its place, whatever order the screens reappear in")
+    func reappearing() {
+        let log = Log()
+        let registry = ScreenRegistry()
+        let (list, deck) = (UUID(), UUID())
+        registry.register(screen("vocabulary", log: log), as: list)
+        registry.register(screen("deck", log: log), as: deck)
+        // Away to another tab and back: SwiftUI shows the pushed deck before the list.
+        registry.remove(list)
+        registry.remove(deck)
+        registry.register(screen("deck", log: log), as: deck)
+        registry.register(screen("vocabulary", log: log), as: list)
+        #expect(registry.screens.map(\.name) == ["vocabulary", "deck"])
+        // A screen new to the registry goes in front of them both.
+        registry.register(screen("speaking", log: log), as: UUID())
+        #expect(registry.screens.last?.name == "speaking")
+    }
+
+    @Test("a reply waits for the app to stop animating, as one transition follows another")
+    func waitsForTransitions() async {
+        let log = Log()
+        var checks = 0
+        let registry = ScreenRegistry(transitioning: {
+            checks += 1
+            return checks < 5
+        })
+        registry.app = screen("app", log: log)
+        let control = RemoteControl(registry: registry, transition: .seconds(5))
+        #expect(await control.handle(RemoteRequest(.tab, tab: "home")).error == nil)
+        #expect(checks >= 5)
+        // Reading waits for nothing.
+        let before = checks
+        _ = await control.handle(RemoteRequest(.ls))
+        #expect(checks == before)
     }
 }

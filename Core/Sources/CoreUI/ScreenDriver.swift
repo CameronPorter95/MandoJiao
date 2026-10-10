@@ -12,6 +12,8 @@ public struct ScreenDriver {
     public let summary: () -> String
     /// The whole state, as `dump` prints it.
     public let dump: () -> String
+    /// The state, cheaply: what a settle compares while it waits, many times a second.
+    public let fingerprint: () -> String
     /// The effects left over once navigation has been followed, described.
     public let effects: () -> AsyncStream<String>
     /// The screen this one shows in front of itself, such as a page pushed onto its stack.
@@ -54,6 +56,7 @@ public struct ScreenDriver {
             Swift.dump(state(), to: &text)
             return text
         }
+        self.fingerprint = { String(describing: state()) }
         self.effects = {
             let source = effects()
             let (described, continuation) = AsyncStream.makeStream(of: String.self)
