@@ -14,9 +14,10 @@ struct MixedLessonState: Equatable {
     /// sentence is found for it or every source has been tried.
     var examplesPending: Set<UUID> = []
 
-    /// Closing before anything is answered, or after the end, needs no confirmation.
+    /// Closing before anything is answered, or after the end, needs no confirmation. A taught
+    /// word answers nothing, so passing one is not reason enough to ask.
     var canCloseWithoutConfirming: Bool {
-        lesson.isFinished || lesson.stepIndex == 0
+        lesson.isFinished || lesson.answers.isEmpty
     }
 }
 

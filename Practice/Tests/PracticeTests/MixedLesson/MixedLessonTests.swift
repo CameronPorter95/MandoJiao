@@ -253,17 +253,29 @@ struct MixedLessonViewModelTests {
         #expect(await repository.recordedResults.count == 1)
     }
 
-    @Test("closing part way asks first, then records what was answered")
-    func quitting() async {
+    @Test("closing after only a taught word closes at once, with nothing to record")
+    func quittingUnanswered() async {
         let (viewModel, log) = makeViewModel()
         viewModel.send(.stepCompleted([]))
+        viewModel.send(.closeTapped)
+        #expect(!viewModel.state.isConfirmingQuit)
+        #expect(await log.contains(.close))
+        try? await Task.sleep(for: .milliseconds(50))
+        #expect(await repository.recordedResults.isEmpty)
+    }
+
+    @Test("closing part way asks first, then records what was answered")
+    func quitting() async {
+        let (viewModel, log) = makeViewModel([
+            .teach(LessonWords.water), .recall(LessonWords.water, .recognise), .readAloud(LessonWords.water),
+        ])
+        viewModel.send(.stepCompleted([]))
+        viewModel.send(.stepCompleted([answer(LessonWords.water, right: true)]))
         viewModel.send(.closeTapped)
         #expect(viewModel.state.isConfirmingQuit)
         viewModel.send(.quitConfirmed)
         #expect(await log.contains(.close))
-        // Nothing answered yet, so nothing to record.
-        try? await Task.sleep(for: .milliseconds(50))
-        #expect(await repository.recordedResults.isEmpty)
+        #expect(await waitUntil { await repository.recordedResults.count == 1 })
     }
 
     @Test("the microphone's session is kept through a run of read-aloud steps, handed back before anything else, and before the fanfare")
