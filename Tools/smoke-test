@@ -1,0 +1,32 @@
+#!/bin/bash
+# Smoke-tests the whole app on the simulator DeviceHub shows: every screen once, as shallow
+# as covers it, through Tools/test-flow.
+#
+#   Tools/smoke-test              build, install and run
+#   Tools/smoke-test --no-build   run against the app already installed
+#
+# Any option is passed to Tools/test-flow. A wrong match adds words to the mistakes list,
+# and lessons quit part way save what was answered; nothing else is changed for good.
+set -euo pipefail
+
+read -r -d '' prompt <<'PROMPT' || true
+Smoke test the whole app: every screen once, as shallow as covers it. Use the map in the
+skill, plan the whole thing before the app moves, and send it in as few runs as you can.
+
+- Home: open settings, change strictness to strict and back to relaxed, close it. Open
+  today's plan, continue through two steps, then back, quitting if it asks.
+- Quick practice: make one right match and one wrong one, then back and quit.
+- Vocabulary: open the Starter folder, the Greetings deck, search it for ni, open and close
+  the add-words sheet, back out to the root.
+- Dictionary: search pengyou, open the first result, open its first character, back out.
+- Lessons from Greetings: speaking with one right answer, then say zzz for a wrong one,
+  then back, quitCancelled, back again, quitConfirmed. Flash cards: answer one card, then
+  quit.
+
+One screen, one action each is enough: no second deck, no repeating a lesson, no extra
+cards. Do not save, delete, move or rename anything. Finish on home and report as a table
+of screen, what you did, pass or fail, then only the failures and surprises with their
+transcript lines.
+PROMPT
+
+exec "$(dirname "$0")/test-flow" "$@" "$prompt"
