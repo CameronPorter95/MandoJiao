@@ -70,8 +70,12 @@ struct LibraryViewModelTests {
 
         try driver.open("folder", "hsk")
         #expect(library.state.selection == .folder(Fixtures.hsk.id))
+        // Each twice: one already in front is not pushed again, or the copy hides under it and
+        // a back pops it with nothing to show for it.
+        try driver.open("folder", "Level 1")
         try driver.open("folder", "Level 1")
         try driver.open("deck", String(Fixtures.part1.id.uuidString.prefix(8)))
+        try driver.open("deck", "Part 1")
         #expect(library.state.path == [.folder(Fixtures.level1.id), .deck(Fixtures.part1.id)])
 
         #expect(throws: ScreenDriverError.notFound("deck", "nope")) { try driver.open("deck", "nope") }

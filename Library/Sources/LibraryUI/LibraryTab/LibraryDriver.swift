@@ -73,6 +73,8 @@ extension LibraryViewModel {
 
     /// A deck is pushed, a top-level folder selected in the sidebar, and a folder inside another
     /// pushed. Found by name, ignoring case, then by built-in key, then by the start of its id.
+    /// One already in front stays as it is, as tapping a row that is not on show cannot push it
+    /// twice.
     private func open(_ kind: String, _ query: String) throws {
         let vocabulary = state.vocabulary
         switch kind {
@@ -80,11 +82,13 @@ extension LibraryViewModel {
             guard let deck = Self.find(query, in: vocabulary.decks, name: \.name, key: \.builtInKey) else {
                 throw ScreenDriverError.notFound(kind, query)
             }
+            guard state.path.last != .deck(deck.id) else { return }
             send(.opened(.deck(deck.id)))
         case "folder":
             guard let folder = Self.find(query, in: vocabulary.folders, name: \.name, key: \.builtInKey) else {
                 throw ScreenDriverError.notFound(kind, query)
             }
+            if folder.parentID != nil, state.path.last == .folder(folder.id) { return }
             send(folder.parentID == nil ? .selected(.folder(folder.id)) : .opened(.folder(folder.id)))
         default:
             throw ScreenDriverError.cannotOpen(kind)
