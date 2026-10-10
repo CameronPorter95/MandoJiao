@@ -1,5 +1,6 @@
 import Foundation
 import Testing
+import LibraryDI
 import MandoKit
 
 /// Card order follows the store's fetch and ids are random, so these read a transcript rather
@@ -195,6 +196,32 @@ struct InterpreterTests {
 
         #expect(await mando.run("back") == ["✓ back"])
         #expect(await screens(mando).last?.hasPrefix("dictionary  query: 你好") == true)
+    }
+
+    @Test("--store runs over a copy of a store: its own words, and the original never written to")
+    func overACopy() async throws {
+        // Laid out as an app's data container, as `xcrun simctl get_app_container … data` prints it.
+        let container = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: container) }
+        let support = container.appendingPathComponent("Library/Application Support")
+        try FileManager.default.createDirectory(at: support, withIntermediateDirectories: true)
+        // Starter words only, no HSK: unlike mando's own in-memory store.
+        _ = try VocabularyRepositoryFactory.openStore(at: support.appendingPathComponent("default.store"), hskWords: { [] })
+
+        let mando = try Interpreter(store: container)
+        #expect(mando.banner.contains("over a copy of \(container.path)"))
+        let home = await screens(mando).first ?? ""
+        let fresh = await screens(try Interpreter()).first ?? ""
+        #expect(home.hasPrefix("home  quick practice: "))
+        #expect(home != fresh, "the store's own words, not mando's seeded HSK")
+
+        _ = await mando.run("open deck Greetings")
+        _ = await mando.run(#"do nameChanged {"_0":"Renamed"}"#)
+        #expect(await screens(mando).last?.hasPrefix("deck  Renamed") == true)
+
+        let again = try Interpreter(store: container)
+        _ = await again.run("open deck Greetings")
+        #expect(await screens(again).last?.hasPrefix("deck  Greetings") == true)
     }
 
     @Test("mistakes are refused in a sentence and leave the session usable")

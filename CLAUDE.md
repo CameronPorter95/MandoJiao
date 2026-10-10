@@ -69,7 +69,8 @@ cd Practice && swift test --filter StrictnessTests
 ```
 
 Drive screens headlessly, no simulator: `cd Tools/MandoCLI && swift run mando`, then
-`help`. Not in the Xcode scheme, so its 16 tests, and `AppComposition`'s 3, are not in the counts
+`help`; `--store <path>` runs over a copy of a simulator's store. Not in the Xcode scheme, so
+its 17 tests, and `AppComposition`'s 3, are not in the counts
 below; see `Documentation/headless-cli.md`. The same commands drive the app on the
 simulator: tick `-remote` under the scheme's Run arguments (committed unticked), run a
 debug build, then `swift run mando --remote`. mando's first line names what it drives;

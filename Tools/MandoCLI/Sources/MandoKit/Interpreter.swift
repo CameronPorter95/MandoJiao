@@ -20,10 +20,11 @@ public final class Interpreter {
     public let banner: String
     public let prompt: String
 
-    /// Screens built here, over an in-memory store.
-    public init() throws {
-        session = try Session()
-        banner = "headless: the screens run here, over an in-memory store, on no simulator"
+    /// Screens built here, over an in-memory store, or over a copy of `store`.
+    public init(store: URL? = nil) throws {
+        session = try Session(store: store)
+        let over = store.map { "a copy of \($0.path)" } ?? "an in-memory store"
+        banner = "headless: the screens run here, over \(over), on no simulator"
         prompt = "mando> "
     }
 

@@ -1,4 +1,5 @@
 import CoreDI
+import Foundation
 import DictionaryDomain
 import LibraryData
 import LibraryDomain
@@ -14,7 +15,17 @@ public enum VocabularyRepositoryFactory {
     /// and HSK 1. `hskWords` is the dictionary's syllabus, read only when the store is empty.
     @MainActor
     public static func openStore(inMemory: Bool = false, hskWords: () -> [HSKWord]) throws -> ModelContainer {
-        let container = try VocabularyStore.makeContainer(inMemory: inMemory)
+        try prepare(VocabularyStore.makeContainer(inMemory: inMemory), hskWords: hskWords)
+    }
+
+    /// The same, for a store file of one's own: mando's copy of a simulator's, say.
+    @MainActor
+    public static func openStore(at url: URL, hskWords: () -> [HSKWord]) throws -> ModelContainer {
+        try prepare(VocabularyStore.makeContainer(url: url), hskWords: hskWords)
+    }
+
+    @MainActor
+    private static func prepare(_ container: ModelContainer, hskWords: () -> [HSKWord]) -> ModelContainer {
         VocabularyStore.seedIfNeeded(container, hskWords: hskWords)
         VocabularyStore.rememberPastAnswers(container)
         return container
