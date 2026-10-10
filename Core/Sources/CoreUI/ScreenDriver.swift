@@ -22,6 +22,9 @@ public struct ScreenDriver {
     public let back: () -> Bool
     /// Working on something that will change what it shows, such as a search under way.
     public let isBusy: () -> Bool
+    /// Showing a dialog over everything in front of it, such as asking whether to quit, so
+    /// commands reach it and not the screens it covers.
+    public let covers: () -> Bool
     /// Opens something this screen lists by its name, as tapping its row would.
     public let open: (_ kind: String, _ query: String) throws -> Void
 
@@ -38,12 +41,14 @@ public struct ScreenDriver {
         back: @escaping () -> Bool = { false },
         relay: EffectRelay? = nil,
         isBusy: @escaping (State) -> Bool = { _ in false },
+        covers: @escaping (State) -> Bool = { _ in false },
         open: @escaping (_ kind: String, _ query: String) throws -> Void = { kind, _ in throw ScreenDriverError.cannotOpen(kind) }
     ) {
         self.open = open
         self.front = front
         self.back = back
         self.isBusy = { isBusy(state()) }
+        self.covers = { covers(state()) }
         self.name = name
         self.actions = actions
         self.send = { action, arguments in

@@ -415,6 +415,30 @@ struct MixedLessonDriverTests {
         #expect(viewModel.state.lesson.stepIndex == 0)
     }
 
+    @Test("the quit dialog covers the step in front, which is kept as it was when it is cancelled")
+    func quitDialogCoversStep() async throws {
+        var closed = false
+        let (viewModel, driver) = try make([
+            .recall(LessonWords.water, .recognise), .recall(LessonWords.tea, .recognise), .recall(LessonWords.book, .recognise),
+        ]) { closed = true }
+        let effects = EffectLog(driver.effects())
+        viewModel.send(.stepCompleted([answer(LessonWords.water, right: true)]))
+        let step = try #require(driver.front())
+        try step.send("dontKnowTapped", nil)
+        let answered = step.summary()
+
+        #expect(driver.back())
+        #expect(driver.covers())
+        try driver.send("quitCancelled", nil)
+        #expect(!driver.covers())
+        #expect(driver.front()?.summary() == answered)
+
+        #expect(driver.back())
+        try driver.send("quitConfirmed", nil)
+        #expect(await waitUntil { closed })
+        #expect(effects.effects.isEmpty)
+    }
+
     @Test("closing navigates rather than reaching the effects")
     func closing() async throws {
         var closed = false

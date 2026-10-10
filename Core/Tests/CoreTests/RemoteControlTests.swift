@@ -19,7 +19,9 @@ struct RemoteControlTests {
         var pushed = false
     }
 
-    private func screen(_ name: String, log: Log, back: @escaping () -> Bool = { false }) -> ScreenDriver {
+    private func screen(
+        _ name: String, log: Log, back: @escaping () -> Bool = { false }, covers: @escaping () -> Bool = { false }
+    ) -> ScreenDriver {
         ScreenDriver(
             name: name, actions: ["appeared", "disappeared", "tapped", "selectTab", "startListeningTapped"],
             state: { name }, summary: { "\($0) shown" },
@@ -28,6 +30,7 @@ struct RemoteControlTests {
                 log.sent.append("\(name) \(action)")
             },
             effects: { AsyncStream<Int> { $0.finish() } }, follow: { $0 }, back: back,
+            covers: { _ in covers() },
             open: { kind, query in
                 if kind == "tab" { log.tab = query }
                 log.opened.append("\(name) \(kind) \(query)")
@@ -80,6 +83,27 @@ struct RemoteControlTests {
         #expect(log.sent == ["deck tapped"])
         #expect(log.tab == "vocabulary")
         #expect(await control.handle(RemoteRequest(.send, action: "bogus")).error == #"no action "bogus" here, see ls"#)
+    }
+
+    @Test("a screen showing a dialog takes the commands, and the screens it covers are left off ls")
+    func covering() async {
+        let log = Log()
+        let registry = ScreenRegistry()
+        var asking = true
+        var closed = false
+        registry.register(screen("plan", log: log, back: { closed = true; return true }, covers: { asking }), as: UUID())
+        registry.register(screen("step", log: log), as: UUID())
+        let control = RemoteControl(registry: registry, transition: .zero)
+
+        #expect(await control.handle(RemoteRequest(.ls)).lines.prefix(2) == ["plan shown", "actions: appeared, disappeared, tapped, selectTab, startListeningTapped"])
+        #expect(await control.handle(RemoteRequest(.send, action: "tapped")).error == nil)
+        #expect(await control.handle(RemoteRequest(.back)).error == nil)
+        #expect(log.sent == ["plan tapped"])
+        #expect(closed)
+
+        asking = false
+        #expect(await control.handle(RemoteRequest(.send, action: "tapped")).error == nil)
+        #expect(log.sent == ["plan tapped", "step tapped"])
     }
 
     @Test("open selects the vocabulary tab, then asks it to find the deck or folder")

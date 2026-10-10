@@ -19,7 +19,13 @@ public final class RemoteControl {
         self.quiet = quiet
     }
 
-    private var top: ScreenDriver? { registry.screens.last ?? registry.app }
+    /// The screens on show, back first, ending at one with a dialog over the rest.
+    private var shown: [ScreenDriver] {
+        guard let covering = registry.screens.firstIndex(where: { $0.covers() }) else { return registry.screens }
+        return Array(registry.screens[...covering])
+    }
+
+    private var top: ScreenDriver? { shown.last ?? registry.app }
 
     public func handle(_ request: RemoteRequest) async -> RemoteReply {
         await settle()
@@ -42,7 +48,7 @@ public final class RemoteControl {
         case .hello:
             return [Self.identity]
         case .ls:
-            let screens = ([registry.app] + registry.screens.map(Optional.some)).compactMap { $0?.summary() }
+            let screens = ([registry.app] + shown.map(Optional.some)).compactMap { $0?.summary() }
             return screens + (top.map { ["actions: \($0.actions.joined(separator: ", "))"] } ?? [])
         case .state:
             return top?.dump().split(separator: "\n").map(String.init) ?? []
@@ -65,7 +71,7 @@ public final class RemoteControl {
             try top.send("startListeningTapped", nil)
         case .back:
             if registry.app?.back() == true { return [] }
-            if registry.screens.reversed().contains(where: { $0.back() }) { return [] }
+            if shown.reversed().contains(where: { $0.back() }) { return [] }
             // A screen pushed over one that has disappeared, as settings over home: nothing on
             // show can pop it, so SwiftUI's own dismissal does, as the back button would.
             guard registry.dismissals.reversed().contains(where: { $0() }) else { throw RemoteError.nothingToGoBackFrom }

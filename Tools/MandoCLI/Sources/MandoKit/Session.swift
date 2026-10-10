@@ -49,13 +49,14 @@ final class Session: Backend {
     }
 
     /// From the open tab's screen down to the one in front, then any lesson over them and the
-    /// step in front of it.
+    /// step in front of it, ending at a screen with a dialog over the rest.
     var chain: [ScreenDriver] {
         var chain: [ScreenDriver] = []
         for root in [tabs[selectedTab]] + presented.map(Optional.some) {
             var next = root
             while let driver = next {
                 chain.append(driver)
+                if driver.covers() { return chain }
                 next = driver.front()
             }
         }

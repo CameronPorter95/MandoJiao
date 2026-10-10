@@ -59,7 +59,9 @@ extension MixedLessonViewModel {
             isBusy: { state in
                 guard case .teach(let word) = state.lesson.step else { return false }
                 return state.examplesPending.contains(word.id)
-            }
+            },
+            // The quit dialog covers the step, whose driver is kept as it is for a cancel.
+            covers: \.isConfirmingQuit
         )
     }
 }
