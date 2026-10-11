@@ -15,4 +15,8 @@ public nonisolated struct SearchDictionaryUseCase: Sendable {
         guard !trimmed.isEmpty else { return [] }
         return try await repository.search(trimmed, limit: Self.limit)
     }
+
+    public func prepare() async {
+        await repository.prepareSearch()
+    }
 }

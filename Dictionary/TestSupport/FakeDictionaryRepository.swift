@@ -45,6 +45,12 @@ public actor FakeDictionaryRepository: DictionaryRepository {
             .map { DictionarySearchResult(entry: $0) }
     }
 
+    public private(set) var preparations = 0
+
+    public func prepareSearch() {
+        preparations += 1
+    }
+
     public func entries(forHanzi hanzi: String) throws -> [DictionaryEntry] {
         lookups.append(hanzi)
         if let failure { throw failure }

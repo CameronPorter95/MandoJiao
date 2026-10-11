@@ -119,6 +119,14 @@ struct DictionarySearchViewModelTests {
         #expect(search.state.path == [DictionaryHeadword(hanzi: "喝", pinyin: "hē")])
     }
 
+    @Test("appearing prepares the search before anything is typed, so the first query does not build it")
+    func preparedOnAppearing() async {
+        let search = makeSearch()
+        search.send(.appeared)
+        #expect(await waitUntil { await dictionary.preparations == 1 })
+        #expect(await dictionary.searches.isEmpty)
+    }
+
     @Test("typing searches once typing pauses, for only the last query")
     func debounced() async {
         let search = makeSearch(delay: .milliseconds(50))

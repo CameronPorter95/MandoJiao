@@ -31,6 +31,8 @@ public final class DictionarySearchViewModel {
     func send(_ action: DictionarySearchAction) {
         switch action {
         case .appeared:
+            // Built off the main actor, once, however often the tab appears.
+            Task { [searchDictionary] in await searchDictionary.prepare() }
             // Live, so a result shows as saved as soon as the editor saves it.
             guard observation == nil else { return }
             let stream = observeSaved()
