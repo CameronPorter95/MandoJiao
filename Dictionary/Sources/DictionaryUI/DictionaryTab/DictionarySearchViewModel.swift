@@ -11,21 +11,12 @@ public final class DictionarySearchViewModel {
 
     private let searchDictionary: SearchDictionaryUseCase
     private let observeSaved: ObserveSavedReadingsUseCase
-    private let searchDelay: Duration
     private var searching: Task<Void, Never>?
     private var observation: Task<Void, Never>?
 
-    public nonisolated static let defaultSearchDelay: Duration = .milliseconds(250)
-
-    /// `searchDelay` waits for typing to pause, since every search reads the whole dictionary.
-    public init(
-        searchDictionary: SearchDictionaryUseCase,
-        observeSaved: ObserveSavedReadingsUseCase,
-        searchDelay: Duration = defaultSearchDelay
-    ) {
+    public init(searchDictionary: SearchDictionaryUseCase, observeSaved: ObserveSavedReadingsUseCase) {
         self.searchDictionary = searchDictionary
         self.observeSaved = observeSaved
-        self.searchDelay = searchDelay
     }
 
     func send(_ action: DictionarySearchAction) {
@@ -66,22 +57,26 @@ public final class DictionarySearchViewModel {
             searching?.cancel()
             guard !state.isBlank else {
                 state.results = .none
+                state.isSearching = false
                 return
             }
-            state.results = .searching
-            searching = Task { [searchDictionary, searchDelay] in
+            // No pause for typing to stop: a search takes milliseconds once the dictionary is
+            // indexed, and a later keystroke cancels this one.
+            state.isSearching = true
+            searching = Task { [searchDictionary] in
                 do {
-                    try await Task.sleep(for: searchDelay)
                     let found = try await searchDictionary(query)
                     try Task.checkCancellation()
                     state.results = .found(found)
                 } catch is CancellationError {
                     // Superseded by later typing, not a failure.
+                    return
                 } catch {
                     let domainError = error as? DictionaryDomainError ?? .unexpected(model: DomainErrorModel(error))
                     DictionaryError.searchFailed(domainError).log()
                     state.results = .failed
                 }
+                state.isSearching = false
             }
         }
     }
