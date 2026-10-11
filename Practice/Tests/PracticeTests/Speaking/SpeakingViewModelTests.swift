@@ -465,7 +465,7 @@ struct SpeakingDriverTests {
 
         try driver.send("typedAnswerSubmitted", answer)
 
-        #expect(await effects.equals(["haptic(PracticeUI.SpeakingHaptic.success)"]))
+        #expect(await effects.equals(["haptic(SpeakingHaptic.success)"]))
     }
 
     @Test("closing navigates rather than reaching the effects")

@@ -46,6 +46,8 @@ struct DictionarySearchViewModelTests {
         #expect(await waitUntil { !driver.isBusy() })
 
         try driver.send("opened", Data(#"{"result":0}"#.utf8))
+        // Only the page in front lists itself, so the search names the way to it.
+        #expect(driver.summary().contains("pages: \(search.state.path.map(\.hanzi).joined(separator: " › "))"))
         try driver.send("vocabularyTapped", Data(#"{"result":0}"#.utf8))
         let edit = try #require(search.state.editor)
         #expect(driver.front()?.name == "word editor \(edit.id)")

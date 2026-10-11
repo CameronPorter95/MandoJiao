@@ -110,7 +110,9 @@ struct LibraryViewModelTests {
 
         try driver.send("searchPresentedChanged", Data(#"{"_0":true}"#.utf8))
         #expect(driver.front()?.name == "results")
+        #expect(driver.summary().hasSuffix("  search open"))
         try driver.send("searchChanged", Data(#"{"_0":"wa"}"#.utf8))
+        #expect(driver.summary().hasSuffix("  searching: wa"))
         _ = driver.front()
         _ = driver.front()
         // Built with the text so far, then handed each change once.

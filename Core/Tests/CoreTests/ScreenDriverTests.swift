@@ -25,6 +25,14 @@ struct ScreenDriverTests {
         #expect(try ScreenDriver.decode(Action.self, name: "typed", arguments: arguments) == .typed(text: "你好"))
     }
 
+    @Test("an effect is described without the modules its types are qualified with")
+    func describingEffects() {
+        #expect(ScreenDriver.describe("haptic(PracticeUI.SpeakingHaptic.success)") == "haptic(SpeakingHaptic.success)")
+        #expect(ScreenDriver.describe("LibraryDomain.Word(id: 1)") == "Word(id: 1)")
+        // Only the app's own modules: anything else, and a word that merely starts like one, stays.
+        #expect(ScreenDriver.describe("Foundation.URL CoreUIKit.thing") == "Foundation.URL CoreUIKit.thing")
+    }
+
     @Test("arguments that are not JSON are refused")
     func notJSON() {
         #expect(throws: ScreenDriverError.badArguments("typed")) {

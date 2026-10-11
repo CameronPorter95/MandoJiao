@@ -105,6 +105,8 @@ extension DictionarySearchState {
             }
             parts.append("results: \(found.count)  \(shown.joined(separator: " | "))")
         }
+        // Only the page in front is listed after this, so the way to it is named here.
+        if !path.isEmpty { parts.append("pages: \(path.map(\.hanzi).joined(separator: " › "))") }
         if editor != nil { parts.append("editing a reading") }
         return parts.joined(separator: "  ")
     }
