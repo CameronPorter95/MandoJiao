@@ -19,20 +19,16 @@ public enum DictionaryTabFactory: InputRouteFactory {
     public static func makeDriver(dependencies: Dependencies, input vocabulary: DictionaryVocabulary) -> ScreenDriver {
         let observe = ObserveSavedReadingsUseCase(repository: vocabulary.savedReadings)
         let makePage = makePage(observe: observe)
-        return makeSearch(observe: observe, searchDelay: .zero).driver(
+        return makeSearch(observe: observe).driver(
             page: { headword, open in makePage(headword).driver(open: open, editor: vocabulary.editorDriver) },
             editor: vocabulary.editorDriver
         )
     }
 
-    private static func makeSearch(
-        observe: ObserveSavedReadingsUseCase,
-        searchDelay: Duration = DictionarySearchViewModel.defaultSearchDelay
-    ) -> DictionarySearchViewModel {
+    private static func makeSearch(observe: ObserveSavedReadingsUseCase) -> DictionarySearchViewModel {
         DictionarySearchViewModel(
             searchDictionary: SearchDictionaryUseCase(repository: DictionaryRepositoryFactory.makeDictionaryRepository()),
-            observeSaved: observe,
-            searchDelay: searchDelay
+            observeSaved: observe
         )
     }
 

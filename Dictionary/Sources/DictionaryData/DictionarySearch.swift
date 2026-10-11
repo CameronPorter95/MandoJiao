@@ -24,6 +24,13 @@ nonisolated struct DictionarySearch: Sendable {
     }
 
     private let records: [Record]
+    /// Each character of either form, to the records holding it.
+    private let byCharacter: [Character: [Int32]]
+    /// Each word of any gloss, to the records holding it.
+    private let byWord: [String: [Int32]]
+    /// Every record, ordered by its toneless pinyin, so those starting with a query's letters
+    /// are one run found by bisection.
+    private let byPinyin: [Int32]
 
     /// An HSK word's headline is matched as its first sense, as the dictionary shows it,
     /// so "at" finds 在, and its HSK rank orders it among the other matches. Only headwords
@@ -77,6 +84,56 @@ nonisolated struct DictionarySearch: Sendable {
                 )
             }
         }
+        var byCharacter: [Character: [Int32]] = [:]
+        var byWord: [String: [Int32]] = [:]
+        // Records are visited in order, so one already listed for a key is last in its list.
+        for (index, record) in records.enumerated() {
+            let index = Int32(index)
+            for form in [record.simplified, record.traditional] {
+                for character in form {
+                    byCharacter[character, default: []].appendOnce(index)
+                }
+            }
+            for glosses in record.glosses {
+                for gloss in glosses {
+                    for word in gloss.split(separator: " ") { byWord[String(word), default: []].appendOnce(index) }
+                }
+            }
+        }
+        self.byCharacter = byCharacter
+        self.byWord = byWord
+        let letters = records.map(\.pinyin.letters)
+        byPinyin = letters.indices
+            .sorted { letters[$0].utf8.lexicographicallyPrecedes(letters[$1].utf8) }
+            .map(Int32.init)
+    }
+
+    /// Every record that could match, in the order of `records`, so ties rank as a scan of
+    /// them all would. A match holds each of the query's characters, or each of its words as
+    /// a word of a gloss, or its letters as a prefix of its pinyin, so the shortest list of
+    /// any one of those, with the pinyin run, holds every match and few that are not.
+    private func candidates(_ query: SearchQuery) -> [Int32] {
+        if query.isHanzi {
+            return Set(query.text).map { byCharacter[$0] ?? [] }.min { $0.count < $1.count } ?? []
+        }
+        var candidates = query.english.split(separator: " ")
+            .map { byWord[String($0)] ?? [] }
+            .min { $0.count < $1.count } ?? []
+        if let letters = query.pinyin?.letters.utf8 {
+            var low = 0
+            var high = byPinyin.count
+            while low < high {
+                let middle = (low + high) / 2
+                if records[Int(byPinyin[middle])].pinyin.letters.utf8.lexicographicallyPrecedes(letters) {
+                    low = middle + 1
+                } else {
+                    high = middle
+                }
+            }
+            let run = byPinyin[low...].prefix { records[Int($0)].pinyin.letters.utf8.starts(with: letters) }
+            if !run.isEmpty { candidates = Array(Set(candidates).union(run)).sorted() }
+        }
+        return candidates
     }
 
     /// Best first: an exact match before a partial one, a match on a first sense before a
@@ -86,20 +143,27 @@ nonisolated struct DictionarySearch: Sendable {
     func results(for query: String, limit: Int) -> [DictionarySearchResult] {
         let query = SearchQuery(query)
         guard !query.isEmpty else { return [] }
-        let rank: (Record) -> Rank?
-        if query.isHanzi {
-            rank = { Self.hanziRank($0, query.text) }
-        } else {
-            rank = { record in
-                [query.pinyin.flatMap { Self.pinyinRank(record, $0) }, Self.englishRank(record, query.english)]
-                    .compactMap { $0 }.min()
+        let english = English(query.english)
+        var ranked: [(Record, Rank)] = []
+        for index in candidates(query) {
+            let record = records[Int(index)]
+            let rank: Rank?
+            if query.isHanzi {
+                rank = Self.hanziRank(record, query.text)
+            } else {
+                let pinyin = query.pinyin.flatMap { Self.pinyinRank(record, $0) }
+                let gloss = Self.englishRank(record, english)
+                rank = switch (pinyin, gloss) {
+                case let (pinyin?, gloss?): min(pinyin, gloss)
+                case (let rank?, nil), (nil, let rank?): rank
+                case (nil, nil): nil
+                }
             }
+            if let rank { ranked.append((record, rank)) }
         }
+        ranked.sort { $0.1 < $1.1 }
         // CC-CEDICT has some headwords twice in one reading, differing only in their
         // traditional form or senses. The page shows both, so a result need only lead there.
-        let ranked = records
-            .compactMap { record in rank(record).map { (record, $0) } }
-            .sorted { $0.1 < $1.1 }
         var seen = Set<String>()
         var results: [DictionarySearchResult] = []
         for (record, _) in ranked {
@@ -143,10 +207,9 @@ nonisolated struct DictionarySearch: Sendable {
     }
 
     private static func hanziRank(_ record: Record, _ query: String) -> Rank? {
-        let forms = [record.simplified, record.traditional]
-        if forms.contains(query) { return rank(record, match: 0) }
-        if forms.contains(where: { $0.hasPrefix(query) }) { return rank(record, match: 1) }
-        if forms.contains(where: { $0.contains(query) }) { return rank(record, match: 2) }
+        if record.simplified == query || record.traditional == query { return rank(record, match: 0) }
+        if record.simplified.hasPrefix(query) || record.traditional.hasPrefix(query) { return rank(record, match: 1) }
+        if record.simplified.contains(query) || record.traditional.contains(query) { return rank(record, match: 2) }
         return nil
     }
 
@@ -156,16 +219,37 @@ nonisolated struct DictionarySearch: Sendable {
         return nil
     }
 
+    /// An English query with the forms a gloss is compared against made once, not per gloss.
+    private struct English {
+        let text: String
+        let verb: String
+        let leading: String
+        let trailing: String
+        let inner: String
+
+        init(_ text: String) {
+            self.text = text
+            verb = "to \(text)"
+            leading = "\(text) "
+            trailing = " \(text)"
+            inner = " \(text) "
+        }
+
+        /// The query as whole words of the gloss.
+        func isHeld(by gloss: String) -> Bool {
+            gloss.hasPrefix(leading) || gloss.hasSuffix(trailing) || gloss.contains(inner)
+        }
+    }
+
     /// A whole gloss, or one that is the query as a verb, before a gloss merely holding it.
-    private static func englishRank(_ record: Record, _ query: String) -> Rank? {
+    private static func englishRank(_ record: Record, _ query: English) -> Rank? {
         var best: Rank?
-        let padded = " \(query) "
         for (sense, glosses) in record.glosses.enumerated() {
             for (index, gloss) in glosses.enumerated() {
                 let match: Int
-                if gloss == query || gloss == "to \(query)" {
+                if gloss == query.text || gloss == query.verb {
                     match = 0
-                } else if " \(gloss) ".contains(padded) {
+                } else if query.isHeld(by: gloss) {
                     match = 4
                 } else {
                     continue
@@ -220,5 +304,11 @@ nonisolated struct DictionarySearch: Sendable {
         return kept.split(separator: ",")
             .map { $0.split(separator: " ").joined(separator: " ") }
             .filter { !$0.isEmpty }
+    }
+}
+
+private extension [Int32] {
+    mutating func appendOnce(_ index: Int32) {
+        if last != index { append(index) }
     }
 }

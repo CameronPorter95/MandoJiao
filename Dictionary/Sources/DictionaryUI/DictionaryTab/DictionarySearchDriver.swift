@@ -58,7 +58,7 @@ extension DictionarySearchViewModel {
                 return true
             },
             relay: children.relay,
-            isBusy: { $0.results == .searching }
+            isBusy: { $0.isSearching }
         )
     }
 }
@@ -97,7 +97,6 @@ extension DictionarySearchState {
         var parts = ["dictionary", "query: \(query)"]
         switch results {
         case .none: parts.append("no search")
-        case .searching: parts.append("searching")
         case .failed: parts.append("search failed")
         case .found(let found):
             let shown = found.prefix(10).enumerated().map { index, result in
@@ -105,6 +104,7 @@ extension DictionarySearchState {
             }
             parts.append("results: \(found.count)  \(shown.joined(separator: " | "))")
         }
+        if isSearching { parts.append("searching") }
         // Only the page in front is listed after this, so the way to it is named here.
         if !path.isEmpty { parts.append("pages: \(path.map(\.hanzi).joined(separator: " › "))") }
         if editor != nil { parts.append("editing a reading") }

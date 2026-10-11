@@ -4,13 +4,15 @@ import Foundation
 struct DictionarySearchState: Equatable {
     enum Results: Equatable {
         case none
-        case searching
         case found([DictionarySearchResult])
         case failed
     }
 
     var query = ""
     var results: Results = .none
+    /// A search for `query` under way. `results` still holds the last one's meanwhile, so the
+    /// list does not blank between keystrokes.
+    var isSearching = false
     /// The saved words, nil until they are known.
     var saved: [SavedReading]?
     var editor: ReadingEdit?
@@ -18,6 +20,10 @@ struct DictionarySearchState: Equatable {
     var path: [DictionaryHeadword] = []
 
     var isBlank: Bool { query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+
+    var hasResults: Bool {
+        if case .found(let found) = results { !found.isEmpty } else { false }
+    }
 
     func vocabulary(for result: DictionarySearchResult) -> ReadingInVocabulary? {
         ReadingInVocabulary(result.entry, in: saved)

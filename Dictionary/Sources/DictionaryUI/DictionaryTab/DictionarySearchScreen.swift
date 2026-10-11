@@ -33,24 +33,11 @@ struct DictionarySearchScreen: View {
             }
         }
         .overlay {
-            switch state.results {
-            case .none:
-                ContentUnavailableView(
-                    "Search the dictionary",
-                    systemImage: "character.book.closed",
-                    description: Text("By Hanzi, by pinyin with or without tones, or by English. From CC-CEDICT.")
-                )
-            case .searching:
+            if state.isSearching, !state.hasResults {
+                // Nothing from an earlier query to keep showing.
                 ProgressView()
-            case .found(let entries) where entries.isEmpty:
-                ContentUnavailableView.search(text: state.query)
-            case .found:
-                EmptyView()
-            case .failed:
-                ContentUnavailableView(
-                    "The dictionary could not be searched",
-                    systemImage: "exclamationmark.triangle"
-                )
+            } else {
+                message
             }
         }
         .searchField(initial: state.query, prompt: "银行, yinhang or bank") { onAction(.queryChanged($0)) }
@@ -61,6 +48,26 @@ struct DictionarySearchScreen: View {
         .navigationTitle("Dictionary")
         .onAppear { onAction(.appeared) }
         .onDisappear { onAction(.disappeared) }
+    }
+
+    @ViewBuilder private var message: some View {
+        switch state.results {
+        case .none:
+            ContentUnavailableView(
+                "Search the dictionary",
+                systemImage: "character.book.closed",
+                description: Text("By Hanzi, by pinyin with or without tones, or by English. From CC-CEDICT.")
+            )
+        case .found(let entries) where entries.isEmpty:
+            ContentUnavailableView.search(text: state.query)
+        case .found:
+            EmptyView()
+        case .failed:
+            ContentUnavailableView(
+                "The dictionary could not be searched",
+                systemImage: "exclamationmark.triangle"
+            )
+        }
     }
 }
 

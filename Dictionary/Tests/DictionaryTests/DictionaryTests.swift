@@ -198,6 +198,14 @@ nonisolated struct DictionaryTests {
         #expect(yinhang?.summary == "banker")
     }
 
+    /// The search looks a query up by one character or word of it, so a match away from the
+    /// start of a headword or gloss must still be among those looked up.
+    @Test("search finds a query inside a headword, and words inside a gloss")
+    func searchWithin() async throws {
+        #expect(try await dictionary.search("行", limit: 5_000).contains { $0.simplified == "银行" })
+        #expect(try await dictionary.search("be alive", limit: 200).contains { $0.simplified == "在" })
+    }
+
     @Test("search lists a headword once per reading, and nothing for a blank query")
     func searchDuplicates() async throws {
         let results = try await dictionary.search("go", limit: 100)
