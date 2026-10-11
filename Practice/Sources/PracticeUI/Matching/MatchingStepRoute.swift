@@ -58,6 +58,8 @@ public final class MatchingStepViewModel {
     private let advanceDelay: Duration
     private let onComplete: ([Answer]) -> Void
     private var isFinished = false
+    /// Matched and waiting out the pause before its answers are handed back.
+    private(set) var isHandingBack = false
 
     /// `pairs` are one board's. `onComplete` hands back its answers, once.
     public init(
@@ -100,9 +102,11 @@ public final class MatchingStepViewModel {
     private func finish() {
         guard !isFinished else { return }
         isFinished = true
+        isHandingBack = true
         let answers = lesson.answers
         Task { [advanceDelay, onComplete] in
             try? await Task.sleep(for: advanceDelay)
+            self.isHandingBack = false
             onComplete(answers)
         }
     }

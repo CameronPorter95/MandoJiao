@@ -73,13 +73,21 @@ public struct ScreenDriver {
             relay?.sink = { continuation.yield($0) }
             let task = Task {
                 for await effect in source {
-                    if let left = follow(effect) { continuation.yield(String(describing: left)) }
+                    if let left = follow(effect) { continuation.yield(Self.describe(left)) }
                 }
                 continuation.finish()
             }
             continuation.onTermination = { _ in task.cancel() }
             return described
         }
+    }
+
+    /// An effect as Swift prints it, without the modules its types are qualified with:
+    /// `haptic(SpeakingHaptic.success)` rather than `haptic(PracticeUI.SpeakingHaptic.success)`.
+    nonisolated static func describe(_ effect: some Sendable) -> String {
+        // One of the app's packages' modules, followed by the dot that qualifies a type.
+        let module = /\b(?:Core|Library|Dictionary|Practice|Progress|Settings)(?:Domain|Data|UI|DI|Sound|Persistence|DesignSystem|Remote|TestSupport)\./
+        return String(describing: effect).replacing(module, with: "")
     }
 
     /// Wraps the payload as `{"name": arguments}`, the shape synthesised `Codable` gives an enum case.

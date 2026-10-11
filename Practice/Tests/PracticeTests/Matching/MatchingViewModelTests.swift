@@ -242,6 +242,17 @@ struct MatchingDriverTests {
         #expect(throws: ScreenDriverError.cannotAnswer("one pair left, so no wrong match")) { try driver.answer(false) }
     }
 
+    @Test("driven, a matched board is busy until the next one is in, so ls shows the next board")
+    func busyBetweenBoards() async throws {
+        let harness = Harness(pool: pairs)
+        let driver = harness.viewModel.driver(navigation: MatchingNavigation(didClose: {}))
+        try driver.send("appeared", nil)
+        for _ in 1...5 { _ = try driver.answer(true) }
+        #expect(driver.isBusy())
+        #expect(await waitUntil { !driver.isBusy() })
+        #expect(driver.summary().hasPrefix("matching  board 2/2  matched 0/5"))
+    }
+
     @Test("a tile no board shows is ignored")
     func unknownTile() throws {
         let harness = Harness(pool: pairs)
@@ -278,6 +289,7 @@ struct MatchingDriverTests {
         }
         #expect(driver.summary().hasPrefix("matching step  matched 5/5"))
         #expect(await waitUntil { answers.count == 5 })
+        #expect(!driver.isBusy())
         #expect(answers.filter { !$0.isCorrect }.isEmpty)
     }
 }

@@ -30,6 +30,8 @@ extension MatchingViewModel {
                 self.send(.closeTapped)
                 return true
             },
+            // A matched board moves on to the next one after a moment.
+            isBusy: { state in state.lesson.map { $0.board.isComplete && !$0.isFinished } ?? false },
             answer: { right in
                 guard let lesson = self.state.lesson, !lesson.isFinished, !self.state.isConfirmingQuit else {
                     throw ScreenDriverError.cannotAnswer("no board is waiting for an answer")
@@ -61,6 +63,8 @@ extension MatchingStepViewModel {
             },
             effects: { AsyncStream<Never> { $0.finish() } },
             follow: { $0 },
+            // A matched board hands its answers back after a moment.
+            isBusy: { _ in self.isHandingBack },
             answer: { right in
                 let taps = try self.lesson.board.guess(right: right)
                 for tile in taps { _ = self.tap(tile) }

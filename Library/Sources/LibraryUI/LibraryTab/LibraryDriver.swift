@@ -149,7 +149,7 @@ extension LibraryState {
         if case .folder(let id) = selection, let folder = vocabulary.folder(id: id) {
             parts.append("selected: \(folder.displayName)")
         }
-        if isSearching { parts.append("searching: \(searchText)") }
+        if isSearching { parts.append(searchText.isEmpty ? "search open" : "searching: \(searchText)") }
         if editor != nil { parts.append("editing a word") }
         if isShowingHSKLevels { parts.append("HSK levels open") }
         return parts.joined(separator: "  ")
