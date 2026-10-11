@@ -48,4 +48,7 @@ public nonisolated protocol DictionaryRepository: Sendable {
     func entries(forHanzi hanzi: String) async throws -> [DictionaryEntry]
     /// Headwords matching Hanzi, pinyin with or without tones, or English, best first.
     func search(_ query: String, limit: Int) async throws -> [DictionarySearchResult]
+    /// Readies `search`, so the first query does not wait for it. A failure is left for that
+    /// query to report.
+    func prepareSearch() async
 }

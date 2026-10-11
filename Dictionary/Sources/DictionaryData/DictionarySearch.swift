@@ -2,7 +2,8 @@ import DictionaryDomain
 import Foundation
 
 /// Every entry of the dictionary made searchable by Hanzi, by pinyin with or without tones,
-/// and by English. Built once, on the first search, since most sessions never search.
+/// and by English. Built once, when the dictionary tab appears, since most sessions never
+/// open it.
 nonisolated struct DictionarySearch: Sendable {
     private struct Record: Sendable {
         let line: Substring
@@ -25,33 +26,56 @@ nonisolated struct DictionarySearch: Sendable {
     private let records: [Record]
 
     /// An HSK word's headline is matched as its first sense, as the dictionary shows it,
-    /// so "at" finds 在, and its HSK rank orders it among the other matches.
+    /// so "at" finds 在, and its HSK rank orders it among the other matches. Only headwords
+    /// HSK has are parsed into entries; the rest are read straight from their fields, which
+    /// halved the build.
     init(_ index: BundledDictionary.Index, headlines: HSKHeadlines = HSKHeadlines([])) {
         var containing: [Character: Int] = [:]
         for hanzi in index.lines.keys {
             for character in Set(hanzi) { containing[character, default: 0] += 1 }
         }
-        let entries = index.lines.values.flatMap { lines -> [(Substring, DictionaryEntry, HSKHeadlines.Word?)] in
+        // Characters outside the main block, like 㣟, are all rare.
+        func commonness(_ simplified: String) -> Int {
+            simplified.unicodeScalars.allSatisfy { !(0x3400...0x4DBF).contains($0.value) && $0.value < 0x20000 }
+                ? simplified.map { containing[$0] ?? 0 }.min() ?? 0
+                : -1
+        }
+        records = index.lines.flatMap { hanzi, lines -> [Record] in
+            guard headlines.words[hanzi] != nil else {
+                return lines.compactMap { line in
+                    let fields = line.split(separator: "\t", maxSplits: 4, omittingEmptySubsequences: false)
+                    guard fields.count == 5 else { return nil }
+                    let simplified = String(fields[0])
+                    return Record(
+                        line: line,
+                        simplified: simplified,
+                        traditional: String(fields[1]),
+                        pinyin: PinyinSpelling(String(fields[2])),
+                        glosses: fields[4].split(separator: "\u{1F}").map(Self.glosses),
+                        isPreferred: fields[3] == "1",
+                        headline: nil,
+                        frequency: nil,
+                        commonness: commonness(simplified)
+                    )
+                }
+            }
             let parsed = lines.compactMap { line in BundledDictionary.Index.entry(line).map { (line, $0) } }
             let applied = headlines.applied(to: parsed.map(\.1))
             let carriers = headlines.carriers(among: parsed.map(\.1))
-            return parsed.indices.map { (parsed[$0].0, applied[$0], carriers[$0]) }
-        }
-        records = entries.map { line, entry, hsk in
-            Record(
-                line: line,
-                simplified: entry.simplified,
-                traditional: entry.traditional,
-                pinyin: PinyinSpelling(entry.pinyin),
-                glosses: entry.senses.map(Self.glosses),
-                isPreferred: entry.isPreferred,
-                headline: hsk?.headline,
-                frequency: hsk?.rank,
-                // Characters outside the main block, like 㣟, are all rare.
-                commonness: entry.simplified.unicodeScalars.allSatisfy { !(0x3400...0x4DBF).contains($0.value) && $0.value < 0x20000 }
-                    ? entry.simplified.map { containing[$0] ?? 0 }.min() ?? 0
-                    : -1
-            )
+            return parsed.indices.map { index in
+                let entry = applied[index]
+                return Record(
+                    line: parsed[index].0,
+                    simplified: entry.simplified,
+                    traditional: entry.traditional,
+                    pinyin: PinyinSpelling(entry.pinyin),
+                    glosses: entry.senses.map(Self.glosses),
+                    isPreferred: entry.isPreferred,
+                    headline: carriers[index]?.headline,
+                    frequency: carriers[index]?.rank,
+                    commonness: commonness(entry.simplified)
+                )
+            }
         }
     }
 
@@ -153,7 +177,37 @@ nonisolated struct DictionarySearch: Sendable {
         return best
     }
 
-    private static func glosses(_ sense: String) -> [String] {
+    /// Byte by byte when the sense is ASCII, as nearly all of CC-CEDICT is, since this runs
+    /// on every sense of every entry while the search is built.
+    static func glosses(_ sense: some StringProtocol) -> [String] {
+        guard sense.utf8.allSatisfy({ $0 < 0x80 }) else { return unicodeGlosses(String(sense)) }
+        var glosses: [String] = []
+        var gloss: [UInt8] = []
+        var depth = 0
+        var spaced = false
+        for byte in sense.utf8 {
+            switch byte {
+            case UInt8(ascii: "("): depth += 1
+            case UInt8(ascii: ")"): depth = max(0, depth - 1)
+            case _ where depth > 0: continue
+            case UInt8(ascii: ","):
+                if !gloss.isEmpty { glosses.append(String(decoding: gloss, as: UTF8.self)) }
+                gloss.removeAll(keepingCapacity: true)
+                spaced = false
+            case UInt8(ascii: "A")...UInt8(ascii: "Z"), UInt8(ascii: "a")...UInt8(ascii: "z"),
+                 UInt8(ascii: "0")...UInt8(ascii: "9"), UInt8(ascii: "'"):
+                if spaced, !gloss.isEmpty { gloss.append(UInt8(ascii: " ")) }
+                spaced = false
+                gloss.append((UInt8(ascii: "A")...UInt8(ascii: "Z")).contains(byte) ? byte | 0x20 : byte)
+            default:
+                spaced = true
+            }
+        }
+        if !gloss.isEmpty { glosses.append(String(decoding: gloss, as: UTF8.self)) }
+        return glosses
+    }
+
+    static func unicodeGlosses(_ sense: String) -> [String] {
         var depth = 0
         var kept = ""
         for character in sense.lowercased() {

@@ -23,7 +23,7 @@ public nonisolated struct PinyinSpelling: Hashable, Sendable {
         var marks: [UInt8] = []
         var starts: [Bool] = []
         var syllable = 0
-        for scalar in pinyin.lowercased().decomposedStringWithCanonicalMapping.unicodeScalars {
+        for scalar in Self.decomposed(pinyin) {
             if let tone = Self.tone(marked: scalar) {
                 if !marks.isEmpty { marks[marks.count - 1] |= tone }
             } else if (0x300...0x36F).contains(scalar.value) {
@@ -87,6 +87,32 @@ public nonisolated struct PinyinSpelling: Hashable, Sendable {
             run.letters.reduce(0) { $0 | tones[offset + $1] } & run.tones == run.tones
         }
     }
+
+    /// Lowercased with its marks split off. Through a table of the Latin letters pinyin
+    /// writes, since Foundation's decomposition dominated building the dictionary's search;
+    /// anything else, a combining mark typed on its own included, goes through Foundation.
+    private static func decomposed(_ pinyin: String) -> [Unicode.Scalar] {
+        var scalars: [Unicode.Scalar] = []
+        scalars.reserveCapacity(pinyin.unicodeScalars.count + 4)
+        for scalar in pinyin.unicodeScalars {
+            if scalar.isASCII {
+                scalars.append(("A"..."Z").contains(scalar) ? Unicode.Scalar(scalar.value | 0x20)! : scalar)
+            } else if let letters = latin[scalar.value] {
+                scalars.append(contentsOf: letters)
+            } else {
+                return Array(pinyin.lowercased().decomposedStringWithCanonicalMapping.unicodeScalars)
+            }
+        }
+        return scalars
+    }
+
+    private static let latin: [UInt32: [Unicode.Scalar]] = Dictionary(
+        uniqueKeysWithValues: [0xC0...0x24F, 0x1E00...0x1EFF].joined().compactMap { value in
+            Unicode.Scalar(value).map { scalar in
+                (value, Array(String(scalar).lowercased().decomposedStringWithCanonicalMapping.unicodeScalars))
+            }
+        }
+    )
 
     private static let vowels: Set<Unicode.Scalar> = ["a", "e", "i", "o", "u", "v"]
 
